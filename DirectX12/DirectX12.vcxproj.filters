@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="SourceCode">
+      <UniqueIdentifier>{6c3a1704-d271-4713-8c0b-d1cc19c9ee4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility">
+      <UniqueIdentifier>{a665be5c-9e73-4596-a7a0-fe82d505e958}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Common">
+      <UniqueIdentifier>{ef499cd8-e00a-485e-a287-8287a4622609}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Common\DirectX">
+      <UniqueIdentifier>{753443ff-3eb7-442d-a7f2-78d44a7ff197}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\String">
+      <UniqueIdentifier>{8a0b8d90-e801-4d33-9edb-f24568eee546}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Random">
+      <UniqueIdentifier>{ef17e26e-b694-4188-9120-8ed1cffc945d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\OneTirrger">
+      <UniqueIdentifier>{c56297a8-88ea-4466-b249-560a08a9a180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Math">
+      <UniqueIdentifier>{b0c885c4-9ad5-43d3-b627-efda5193f81b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Hash">
+      <UniqueIdentifier>{6e16e845-1c68-47c8-99da-2fe29c4195f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\FontWrite">
+      <UniqueIdentifier>{515bff8d-f38e-4101-abfd-85ac1b4cdf39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Fade">
+      <UniqueIdentifier>{9707ffd5-0148-4cee-be8b-de14d2a786a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Editer">
+      <UniqueIdentifier>{ce32ddd7-8764-42d0-a075-3cbb9a4c494b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Assert">
+      <UniqueIdentifier>{470f2cbb-985c-4cd6-a1a5-305d7d56db0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Editer\ObjectEditer">
+      <UniqueIdentifier>{affee195-0d41-415d-84f6-2721e1b5f6c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Editer\UIEditer">
+      <UniqueIdentifier>{56699a29-5428-4672-a8cf-f8afd103ec30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\Utility\Hash\hashTable">
+      <UniqueIdentifier>{645d6b6a-7374-4a66-b1b6-347da769dac9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SourceCode\Global.h">
+      <Filter>SourceCode\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\stdafx.h">
+      <Filter>SourceCode\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Main\CMain.h">
+      <Filter>SourceCode\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\DirectX\CDirectX12.h">
+      <Filter>SourceCode\Common\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\String\String.h">
+      <Filter>SourceCode\Utility\String</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\String\magic_enum.h">
+      <Filter>SourceCode\Utility\String</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\Math\Math.h">
+      <Filter>SourceCode\Utility\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\Random\Random.h">
+      <Filter>SourceCode\Utility\Random</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h">
+      <Filter>SourceCode\Utility\OneTirrger</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\FontWrite\FontWrite.h">
+      <Filter>SourceCode\Utility\FontWrite</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\Hash\Crc32Table\HashTable.h">
+      <Filter>SourceCode\Utility\Hash\hashTable</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\Utility\Hash\CHash.h">
+      <Filter>SourceCode\Utility\Hash</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SourceCode\stdafx.cpp">
+      <Filter>SourceCode\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\Main\CMain.cpp">
+      <Filter>SourceCode\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\Main\WinMain.cpp">
+      <Filter>SourceCode\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\DirectX\CDirectX12.cpp">
+      <Filter>SourceCode\Common\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\Utility\String\String.cpp">
+      <Filter>SourceCode\Utility\String</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\Utility\FontWrite\FontWrite.cpp">
+      <Filter>SourceCode\Utility\FontWrite</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\Utility\Hash\Crc32Table\HashTable.cpp">
+      <Filter>SourceCode\Utility\Hash\hashTable</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SourceCode\Utility\Math\Math.inl">
+      <Filter>SourceCode\Utility\Math</Filter>
+    </None>
+    <None Include="SourceCode\Utility\Assert\Assert.inl">
+      <Filter>SourceCode\Utility\Assert</Filter>
+    </None>
+  </ItemGroup>
+</Project>
