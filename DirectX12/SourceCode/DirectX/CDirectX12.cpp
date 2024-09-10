@@ -418,8 +418,8 @@ bool CDirectX12::Create(HWND hWnd)
 		D3D12_RECT scissorrect = {};
 		scissorrect.top = 0;//切り抜き上座標
 		scissorrect.left = 0;//切り抜き左座標
-		scissorrect.right = scissorrect.left + WND_WF;//切り抜き右座標
-		scissorrect.bottom = scissorrect.top + WND_HF;//切り抜き下座標
+		scissorrect.right = scissorrect.left + static_cast<LONG>(WND_W);//切り抜き右座標
+		scissorrect.bottom = scissorrect.top + static_cast<LONG>(WND_H);//切り抜き下座標
 
 		unsigned int frame = 0;
 
