@@ -8,10 +8,13 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 
+// XXX : 昔のヘッダーがincludeされてしまうため直パス.
+#include "C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\d3dcompiler.h"	
+
 //ライブラリ読み込み.
-#pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
 
 using namespace DirectX;
 

@@ -49,15 +49,18 @@
     <Filter Include="SourceCode\Utility\Hash\hashTable">
       <UniqueIdentifier>{645d6b6a-7374-4a66-b1b6-347da769dac9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SourceCode\Common\Main">
+      <UniqueIdentifier>{45a9b206-7f97-4304-ab0e-2eb8a0d1a531}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{6d1e14d3-11b0-4bee-99ff-bb3667eb787f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SourceCode\Global.h">
       <Filter>SourceCode\Common</Filter>
     </ClInclude>
     <ClInclude Include="SourceCode\stdafx.h">
-      <Filter>SourceCode\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="SourceCode\Main\CMain.h">
       <Filter>SourceCode\Common</Filter>
     </ClInclude>
     <ClInclude Include="SourceCode\DirectX\CDirectX12.h">
@@ -87,15 +90,12 @@
     <ClInclude Include="SourceCode\Utility\Hash\CHash.h">
       <Filter>SourceCode\Utility\Hash</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\Main\CMain.h">
+      <Filter>SourceCode\Common\Main</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">
-      <Filter>SourceCode\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="SourceCode\Main\CMain.cpp">
-      <Filter>SourceCode\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="SourceCode\Main\WinMain.cpp">
       <Filter>SourceCode\Common</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\DirectX\CDirectX12.cpp">
@@ -110,6 +110,12 @@
     <ClCompile Include="SourceCode\Utility\Hash\Crc32Table\HashTable.cpp">
       <Filter>SourceCode\Utility\Hash\hashTable</Filter>
     </ClCompile>
+    <ClCompile Include="SourceCode\Main\WinMain.cpp">
+      <Filter>SourceCode\Common\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\Main\CMain.cpp">
+      <Filter>SourceCode\Common\Main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SourceCode\Utility\Math\Math.inl">
@@ -118,5 +124,13 @@
     <None Include="SourceCode\Utility\Assert\Assert.inl">
       <Filter>SourceCode\Utility\Assert</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Data\Shader\Basic\BasicPixelShader.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Data\Shader\Basic\BasicVertexShader.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
