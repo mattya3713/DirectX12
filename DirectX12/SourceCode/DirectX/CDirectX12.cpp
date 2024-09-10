@@ -138,7 +138,7 @@ bool CDirectX12::Create(HWND hWnd)
 			&swcDesc);
 
 
-		// ﾃﾞｨｽｸﾘﾌﾟﾀﾋｰﾌﾟの戦闘アドレスを取り出す.
+		// ﾃﾞｨｽｸﾘﾌﾟﾀﾋｰﾌﾟの先頭アドレスを取り出す.
 		D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle = RTVHeaps->GetCPUDescriptorHandleForHeapStart();
 
 		// バックバッファをヒープの数分宣言.
@@ -172,60 +172,61 @@ bool CDirectX12::Create(HWND hWnd)
 			D3D12_FENCE_FLAG_NONE,						// フェンスのオプション.
 			IID_PPV_ARGS(&Fence));						// (Out) フェンス.
 
+		// 頂点生成.
 		XMFLOAT3 vertices[] = {
-		{-0.4f,-0.7f,0.0f} ,//左下
-		{-0.4f,0.7f,0.0f} ,//左上
-		{0.4f,-0.7f,0.0f} ,//右下
-		{0.4f,0.7f,0.0f} ,//右上
+		{-0.4f,-0.7f, 0.0f} , // 左下.
+		{-0.4f, 0.7f, 0.0f} , // 左上.
+		{0.4f, -0.7f, 0.0f} , // 右下.
+		{0.4f,  0.7f, 0.0f} , // 右上.
 		};
 
 		// ヒープのプロパティ.
-		D3D12_HEAP_PROPERTIES heapprop = {};								
-		heapprop.Type = D3D12_HEAP_TYPE_UPLOAD;						// ヒープの種類.
-		heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// CPUページプロパティ.
-		heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// メモリプール.
+		D3D12_HEAP_PROPERTIES HeapProperty= {};								
+		HeapProperty.Type = D3D12_HEAP_TYPE_UPLOAD;						// ヒープの種類.
+		HeapProperty.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// CPUページプロパティ.
+		HeapProperty.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// メモリプール.
 
 		// テクスチャリソース.
-		D3D12_RESOURCE_DESC resdesc = {};							
-		resdesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-		resdesc.Width = sizeof(vertices);
-		resdesc.Height = 1;
-		resdesc.DepthOrArraySize = 1;
-		resdesc.MipLevels = 1;
-		resdesc.Format = DXGI_FORMAT_UNKNOWN;
-		resdesc.SampleDesc.Count = 1;
-		resdesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-		resdesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		D3D12_RESOURCE_DESC ResDesc = {};							
+		ResDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;			// リソースのディメンションかバッファー.
+		ResDesc.Width = sizeof(vertices);								// 幅を指定.
+		ResDesc.Height = 1;												// 高さを指定.
+		ResDesc.DepthOrArraySize = 1;									// リソースの深さ.
+		ResDesc.MipLevels = 1;											// MIPレベルの数.
+		ResDesc.Format = DXGI_FORMAT_UNKNOWN;							// フォーマット.
+		ResDesc.SampleDesc.Count = 1;									// ピクセルあたりのマルチサンプルの数.　
+		ResDesc.Flags = D3D12_RESOURCE_FLAG_NONE;						// テクスチャレイアウトオプション.
+		ResDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;				// リソースを操作するためのオプションを指定.
 
 
 		//UPLOAD(確保は可能)
-		ID3D12Resource* vertBuff = nullptr;
+		ID3D12Resource* VertBuff = nullptr;
 
 			MyAssert::IsFailed(
-			_T(""),
+			_T("GPUに領域を確保"),
 			&ID3D12Device::CreateCommittedResource, m_pDevice12,
-			&heapprop,
+			&HeapProperty,
 			D3D12_HEAP_FLAG_NONE,
-			&resdesc,
+			&ResDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&vertBuff));
+			IID_PPV_ARGS(&VertBuff));
 
 		XMFLOAT3* vertMap = nullptr;
 
 			MyAssert::IsFailed(
 				_T(""), 
-				&ID3D12Resource::Map, vertBuff,
+				&ID3D12Resource::Map, VertBuff,
 				0, 
 				nullptr, 
 				(void**)&vertMap);
 
 		std::copy(std::begin(vertices), std::end(vertices), vertMap);
 
-		vertBuff->Unmap(0, nullptr);
+		VertBuff->Unmap(0, nullptr);
 
 		D3D12_VERTEX_BUFFER_VIEW vbView = {};
-		vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();//バッファの仮想アドレス
+		vbView.BufferLocation = VertBuff->GetGPUVirtualAddress();//バッファの仮想アドレス
 		vbView.SizeInBytes = sizeof(vertices);//全バイト数
 		vbView.StrideInBytes = sizeof(vertices[0]);//1頂点あたりのバイト数
 
@@ -234,13 +235,13 @@ bool CDirectX12::Create(HWND hWnd)
 		ID3D12Resource* idxBuff = nullptr;
 		//設定は、バッファのサイズ以外頂点バッファの設定を使いまわして
 		//OKだと思います。
-		resdesc.Width = sizeof(indices);
+		ResDesc.Width = sizeof(indices);
 		MyAssert::IsFailed(
 			_T(""),
 			&ID3D12Device::CreateCommittedResource, m_pDevice12,
-			&heapprop,
+			&HeapProperty,
 			D3D12_HEAP_FLAG_NONE,
-			&resdesc,
+			&ResDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&idxBuff));
@@ -468,8 +469,6 @@ bool CDirectX12::Create(HWND hWnd)
 
 			//命令のクローズ
 			m_pCmdList->Close();
-
-
 
 			//コマンドリストの実行
 			ID3D12CommandList* cmdlists[] = { m_pCmdList };
