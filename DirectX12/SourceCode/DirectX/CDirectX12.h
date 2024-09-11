@@ -48,6 +48,12 @@ private:
 	* @brief	デバッグレイヤーを起動.
 	*******************************************/
 	void EnableDebuglayer();
+	
+	/*******************************************
+	* @brief	ErroeBlobに入ったエラーを出力.
+	* @param	検索する文字列.
+	*******************************************/
+	void ShaderCompileError(const HRESULT& Result, ID3DBlob* ErrorMsg);
 
 private:
 	ID3D12Device*		m_pDevice12;	// DirectX12のデバイスコンテキスト.
