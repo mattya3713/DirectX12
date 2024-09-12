@@ -1,7 +1,5 @@
 #include "CMain.h"
-#include "Global.h"
 #include <crtdbg.h>	//_ASSERT_EXPR()‚Å•K—v.
-#include "Utility/Macro/Macro.h"
 
 
 //================================================

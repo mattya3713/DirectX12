@@ -124,6 +124,9 @@
     <None Include="SourceCode\Utility\Assert\Assert.inl">
       <Filter>SourceCode\Utility\Assert</Filter>
     </None>
+    <None Include="Data\Shader\Basic\BasicShaderHeader.hlsli">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\Shader\Basic\BasicPixelShader.hlsl">

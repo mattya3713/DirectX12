@@ -34,6 +34,10 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 
+// ヘッターを設定しなくてはならない.
+// プロパティからヘッターまでのパスの環境変数をつくり$(DXTEXDIR)をC++>全般>追加のインクルードディテクトリに追加.
+#include<DirectXTex.h>
+
 // DirectSound.
 #include <dsound.h>
 
@@ -44,6 +48,11 @@
 #pragma comment(lib, "dxgi.lib")
 //DirectSound.
 #pragma comment( lib, "dsound.lib" )
+
+// ライブラリを設定しなくてはならない.
+// $(DXTEX_DIR)\Bin\Desktop_2022_Win10\x64\Debugをリンカー>全般>追加のライブラリディテクトリに追加.
+#pragma comment( lib,"DirectXTex.lib" )
+
 
 //=================================================
 //	定数.

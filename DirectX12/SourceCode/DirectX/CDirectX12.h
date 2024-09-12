@@ -5,6 +5,7 @@
 
 //ヘッダ読込.
 #include <D3D12.h>
+#include <d3dx12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 
@@ -16,6 +17,8 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
+
+
 using namespace DirectX;
 
 /**************************************************
@@ -23,6 +26,14 @@ using namespace DirectX;
 **/
 class CDirectX12
 {
+public:
+
+	struct VerTex
+	{
+		XMFLOAT3 Pos;	// xyz座標.
+		XMFLOAT2 uv;	// xuv座標.
+	};
+
 public:
 	CDirectX12();
 	~CDirectX12();
