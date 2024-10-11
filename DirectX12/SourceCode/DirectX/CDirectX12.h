@@ -5,9 +5,11 @@
 
 //ヘッダ読込.
 #include <D3D12.h>
+#include <d3d12.h>
 #include <d3dx12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
+#include <DirectXTex.h>
 
 // XXX : 昔のヘッダーがincludeされてしまうため直パス.
 #include "C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\um\d3dcompiler.h"	

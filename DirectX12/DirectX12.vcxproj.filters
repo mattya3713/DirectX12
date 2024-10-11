@@ -81,9 +81,6 @@
     <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h">
       <Filter>SourceCode\Utility\OneTirrger</Filter>
     </ClInclude>
-    <ClInclude Include="SourceCode\Utility\FontWrite\FontWrite.h">
-      <Filter>SourceCode\Utility\FontWrite</Filter>
-    </ClInclude>
     <ClInclude Include="SourceCode\Utility\Hash\Crc32Table\HashTable.h">
       <Filter>SourceCode\Utility\Hash\hashTable</Filter>
     </ClInclude>
@@ -103,9 +100,6 @@
     </ClCompile>
     <ClCompile Include="SourceCode\Utility\String\String.cpp">
       <Filter>SourceCode\Utility\String</Filter>
-    </ClCompile>
-    <ClCompile Include="SourceCode\Utility\FontWrite\FontWrite.cpp">
-      <Filter>SourceCode\Utility\FontWrite</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\Utility\Hash\Crc32Table\HashTable.cpp">
       <Filter>SourceCode\Utility\Hash\hashTable</Filter>
