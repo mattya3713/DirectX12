@@ -189,7 +189,7 @@ bool CDirectX12::Create(HWND hWnd)
 		//UPLOAD(確保は可能).
 		ID3D12Resource* VertBuffer = nullptr;
 		
-			// ローカル変数を定義
+		// ローカル変数を定義.
 		CD3DX12_HEAP_PROPERTIES HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 		CD3DX12_RESOURCE_DESC ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(Vertices));
 
