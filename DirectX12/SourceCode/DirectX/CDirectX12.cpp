@@ -558,13 +558,13 @@ bool CDirectX12::Create(HWND hWnd)
 		XMMATRIX* mapMatrix;//マップ先を示すポインタ
 
 		MyAssert::IsFailed(
-			_T("バッファにインデックスバッファをコピー"),
+			_T("バッファにインデックスバッファをマップ"),
 			&ID3D12Resource::Map, constBuff,
 			0,					// サブリソースの番号.
 			nullptr, 			// アクセスするメモリの範囲(nullptrで全範囲).
 			(void**)&mapMatrix);	// (Out) マップデータアドレス.
 
-		*mapMatrix = worldMat * viewMat * projMat;
+		static float angle = 0.1f;
 
 
 		std::copy(
@@ -668,6 +668,11 @@ bool CDirectX12::Create(HWND hWnd)
 
 				m_pCmdList->ResourceBarrier(1, &Barrier);
 			}
+
+			angle += 0.1f;
+			worldMat = XMMatrixRotationY(angle);
+			*mapMatrix = worldMat * viewMat * projMat;
+
 
 			// 命令のクローズ
 			m_pCmdList->Close();

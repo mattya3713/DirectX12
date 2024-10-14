@@ -12,7 +12,7 @@
 #include <DirectXTex.h>
 
 // XXX : 昔のヘッダーがincludeされてしまうため直パス.
-#include "C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\um\d3dcompiler.h"	
+#include "d3dcompiler.h"	
 
 //ライブラリ読み込み.
 #pragma comment(lib, "d3d12.lib")
