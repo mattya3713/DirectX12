@@ -19,8 +19,6 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
-
-
 using namespace DirectX;
 
 /**************************************************
@@ -36,6 +34,12 @@ public:
 		XMFLOAT2 uv;	// xuv座標.
 	};
 
+	struct PMDHedeader
+	{
+		XMFLOAT3 Pos;	// xyz座標.
+		XMFLOAT2 uv;	// xuv座標.
+	};
+
 public:
 	CDirectX12();
 	~CDirectX12();
@@ -44,10 +48,9 @@ public:
 	bool Create(HWND hWnd);
 	void UpDate();
 
-	//デバイスを取得.
-	ID3D12Device* GetDevice() const { return m_pDevice12; }
 	//デバイスコンテキストを取得.
-	//ID3D11DeviceContext* GetContext() const { return m_pContext11; }
+	ID3D12Device* GetDevice() const { return m_pDevice12; }
+	
 
 private:
 	/*******************************************

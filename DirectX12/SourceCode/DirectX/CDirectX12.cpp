@@ -564,8 +564,7 @@ bool CDirectX12::Create(HWND hWnd)
 			nullptr, 			// アクセスするメモリの範囲(nullptrで全範囲).
 			(void**)&mapMatrix);	// (Out) マップデータアドレス.
 
-		static float angle = 0.1f;
-
+		*mapMatrix = worldMat * viewMat * projMat;
 
 		std::copy(
 			std::begin(Indexes),
@@ -668,11 +667,6 @@ bool CDirectX12::Create(HWND hWnd)
 
 				m_pCmdList->ResourceBarrier(1, &Barrier);
 			}
-
-			angle += 0.1f;
-			worldMat = XMMatrixRotationY(angle);
-			*mapMatrix = worldMat * viewMat * projMat;
-
 
 			// 命令のクローズ
 			m_pCmdList->Close();
