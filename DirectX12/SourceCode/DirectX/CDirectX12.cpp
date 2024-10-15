@@ -9,6 +9,27 @@ CDirectX12::CDirectX12()
 	, m_pCmdQueue		( nullptr )
 	, m_Vertex			()
 {
+	char Signature[3] = {}; // シグネチャ.
+
+	auto fp = fopen("Data\\Model\\初音ミク.pmd", "rb");
+
+	// モデルのシグネチャを読み込み
+	fread(Signature, sizeof(Signature), 1, fp);
+
+	// PMDヘッダーの読み込み
+	PMDHeader PMDHeader;
+	fread(&PMDHeader, sizeof(PMDHeader), 1, fp);
+
+	// 頂点数の読み込み
+	unsigned int VertNum;
+	fread(&VertNum, sizeof(VertNum), 1, fp);
+
+	// 頂点データの読み込み
+	std::vector<unsigned char> Vertices(VertNum * PmdVertexSize); // バッファの確保
+	fread(Vertices.data(), Vertices.size(), 1, fp); // 読み込み
+
+	// ファイルを閉じる
+	fclose(fp);
 }
 
 CDirectX12::~CDirectX12()
@@ -566,7 +587,6 @@ bool CDirectX12::Create(HWND hWnd)
 
 		static float angle = 0.1f;
 
-
 		std::copy(
 			std::begin(Indexes),
 			std::end(Indexes),
@@ -629,12 +649,12 @@ bool CDirectX12::Create(HWND hWnd)
 
 			m_pCmdList->SetPipelineState(_pipelinestate);
 
-			// レンダーターゲットを指定
+			// レンダーターゲットを指定.
 			auto rtvH = RTVHeaps->GetCPUDescriptorHandleForHeapStart();
 			rtvH.ptr += BBIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
 
-			// 画面クリア
+			// 画面クリア.
 			float r = (float)(0xff & frame >> 16) / 255.0f;
 			float g = (float)(0xff & frame >> 8) / 255.0f;
 			float b = (float)(0xff & frame >> 0) / 255.0f;
