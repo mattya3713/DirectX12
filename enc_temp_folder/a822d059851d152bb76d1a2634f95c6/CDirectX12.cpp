@@ -294,7 +294,7 @@ bool CDirectX12::Create(HWND hWnd)
 		vbView.SizeInBytes = static_cast<UINT>(Vertices.size() * sizeof(PMDVertex));//全バイト数
 		vbView.StrideInBytes = sizeof(PMDVertex);//1頂点あたりのバイト数
 
-		std::vector<unsigned short> indices(IndicesNum);
+		std::vector<unsigned short> indices(10000);
 
 		fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
 		fclose(fp);
@@ -716,7 +716,7 @@ bool CDirectX12::Create(HWND hWnd)
 			m_pCmdList->SetDescriptorHeaps(1, &basicDescHeap);
 			m_pCmdList->SetGraphicsRootDescriptorTable(0, basicDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-			m_pCmdList->DrawIndexedInstanced(IndicesNum, 1, 0, 0, 0);
+			m_pCmdList->DrawIndexedInstanced(10000, 1, 0, 0, 0);
 
 			BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 			BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;

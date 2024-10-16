@@ -43,8 +43,8 @@ public:
 	struct PMDHeader
 	{
 		float Version;			// バージョン.
-		char ModelName[64];		// モデルの名前.
-		char ModelComment[256];	// モデルのコメント.
+		char ModelName[32];		// モデルの名前.
+		char ModelComment[512];	// モデルのコメント.
 	};
 
 	// PMD頂点構造体.
