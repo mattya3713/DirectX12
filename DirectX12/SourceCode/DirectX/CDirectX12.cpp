@@ -532,70 +532,37 @@ bool CDirectX12::Create(HWND hWnd)
 		//	IID_PPV_ARGS(&texbuff)
 		//);
 
-		MyAssert::IsFailed(
-			_T(""),
-			&ID3D12Resource::WriteToSubresource, texbuff,
-			0,
-			nullptr,//全領域へコピー
-			Image->pixels,//元データアドレス
-			static_cast<UINT>(Image->rowPitch),//1ラインサイズ
-			static_cast<UINT>(Image->slicePitch)//全サイズ
-		);
+		//MyAssert::IsFailed(
+		//	_T(""),
+		//	&ID3D12Resource::WriteToSubresource, texbuff,
+		//	0,
+		//	nullptr,//全領域へコピー
+		//	Image->pixels,//元データアドレス
+		//	static_cast<UINT>(Image->rowPitch),//1ラインサイズ
+		//	static_cast<UINT>(Image->slicePitch)//全サイズ
+		//);
+
+		
+
+		ID3D12Resource* constBuff = nullptr;
+		HeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		ResDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
+		
+
+		XMMATRIX* mapMatrix;//マップ先を示すポインタ
 
 		//定数バッファ作成
-		auto worldMat = XMMatrixRotationY(XM_PIDIV4);
-		XMFLOAT3 eye(0, 0, -5);
-		XMFLOAT3 target(0, 0, 0);
+		XMMATRIX worldMat = XMMatrixIdentity();
+		XMFLOAT3 eye(0, 10, -15);
+		XMFLOAT3 target(0, 10, 0);
 		XMFLOAT3 up(0, 1, 0);
 		auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 		auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2,//画角は90°
 			WND_WF / WND_HF,//アス比
 			1.0f,//近い方
-			10.0f//遠い方
+			100.0f//遠い方
 		);
 
-		ID3D12Resource* constBuff = nullptr;
-		//HeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		//ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
-		//MyAssert::IsFailed(
-		//	_T("インデックスバッファの作成"),
-		//	&ID3D12Device::CreateCommittedResource, m_pDevice12,
-		//	&HeapProperties,					// ヒーププロパティ(アップロード用).
-		//	D3D12_HEAP_FLAG_NONE,				// ヒープのオプション.
-		//	&ResourceDesc,						// リソースへのポインタ.
-		//	D3D12_RESOURCE_STATE_GENERIC_READ,	// 初期設定.
-		//	nullptr,							// クリアカラー構造体へのポインタ.
-		//	IID_PPV_ARGS(&constBuff)			// 作成されたリソースをIndexBufferに格納. 
-		//);
-
-		XMMATRIX* mapMatrix;//マップ先を示すポインタ
-
-		MyAssert::IsFailed(
-			_T("バッファにインデックスバッファをマップ"),
-			&ID3D12Resource::Map, constBuff,
-			0,					// サブリソースの番号.
-			nullptr, 			// アクセスするメモリの範囲(nullptrで全範囲).
-			(void**)&mapMatrix);	// (Out) マップデータアドレス.
-
-		static float angle = 0.1f;
-
-	/*	std::copy(
-			std::begin(Indexes),
-			std::end(Indexes),
-			IndexMap);*/
-
-		ID3D12DescriptorHeap* basicDescHeap = nullptr;
-		D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
-		descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;//シェーダから見えるように
-		descHeapDesc.NodeMask = 0;//マスクは0
-		descHeapDesc.NumDescriptors = 2;//SRV1つとCBV1つ
-		descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//デスクリプタヒープ種別
-
-		MyAssert::IsFailed(
-			_T("ディスクリプタヒープの作成"),
-			&ID3D12Device::CreateDescriptorHeap, m_pDevice12,
-			&descHeapDesc,										// ディスクリプタヒープ構造体を登録.
-			IID_PPV_ARGS(&basicDescHeap));						// (Out)ディスクリプタヒープ.
 
 		//通常テクスチャビュー作成
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -604,24 +571,31 @@ bool CDirectX12::Create(HWND hWnd)
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2Dテクスチャ
 		srvDesc.Texture2D.MipLevels = 1;//ミップマップは使用しないので1
 
-		//デスクリプタの先頭ハンドルを取得しておく
-		auto basicHeapHandle = basicDescHeap->GetCPUDescriptorHandleForHeapStart();
-		
-		m_pDevice12->CreateShaderResourceView(
-			texbuff, //ビューと関連付けるバッファ
-			&srvDesc, //先ほど設定したテクスチャ設定情報
-			basicHeapHandle
-		);
+		ID3D12DescriptorHeap* basicDescHeap = nullptr;
+		D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
+		descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;//シェーダから見えるように
+		descHeapDesc.NodeMask = 0;//マスクは0
+		descHeapDesc.NumDescriptors = 1;//CBV1つ
+		descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//デスクリプタヒープ種別
 
-		basicHeapHandle.ptr +=
-			m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice12->CreateCommittedResource(
+			&HeapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&ResDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&constBuff)
+		);
+		m_pDevice12->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&basicDescHeap));//生成
+
+		////デスクリプタの先頭ハンドルを取得しておく
+		auto basicHeapHandle = basicDescHeap->GetCPUDescriptorHandleForHeapStart();
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		cbvDesc.BufferLocation = constBuff->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = static_cast<UINT>(constBuff->GetDesc().Width);
 		//定数バッファビューの作成
 		m_pDevice12->CreateConstantBufferView(&cbvDesc, basicHeapHandle);
-
-		unsigned int frame = 0;
+		static unsigned int frame = 0;
 
 		while (true)
 		{
@@ -643,7 +617,7 @@ bool CDirectX12::Create(HWND hWnd)
 
 			// レンダーターゲットを指定.
 			auto rtvH = RTVHeaps->GetCPUDescriptorHandleForHeapStart();
-			rtvH.ptr += BBIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			rtvH.ptr += BBIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
 
 			// 画面クリア.
@@ -680,12 +654,7 @@ bool CDirectX12::Create(HWND hWnd)
 
 				m_pCmdList->ResourceBarrier(1, &Barrier);
 			}
-
-			angle += 0.1f;
-			worldMat = XMMatrixRotationY(angle);
-			*mapMatrix = worldMat * viewMat * projMat;
-
-
+		
 			// 命令のクローズ
 			m_pCmdList->Close();
 
@@ -702,11 +671,12 @@ bool CDirectX12::Create(HWND hWnd)
 				CloseHandle(event);
 			}
 
+			// フリップ
+			m_pSwapChain->Present(1, 0);
+
 			m_pCmdAllocator->Reset(); // キューをクリア
 			m_pCmdList->Reset(m_pCmdAllocator, _pipelinestate); // 再びコマンドリストをためる準備
 
-			// フリップ
-			m_pSwapChain->Present(1, 0);
 		}
 	}
 	catch(const std::runtime_error& Msg) {
