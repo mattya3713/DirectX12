@@ -179,97 +179,94 @@ bool CDirectX12::Create(HWND hWnd)
 			D3D12_FENCE_FLAG_NONE,						// フェンスのオプション.
 			IID_PPV_ARGS(&Fence));						// (Out) フェンス.
 
-		// 頂点生成.
-		VerTex Vertices[] = {
-		{{-0.4f,-0.7f, 0.f} , {0.f,1.f}},	// 左下.
-		{{-0.4f, 0.7f, 0.f} , {0.f,0.f}},	// 左上.
-		{{0.4f, -0.7f, 0.f} , {1.f,1.f}},	// 右下.
-		{{0.4f,  0.7f, 0.f} , {1.f,0.f}} };  // 右上.
 
-		//UPLOAD(確保は可能).
-		ID3D12Resource* VertBuffer = nullptr;
-		
-		// ローカル変数を定義.
-		CD3DX12_HEAP_PROPERTIES HeapProperties(D3D12_HEAP_TYPE_UPLOAD);
-		CD3DX12_RESOURCE_DESC ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(Vertices));
+		char Signature[3];
+		PMDHeader Pmdheader = {};
+		FILE* fp;
+			
+		auto err = fopen_s(&fp, "Data\\Model\\初音ミク.pmd", "rb");
 
-		MyAssert::IsFailed(
-			_T("頂点のヒープとリソース設定の作成"),
-			&ID3D12Device::CreateCommittedResource, m_pDevice12,
-			&HeapProperties,                               // ヒーププロパティのポインタ.
-			D3D12_HEAP_FLAG_NONE,                          // ヒープオプション.
-			&ResourceDesc,                                 // リソース記述のポインタ.
-			D3D12_RESOURCE_STATE_GENERIC_READ,             // リソースの初期状態.
-			nullptr,                                       // クリアカラー.
-			IID_PPV_ARGS(&VertBuffer)                      // 作成されたリソース.
-		);
-		
-		VerTex* VertMap = nullptr;
+		if (fp == nullptr) {
+			char strerr[256];
+			strerror_s(strerr, 256, err);
+			return -1;
+		}
 
-		MyAssert::IsFailed(
-			_T("バッファに頂点をコピー"),
-			&ID3D12Resource::Map, VertBuffer,
-			0,					// サブリソースの番号.
-			nullptr, 			// アクセスするメモリの範囲(nullptrで全範囲).
-			(void**)&VertMap);	// (Out) マップデータアドレス.
+		// シグネクチャ.
+		fread(Signature, sizeof(Signature), 1, fp);
+		// PMDヘッダー.
+		fread(&Pmdheader, sizeof(Pmdheader), 1, fp);
 
-		// リソースをコピー.
-		std::copy(
-			std::begin(Vertices),
-			std::end(Vertices),
-			VertMap);
+		// 頂点数.
+		unsigned int VertNum = 0;
+		fread(&VertNum, sizeof(VertNum), 1, fp);
 
-		// MAPを解除する.
-		VertBuffer->Unmap(0, nullptr);
+		std::string result = "VertNum : " + std::to_string(VertNum);
 
-		D3D12_VERTEX_BUFFER_VIEW VerticeBufferView = {};
-		VerticeBufferView.BufferLocation = VertBuffer->GetGPUVirtualAddress();	// バッファの仮想アドレス.
-		VerticeBufferView.SizeInBytes = sizeof(Vertices);						// 全バイト数.
-		VerticeBufferView.StrideInBytes = sizeof(Vertices[0]);					// 1頂点あたりのバイト数.
+		OutputDebugStringA(result.c_str());
 
-		unsigned short Indexes[] = { 0,1,2, 2,1,3 };
+		std::vector<PMDVertex> Vertices(VertNum);//バッファ確保
+		for (auto i = 0; i < VertNum; i++)
+		{
+			fread(&Vertices[i], PmdVertexSize, 1, fp);
+		}
 
-		ResourceDesc.Width = sizeof(Indexes);
-		ID3D12Resource* IndexBuffer = nullptr;
+		// インデックス数.
+		unsigned int IndicesNum;
+		fread(&IndicesNum, sizeof(IndicesNum), 1, fp);
 
-		HeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(Vertices));
+		auto HeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto ResDesc = CD3DX12_RESOURCE_DESC::Buffer(Vertices.size() * sizeof(PMDVertex));
 
-		MyAssert::IsFailed(
-			_T("インデックスバッファの作成"),
-			&ID3D12Device::CreateCommittedResource, m_pDevice12,
-			&HeapProperties,					// ヒーププロパティ(アップロード用).
-			D3D12_HEAP_FLAG_NONE,				// ヒープのオプション.
-			&ResourceDesc,						// リソースへのポインタ.
-			D3D12_RESOURCE_STATE_GENERIC_READ,	// 初期設定.
-			nullptr,							// クリアカラー構造体へのポインタ.
-			IID_PPV_ARGS(&IndexBuffer)			// 作成されたリソースをIndexBufferに格納. 
-		);
-		
+		//UPLOAD(確保は可能)
+		ID3D12Resource* vertBuff = nullptr;
+		m_pDevice12->CreateCommittedResource(
+			&HeapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&ResDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&vertBuff));
 
-		//作ったバッファにインデックスデータをコピー.
-		unsigned short* IndexMap = nullptr;
+		PMDVertex* vertMap = nullptr;
+		vertBuff->Map(0, nullptr, (void**)&vertMap);
+		std::copy(Vertices.begin(), Vertices.end(), vertMap);
+		vertBuff->Unmap(0, nullptr);
 
-		MyAssert::IsFailed(
-			_T("バッファにインデックスバッファをコピー"),
-			&ID3D12Resource::Map, IndexBuffer,
-			0,					// サブリソースの番号.
-			nullptr, 			// アクセスするメモリの範囲(nullptrで全範囲).
-			(void**)&IndexMap);	// (Out) マップデータアドレス.
+		D3D12_VERTEX_BUFFER_VIEW vbView = {};
+		vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();//バッファの仮想アドレス
+		vbView.SizeInBytes = static_cast<UINT>(Vertices.size() * sizeof(PMDVertex));//全バイト数
+		vbView.StrideInBytes = sizeof(PMDVertex);//1頂点あたりのバイト数
 
-		std::copy(
-			std::begin(Indexes),
-			std::end(Indexes),
-			IndexMap);
+		std::vector<unsigned short> indices(IndicesNum);
 
-		// MAPを解除.
-		IndexBuffer->Unmap(0, nullptr);
+		fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
+		fclose(fp);
 
-		// インデックスバッファビューを作成.
+		ID3D12Resource* idxBuff = nullptr;
+		HeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		ResDesc = CD3DX12_RESOURCE_DESC::Buffer(indices.size() * sizeof(indices[0]));
+		//設定は、バッファのサイズ以外頂点バッファの設定を使いまわして
+		//OKだと思います。
+		m_pDevice12->CreateCommittedResource(
+			&HeapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&ResDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&idxBuff));
+
+		//作ったバッファにインデックスデータをコピー
+		unsigned short* mappedIdx = nullptr;
+		idxBuff->Map(0, nullptr, (void**)&mappedIdx);
+		std::copy(indices.begin(), indices.end(), mappedIdx);
+		idxBuff->Unmap(0, nullptr);
+
+		//インデックスバッファビューを作成
 		D3D12_INDEX_BUFFER_VIEW ibView = {};
-		ibView.BufferLocation = IndexBuffer->GetGPUVirtualAddress();
+		ibView.BufferLocation = idxBuff->GetGPUVirtualAddress();
 		ibView.Format = DXGI_FORMAT_R16_UINT;
-		ibView.SizeInBytes = sizeof(Indexes);
+		ibView.SizeInBytes = static_cast<UINT>(indices.size() * sizeof(indices[0]));
 
 		// ブロブを作成(汎用的なデータの塊を表す型).
 		ID3DBlob* VSBlob = nullptr;
@@ -322,14 +319,30 @@ bool CDirectX12::Create(HWND hWnd)
 				0
 			},
 
-			{	"TEXCOORD",
-				0,
-				DXGI_FORMAT_R32G32_FLOAT,
-				0,
-				D3D12_APPEND_ALIGNED_ELEMENT,
-				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-				0
-			}
+			{	"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+							   D3D12_APPEND_ALIGNED_ELEMENT,
+							   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			},
+
+			{	"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
+							   D3D12_APPEND_ALIGNED_ELEMENT,
+							   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			},
+
+			{	"BONE_NO", 0, DXGI_FORMAT_R16G16_FLOAT, 0,
+							   D3D12_APPEND_ALIGNED_ELEMENT,
+							   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			},
+
+			{	"WEIGHT", 0, DXGI_FORMAT_R8_UINT, 0,
+							   D3D12_APPEND_ALIGNED_ELEMENT,
+							   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			},
+
+			{	"EDGE_FLG", 0, DXGI_FORMAT_R8_UINT, 0,
+							   D3D12_APPEND_ALIGNED_ELEMENT,
+							   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+			},
 		};
 
 		// グラフィックパイプラインステート.
@@ -495,64 +508,59 @@ bool CDirectX12::Create(HWND hWnd)
 		texHeapProp.CreationNodeMask = 0;//単一アダプタのため0
 		texHeapProp.VisibleNodeMask = 0;//単一アダプタのため0
 
-		ResourceDesc = {};
-		ResourceDesc.Format = metadata.format;//RGBAフォーマットsrvDesc.Format と合わせなくて位はいけない
-		ResourceDesc.Width = static_cast<UINT>(metadata.width);//幅
-		ResourceDesc.Height = static_cast<UINT>(metadata.height);//高さ
-		ResourceDesc.DepthOrArraySize = static_cast<uint16_t>(metadata.arraySize);//2Dで配列でもないので１
-		ResourceDesc.SampleDesc.Count = 1;//通常テクスチャなのでアンチェリしない
-		ResourceDesc.SampleDesc.Quality = 0;//
-		ResourceDesc.MipLevels = static_cast<uint16_t>(metadata.mipLevels);//ミップマップしないのでミップ数は１つ
-		ResourceDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);//2Dテクスチャ用
-		ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;//レイアウトについては決定しない
-		ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;//とくにフラグなし
+		//ResourceDesc = {};
+		//ResourceDesc.Format = metadata.format;//RGBAフォーマットsrvDesc.Format と合わせなくて位はいけない
+		//ResourceDesc.Width = static_cast<UINT>(metadata.width);//幅
+		//ResourceDesc.Height = static_cast<UINT>(metadata.height);//高さ
+		//ResourceDesc.DepthOrArraySize = static_cast<uint16_t>(metadata.arraySize);//2Dで配列でもないので１
+		//ResourceDesc.SampleDesc.Count = 1;//通常テクスチャなのでアンチェリしない
+		//ResourceDesc.SampleDesc.Quality = 0;//
+		//ResourceDesc.MipLevels = static_cast<uint16_t>(metadata.mipLevels);//ミップマップしないのでミップ数は１つ
+		//ResourceDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);//2Dテクスチャ用
+		//ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;//レイアウトについては決定しない
+		//ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;//とくにフラグなし
 
 		ID3D12Resource* texbuff = nullptr;
-		MyAssert::IsFailed(
-			_T(""),
-			&ID3D12Device::CreateCommittedResource, m_pDevice12,
-			&texHeapProp,
-			D3D12_HEAP_FLAG_NONE,//特に指定なし
-			&ResourceDesc,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,//テクスチャ用(ピクセルシェーダから見る用)
-			nullptr,
-			IID_PPV_ARGS(&texbuff)
-		);
+		//MyAssert::IsFailed(
+		//	_T(""),
+		//	&ID3D12Device::CreateCommittedResource, m_pDevice12,
+		//	&texHeapProp,
+		//	D3D12_HEAP_FLAG_NONE,//特に指定なし
+		//	&ResourceDesc,
+		//	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,//テクスチャ用(ピクセルシェーダから見る用)
+		//	nullptr,
+		//	IID_PPV_ARGS(&texbuff)
+		//);
 
-		MyAssert::IsFailed(
-			_T(""),
-			&ID3D12Resource::WriteToSubresource, texbuff,
-			0,
-			nullptr,//全領域へコピー
-			Image->pixels,//元データアドレス
-			static_cast<UINT>(Image->rowPitch),//1ラインサイズ
-			static_cast<UINT>(Image->slicePitch)//全サイズ
-		);
+		//MyAssert::IsFailed(
+		//	_T(""),
+		//	&ID3D12Resource::WriteToSubresource, texbuff,
+		//	0,
+		//	nullptr,//全領域へコピー
+		//	Image->pixels,//元データアドレス
+		//	static_cast<UINT>(Image->rowPitch),//1ラインサイズ
+		//	static_cast<UINT>(Image->slicePitch)//全サイズ
+		//);
+
+		
+
+		ID3D12Resource* constBuff = nullptr;
+		HeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		ResDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
+		
+
+		XMMATRIX* mapMatrix;//マップ先を示すポインタ
 
 		//定数バッファ作成
-		auto worldMat = XMMatrixRotationY(XM_PIDIV4);
-		XMFLOAT3 eye(0, 0, -5);
-		XMFLOAT3 target(0, 0, 0);
+		XMMATRIX worldMat = XMMatrixIdentity();
+		XMFLOAT3 eye(0, 10, -15);
+		XMFLOAT3 target(0, 10, 0);
 		XMFLOAT3 up(0, 1, 0);
 		auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 		auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2,//画角は90°
 			WND_WF / WND_HF,//アス比
 			1.0f,//近い方
-			10.0f//遠い方
-		);
-
-		ID3D12Resource* constBuff = nullptr;
-		HeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
-		MyAssert::IsFailed(
-			_T("インデックスバッファの作成"),
-			&ID3D12Device::CreateCommittedResource, m_pDevice12,
-			&HeapProperties,					// ヒーププロパティ(アップロード用).
-			D3D12_HEAP_FLAG_NONE,				// ヒープのオプション.
-			&ResourceDesc,						// リソースへのポインタ.
-			D3D12_RESOURCE_STATE_GENERIC_READ,	// 初期設定.
-			nullptr,							// クリアカラー構造体へのポインタ.
-			IID_PPV_ARGS(&constBuff)			// 作成されたリソースをIndexBufferに格納. 
+			100.0f//遠い方
 		);
 
 		XMMATRIX* mapMatrix;//マップ先を示すポインタ
@@ -591,24 +599,31 @@ bool CDirectX12::Create(HWND hWnd)
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2Dテクスチャ
 		srvDesc.Texture2D.MipLevels = 1;//ミップマップは使用しないので1
 
-		//デスクリプタの先頭ハンドルを取得しておく
-		auto basicHeapHandle = basicDescHeap->GetCPUDescriptorHandleForHeapStart();
-		
-		m_pDevice12->CreateShaderResourceView(
-			texbuff, //ビューと関連付けるバッファ
-			&srvDesc, //先ほど設定したテクスチャ設定情報
-			basicHeapHandle
-		);
+		ID3D12DescriptorHeap* basicDescHeap = nullptr;
+		D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
+		descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;//シェーダから見えるように
+		descHeapDesc.NodeMask = 0;//マスクは0
+		descHeapDesc.NumDescriptors = 1;//CBV1つ
+		descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//デスクリプタヒープ種別
 
-		basicHeapHandle.ptr +=
-			m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice12->CreateCommittedResource(
+			&HeapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&ResDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&constBuff)
+		);
+		m_pDevice12->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&basicDescHeap));//生成
+
+		////デスクリプタの先頭ハンドルを取得しておく
+		auto basicHeapHandle = basicDescHeap->GetCPUDescriptorHandleForHeapStart();
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		cbvDesc.BufferLocation = constBuff->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = static_cast<UINT>(constBuff->GetDesc().Width);
 		//定数バッファビューの作成
 		m_pDevice12->CreateConstantBufferView(&cbvDesc, basicHeapHandle);
-
-		unsigned int frame = 0;
+		static unsigned int frame = 0;
 
 		while (true)
 		{
@@ -628,12 +643,12 @@ bool CDirectX12::Create(HWND hWnd)
 
 			m_pCmdList->SetPipelineState(_pipelinestate);
 
-			// レンダーターゲットを指定
+			// レンダーターゲットを指定.
 			auto rtvH = RTVHeaps->GetCPUDescriptorHandleForHeapStart();
-			rtvH.ptr += BBIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			rtvH.ptr += BBIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
 
-			// 画面クリア
+			// 画面クリア.
 			float r = (float)(0xff & frame >> 16) / 255.0f;
 			float g = (float)(0xff & frame >> 8) / 255.0f;
 			float b = (float)(0xff & frame >> 0) / 255.0f;
@@ -647,7 +662,7 @@ bool CDirectX12::Create(HWND hWnd)
 			m_pCmdList->SetGraphicsRootSignature(Rootsignature);
 
 			m_pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			m_pCmdList->IASetVertexBuffers(0, 1, &VerticeBufferView);
+			//m_pCmdList->IASetVertexBuffers(0, 1, &VerticeBufferView);
 			m_pCmdList->IASetIndexBuffer(&ibView);
 
 			m_pCmdList->SetGraphicsRootSignature(Rootsignature);
@@ -668,6 +683,16 @@ bool CDirectX12::Create(HWND hWnd)
 				m_pCmdList->ResourceBarrier(1, &Barrier);
 			}
 
+			angle += 0.1f;
+			worldMat = XMMatrixRotationY(angle);
+			*mapMatrix = worldMat * viewMat * projMat;
+
+
+			angle += 0.1f;
+			worldMat = XMMatrixRotationY(angle);
+			*mapMatrix = worldMat * viewMat * projMat;
+
+
 			// 命令のクローズ
 			m_pCmdList->Close();
 
@@ -684,11 +709,12 @@ bool CDirectX12::Create(HWND hWnd)
 				CloseHandle(event);
 			}
 
+			// フリップ
+			m_pSwapChain->Present(1, 0);
+
 			m_pCmdAllocator->Reset(); // キューをクリア
 			m_pCmdList->Reset(m_pCmdAllocator, _pipelinestate); // 再びコマンドリストをためる準備
 
-			// フリップ
-			m_pSwapChain->Present(1, 0);
 		}
 	}
 	catch(const std::runtime_error& Msg) {
