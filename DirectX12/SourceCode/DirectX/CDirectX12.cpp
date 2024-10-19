@@ -82,7 +82,7 @@ bool CDirectX12::Create(HWND hWnd)
 		result = m_pDevice12->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_pCmdQueue));//コマンドキュー生成
 
 		DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
-		swapchainDesc.Width = WND_HF;
+		swapchainDesc.Width = WND_WF;
 		swapchainDesc.Height = WND_HF;
 		swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		swapchainDesc.Stereo = false;
@@ -132,7 +132,7 @@ bool CDirectX12::Create(HWND hWnd)
 		//深度バッファの仕様
 		D3D12_RESOURCE_DESC depthResDesc = {};
 		depthResDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;//2次元のテクスチャデータとして
-		depthResDesc.Width = WND_HF;//幅と高さはレンダーターゲットと同じ
+		depthResDesc.Width = WND_WF;//幅と高さはレンダーターゲットと同じ
 		depthResDesc.Height = WND_HF;//上に同じ
 		depthResDesc.DepthOrArraySize = 1;//テクスチャ配列でもないし3Dテクスチャでもない
 		depthResDesc.Format = DXGI_FORMAT_D32_FLOAT;//深度値書き込み用フォーマット
@@ -444,7 +444,7 @@ bool CDirectX12::Create(HWND hWnd)
 		result = m_pDevice12->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(&_pipelinestate));
 
 		D3D12_VIEWPORT viewport = {};
-		viewport.Width = WND_HF;//出力先の幅(ピクセル数)
+		viewport.Width = WND_WF;//出力先の幅(ピクセル数)
 		viewport.Height = WND_HF;//出力先の高さ(ピクセル数)
 		viewport.TopLeftX = 0;//出力先の左上座標X
 		viewport.TopLeftY = 0;//出力先の左上座標Y
@@ -455,7 +455,7 @@ bool CDirectX12::Create(HWND hWnd)
 		D3D12_RECT scissorrect = {};
 		scissorrect.top = 0;//切り抜き上座標
 		scissorrect.left = 0;//切り抜き左座標
-		scissorrect.right = scissorrect.left + WND_HF;//切り抜き右座標
+		scissorrect.right = scissorrect.left + WND_WF;//切り抜き右座標
 		scissorrect.bottom = scissorrect.top + WND_HF;//切り抜き下座標
 
 		//シェーダ側に渡すための基本的な行列データ
@@ -471,7 +471,7 @@ bool CDirectX12::Create(HWND hWnd)
 		XMFLOAT3 up(0, 1, 0);
 		auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 		auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV2,//画角は90°
-			static_cast<float>(WND_HF) / static_cast<float>(WND_HF),//アス比
+			static_cast<float>(WND_WF) / static_cast<float>(WND_HF),//アス比
 			1.0f,//近い方
 			100.0f//遠い方
 		);
