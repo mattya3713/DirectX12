@@ -13,9 +13,9 @@
 namespace MyAssert {
 
 	// HRESULTを日本語として返す.
-	static inline std::string HRESULTToJapanese(HRESULT result)
+	static inline std::string HResultToJapanese(HRESULT Result)
 	{
-		switch (result) {
+		switch (Result) {
 		case E_ABORT: return "操作は中止されました";
 		case E_ACCESSDENIED: return "一般的なアクセス拒否エラーが発生しました";
 		case E_FAIL: return "不特定のエラー";
@@ -34,56 +34,56 @@ namespace MyAssert {
 #if UNICODE
 	using runtime_error_msg = LPCWSTR;
 
-	static inline std::string FormatErrorMessage(const std::wstring& errorMsg, HRESULT result) {
-		std::string narrowErrorMsg = MyString::WStringToString(errorMsg);
-		std::string HresultMsg = HRESULTToJapanese(result);
+	static inline std::string FormatErrorMessage(const std::wstring& ErrorMsg, HRESULT Result) {
+		std::string NarrowErrorMsg = MyString::WStringToString(ErrorMsg);
+		std::string HResultMsg = HResultToJapanese(Result);
 		std::stringstream ss;
-		ss << narrowErrorMsg << " に失敗,\n 原因 : " << std::hex << HresultMsg;
+		ss << NarrowErrorMsg << " に失敗,\n 原因 : " << std::hex << HResultMsg;
 		return ss.str();
 	}
 #else
 	using runtime_error_msg = LPCSTR;
 
-	static inline std::wstring NarrowToWide(const std::string& narrowStr) {
-		int size = MultiByteToWideChar(CP_UTF8, 0, narrowStr.c_str(), -1, nullptr, 0);
-		if (size <= 0) {
+	static inline std::wstring NarrowToWide(const std::string& NarrowStr) {
+		int Size = MultiByteToWideChar(CP_UTF8, 0, NarrowStr.c_str(), -1, nullptr, 0);
+		if (Size <= 0) {
 			throw std::runtime_error("NarrowToWide conversion failed.");
 		}
-		std::wstring wideStr;
-		wideStr.resize(size - 1); // 終端のnull文字を除く
-		MultiByteToWideChar(CP_UTF8, 0, narrowStr.c_str(), -1, &wideStr[0], size);
-		return wideStr;
+		std::wstring WideStr;
+		WideStr.resize(Size - 1); // 終端のnull文字を除く
+		MultiByteToWideChar(CP_UTF8, 0, NarrowStr.c_str(), -1, &WideStr[0], Size);
+		return WideStr;
 	}
 
-	static inline std::wstring FormatErrorMessage(const std::string& errorMsg, HRESULT result) {
-		std::wstring wideErrorMsg = NarrowToWide(errorMsg);
+	static inline std::wstring FormatErrorMessage(const std::string& ErrorMsg, HRESULT Result) {
+		std::wstring WideErrorMsg = NarrowToWide(ErrorMsg);
 		std::wstringstream ss;
-		ss << wideErrorMsg << L" に失敗, 原因 : 0x" << std::hex << result;
+		ss << WideErrorMsg << L" に失敗, 原因 : 0x" << std::hex << Result;
 		return ss.str();
 	}
 #endif
 
 	template<class Func, class... Args,
 		std::enable_if_t<std::is_same_v<std::invoke_result_t<Func, Args...>, HRESULT>, int> = 0>
-	static inline bool IsFailed(runtime_error_msg errorMsg, Func&& func, Args&&... args) noexcept(false) {
-		HRESULT result = S_OK;
+	static inline bool IsFailed(runtime_error_msg ErrorMsg, Func&& func, Args&&... args) noexcept(false) {
+		HRESULT Result = S_OK;
 		std::tuple<Args...> tup(std::forward<Args>(args)...);
 
-		result = std::apply(std::forward<Func>(func), std::move(tup));
+		Result = std::apply(std::forward<Func>(func), std::move(tup));
 
-		if (FAILED(result)) {
-			std::string formattedMessage;
+		if (FAILED(Result)) {
+			std::string FormattedMessage;
 
 #if UNICODE
 			// LPCWSTR を std::wstring に変換
-			std::wstring wideErrorMsg(errorMsg);
-			formattedMessage = FormatErrorMessage(wideErrorMsg, result);
+			std::wstring WideErrorMsg(ErrorMsg);
+			FormattedMessage = FormatErrorMessage(WideErrorMsg, Result);
 #else
 			// LPCSTR を std::string に変換
-			formattedMessage = FormatErrorMessage(std::string(errorMsg), result);
+			FormattedMessage = FormatErrorMessage(std::string(ErrorMsg), Result);
 #endif
 
-			throw std::runtime_error(formattedMessage);
+			throw std::runtime_error(FormattedMessage);
 			return false;
 		}
 		return true;
