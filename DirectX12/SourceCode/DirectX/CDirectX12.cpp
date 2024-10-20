@@ -210,10 +210,12 @@ bool CDirectX12::Create(HWND hWnd)
 			fread(&vertices[i], pmdvertex_size, 1, fp);
 		}
 
-		unsigned int indicesNum;//インデックス数
-		fread(&indicesNum, sizeof(indicesNum), 1, fp);
+		unsigned int IndicesNum;//インデックス数
+		fread(&IndicesNum, sizeof(IndicesNum), 1, fp);
 		auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size() * sizeof(PMDVertex));
+
+		
 		//UPLOAD(確保は可能)
 		ID3D12Resource* vertBuff = nullptr;
 		result = m_pDevice12->CreateCommittedResource(
@@ -234,9 +236,104 @@ bool CDirectX12::Create(HWND hWnd)
 		vbView.SizeInBytes = static_cast<UINT>(vertices.size() * sizeof(PMDVertex));//全バイト数
 		vbView.StrideInBytes = sizeof(PMDVertex);//1頂点あたりのバイト数
 
-		std::vector<unsigned short> indices(indicesNum);
+		std::vector<unsigned short> indices(IndicesNum);
 
 		fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
+
+		// マテリアルの読み込み.
+		unsigned int MaterialNum;
+		fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
+
+		std::vector<PMDMaterial> pmdMaterials(MaterialNum);
+		fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
+		unsigned int MaterialNum;//マテリアル数
+		fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
+		std::vector<Material> Materials(MaterialNum);
+
+		std::vector<ID3D12Resource*> textureResources(MaterialNum);
+		std::vector<ID3D12Resource*> sphResources(MaterialNum);
+		std::vector<ID3D12Resource*> spaResources(MaterialNum);
+		std::vector<ID3D12Resource*> toonResources(MaterialNum);
+		{
+			std::vector<PMDMaterial> pmdMaterials(MaterialNum);
+			fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
+			//コピー
+			for (int i = 0; i < pmdMaterials.size(); ++i) {
+				Materials[i].IndicesNum = pmdMaterials[i].IndiceNum;
+				Materials[i].Material.Diffuse = pmdMaterials[i].Diffuse;
+				Materials[i].Material.Alpha = pmdMaterials[i].Alpha;
+				Materials[i].Material.Specular = pmdMaterials[i].Specular;
+				Materials[i].Material.Specularity = pmdMaterials[i].Specularity;
+				Materials[i].Material.Ambient = pmdMaterials[i].Ambient;
+				Materials[i].Additional.ToonIdx = pmdMaterials[i].ToonIdx;
+			}
+
+			//for (int i = 0; i < pmdMaterials.size(); ++i) {
+			//	//トゥーンリソースの読み込み
+			//	std::string toonFilePath = "toon/";
+			//	char toonFileName[16];
+			//	sprintf_s(toonFileName, 16, "toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
+			//	toonFilePath += toonFileName;
+			//	toonResources[i] = LoadTextureFromFile(toonFilePath);
+			//
+			//	if (strlen(pmdMaterials[i].TexFilePath) == 0) {
+			//		textureResources[i] = nullptr;
+			//		continue;
+			//	}
+			//
+			//	std::string texFileName = pmdMaterials[i].TexFilePath;
+			//	std::string sphFileName = "";
+			//	std::string spaFileName = "";
+			//	if (count(texFileName.begin(), texFileName.end(), '*') > 0) {//スプリッタがある
+			//		auto namepair = SplitFileName(texFileName);
+			//		if (GetExtension(namepair.first) == "sph") {
+			//			texFileName = namepair.second;
+			//			sphFileName = namepair.first;
+			//		}
+			//		else if (GetExtension(namepair.first) == "spa") {
+			//			texFileName = namepair.second;
+			//			spaFileName = namepair.first;
+			//		}
+			//		else {
+			//			texFileName = namepair.first;
+			//			if (GetExtension(namepair.second) == "sph") {
+			//				sphFileName = namepair.second;
+			//			}
+			//			else if (GetExtension(namepair.second) == "spa") {
+			//				spaFileName = namepair.second;
+			//			}
+			//		}
+			//	}
+			//	else {
+			//		if (GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
+			//			sphFileName = pmdMaterials[i].TexFilePath;
+			//			texFileName = "";
+			//		}
+			//		else if (GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
+			//			spaFileName = pmdMaterials[i].TexFilePath;
+			//			texFileName = "";
+			//		}
+			//		else {
+			//			texFileName = pmdMaterials[i].TexFilePath;
+			//		}
+			//	}
+			//	//モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
+			//	if (texFileName != "") {
+			//		auto TexFilePath = GetTexturePathFromModelAndTexPath(strModelPath, texFileName.c_str());
+			//		textureResources[i] = LoadTextureFromFile(TexFilePath);
+			//	}
+			//	if (sphFileName != "") {
+			//		auto sphFilePath = GetTexturePathFromModelAndTexPath(strModelPath, sphFileName.c_str());
+			//		sphResources[i] = LoadTextureFromFile(sphFilePath);
+			//	}
+			//	if (spaFileName != "") {
+			//		auto spaFilePath = GetTexturePathFromModelAndTexPath(strModelPath, spaFileName.c_str());
+			//		spaResources[i] = LoadTextureFromFile(spaFilePath);
+			//	}
+			//}
+
+		}
+
 		fclose(fp);
 
 		ID3D12Resource* idxBuff = nullptr;
@@ -567,7 +664,7 @@ bool CDirectX12::Create(HWND hWnd)
 			m_pCmdList->SetDescriptorHeaps(1, &basicDescHeap);
 			m_pCmdList->SetGraphicsRootDescriptorTable(0, basicDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-			m_pCmdList->DrawIndexedInstanced(indicesNum, 1, 0, 0, 0);
+			m_pCmdList->DrawIndexedInstanced(IndicesNum, 1, 0, 0, 0);
 
 			BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 			BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;

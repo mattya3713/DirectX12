@@ -56,20 +56,45 @@ public:
 		uint16_t BoneNo[2];		// ボーン番号	:  4Byte.
 		uint8_t  BoneWeight;    // ボーン影響度	:  1Byte.
 		uint8_t  EdgeFlg;       // 輪郭線フラグ :  1Byte.
-		uint16_t dummy;
-	};
+		uint16_t Padding;		// パディング	:  2Byte.
+	}; // 40Byte.
 	
-	// PMDマテリアル構造体.
-	struct PMDVertex
-	{
-		XMFLOAT3 Pos;			// 頂点座標		: 12Byte.
-		XMFLOAT3 Normal;        // 法線ベクトル	: 12Byte.
-		XMFLOAT2 uv;            // uv座標		:  8Byte.
-		uint16_t BoneNo[2];		// ボーン番号	:  4Byte.
-		uint8_t  BoneWeight;    // ボーン影響度	:  1Byte.
-		uint8_t  EdgeFlg;       // 輪郭線フラグ   :  1Byte.
-		uint16_t Dummy;			// 
-	}; // 38Byte.
+	//PMDマテリアル構造体
+	struct PMDMaterial {
+		XMFLOAT3 Diffuse;       // ディフューズ色			: 12Byte.
+		float	 Alpha;         // α値						:  4Byte.
+		float    Specularity;   // スペキュラの強さ			:  4Byte.
+		XMFLOAT3 Specular;      // スペキュラ色				: 12Byte.
+		XMFLOAT3 Ambient;       // アンビエント色			: 12Byte.
+		uint8_t  ToonIdx;		// トゥーン番号				:  1Byte.
+		uint8_t  EdgeFlg;		// Material毎の輪郭線フラグ	:  1Byte.
+		uint16_t Padding;       // パディング				:  2Byte.
+		uint32_t IndiceNum;		// 割り当たるインデックス数	:  4Byte.
+		char     TexFilePath[20];// テクスチャファイル名	: 20Byte.
+	};// 72Byte.
+
+	// シェーダ側に投げられるマテリアルデータ.
+	struct MaterialForHlsl {
+		XMFLOAT3 Diffuse;		// ディフューズ色.		
+		float	 Alpha;			// α値.		
+		XMFLOAT3 Specular;		// スペキュラの強.		
+		float	 Specularity;	// スペキュラ色.		
+		XMFLOAT3 Ambient;		// アンビエント色.		
+	};
+
+	// それ以外のマテリアルデータ.
+	struct AdditionalMaterial {
+		std::string TexPath;	// テクスチャファイルパス.
+		int			ToonIdx;	// トゥーン番号.
+		bool		EdgeFlg;	// マテリアル毎の輪郭線フラグ.
+	};
+
+	// まとめたもの.
+	struct Material {
+		unsigned int IndicesNum;	//インデックス数.
+		MaterialForHlsl Material;
+		AdditionalMaterial Additional;
+	};
 
 public:
 	CDirectX12();
