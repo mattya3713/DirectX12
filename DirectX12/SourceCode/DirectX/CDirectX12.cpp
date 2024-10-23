@@ -17,91 +17,24 @@ CDirectX12::~CDirectX12()
 
 bool CDirectX12::Create(HWND hWnd)
 {
+	m_hWnd = hWnd;
+
 #if _DEBUG
 	// デバッグレイヤーをオン.
 	EnableDebuglayer();
 
 #endif _DEBUG
 
-
 	try {
-		MyAssert::IsFailed(
-			_T("DXGIの生成"),
-			&CreateDXGIFactory1,
-			IID_PPV_ARGS(&m_pDxgiFactory));
+		
+		// DXGIの生成.
+		CreateDXGIFactory();
+	
+		// コマンド類の生成.
+		CreateCommandObject();
 
-		// フィーチャレベル列挙.
-		D3D_FEATURE_LEVEL levels[] = {
-			D3D_FEATURE_LEVEL_12_2,
-			D3D_FEATURE_LEVEL_12_1,
-			D3D_FEATURE_LEVEL_12_0,
-			D3D_FEATURE_LEVEL_11_1,
-			D3D_FEATURE_LEVEL_11_0,
-			D3D_FEATURE_LEVEL_10_1,
-			D3D_FEATURE_LEVEL_10_0,
-			D3D_FEATURE_LEVEL_9_3,
-			D3D_FEATURE_LEVEL_9_2,
-			D3D_FEATURE_LEVEL_9_1,
-		};
-
-		HRESULT result = S_OK;
-
-		result = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_pDxgiFactory));
-		std::vector <IDXGIAdapter*> adapters;
-		IDXGIAdapter* tmpAdapter = nullptr;
-		for (int i = 0; m_pDxgiFactory->EnumAdapters(i, &tmpAdapter) != DXGI_ERROR_NOT_FOUND; ++i) {
-			adapters.push_back(tmpAdapter);
-		}
-		for (auto adpt : adapters) {
-			DXGI_ADAPTER_DESC adesc = {};
-			adpt->GetDesc(&adesc);
-			std::wstring strDesc = adesc.Description;
-			if (strDesc.find(L"NVIDIA") != std::string::npos) {
-				tmpAdapter = adpt;
-				break;
-			}
-		}
-
-		//Direct3Dデバイスの初期化
-		D3D_FEATURE_LEVEL featureLevel;
-		for (auto l : levels) {
-			if (D3D12CreateDevice(tmpAdapter, l, IID_PPV_ARGS(&m_pDevice12)) == S_OK) {
-				featureLevel = l; 
-				break;
-			}
-		}
-
-		result = m_pDevice12->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCmdAllocator));
-		result = m_pDevice12->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pCmdAllocator, nullptr, IID_PPV_ARGS(&m_pCmdList));
-
-		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-		cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;//タイムアウトなし
-		cmdQueueDesc.NodeMask = 0;
-		cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;//プライオリティ特に指定なし
-		cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;//ここはコマンドリストと合わせてください
-		result = m_pDevice12->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_pCmdQueue));//コマンドキュー生成
-
-		DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
-		swapchainDesc.Width = WND_WF;
-		swapchainDesc.Height = WND_HF;
-		swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swapchainDesc.Stereo = false;
-		swapchainDesc.SampleDesc.Count = 1;
-		swapchainDesc.SampleDesc.Quality = 0;
-		swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
-		swapchainDesc.BufferCount = 2;
-		swapchainDesc.Scaling = DXGI_SCALING_STRETCH;
-		swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-		swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-
-		result = m_pDxgiFactory->CreateSwapChainForHwnd(m_pCmdQueue,
-			hWnd,
-			&swapchainDesc,
-			nullptr,
-			nullptr,
-			(IDXGISwapChain1**)&m_pSwapChain);
+		// スワップチェインの生成.
+		CreateSwapChain();
 
 		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;//レンダーターゲットビューなので当然RTV
@@ -246,8 +179,7 @@ bool CDirectX12::Create(HWND hWnd)
 
 		std::vector<PMDMaterial> pmdMaterials(MaterialNum);
 		fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
-		unsigned int MaterialNum;//マテリアル数
-		fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
+
 		std::vector<Material> Materials(MaterialNum);
 
 		std::vector<ID3D12Resource*> textureResources(MaterialNum);
@@ -257,7 +189,8 @@ bool CDirectX12::Create(HWND hWnd)
 		{
 			std::vector<PMDMaterial> pmdMaterials(MaterialNum);
 			fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
-			//コピー
+
+			// コピー.
 			for (int i = 0; i < pmdMaterials.size(); ++i) {
 				Materials[i].IndicesNum = pmdMaterials[i].IndiceNum;
 				Materials[i].Material.Diffuse = pmdMaterials[i].Diffuse;
@@ -268,70 +201,10 @@ bool CDirectX12::Create(HWND hWnd)
 				Materials[i].Additional.ToonIdx = pmdMaterials[i].ToonIdx;
 			}
 
-			//for (int i = 0; i < pmdMaterials.size(); ++i) {
-			//	//トゥーンリソースの読み込み
-			//	std::string toonFilePath = "toon/";
-			//	char toonFileName[16];
-			//	sprintf_s(toonFileName, 16, "toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
-			//	toonFilePath += toonFileName;
-			//	toonResources[i] = LoadTextureFromFile(toonFilePath);
-			//
-			//	if (strlen(pmdMaterials[i].TexFilePath) == 0) {
-			//		textureResources[i] = nullptr;
-			//		continue;
-			//	}
-			//
-			//	std::string texFileName = pmdMaterials[i].TexFilePath;
-			//	std::string sphFileName = "";
-			//	std::string spaFileName = "";
-			//	if (count(texFileName.begin(), texFileName.end(), '*') > 0) {//スプリッタがある
-			//		auto namepair = SplitFileName(texFileName);
-			//		if (GetExtension(namepair.first) == "sph") {
-			//			texFileName = namepair.second;
-			//			sphFileName = namepair.first;
-			//		}
-			//		else if (GetExtension(namepair.first) == "spa") {
-			//			texFileName = namepair.second;
-			//			spaFileName = namepair.first;
-			//		}
-			//		else {
-			//			texFileName = namepair.first;
-			//			if (GetExtension(namepair.second) == "sph") {
-			//				sphFileName = namepair.second;
-			//			}
-			//			else if (GetExtension(namepair.second) == "spa") {
-			//				spaFileName = namepair.second;
-			//			}
-			//		}
-			//	}
-			//	else {
-			//		if (GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
-			//			sphFileName = pmdMaterials[i].TexFilePath;
-			//			texFileName = "";
-			//		}
-			//		else if (GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
-			//			spaFileName = pmdMaterials[i].TexFilePath;
-			//			texFileName = "";
-			//		}
-			//		else {
-			//			texFileName = pmdMaterials[i].TexFilePath;
-			//		}
-			//	}
-			//	//モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
-			//	if (texFileName != "") {
-			//		auto TexFilePath = GetTexturePathFromModelAndTexPath(strModelPath, texFileName.c_str());
-			//		textureResources[i] = LoadTextureFromFile(TexFilePath);
-			//	}
-			//	if (sphFileName != "") {
-			//		auto sphFilePath = GetTexturePathFromModelAndTexPath(strModelPath, sphFileName.c_str());
-			//		sphResources[i] = LoadTextureFromFile(sphFilePath);
-			//	}
-			//	if (spaFileName != "") {
-			//		auto spaFilePath = GetTexturePathFromModelAndTexPath(strModelPath, spaFileName.c_str());
-			//		spaResources[i] = LoadTextureFromFile(spaFilePath);
-			//	}
-			//}
+			auto materialBuffSize = sizeof(MaterialForHlsl);
+			materialBuffSize = (materialBuffSize + 0xff) & ~0xff;
 
+			ID3D12Resource* materialBuff = nullptr;
 		}
 
 		fclose(fp);
@@ -710,6 +583,113 @@ void CDirectX12::UpDate()
 {
 }
 
+// DXGIの生成.
+void CDirectX12::CreateDXGIFactory()
+{
+#ifdef _DEBUG
+	MyAssert::IsFailed(
+		_T("DXGIの生成"),
+		&CreateDXGIFactory2,
+		DXGI_CREATE_FACTORY_DEBUG,			// デバッグモード.
+		IID_PPV_ARGS(&m_pDxgiFactory));		// (Out)DXGI.
+#else // _DEBUG
+	MyAssert::IsFailed(
+		_T("DXGIの生成"),
+		&CreateDXGIFactory1,
+		IID_PPV_ARGS(&m_pDxgiFactory));
+#endif
+
+	// フィーチャレベル列挙.
+	D3D_FEATURE_LEVEL Levels[] = {
+		D3D_FEATURE_LEVEL_12_2,
+		D3D_FEATURE_LEVEL_12_1,
+		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1,
+	};
+
+	HRESULT Ret = S_OK;
+	D3D_FEATURE_LEVEL FeatureLevel;
+	for (auto Lv: Levels)
+	{
+		// DirectX12を実体化.
+		if (D3D12CreateDevice(
+			FindAdapter(L"NVIDIA"),				// グラボを選択.
+			Lv,									// フィーチャーレベル.
+			IID_PPV_ARGS(&m_pDevice12)) == S_OK)// (Out)Direct12.
+		{
+			// フィーチャーレベル.
+			FeatureLevel = Lv;
+			break;
+		}
+	}
+}
+
+void CDirectX12::CreateCommandObject()
+{
+	MyAssert::IsFailed(
+		_T("コマンドリストアロケーターの生成"),
+		&ID3D12Device::CreateCommandAllocator, m_pDevice12,
+		D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンドアロケータの種類.
+		IID_PPV_ARGS(&m_pCmdAllocator));		// (Out) コマンドアロケータ.
+
+	MyAssert::IsFailed(
+		_T("コマンドリストの生成"),
+		&ID3D12Device::CreateCommandList, m_pDevice12,
+		0,										// 単一のGPU操作の場合は0.
+		D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンド リストの種類.
+		m_pCmdAllocator,						// アロケータへのポインタ.
+		nullptr,								// ダミーの初期パイプラインが設定される?
+		IID_PPV_ARGS(&m_pCmdList));				// (Out) コマンドリスト.
+
+	// コマンドキュー構造体の作成.
+	D3D12_COMMAND_QUEUE_DESC CmdQueueDesc = {};
+	CmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;				// タイムアウトなし.
+	CmdQueueDesc.NodeMask = 0;										// アダプターを一つしか使わないときは0でいい.
+	CmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;	// プライオリティは特に指定なし.
+	CmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;				// コマンドリストと合わせる.
+
+	MyAssert::IsFailed(
+		_T("キューの作成"),
+		&ID3D12Device::CreateCommandQueue, m_pDevice12,
+		&CmdQueueDesc,
+		IID_PPV_ARGS(&m_pCmdQueue));
+}
+
+// スワップチェーンの作成.
+void CDirectX12::CreateSwapChain()
+{
+	// スワップ チェーン構造体の設定.
+	DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
+	SwapChainDesc.Width = WND_W;									//  画面の幅.
+	SwapChainDesc.Height = WND_H;									//  画面の高さ.
+	SwapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;				//  表示形式.
+	SwapChainDesc.Stereo = false;									//  全画面モードかどうか.
+	SwapChainDesc.SampleDesc.Count = 1;								//  ピクセル当たりのマルチサンプルの数.
+	SwapChainDesc.SampleDesc.Quality = 0;							//  品質レベル(0~1).
+	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	//  ﾊﾞｯｸﾊﾞｯﾌｧのメモリ量.
+	SwapChainDesc.BufferCount = 2;									//  ﾊﾞｯｸﾊﾞｯﾌｧの数.
+	SwapChainDesc.Scaling = DXGI_SCALING_STRETCH;					//  ﾊﾞｯｸﾊﾞｯﾌｧのｻｲｽﾞがﾀｰｹﾞｯﾄと等しくない場合のｻｲｽﾞ変更の動作.
+	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		//  ﾌﾘｯﾌﾟ後は素早く破棄.
+	SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;			//  ｽﾜｯﾌﾟﾁｪｰﾝ,ﾊﾞｯｸﾊﾞｯﾌｧの透過性の動作
+	SwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;	//  ｽﾜｯﾌﾟﾁｪｰﾝ動作のｵﾌﾟｼｮﾝ(ｳｨﾝﾄﾞｳﾌﾙｽｸ切り替え可能ﾓｰﾄﾞ).
+
+	MyAssert::IsFailed(
+		_T("スワップチェーンの作成"),
+		&IDXGIFactory2::CreateSwapChainForHwnd, m_pDxgiFactory,
+		m_pCmdQueue,									// コマンドキュー.
+		m_hWnd,											// ウィンドウハンドル.
+		&SwapChainDesc,									// スワップチェーン設定.
+		nullptr,										// ひとまずnullotrでよい.TODO : なにこれ
+		nullptr,										// これもnulltrでよう
+		(IDXGISwapChain1**)&m_pSwapChain);				// (Out)スワップチェーン.
+}
+
 // アダプターを見つける.
 IDXGIAdapter* CDirectX12::FindAdapter(std::wstring FindWord)
 {
@@ -754,6 +734,8 @@ void CDirectX12::EnableDebuglayer()
 
 	// デバッグレイヤーを有効.
 	DebugLayer->EnableDebugLayer();	
+
+	// 解放.
 	DebugLayer->Release();
 }
 

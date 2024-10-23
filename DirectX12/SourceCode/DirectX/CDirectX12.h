@@ -108,6 +108,19 @@ public:
 	ID3D12Device* GetDevice() const { return m_pDevice12; }
 	
 
+private:// 作っていくんだよねぇ.
+
+	// DXGIの生成.
+	void CreateDXGIFactory();
+
+	// コマンド類の生成.
+	void CreateCommandObject();
+
+	// スワップチェーンの作成.
+	void CreateSwapChain();
+
+	// 
+
 private:
 	/*******************************************
 	* @brief	アダプターを見つける.
@@ -128,6 +141,8 @@ private:
 	void ShaderCompileError(const HRESULT& Result, ID3DBlob* ErrorMsg);
 
 private:
+	HWND m_hWnd;	// ウィンドウハンドル.
+
 	ID3D12Device*		m_pDevice12;	// DirectX12のデバイスコンテキスト.
 	IDXGIFactory6*		m_pDxgiFactory;	// ディスプレイに出力するためのAPI.
 	IDXGISwapChain4*	m_pSwapChain;	// スワップチェーン.
