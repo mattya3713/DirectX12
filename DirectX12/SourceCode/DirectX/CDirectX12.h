@@ -10,6 +10,7 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include <DirectXTex.h>
+#include <wrl.h>	
 
 // XXX : 昔のヘッダーがincludeされてしまうため直パス.
 #include "d3dcompiler.h"	
@@ -19,11 +20,12 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
-
 // モデルの頂点サイズ.
 constexpr size_t PmdVertexSize = 38;
 
+// TODO : DirextXとComtr 書く場所ここでいいのか.
 using namespace DirectX;
+using namespace Microsoft::WRL;
 
 /**************************************************
 *	DirectX12セットアップ.
@@ -105,7 +107,7 @@ public:
 	void UpDate();
 
 	//デバイスコンテキストを取得.
-	ID3D12Device* GetDevice() const { return m_pDevice12; }
+	//ID3D12Device* GetDevice() const { return m_pDevice12; }
 	
 
 private:// 作っていくんだよねぇ.
@@ -119,7 +121,11 @@ private:// 作っていくんだよねぇ.
 	// スワップチェーンの作成.
 	void CreateSwapChain();
 
-	// 
+	// レンダーターゲットの作成.
+	void CreateRenderTarget();
+
+	// 深度バッファの作成.
+	void CreateDepthDesc();
 
 private:
 	/*******************************************
@@ -143,13 +149,24 @@ private:
 private:
 	HWND m_hWnd;	// ウィンドウハンドル.
 
-	ID3D12Device*		m_pDevice12;	// DirectX12のデバイスコンテキスト.
-	IDXGIFactory6*		m_pDxgiFactory;	// ディスプレイに出力するためのAPI.
-	IDXGISwapChain4*	m_pSwapChain;	// スワップチェーン.
+	// DirectX12,DXGI.
+	ComPtr<ID3D12Device>	m_pDevice12;	// DirectX12のデバイスコンテキスト.
+	ComPtr<IDXGIFactory6>	m_pDxgiFactory;	// ディスプレイに出力するためのAPI.
+	ComPtr<IDXGISwapChain4>	m_pSwapChain;	// スワップチェーン.
 
-	ID3D12CommandAllocator*		m_pCmdAllocator;// コマンドアロケータ(命令をためておくメモリ領域).	
-	ID3D12GraphicsCommandList*	m_pCmdList;		// コマンドリスト.
-	ID3D12CommandQueue*			m_pCmdQueue;	// コマンドキュー.
+	// コマンド類.
+	ComPtr<ID3D12CommandAllocator>			m_pCmdAllocator;		// コマンドアロケータ(命令をためておくメモリ領域).	
+	ComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
+	ComPtr<ID3D12CommandQueue>				m_pCmdQueue;			// コマンドキュー.
+
+	// レンダーターゲット.
+	ComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// レンダーターゲットビュー.
+	std::vector<ComPtr<ID3D12Resource>>		m_pBackBuffer;			// バックバッファ.
+
+	// 深度バッファ.
+	ComPtr<ID3D12Resource>					m_pDepthBuffer;			// 深度バッファ.
+	ComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビューのデスクリプタヒープ. 
+	D3D12_CLEAR_VALUE						m_DepthClearValue;		// 深度のクリア値.
 
 	XMFLOAT3					m_Vertex[3];		// 頂点.
 };

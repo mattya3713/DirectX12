@@ -33,33 +33,14 @@ bool CDirectX12::Create(HWND hWnd)
 		// コマンド類の生成.
 		CreateCommandObject();
 
-		// スワップチェインの生成.
+		// スワップチェーンの生成.
 		CreateSwapChain();
 
-		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;//レンダーターゲットビューなので当然RTV
-		heapDesc.NodeMask = 0;
-		heapDesc.NumDescriptors = 2;//表裏の２つ
-		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;//特に指定なし
-		ID3D12DescriptorHeap* rtvHeaps = nullptr;
-		result = m_pDevice12->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
-		DXGI_SWAP_CHAIN_DESC swcDesc = {};
-		result = m_pSwapChain->GetDesc(&swcDesc);
-		std::vector<ID3D12Resource*> _backBuffers(swcDesc.BufferCount);
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+		// レンダーターゲットの作成.
+		CreateRenderTarget();
 
-		//SRGBレンダーターゲットビュー設定
-		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-		rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-
-
-		for (size_t i = 0; i < swcDesc.BufferCount; ++i) {
-			result = m_pSwapChain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&_backBuffers[i]));
-			rtvDesc.Format = _backBuffers[i]->GetDesc().Format;
-			m_pDevice12->CreateRenderTargetView(_backBuffers[i], &rtvDesc, rtvH);
-			rtvH.ptr += m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		}
+		// 深度バッファの作成.
+		CreateDepthDesc();
 
 		//深度バッファ作成
 		//深度バッファの仕様
@@ -591,12 +572,12 @@ void CDirectX12::CreateDXGIFactory()
 		_T("DXGIの生成"),
 		&CreateDXGIFactory2,
 		DXGI_CREATE_FACTORY_DEBUG,			// デバッグモード.
-		IID_PPV_ARGS(&m_pDxgiFactory));		// (Out)DXGI.
+		IID_PPV_ARGS(m_pDxgiFactory.ReleaseAndGetAddressOf()));		// (Out)DXGI.
 #else // _DEBUG
 	MyAssert::IsFailed(
 		_T("DXGIの生成"),
 		&CreateDXGIFactory1,
-		IID_PPV_ARGS(&m_pDxgiFactory));
+		IID_PPV_ARGS(m_pDxgiFactory.ReleaseAndGetAddressOf()));
 #endif
 
 	// フィーチャレベル列挙.
@@ -621,7 +602,7 @@ void CDirectX12::CreateDXGIFactory()
 		if (D3D12CreateDevice(
 			FindAdapter(L"NVIDIA"),				// グラボを選択.
 			Lv,									// フィーチャーレベル.
-			IID_PPV_ARGS(&m_pDevice12)) == S_OK)// (Out)Direct12.
+			IID_PPV_ARGS(m_pDevice12.ReleaseAndGetAddressOf())) == S_OK)// (Out)Direct12.
 		{
 			// フィーチャーレベル.
 			FeatureLevel = Lv;
@@ -634,18 +615,18 @@ void CDirectX12::CreateCommandObject()
 {
 	MyAssert::IsFailed(
 		_T("コマンドリストアロケーターの生成"),
-		&ID3D12Device::CreateCommandAllocator, m_pDevice12,
+		&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
 		D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンドアロケータの種類.
-		IID_PPV_ARGS(&m_pCmdAllocator));		// (Out) コマンドアロケータ.
+		IID_PPV_ARGS(m_pCmdAllocator.ReleaseAndGetAddressOf()));		// (Out) コマンドアロケータ.
 
 	MyAssert::IsFailed(
 		_T("コマンドリストの生成"),
-		&ID3D12Device::CreateCommandList, m_pDevice12,
-		0,										// 単一のGPU操作の場合は0.
-		D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンド リストの種類.
-		m_pCmdAllocator,						// アロケータへのポインタ.
-		nullptr,								// ダミーの初期パイプラインが設定される?
-		IID_PPV_ARGS(&m_pCmdList));				// (Out) コマンドリスト.
+		&ID3D12Device::CreateCommandList, m_pDevice12.Get(),
+		0,									// 単一のGPU操作の場合は0.
+		D3D12_COMMAND_LIST_TYPE_DIRECT,		// 作成するコマンド リストの種類.
+		m_pCmdAllocator.Get(),				// アロケータへのポインタ.
+		nullptr,							// ダミーの初期パイプラインが設定される?
+		IID_PPV_ARGS(m_pCmdList.ReleaseAndGetAddressOf()));				// (Out) コマンドリスト.
 
 	// コマンドキュー構造体の作成.
 	D3D12_COMMAND_QUEUE_DESC CmdQueueDesc = {};
@@ -656,9 +637,9 @@ void CDirectX12::CreateCommandObject()
 
 	MyAssert::IsFailed(
 		_T("キューの作成"),
-		&ID3D12Device::CreateCommandQueue, m_pDevice12,
+		&ID3D12Device::CreateCommandQueue, m_pDevice12.Get(),
 		&CmdQueueDesc,
-		IID_PPV_ARGS(&m_pCmdQueue));
+		IID_PPV_ARGS(m_pCmdQueue.ReleaseAndGetAddressOf()));
 }
 
 // スワップチェーンの作成.
@@ -681,13 +662,122 @@ void CDirectX12::CreateSwapChain()
 
 	MyAssert::IsFailed(
 		_T("スワップチェーンの作成"),
-		&IDXGIFactory2::CreateSwapChainForHwnd, m_pDxgiFactory,
-		m_pCmdQueue,									// コマンドキュー.
+		&IDXGIFactory2::CreateSwapChainForHwnd, m_pDxgiFactory.Get(),
+		m_pCmdQueue.Get(),								// コマンドキュー.
 		m_hWnd,											// ウィンドウハンドル.
 		&SwapChainDesc,									// スワップチェーン設定.
 		nullptr,										// ひとまずnullotrでよい.TODO : なにこれ
 		nullptr,										// これもnulltrでよう
-		(IDXGISwapChain1**)&m_pSwapChain);				// (Out)スワップチェーン.
+		(IDXGISwapChain1**)m_pSwapChain.ReleaseAndGetAddressOf());	// (Out)スワップチェーン.
+}
+
+// レンダーターゲットの作成.
+void CDirectX12::CreateRenderTarget()
+{
+	// ディスクリプタヒープ構造体の作成.
+	D3D12_DESCRIPTOR_HEAP_DESC HeapDesc = {};
+	HeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;		// RTV用ヒープ.
+	HeapDesc.NumDescriptors = 2;						// 2つのディスクリプタ.
+	HeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// ヒープのオプション(特になしを設定).
+	HeapDesc.NodeMask = 0;								// 単一アダプタ.					
+
+	MyAssert::IsFailed(
+		_T("ディスクリプタヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+		&HeapDesc,														// ディスクリプタヒープ構造体を登録.
+		IID_PPV_ARGS(m_pRenderTargetViewHeap.ReleaseAndGetAddressOf()));// (Out)ディスクリプタヒープ.
+
+	// スワップチェーン構造体.
+	DXGI_SWAP_CHAIN_DESC SwcDesc = {};
+	MyAssert::IsFailed(
+		_T("ディスクリプタヒープの作成"),
+		&IDXGISwapChain4::GetDesc, m_pSwapChain.Get(),
+		&SwcDesc);
+
+	// ﾃﾞｨｽｸﾘﾌﾟﾀﾋｰﾌﾟの先頭アドレスを取り出す.
+	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
+
+	// バックバッファをヒープの数分宣言.
+	std::vector<ComPtr<ID3D12Resource>> m_pBackBuffer(SwcDesc.BufferCount);
+
+	// バックバファの数分.
+	for (int i = 0; i < static_cast<int>(SwcDesc.BufferCount); ++i)
+	{
+		MyAssert::IsFailed(
+			_T("%d個目のスワップチェーン内のバッファーとビューを関連づける", i + 1),
+			&IDXGISwapChain4::GetBuffer, m_pSwapChain.Get(),
+			static_cast<UINT>(i),
+			IID_PPV_ARGS(m_pBackBuffer[i].GetAddressOf()));
+
+		// レンダーターゲットビューを生成する.
+		m_pDevice12->CreateRenderTargetView(
+			m_pBackBuffer[i].Get(),
+			nullptr,
+			DescriptorHandle);
+
+		// ポインタをずらす.
+		DescriptorHandle.ptr += m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	}
+}
+
+// 深度バッファ作成.
+void CDirectX12::CreateDepthDesc()
+{
+	// 深度バッファの仕様.
+	D3D12_RESOURCE_DESC DepthResourceDesc = {};
+	DepthResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;	// 2次元のテクスチャデータとして.
+	DepthResourceDesc.Width = WND_WF;									// 幅と高さはレンダーターゲットと同じ.
+	DepthResourceDesc.Height = WND_HF;									// 上に同じ.
+	DepthResourceDesc.DepthOrArraySize = 1;								// テクスチャ配列でもないし3Dテクスチャでもない.
+	DepthResourceDesc.Format = DXGI_FORMAT_D32_FLOAT;					// 深度値書き込み用フォーマット.
+	DepthResourceDesc.SampleDesc.Count = 1;								// サンプルは1ピクセル当たり1つ.
+	DepthResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;	// このバッファは深度ステンシルとして使用します.
+	DepthResourceDesc.MipLevels = 1;
+	DepthResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	DepthResourceDesc.Alignment = 0;
+
+	// デプス用ヒーププロパティ.
+	D3D12_HEAP_PROPERTIES DepthHeapProperty = {};
+	DepthHeapProperty.Type = D3D12_HEAP_TYPE_DEFAULT;					// DEFAULTだから後はUNKNOWNでよし.
+	DepthHeapProperty.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	DepthHeapProperty.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+	// このクリアバリューが重要な意味を持つ.
+	m_DepthClearValue.DepthStencil.Depth = 1.0f;		// 深さ１(最大値)でクリア.
+	m_DepthClearValue.Format = DXGI_FORMAT_D32_FLOAT;	// 32bit深度値としてクリア.
+
+	MyAssert::IsFailed(
+		_T("深度バッファリソースを作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(),
+		&DepthHeapProperty,							// ヒーププロパティの設定.
+		D3D12_HEAP_FLAG_NONE,						// ヒープのオプション(特になしを設定).
+		&DepthResourceDesc,							// リソースの仕様.
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,			// リソースの初期状態.
+		&m_DepthClearValue,							// 深度バッファをクリアするための設定.
+		IID_PPV_ARGS(m_pDepthBuffer.ReleaseAndGetAddressOf())); // (Out)深度バッファ.
+
+	// 深度ステンシルビュー用のデスクリプタヒープを作成
+	D3D12_DESCRIPTOR_HEAP_DESC DsvHeapDesc = {};
+	DsvHeapDesc.NumDescriptors = 1;                   // 深度ビュー1つ.
+	DsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;// デスクリプタヒープのタイプ.
+
+	MyAssert::IsFailed(
+		_T("深度ステンシルビュー用のデスクリプタヒープを作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+		&DsvHeapDesc,											// ヒープの設定.
+		IID_PPV_ARGS(m_pDepthHeap.ReleaseAndGetAddressOf()));	// (Out)デスクリプタヒープ.
+	
+
+	// 深度ビュー作成.
+	D3D12_DEPTH_STENCIL_VIEW_DESC DsvDesc = {};
+	DsvDesc.Format = DXGI_FORMAT_D32_FLOAT;					// デプスフォーマット.
+	DsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;	// 2Dテクスチャ.
+	DsvDesc.Flags = D3D12_DSV_FLAG_NONE;					// フラグなし.
+
+	m_pDevice12->CreateDepthStencilView(
+		m_pDepthBuffer.Get(),								// 深度バッファ.
+		&DsvDesc,											// 深度ビューの設定.
+		m_pDepthHeap->GetCPUDescriptorHandleForHeapStart());// ヒープ内の位置.
 }
 
 // アダプターを見つける.

@@ -23,7 +23,7 @@
 #include <cmath>        // 数学関数.
 #include <memory>       // メモリ管理.
 #include <string>       // 文字列.
-#include <fstream>		// ファイル入出力.
+#include <fstream>		// ファイル入出力.	
 
 #include "Utility/Assert/Assert.inl"	// HRESULTのtrycatchをする.
 #include "Utility/Macro/Macro.h"		// マクロ.
