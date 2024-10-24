@@ -60,7 +60,7 @@ public:
 		uint8_t  EdgeFlg;       // 輪郭線フラグ :  1Byte.
 		uint16_t Padding;		// パディング	:  2Byte.
 	}; // 40Byte.
-	
+
 	//PMDマテリアル構造体
 	struct PMDMaterial {
 		XMFLOAT3 Diffuse;       // ディフューズ色			: 12Byte.
@@ -71,7 +71,7 @@ public:
 		uint8_t  ToonIdx;		// トゥーン番号				:  1Byte.
 		uint8_t  EdgeFlg;		// Material毎の輪郭線フラグ	:  1Byte.
 		uint16_t Padding;       // パディング				:  2Byte.
-		uint32_t IndiceNum;		// 割り当たるインデックス数	:  4Byte.
+		uint32_t IndicesNum;		// 割り当たるインデックス数	:  4Byte.
 		char     TexFilePath[20];// テクスチャファイル名	: 20Byte.
 	};// 72Byte.
 
@@ -108,7 +108,7 @@ public:
 
 	//デバイスコンテキストを取得.
 	//ID3D12Device* GetDevice() const { return m_pDevice12; }
-	
+
 
 private:// 作っていくんだよねぇ.
 
@@ -127,6 +127,15 @@ private:// 作っていくんだよねぇ.
 	// 深度バッファの作成.
 	void CreateDepthDesc();
 
+	// フェンスの作成.
+	void CreateFance();
+
+	// textureの作成.
+	ID3D12Resource* CreateGrayGradationTexture();
+	ID3D12Resource* CreateWhiteTexture();
+	ID3D12Resource* CreateBlackTexture();
+	// 読み込み
+	ID3D12Resource* LoadTextureFromFile(std::string& texPath);
 private:
 	/*******************************************
 	* @brief	アダプターを見つける.
@@ -139,10 +148,11 @@ private:
 	* @brief	デバッグレイヤーを起動.
 	*******************************************/
 	void EnableDebuglayer();
-	
+
 	/*******************************************
 	* @brief	ErroeBlobに入ったエラーを出力.
-	* @param	検索する文字列.
+	* @param	そもそもファイルがあるかどうか.
+	* @param	その他のコンパイルエラー内容.
 	*******************************************/
 	void ShaderCompileError(const HRESULT& Result, ID3DBlob* ErrorMsg);
 
@@ -150,9 +160,9 @@ private:
 	HWND m_hWnd;	// ウィンドウハンドル.
 
 	// DirectX12,DXGI.
-	ComPtr<ID3D12Device>	m_pDevice12;	// DirectX12のデバイスコンテキスト.
-	ComPtr<IDXGIFactory6>	m_pDxgiFactory;	// ディスプレイに出力するためのAPI.
-	ComPtr<IDXGISwapChain4>	m_pSwapChain;	// スワップチェーン.
+	ComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
+	ComPtr<IDXGIFactory6>					m_pDxgiFactory;			// ディスプレイに出力するためのAPI.
+	ComPtr<IDXGISwapChain4>					m_pSwapChain;			// スワップチェーン.
 
 	// コマンド類.
 	ComPtr<ID3D12CommandAllocator>			m_pCmdAllocator;		// コマンドアロケータ(命令をためておくメモリ領域).	
@@ -167,6 +177,17 @@ private:
 	ComPtr<ID3D12Resource>					m_pDepthBuffer;			// 深度バッファ.
 	ComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビューのデスクリプタヒープ. 
 	D3D12_CLEAR_VALUE						m_DepthClearValue;		// 深度のクリア値.
+
+	// フェンス類.
+	ComPtr<ID3D12Fence>						m_pFence;				// 処理待ち柵.
+	UINT64									m_FenceValue;			// 処理カウンター.
+
+
+	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, TexMetadata*, ScratchImage&)>;
+	std::map<std::string, LoadLambda_t> LoadLambdaTable;
+
+	//ファイル名パスとリソースのマップテーブル
+	std::map<std::string, ID3D12Resource*> _resourceTable;
 
 	XMFLOAT3					m_Vertex[3];		// 頂点.
 };

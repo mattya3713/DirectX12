@@ -90,6 +90,7 @@
     <ClInclude Include="SourceCode\Main\CMain.h">
       <Filter>SourceCode\Common\Main</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">
@@ -110,6 +111,7 @@
     <ClCompile Include="SourceCode\Main\CMain.cpp">
       <Filter>SourceCode\Common\Main</Filter>
     </ClCompile>
+    <ClCompile Include="SourceCode\Utility\String\FilePath\FilePath.inl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SourceCode\Utility\Math\Math.inl">

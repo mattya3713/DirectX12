@@ -166,6 +166,7 @@
     <ClInclude Include="SourceCode\Utility\Math\Math.h" />
     <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h" />
     <ClInclude Include="SourceCode\Utility\Random\Random.h" />
+    <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
     <ClInclude Include="SourceCode\Utility\String\magic_enum.h" />
     <ClInclude Include="SourceCode\Utility\String\String.h" />
   </ItemGroup>
@@ -180,6 +181,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SourceCode\Utility\Hash\Crc32Table\HashTable.cpp" />
+    <ClCompile Include="SourceCode\Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\Utility\String\String.cpp" />
   </ItemGroup>
   <ItemGroup>

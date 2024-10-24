@@ -1,5 +1,5 @@
-#include "Math.h"
 #pragma once
+#include "Math.h"
 
 namespace MyMath {
     //-----------------
