@@ -136,6 +136,7 @@ private:// 作っていくんだよねぇ.
 	ID3D12Resource* CreateBlackTexture();
 	// 読み込み
 	ID3D12Resource* LoadTextureFromFile(std::string& texPath);
+
 private:
 	/*******************************************
 	* @brief	アダプターを見つける.
