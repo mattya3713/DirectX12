@@ -91,6 +91,7 @@
       <Filter>SourceCode\Common\Main</Filter>
     </ClInclude>
     <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
+    <ClInclude Include="SourceCode\Utility\ComPtr\CComPtr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">

@@ -60,16 +60,16 @@ bool CDirectX12::Create(HWND hWnd)
 			LoadLambdaTable["spa"] =
 			LoadLambdaTable["bmp"] = LoadLambdaTable["png"] =
 			LoadLambdaTable["jpg"] =
-			[](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT {
-			return LoadFromWICFile(path.c_str(), WIC_FLAGS_NONE, meta, img);
+			[](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+			return LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, meta, img);
 			};
 
-		LoadLambdaTable["tga"] = [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT {
+		LoadLambdaTable["tga"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
 			return LoadFromTGAFile(path.c_str(), meta, img);
 			};
 
-		LoadLambdaTable["dds"] = [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT {
-			return LoadFromDDSFile(path.c_str(), DDS_FLAGS_NONE, meta, img);
+		LoadLambdaTable["dds"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+			return LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, meta, img);
 			};
 
 		char signature[3];
@@ -528,19 +528,19 @@ bool CDirectX12::Create(HWND hWnd)
 
 		//シェーダ側に渡すための基本的な環境データ
 		struct SceneData {
-			XMMATRIX world;//ワールド行列
-			XMMATRIX view;//ビュープロジェクション行列
-			XMMATRIX proj;//
-			XMFLOAT3 eye;//視点座標
+			DirectX::XMMATRIX world;//ワールド行列
+			DirectX::XMMATRIX view;//ビュープロジェクション行列
+			DirectX::XMMATRIX proj;//
+			DirectX::XMFLOAT3 eye;//視点座標
 		};
 
 		//定数バッファ作成
-		XMMATRIX worldMat = XMMatrixIdentity();
-		XMFLOAT3 eye(0, 15, -15);
-		XMFLOAT3 target(0, 15, 0);
-		XMFLOAT3 up(0, 1, 0);
-		auto viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-		auto projMat = XMMatrixPerspectiveFovLH(XM_PIDIV4,//画角は45°
+		DirectX::XMMATRIX worldMat = DirectX::XMMatrixIdentity();
+		DirectX::XMFLOAT3 eye(0, 15, -15);
+		DirectX::XMFLOAT3 target(0, 15, 0);
+		DirectX::XMFLOAT3 up(0, 1, 0);
+		auto viewMat = DirectX::XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		auto projMat = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4,//画角は45°
 			static_cast<float>(WND_W) / static_cast<float>(WND_H),//アス比
 			1.0f,//近い方
 			100.0f//遠い方
@@ -586,7 +586,7 @@ bool CDirectX12::Create(HWND hWnd)
 		float angle = 0.0f;
 		auto dsvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
 		while (true) {
-			worldMat = XMMatrixRotationY(angle);
+			worldMat = DirectX::XMMatrixRotationY(angle);
 			mapScene->world = worldMat;
 			mapScene->view = viewMat;
 			mapScene->proj = projMat;
@@ -830,7 +830,7 @@ void CDirectX12::CreateRenderTarget()
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
 
 	// バックバッファをヒープの数分宣言.
-	std::vector<ComPtr<ID3D12Resource>> m_pBackBuffer(SwcDesc.BufferCount);
+	std::vector<MyComPtr<ID3D12Resource>> m_pBackBuffer(SwcDesc.BufferCount);
 
 	// バックバファの数分.
 	for (int i = 0; i < static_cast<int>(SwcDesc.BufferCount); ++i)
@@ -1061,21 +1061,21 @@ ID3D12Resource* CDirectX12::LoadTextureFromFile(std::string& TexPath)
 	}
 
 	// WICテクスチャのロード.
-	TexMetadata MetaData = {};
-	ScratchImage ScratchImg = {};
+	DirectX::TexMetadata MetaData = {};
+	DirectX::ScratchImage ScratchImg = {};
 
 	// テクスチャのファイルパス.
 	auto wTexPath = MyString::StringToWString(TexPath);
 
 	// 拡張子を取得.
-	//auto Extension = MyFilePath::GetExtension(TexPath);
+	auto Extension = MyFilePath::GetExtension(TexPath);
 
-	////auto Result = LoadLambdaTable[Extension](wTexPath,
-	//	&MetaData,
-	//	ScratchImg);
-	//if (FAILED(Result)) {
-	//	return nullptr;
-	//}
+	auto Result = LoadLambdaTable[Extension](wTexPath,
+		&MetaData,
+		ScratchImg);
+	if (FAILED(Result)) {
+		return nullptr;
+	}
 
 	// 生データ抽出.
 	auto Img = ScratchImg.GetImage(0, 0, 0);	

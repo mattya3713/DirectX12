@@ -29,6 +29,8 @@
 #include "Utility/Macro/Macro.h"		// ƒ}ƒNƒ.
 #include "Utility/Math/Math.h"			// Z”Œn.	
 
+#include "Utility/ComPtr/CComPtr.h"		// Microsoft::WRL::ComPtr‚Ì‚æ‚¤‚È‚à‚Ì.	
+
 // DirectX12.
 #include <D3D12.h>
 #include <dxgi1_6.h>

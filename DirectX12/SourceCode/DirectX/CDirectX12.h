@@ -10,7 +10,6 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include <DirectXTex.h>
-#include <wrl.h>	
 
 // XXX : 昔のヘッダーがincludeされてしまうため直パス.
 #include "d3dcompiler.h"	
@@ -23,10 +22,6 @@
 // モデルの頂点サイズ.
 constexpr size_t PmdVertexSize = 38;
 
-// TODO : DirextXとComtr 書く場所ここでいいのか.
-using namespace DirectX;
-using namespace Microsoft::WRL;
-
 /**************************************************
 *	DirectX12セットアップ.
 **/
@@ -37,8 +32,8 @@ public:
 	// 頂点構造体.
 	struct VerTex
 	{
-		XMFLOAT3 Pos;	// xyz座標.
-		XMFLOAT2 uv;	// uv座標.
+		DirectX::XMFLOAT3 Pos;	// xyz座標.
+		DirectX::XMFLOAT2 uv;	// uv座標.
 	};
 
 	// PMDヘッダー構造体.
@@ -52,9 +47,9 @@ public:
 	// PMD頂点構造体.
 	struct PMDVertex
 	{
-		XMFLOAT3 Pos;			// 頂点座標		: 12Byte.
-		XMFLOAT3 Normal;        // 法線ベクトル	: 12Byte.
-		XMFLOAT2 uv;            // uv座標		:  8Byte.
+		DirectX::XMFLOAT3 Pos;			// 頂点座標		: 12Byte.
+		DirectX::XMFLOAT3 Normal;        // 法線ベクトル	: 12Byte.
+		DirectX::XMFLOAT2 uv;            // uv座標		:  8Byte.
 		uint16_t BoneNo[2];		// ボーン番号	:  4Byte.
 		uint8_t  BoneWeight;    // ボーン影響度	:  1Byte.
 		uint8_t  EdgeFlg;       // 輪郭線フラグ :  1Byte.
@@ -63,11 +58,11 @@ public:
 
 	//PMDマテリアル構造体
 	struct PMDMaterial {
-		XMFLOAT3 Diffuse;       // ディフューズ色			: 12Byte.
+		DirectX::XMFLOAT3 Diffuse;       // ディフューズ色			: 12Byte.
 		float	 Alpha;         // α値						:  4Byte.
 		float    Specularity;   // スペキュラの強さ			:  4Byte.
-		XMFLOAT3 Specular;      // スペキュラ色				: 12Byte.
-		XMFLOAT3 Ambient;       // アンビエント色			: 12Byte.
+		DirectX::XMFLOAT3 Specular;      // スペキュラ色				: 12Byte.
+		DirectX::XMFLOAT3 Ambient;       // アンビエント色			: 12Byte.
 		uint8_t  ToonIdx;		// トゥーン番号				:  1Byte.
 		uint8_t  EdgeFlg;		// Material毎の輪郭線フラグ	:  1Byte.
 		uint16_t Padding;       // パディング				:  2Byte.
@@ -77,11 +72,11 @@ public:
 
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
-		XMFLOAT3 Diffuse;		// ディフューズ色.		
+		DirectX::XMFLOAT3 Diffuse;		// ディフューズ色.		
 		float	 Alpha;			// α値.		
-		XMFLOAT3 Specular;		// スペキュラの強.		
+		DirectX::XMFLOAT3 Specular;		// スペキュラの強.		
 		float	 Specularity;	// スペキュラ色.		
-		XMFLOAT3 Ambient;		// アンビエント色.		
+		DirectX::XMFLOAT3 Ambient;		// アンビエント色.		
 	};
 
 	// それ以外のマテリアルデータ.
@@ -161,34 +156,34 @@ private:
 	HWND m_hWnd;	// ウィンドウハンドル.
 
 	// DirectX12,DXGI.
-	ComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
-	ComPtr<IDXGIFactory6>					m_pDxgiFactory;			// ディスプレイに出力するためのAPI.
-	ComPtr<IDXGISwapChain4>					m_pSwapChain;			// スワップチェーン.
+	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
+	MyComPtr<IDXGIFactory6>					m_pDxgiFactory;			// ディスプレイに出力するためのAPI.
+	MyComPtr<IDXGISwapChain4>				m_pSwapChain;			// スワップチェーン.
 
 	// コマンド類.
-	ComPtr<ID3D12CommandAllocator>			m_pCmdAllocator;		// コマンドアロケータ(命令をためておくメモリ領域).	
-	ComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
-	ComPtr<ID3D12CommandQueue>				m_pCmdQueue;			// コマンドキュー.
+	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocator;		// コマンドアロケータ(命令をためておくメモリ領域).	
+	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
+	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// コマンドキュー.
 
 	// レンダーターゲット.
-	ComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// レンダーターゲットビュー.
-	std::vector<ComPtr<ID3D12Resource>>		m_pBackBuffer;			// バックバッファ.
+	MyComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// レンダーターゲットビュー.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pBackBuffer;			// バックバッファ.
 
 	// 深度バッファ.
-	ComPtr<ID3D12Resource>					m_pDepthBuffer;			// 深度バッファ.
-	ComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビューのデスクリプタヒープ. 
+	MyComPtr<ID3D12Resource>				m_pDepthBuffer;			// 深度バッファ.
+	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビューのデスクリプタヒープ. 
 	D3D12_CLEAR_VALUE						m_DepthClearValue;		// 深度のクリア値.
 
 	// フェンス類.
-	ComPtr<ID3D12Fence>						m_pFence;				// 処理待ち柵.
+	MyComPtr<ID3D12Fence>					m_pFence;				// 処理待ち柵.
 	UINT64									m_FenceValue;			// 処理カウンター.
 
 
-	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, TexMetadata*, ScratchImage&)>;
+	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
 	std::map<std::string, LoadLambda_t> LoadLambdaTable;
 
-	//ファイル名パスとリソースのマップテーブル
+	// ファイル名パスとリソースのマップテーブル.
 	std::map<std::string, ID3D12Resource*> _resourceTable;
 
-	XMFLOAT3					m_Vertex[3];		// 頂点.
+	DirectX::XMFLOAT3						m_Vertex[3];		// 頂点.
 };

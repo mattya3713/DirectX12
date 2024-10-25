@@ -161,6 +161,7 @@
     <ClInclude Include="SourceCode\Global.h" />
     <ClInclude Include="SourceCode\Main\CMain.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
+    <ClInclude Include="SourceCode\Utility\ComPtr\CComPtr.h" />
     <ClInclude Include="SourceCode\Utility\Hash\CHash.h" />
     <ClInclude Include="SourceCode\Utility\Hash\Crc32Table\HashTable.h" />
     <ClInclude Include="SourceCode\Utility\Math\Math.h" />
