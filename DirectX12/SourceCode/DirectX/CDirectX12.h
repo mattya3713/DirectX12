@@ -101,6 +101,12 @@ public:
 	bool Create(HWND hWnd);
 	void UpDate();
 
+	void BeginDraw();
+	void Draw();
+	void EndDraw();
+
+	MyComPtr<IDXGISwapChain4> GetSwapChain();
+
 	//デバイスコンテキストを取得.
 	//ID3D12Device* GetDevice() const { return m_pDevice12; }
 
@@ -124,6 +130,9 @@ private:// 作っていくんだよねぇ.
 
 	// フェンスの作成.
 	void CreateFance();
+
+	//テクスチャローダテーブルの作成.
+	void CreateTextureLoadTable();
 
 	// textureの作成.
 	ID3D12Resource* CreateGrayGradationTexture();

@@ -55,23 +55,6 @@ bool CDirectX12::Create(HWND hWnd)
 		// フェンスの表示.
 		CreateFance();
 
-		// TODO : 読みにくすぎ.
-		LoadLambdaTable["sph"] = 
-			LoadLambdaTable["spa"] =
-			LoadLambdaTable["bmp"] = LoadLambdaTable["png"] =
-			LoadLambdaTable["jpg"] =
-			[](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
-			return LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, meta, img);
-			};
-
-		LoadLambdaTable["tga"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
-			return LoadFromTGAFile(path.c_str(), meta, img);
-			};
-
-		LoadLambdaTable["dds"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
-			return LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, meta, img);
-			};
-
 		char signature[3];
 		PMDHeader pmdheader = {};
 
@@ -79,6 +62,7 @@ bool CDirectX12::Create(HWND hWnd)
 		std::string strModelPath = "Model/初音ミク.pmd";
 		FILE* fp;
 		fopen_s(&fp, strModelPath.c_str(), "rb");
+		fread(signature, sizeof(signature), 1, fp);
 		fread(signature, sizeof(signature), 1, fp);
 		fread(&pmdheader, sizeof(pmdheader), 1, fp);
 
@@ -696,6 +680,10 @@ void CDirectX12::UpDate()
 {
 }
 
+MyComPtr<IDXGISwapChain4> CDirectX12::GetSwapChain()
+{
+}
+
 // DXGIの生成.
 void CDirectX12::CreateDXGIFactory()
 {
@@ -921,6 +909,28 @@ void CDirectX12::CreateFance()
 		m_FenceValue,									// 初期化子.
 		D3D12_FENCE_FLAG_NONE,							// フェンスのオプション.
 		IID_PPV_ARGS(m_pFence.ReleaseAndGetAddressOf()));// (Out) フェンス.
+}
+
+// テクスチャロードテーブルの作成.
+void CDirectX12::CreateTextureLoadTable()
+{
+	LoadLambdaTable["sph"] =
+		LoadLambdaTable["spa"] =
+		LoadLambdaTable["bmp"] =
+		LoadLambdaTable["png"] =
+		LoadLambdaTable["jpg"] =
+		[](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+		return LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, meta, img);
+		};
+
+	LoadLambdaTable["tga"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+		return LoadFromTGAFile(path.c_str(), meta, img);
+		};
+
+	LoadLambdaTable["dds"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+		return LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, meta, img);
+		};
+
 }
 
 ID3D12Resource* CDirectX12::CreateGrayGradationTexture()
