@@ -15,34 +15,44 @@ public:
         }
     }
 
-    // デストラクタ.
-    ~MyComPtr() {
-        Reset();
+    // コピーコンストラクタ.
+    MyComPtr(const MyComPtr& other) : m_ptr(other.m_ptr) {
+        if (m_ptr) {
+            m_ptr->AddRef();
+        }
     }
-
-    // コピーコンストラクタは削除.
-    MyComPtr(const MyComPtr&) = delete;
 
     // ムーブコンストラクタ.
     MyComPtr(MyComPtr&& other) noexcept : m_ptr(other.m_ptr) {
         // 移動元を無効にする.
-        other.m_ptr = nullptr; 
+        other.m_ptr = nullptr;
     }
 
-    // コピー代入演算子は削除.
-    MyComPtr& operator=(const MyComPtr&) = delete;
+    // コピー代入演算子.
+    MyComPtr& operator=(const MyComPtr& other) {
+        if (this != &other) {
+            Reset(); // 現在のポインタを解放.
+            m_ptr = other.m_ptr;
+            if (m_ptr) {
+                m_ptr->AddRef();
+            }
+        }
+        return *this;
+    }
 
     // ムーブ代入演算子.
     MyComPtr& operator=(MyComPtr&& other) noexcept {
         if (this != &other) {
-            // 現在のポインタを解放.
-            Reset(); 
-            // 新しいポインタを移動.
+            Reset(); // 現在のポインタを解放.
             m_ptr = other.m_ptr;
-            // 移動元を無効にする.
-            other.m_ptr = nullptr; 
+            other.m_ptr = nullptr; // 移動元を無効にする.
         }
         return *this;
+    }
+
+    // デストラクタ.
+    ~MyComPtr() {
+        Reset();
     }
 
     // 内部ポインタの取得.
@@ -56,16 +66,13 @@ public:
 
     // 新しいポインタを設定する.
     void Reset(T* ptr = nullptr) {
-
         if (m_ptr) {
-            // 現在のポインタを解放.
-            m_ptr->Release(); 
+            m_ptr->Release();
         }
 
         m_ptr = ptr;
 
         if (m_ptr) {
-            // 新しいポインタを参照カウント.
             m_ptr->AddRef();
         }
     }
@@ -77,23 +84,14 @@ public:
 
     // 内部ポインタのアドレスを取得する.
     T** GetAddressOf() {
-
-        // 以前のポインタを解放.
         Reset();
-
-        // 内部ポインタのアドレスを返す.
-        return &m_ptr;     
+        return &m_ptr;
     }
 
     // 現在のポインタを解放し、そのアドレスを返す.
     T** ReleaseAndGetAddressOf() {
-
-        // 現在のポインタのアドレスを保持.
         T** address = &m_ptr;
-
-        Reset(); // 現在のポインタを解放.
-
-        // 解放したポインタのアドレスを返す.
+        Reset();
         return address;
     }
 

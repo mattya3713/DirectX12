@@ -62,6 +62,7 @@ bool CDirectX12::Create(HWND hWnd)
 		std::string strModelPath = "Model/èââπÉ~ÉN.pmd";
 		FILE* fp;
 		fopen_s(&fp, strModelPath.c_str(), "rb");
+
 		fread(signature, sizeof(signature), 1, fp);
 		fread(signature, sizeof(signature), 1, fp);
 		fread(&pmdheader, sizeof(pmdheader), 1, fp);
@@ -680,8 +681,22 @@ void CDirectX12::UpDate()
 {
 }
 
+void CDirectX12::BeginDraw()
+{
+}
+
+void CDirectX12::Draw()
+{
+}
+
+void CDirectX12::EndDraw()
+{
+	
+}
+
 MyComPtr<IDXGISwapChain4> CDirectX12::GetSwapChain()
 {
+	return m_pSwapChain;
 }
 
 // DXGIÇÃê∂ê¨.
