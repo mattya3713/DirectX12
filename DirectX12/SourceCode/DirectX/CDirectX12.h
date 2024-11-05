@@ -218,7 +218,6 @@ private:
 	MyComPtr<ID3D12PipelineState>			m_pPipelineState;		// 描画設定.
 	MyComPtr<ID3D12RootSignature>			m_pRootSignature;		// ルートシグネチャ.
 
-
 	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
 	std::map<std::string, LoadLambda_t> LoadLambdaTable;
 
