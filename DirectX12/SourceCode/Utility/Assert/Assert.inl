@@ -6,7 +6,9 @@
 #include <string>
 #include <tuple>
 #include <locale>
-#include <windows.h> // HRESULT と Windows API の定義が含まれる
+#include <windows.h>	 // HRESULT と Windows API の定義が含まれる
+
+#include <d3dcompiler.h> // Blobの定義が含まれる.
 
 #include "Utility/String/String.h"
 
@@ -87,5 +89,41 @@ namespace MyAssert {
 			return false;
 		}
 		return true;
+	}
+
+	/*******************************************
+	* @brief	ErroeBlobに入ったエラーを出力.
+	* @param	成功かどうか.
+	* @param	ErroeBlob.
+	*******************************************/
+	void ErrorBlob(const HRESULT& Result, ID3DBlob* ErrorMsg)
+	{
+		// 成功なら処理をしない.
+		if (SUCCEEDED(Result)) { return; }
+
+		std::wstring ErrStr;
+
+		if (Result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+			ErrStr = L"ファイルが見当たりません";
+		}
+		else {
+			if (ErrorMsg) {
+				// ErrorMsg があるの場合.
+				ErrStr.resize(ErrorMsg->GetBufferSize());
+				std::copy_n(static_cast<const char*>(ErrorMsg->GetBufferPointer()), ErrorMsg->GetBufferSize(), ErrStr.begin());
+				ErrStr += L"\n";
+			}
+			else {
+				// ErrorMsg がないの場合.
+				ErrStr = L"ErrorMsg is null";
+			}
+		}
+		if (ErrorMsg) {
+			ErrorMsg->Release();  // メモリ解放
+		}
+
+		std::wstring WideErrorMsg(ErrStr);
+		std::string FormattedMessage = MyAssert::FormatErrorMessage(WideErrorMsg, Result);
+		throw std::runtime_error(FormattedMessage);
 	}
 }

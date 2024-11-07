@@ -6,24 +6,17 @@
 #include<string>
 #include<algorithm>
 
-using namespace std;
+constexpr size_t PMDTexWide = 4;
 
-namespace {
-	void PrintErrorBlob(ID3DBlob* blob) {
-		assert(blob);
-		string err;
-		err.resize(blob->GetBufferSize());
-		copy_n((char*)blob->GetBufferPointer(),err.size(),err.begin());
-	}
-}
-
-PMDRenderer::PMDRenderer(DirectX12& dx12):m_pDx12(dx12)
+PMDRenderer::PMDRenderer(CDirectX12& dx12):m_pDx12(dx12)
 {
-	assert(SUCCEEDED(CreateRootSignature()));
-	assert(SUCCEEDED(CreateGraphicsPipelineForPMD()));
-	_whiteTex= CreateWhiteTexture();
-	_blackTex = CreateBlackTexture();
-	_gradTex = CreateGrayGradationTexture();
+	CreateRootSignature();
+	CreateGraphicsPipelineForPMD();
+
+	// PMD用汎用テクスチャの生成.
+	m_pWhiteTex = MyComPtr<ID3D12Resource>(CreateWhiteTexture());
+	m_pBlackTex = MyComPtr<ID3D12Resource>(CreateBlackTexture());
+	m_pGradTex  = MyComPtr<ID3D12Resource>(CreateGrayGradationTexture());
 }
 
 
@@ -41,53 +34,77 @@ PMDRenderer::Draw() {
 
 }
 
-ID3D12Resource* 
-PMDRenderer::CreateDefaultTexture(size_t width, size_t height) {
-	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
-	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
-	ID3D12Resource* buff = nullptr;
-	auto result = m_pDx12.Device()->CreateCommittedResource(
-		&texHeapProp,
+// テクスチャの汎用素材を作成.
+ID3D12Resource* PMDRenderer::CreateDefaultTexture(size_t Width, size_t Height) {
+
+	// リソースの設定.
+	auto ResourceDesc = 
+		CD3DX12_RESOURCE_DESC::Tex2D(
+			DXGI_FORMAT_R8G8B8A8_UNORM,		// RGB8bitフォーマット.
+			Width, Height);					// 幅、高さ.
+
+	// ヒープの設定.
+	auto TexHeapProp = 
+		CD3DX12_HEAP_PROPERTIES(
+		D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, // CPUから読み書き可能なメモリ領域に配置.
+			D3D12_MEMORY_POOL_L0);          // パフォーマンス優先のメモリプール.
+
+	ID3D12Resource* Buffer= nullptr;
+
+	MyAssert::IsFailed(
+		_T("基本テクスチャの作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
+		&TexHeapProp,
 		D3D12_HEAP_FLAG_NONE,//特に指定なし
-		&resDesc,
+		&ResourceDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		nullptr,
-		IID_PPV_ARGS(&buff)
+		IID_PPV_ARGS(&Buffer)
 	);
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return nullptr;
-	}
-	return buff;
+
+	return Buffer;
 }
 
-ID3D12Resource* 
-PMDRenderer::CreateWhiteTexture() {
+// 白テクスチャ作成.
+ID3D12Resource* PMDRenderer::CreateWhiteTexture()
+{
+	// テクスチャリソースの作成.
+	ID3D12Resource* WhiteBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
 	
-	ID3D12Resource* whiteBuff = CreateDefaultTexture(4,4);
-	
-	std::vector<unsigned char> data(4 * 4 * 4);
+	// テクスチャの範囲の白データ作成.
+	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
 	std::fill(data.begin(), data.end(), 0xff);
 
-	auto result = whiteBuff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, data.size());
-	assert(SUCCEEDED(result));
-	return whiteBuff;
-}
-ID3D12Resource*	
-PMDRenderer::CreateBlackTexture() {
+	MyAssert::IsFailed(
+		_T("テクスチャリソースを白で塗りつぶし"),
+		&ID3D12Resource::WriteToSubresource, WhiteBuff,
+		0, nullptr,
+		data.data(), 4 * 4, data.size());
 
-	ID3D12Resource* blackBuff = CreateDefaultTexture(4, 4);
-	std::vector<unsigned char> data(4 * 4 * 4);
+	return WhiteBuff;
+}
+ID3D12Resource*	PMDRenderer::CreateBlackTexture() 
+{
+	// テクスチャリソースの作成.
+	ID3D12Resource* BlackBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
+
+	// テクスチャの範囲の黒データを作成.
+	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
 	std::fill(data.begin(), data.end(), 0x00);
 
-	auto result = blackBuff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, data.size());
-	assert(SUCCEEDED(result));
-	return blackBuff;
+	MyAssert::IsFailed(
+		_T("テクスチャリソースを黒で塗りつぶし"),
+		&ID3D12Resource::WriteToSubresource, BlackBuff,
+		0, nullptr,
+		data.data(), 4 * 4, data.size());
+
+	return BlackBuff;
 }
-ID3D12Resource*	
-PMDRenderer::CreateGrayGradationTexture() {
-	ID3D12Resource* gradBuff = CreateDefaultTexture(4, 256);
-	//上が白くて下が黒いテクスチャデータを作成
+ID3D12Resource*	PMDRenderer::CreateGrayGradationTexture() 
+{
+	ID3D12Resource* GradBuff = CreateDefaultTexture(4, 256);
+
+	// テクスチャの範囲の白<->黒グラデーションデータの作成.
 	std::vector<unsigned int> data(4 * 256);
 	auto it = data.begin();
 	unsigned int c = 0xff;
@@ -97,68 +114,49 @@ PMDRenderer::CreateGrayGradationTexture() {
 		--c;
 	}
 
-	auto result = gradBuff->WriteToSubresource(0, nullptr, data.data(), 4 * sizeof(unsigned int), sizeof(unsigned int)*data.size());
-	assert(SUCCEEDED(result));
-	return gradBuff;
-}
+	MyAssert::IsFailed(
+		_T("テクスチャリソースに白<->黒グラデーションを書き込む"),
+		&ID3D12Resource::WriteToSubresource, GradBuff,
+		0, nullptr,
+		data.data(), 4 * 4, data.size());
 
-bool 
-PMDRenderer::CheckShaderCompileResult(HRESULT result, ID3DBlob* error) {
-	if (FAILED(result)) {
-		if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
-			::OutputDebugStringA("ファイルが見当たりません");
-		}
-		else {
-			std::string errstr;
-			errstr.resize(error->GetBufferSize());
-			std::copy_n((char*)error->GetBufferPointer(), error->GetBufferSize(), errstr.begin());
-			errstr += "\n";
-			OutputDebugStringA(errstr.c_str());
-		}
-		return false;
-	}
-	else {
-		return true;
-	}
+	return GradBuff;
 }
 
 //パイプライン初期化
-HRESULT 
-PMDRenderer::CreateGraphicsPipelineForPMD() {
-	ComPtr<ID3DBlob> vsBlob = nullptr;
-	ComPtr<ID3DBlob> psBlob = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	auto result = D3DCompileFromFile(L"BasicVertexShader.hlsl",
-		nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+void PMDRenderer::CreateGraphicsPipelineForPMD() {
+
+	MyComPtr<ID3DBlob> VSBlob(nullptr);		// 頂点シェーダーのブロブ.
+	MyComPtr<ID3DBlob> PSBlob(nullptr);		// ピクセルシェーダーのブロブ.
+	MyComPtr<ID3DBlob> ErrerBlob(nullptr);	// エラーのブロブ.
+	HRESULT   result = S_OK;
+
+	// 頂点シェーダーの読み込み.
+	CompileShaderFromFile(
+		L"Data\\Shader\\Basic\\BasicVertexShader.hlsl",
 		"BasicVS", "vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0, &vsBlob, &errorBlob);
-	if (!CheckShaderCompileResult(result,errorBlob.Get())){
-		assert(0);
-		return result;
-	}
-	result = D3DCompileFromFile(L"BasicPixelShader.hlsl",
-		nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		VSBlob.ReleaseAndGetAddressOf());
+
+
+	CompileShaderFromFile(
+		L"Data\\Shader\\Basic\\BasicPixelShader.hlsl",
 		"BasicPS", "ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0, &psBlob, &errorBlob);
-	if (!CheckShaderCompileResult(result, errorBlob.Get())) {
-		assert(0);
-		return result;
-	}
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-		{ "POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-		{ "NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-		{ "TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-		//{ "BONE_NO",0,DXGI_FORMAT_R16G16_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-		//{ "WEIGHT",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
+		VSBlob.ReleaseAndGetAddressOf());
+
+	// TODO : 短くできそう.
+	D3D12_INPUT_ELEMENT_DESC InputLayout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONE_NO"	, 0, DXGI_FORMAT_R16G16_UINT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "WEIGHT"	, 0, DXGI_FORMAT_R8_UINT		, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		//{ "EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
 	};
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
-	gpipeline.pRootSignature = _rootSignature.Get();
-	gpipeline.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-	gpipeline.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
+	gpipeline.pRootSignature = m_pRootSignature.Get();
+	gpipeline.VS = CD3DX12_SHADER_BYTECODE(VSBlob.Get());
+	gpipeline.PS = CD3DX12_SHADER_BYTECODE(PSBlob.Get());
 
 	gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;//中身は0xffffffff
 
@@ -174,8 +172,8 @@ PMDRenderer::CreateGraphicsPipelineForPMD() {
 	gpipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	gpipeline.DepthStencilState.StencilEnable = false;
 
-	gpipeline.InputLayout.pInputElementDescs = inputLayout;//レイアウト先頭アドレス
-	gpipeline.InputLayout.NumElements = _countof(inputLayout);//レイアウト配列数
+	gpipeline.InputLayout.pInputElementDescs = InputLayout;//レイアウト先頭アドレス
+	gpipeline.InputLayout.NumElements = _countof(InputLayout);//レイアウト配列数
 
 	gpipeline.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;//ストリップ時のカットなし
 	gpipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;//三角形で構成
@@ -185,16 +183,18 @@ PMDRenderer::CreateGraphicsPipelineForPMD() {
 
 	gpipeline.SampleDesc.Count = 1;//サンプリングは1ピクセルにつき１
 	gpipeline.SampleDesc.Quality = 0;//クオリティは最低
-	result = m_pDx12.Device()->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipeline.ReleaseAndGetAddressOf()));
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-	}
-	return result;
+
+	MyAssert::IsFailed(
+		_T("グラフィックパイプラインの作成"),
+		&ID3D12Device::CreateGraphicsPipelineState, m_pDx12.GetDevice(),
+		&gpipeline,
+		IID_PPV_ARGS(m_pPipelineState.ReleaseAndGetAddressOf())
+	);
 
 }
+
 //ルートシグネチャ初期化
-HRESULT 
-PMDRenderer::CreateRootSignature() {
+void PMDRenderer::CreateRootSignature() {
 	//レンジ
 	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};//テクスチャと定数の２つ
 	descTblRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);//定数[b0](ビュープロジェクション用)
@@ -215,27 +215,59 @@ PMDRenderer::CreateRootSignature() {
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.Init(3, rootParams, 2, samplerDescs, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	ComPtr<ID3DBlob> rootSigBlob = nullptr;
-	ComPtr<ID3DBlob> errorBlob = nullptr;
-	auto result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSigBlob, &errorBlob);
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
-	result = m_pDx12.Device()->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(_rootSignature.ReleaseAndGetAddressOf()));
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
-	return result;
+	MyComPtr<ID3DBlob> RootSigBlob(nullptr);
+	MyComPtr<ID3DBlob> ErrorBlob(nullptr);
+
+	MyAssert::IsFailed(
+		_T("ルートシグネクチャをシリアライズする"),
+		&D3D12SerializeRootSignature,
+		&rootSignatureDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1,
+		RootSigBlob.GetAddressOf(),
+		ErrorBlob.GetAddressOf()
+	);
+	
+	MyAssert::IsFailed(
+		_T("ルートシグネクチャをシリアライズする"),
+		&ID3D12Device::CreateRootSignature, m_pDx12.GetDevice(),
+		0,
+		RootSigBlob->GetBufferPointer(),
+		RootSigBlob->GetBufferSize(),
+		IID_PPV_ARGS(m_pRootSignature.ReleaseAndGetAddressOf())
+	);
+
 }
 
-ID3D12PipelineState* 
-PMDRenderer::GetPipelineState() {
-	return _pipeline.Get();
+// シェーダーのコンパイル.
+HRESULT PMDRenderer::CompileShaderFromFile(
+	const std::wstring& FilePath,
+	LPCSTR EntryPoint,
+	LPCSTR Target,
+	ID3DBlob** ShaderBlob)
+{
+	ID3DBlob* ErrorBlob = nullptr;
+	HRESULT Result = D3DCompileFromFile(
+		FilePath.c_str(),
+		nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		EntryPoint, Target,
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, // デバッグオプション.
+		0, ShaderBlob, &ErrorBlob
+	);
+
+	// コンパイルエラー時にエラーハンドリングを行う.
+	MyAssert::ErrorBlob(Result, ErrorBlob);
+
+	return Result;
 }
 
-ID3D12RootSignature* 
-PMDRenderer::GetRootSignature() {
-	return _rootSignature.Get();
+// PMD用のパイプラインステートを取得.
+ID3D12PipelineState* PMDRenderer::GetPipelineState()
+{
+	return m_pPipelineState.Get();
+}
+
+// PMD用のルート署名を取得.
+ID3D12RootSignature* PMDRenderer::GetRootSignature() 
+{
+	return m_pRootSignature.Get();
 }

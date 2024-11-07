@@ -72,275 +72,6 @@ bool CDirectX12::Create(HWND hWnd)
 		// テクスチャロードテーブルの作成.
 		CreateTextureLoadTable();
 
-		char signature[3];
-		PMDHeader pmdheader = {};
-
-		//string strModelPath = "Model/巡音ルカ.pmd";
-		std::string strModelPath = "Model/初音ミク.pmd";
-		FILE* fp;
-		auto err = fopen_s(&fp, "Data\\Model\\初音ミク.pmd", "rb");
-		if (fp == nullptr) {
-			return -1;
-		}
-		fread(signature, sizeof(signature), 1, fp);
-		fread(&pmdheader, sizeof(pmdheader), 1, fp);
-
-		unsigned int vertNum;//頂点数
-		fread(&vertNum, sizeof(vertNum), 1, fp);
-
-		std::vector<PMDVertex> vertices(vertNum);//バッファ確保
-		for (unsigned int i = 0; i < vertNum; i++)
-		{
-			fread(&vertices[i], PmdVertexSize, 1, fp);
-		}
-
-		unsigned int IndicesNum;//インデックス数
-		fread(&IndicesNum, sizeof(IndicesNum), 1, fp);//
-
-		//UPLOAD(確保は可能)
-		auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size() * sizeof(PMDVertex));
-		ID3D12Resource* vertBuff = nullptr;
-
-		HRESULT result;
-
-		result = m_pDevice12->CreateCommittedResource(
-			&heapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&resDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&vertBuff));
-
-		PMDVertex* vertMap = nullptr;
-		result = vertBuff->Map(0, nullptr, (void**)&vertMap);
-		std::copy(vertices.begin(), vertices.end(), vertMap);
-		vertBuff->Unmap(0, nullptr);
-
-		D3D12_VERTEX_BUFFER_VIEW vbView = {};
-		vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();//バッファの仮想アドレス
-		vbView.SizeInBytes = static_cast<UINT>(vertices.size() * sizeof(PMDVertex));//全バイト数
-		vbView.StrideInBytes = sizeof(PMDVertex);//1頂点あたりのバイト数
-
-		std::vector<unsigned short> indices(IndicesNum);
-		fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);//一気に読み込み
-
-		unsigned int MaterialNum;//マテリアル数
-		fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
-		std::vector<Material> Materials(MaterialNum);
-
-		std::vector<ID3D12Resource*> textureResources(MaterialNum);
-		std::vector<ID3D12Resource*> sphResources(MaterialNum);
-		std::vector<ID3D12Resource*> spaResources(MaterialNum);
-		std::vector<ID3D12Resource*> toonResources(MaterialNum);
-		{
-			std::vector<PMDMaterial> pmdMaterials(MaterialNum);
-			fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
-			//コピー
-			for (int i = 0; i < pmdMaterials.size(); ++i) {
-				Materials[i].IndicesNum = pmdMaterials[i].IndicesNum;
-				Materials[i].Material.Diffuse = pmdMaterials[i].Diffuse;
-				Materials[i].Material.Alpha = pmdMaterials[i].Alpha;
-				Materials[i].Material.Specular = pmdMaterials[i].Specular;
-				Materials[i].Material.Specularity = pmdMaterials[i].Specularity;
-				Materials[i].Material.Ambient = pmdMaterials[i].Ambient;
-				Materials[i].Additional.ToonIdx = pmdMaterials[i].ToonIdx;
-			}
-
-			for (int i = 0; i < pmdMaterials.size(); ++i) {
-				//トゥーンリソースの読み込み
-				std::string toonFilePath = "Data/Model/toon/";
-				char toonFileName[16];
-				sprintf_s(toonFileName, 16, "toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
-				toonFilePath += toonFileName;
-				toonResources[i] = LoadTextureFromFile(toonFilePath);
-
-				if (strlen(pmdMaterials[i].TexFilePath) == 0) {
-					textureResources[i] = nullptr;
-					continue;
-				}
-
-				std::string texFileName = pmdMaterials[i].TexFilePath;
-				std::string sphFileName = "";
-				std::string spaFileName = "";
-				if (count(texFileName.begin(), texFileName.end(), '*') > 0) {//スプリッタがある
-					auto namepair = MyFilePath::SplitFileName(texFileName);
-					if (MyFilePath::GetExtension(namepair.first) == "sph") {
-						texFileName = namepair.second;
-						sphFileName = namepair.first;
-					}
-					else if (MyFilePath::GetExtension(namepair.first) == "spa") {
-						texFileName = namepair.second;
-						spaFileName = namepair.first;
-					}
-					else {
-						texFileName = namepair.first;
-						if (MyFilePath::GetExtension(namepair.second) == "sph") {
-							sphFileName = namepair.second;
-						}
-						else if (MyFilePath::GetExtension(namepair.second) == "spa") {
-							spaFileName = namepair.second;
-						}
-					}
-				}
-				else {
-					if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
-						sphFileName = pmdMaterials[i].TexFilePath;
-						texFileName = "";
-					}
-					else if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
-						spaFileName = pmdMaterials[i].TexFilePath;
-						texFileName = "";
-					}
-					else {
-						texFileName = pmdMaterials[i].TexFilePath;
-					}
-				}
-				//モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
-				if (texFileName != "") {
-					auto texFilePath = MyFilePath::GetTexPath(strModelPath, texFileName.c_str());
-					textureResources[i] = LoadTextureFromFile(texFilePath);
-				}
-				if (sphFileName != "") {
-					auto sphFilePath = MyFilePath::GetTexPath(strModelPath, sphFileName.c_str());
-					sphResources[i] = LoadTextureFromFile(sphFilePath);
-				}
-				if (spaFileName != "") {
-					auto spaFilePath = MyFilePath::GetTexPath(strModelPath, spaFileName.c_str());
-					spaResources[i] = LoadTextureFromFile(spaFilePath);
-				}
-
-
-			}
-
-		}
-		fclose(fp);
-
-
-		auto whiteTex = CreateWhiteTexture();
-		auto blackTex = CreateBlackTexture();
-		auto gradTex = CreateGrayGradationTexture();
-
-
-		ID3D12Resource* idxBuff = nullptr;
-		//設定は、バッファのサイズ以外頂点バッファの設定を使いまわして
-		//OKだと思います。
-		heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		resDesc = CD3DX12_RESOURCE_DESC::Buffer(indices.size() * sizeof(indices[0]));
-		result = m_pDevice12->CreateCommittedResource(
-			&heapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&resDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&idxBuff));
-
-		//作ったバッファにインデックスデータをコピー
-		unsigned short* mappedIdx = nullptr;
-		idxBuff->Map(0, nullptr, (void**)&mappedIdx);
-		std::copy(indices.begin(), indices.end(), mappedIdx);
-		idxBuff->Unmap(0, nullptr);
-
-		//インデックスバッファビューを作成
-		D3D12_INDEX_BUFFER_VIEW ibView = {};
-		ibView.BufferLocation = idxBuff->GetGPUVirtualAddress();
-		ibView.Format = DXGI_FORMAT_R16_UINT;
-		ibView.SizeInBytes = static_cast<UINT>(indices.size() * sizeof(indices[0]));
-
-		//マテリアルバッファを作成
-		auto MaterialBuffSize = sizeof(MaterialForHlsl);
-		MaterialBuffSize = (MaterialBuffSize + 0xff) & ~0xff;
-		heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		resDesc = CD3DX12_RESOURCE_DESC::Buffer(MaterialBuffSize * MaterialNum);//勿体ないけど仕方ないですね
-		ID3D12Resource* MaterialBuff = nullptr;
-		result = m_pDevice12->CreateCommittedResource(
-			&heapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&resDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&MaterialBuff)
-		);
-
-		//マップマテリアルにコピー
-		char* mapMaterial = nullptr;
-		result = MaterialBuff->Map(0, nullptr, (void**)&mapMaterial);
-		for (auto& m : Materials) {
-			*((MaterialForHlsl*)mapMaterial) = m.Material;//データコピー
-			mapMaterial += MaterialBuffSize;//次のアライメント位置まで進める
-		}
-		MaterialBuff->Unmap(0, nullptr);
-
-
-		ID3D12DescriptorHeap* MaterialDescHeap = nullptr;
-		D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
-		MaterialDescHeapDesc.NumDescriptors = MaterialNum * 5;//マテリアル数ぶん(定数1つ、テクスチャ3つ)
-		MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		MaterialDescHeapDesc.NodeMask = 0;
-
-		MaterialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//デスクリプタヒープ種別
-		result = m_pDevice12->CreateDescriptorHeap(&MaterialDescHeapDesc, IID_PPV_ARGS(&MaterialDescHeap));//生成
-
-		D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
-		matCBVDesc.BufferLocation = MaterialBuff->GetGPUVirtualAddress();
-		matCBVDesc.SizeInBytes = static_cast<UINT>(MaterialBuffSize);
-
-		////通常テクスチャビュー作成
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;//後述
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2Dテクスチャ
-		srvDesc.Texture2D.MipLevels = 1;//ミップマップは使用しないので1
-
-		auto matDescHeapH = MaterialDescHeap->GetCPUDescriptorHandleForHeapStart();
-		auto incSize = m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		for (size_t i = 0; i < MaterialNum; ++i) {
-			//マテリアル固定バッファビュー
-			m_pDevice12->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
-			matDescHeapH.ptr += incSize;
-			matCBVDesc.BufferLocation += MaterialBuffSize;
-			if (textureResources[i] == nullptr) {
-				srvDesc.Format = whiteTex->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(whiteTex, &srvDesc, matDescHeapH);
-			}
-			else {
-				srvDesc.Format = textureResources[i]->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(textureResources[i], &srvDesc, matDescHeapH);
-			}
-			matDescHeapH.ptr += incSize;
-
-			if (sphResources[i] == nullptr) {
-				srvDesc.Format = whiteTex->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(whiteTex, &srvDesc, matDescHeapH);
-			}
-			else {
-				srvDesc.Format = sphResources[i]->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(sphResources[i], &srvDesc, matDescHeapH);
-			}
-			matDescHeapH.ptr += incSize;
-
-			if (spaResources[i] == nullptr) {
-				srvDesc.Format = blackTex->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(blackTex, &srvDesc, matDescHeapH);
-			}
-			else {
-				srvDesc.Format = spaResources[i]->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(spaResources[i], &srvDesc, matDescHeapH);
-			}
-			matDescHeapH.ptr += incSize;
-
-
-			if (toonResources[i] == nullptr) {
-				srvDesc.Format = gradTex->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(gradTex, &srvDesc, matDescHeapH);
-			}
-			else {
-				srvDesc.Format = toonResources[i]->GetDesc().Format;
-				m_pDevice12->CreateShaderResourceView(toonResources[i], &srvDesc, matDescHeapH);
-			}
-			matDescHeapH.ptr += incSize;
-
-		}
-
 		// グラフィックパイプラインステートの設定.
 		CreateGraphicPipeline(m_pPipelineState);
 
@@ -609,6 +340,7 @@ const MyComPtr<ID3D12GraphicsCommandList> CDirectX12::GetCommandList()
 	return m_pCmdList;
 }
 
+// テクスチャを取得.
 MyComPtr<ID3D12Resource> CDirectX12::GetTextureByPath(const char* texpath)
 {
 	auto it = m_ResourceTable.find(texpath);
@@ -899,51 +631,7 @@ void CDirectX12::CreateTextureLoadTable()
 
 ID3D12Resource* CDirectX12::CreateGrayGradationTexture()
 {
-	D3D12_RESOURCE_DESC resDesc = {};
-	resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	resDesc.Width = 4;//幅
-	resDesc.Height = 256;//高さ
-	resDesc.DepthOrArraySize = 1;
-	resDesc.SampleDesc.Count = 1;
-	resDesc.SampleDesc.Quality = 0;//
-	resDesc.MipLevels = 1;//
-	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;//レイアウトについては決定しない
-	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;//とくにフラグなし
-
-	D3D12_HEAP_PROPERTIES texHeapProp = {};
-	texHeapProp.Type = D3D12_HEAP_TYPE_CUSTOM;//特殊な設定なのでdefaultでもuploadでもなく
-	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;//ライトバックで
-	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;//転送がL0つまりCPU側から直で
-	texHeapProp.CreationNodeMask = 0;//単一アダプタのため0
-	texHeapProp.VisibleNodeMask = 0;//単一アダプタのため0
-
-	ID3D12Resource* gradBuff = nullptr;
-	auto result = m_pDevice12->CreateCommittedResource(
-		&texHeapProp,
-		D3D12_HEAP_FLAG_NONE,//特に指定なし
-		&resDesc,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		nullptr,
-		IID_PPV_ARGS(&gradBuff)
-	);
-	if (FAILED(result)) {
-		return nullptr;
-	}
-
-	//上が白くて下が黒いテクスチャデータを作成
-	std::vector<unsigned int> data(4 * 256);
-	auto it = data.begin();
-	unsigned int c = 0xff;
-	for (; it != data.end(); it += 4) {
-		auto col = (0xff << 24) | RGB(c, c, c);//RGBAが逆並びしているためRGBマクロと0xff<<24を用いて表す。
-		//auto col = (0xff << 24) | (c<<16)|(c<<8)|c;//これでもOK
-		std::fill(it, it + 4, col);
-		--c;
-	}
-
-	result = gradBuff->WriteToSubresource(0, nullptr, data.data(), 4 * sizeof(unsigned int), sizeof(unsigned int) * static_cast<UINT>(data.size()));
-	return gradBuff;
+	
 }
 
 ID3D12Resource* CDirectX12::CreateWhiteTexture() {
@@ -1169,7 +857,7 @@ void CDirectX12::CreateGraphicPipeline(
 {
 	ID3DBlob* VSBlob = nullptr;	// 頂点シェーダーのブロブ.
 	ID3DBlob* PSBlob = nullptr;	// ピクセルシェーダーのブロブ.
-	ID3DBlob* ErrerBlob = nullptr;	// ピクセルシェーダーのブロブ.
+	ID3DBlob* ErrerBlob = nullptr;	// エラーのブロブ.
 	HRESULT   result = S_OK;
 
 	// 頂点シェーダーの読み込み.
@@ -1320,29 +1008,6 @@ void CDirectX12::CreateGraphicPipeline(
 	result = m_pDevice12->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(&_pipelinestate));
 }
 
-// シェーダーのコンパイル.
-HRESULT CDirectX12::CompileShaderFromFile(
-	const std::wstring& FilePath, 
-	LPCSTR EntryPoint, 
-	LPCSTR Target, 
-	ID3DBlob** ShaderBlob)
-{
-		ID3DBlob* ErrorBlob = nullptr;
-		HRESULT Result = D3DCompileFromFile(
-			FilePath.c_str(),
-			nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-			EntryPoint, Target,
-			D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, // デバッグオプション.
-			0, ShaderBlob, &ErrorBlob
-		);
-
-		// コンパイルエラー時にエラーハンドリングを行う.
-		ShaderCompileError(Result, ErrorBlob);
-
-		return Result;
-}
-
-
 // アダプターを見つける.
 IDXGIAdapter* CDirectX12::FindAdapter(std::wstring FindWord)
 {
@@ -1390,35 +1055,4 @@ void CDirectX12::EnableDebuglayer()
 
 	// 解放.
 	DebugLayer->Release();
-}
-
-// ErroeBlobに入ったエラーを出力.
-void CDirectX12::ShaderCompileError(const HRESULT& Result, ID3DBlob* ErrorMsg)
-{
-	if (FAILED(Result)) {
-		std::wstring ErrStr;
-
-		if (Result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
-			ErrStr = L"ファイルが見当たりません";
-		}
-		else {
-			if (ErrorMsg) {
-				// ErrorMsg があるの場合.
-				ErrStr.resize(ErrorMsg->GetBufferSize());
-				std::copy_n(static_cast<const char*>(ErrorMsg->GetBufferPointer()), ErrorMsg->GetBufferSize(), ErrStr.begin());
-				ErrStr += L"\n";
-			}
-			else {
-				// ErrorMsg がないの場合.
-				ErrStr = L"ErrorMsg is null";
-			}
-		}
-		if (ErrorMsg) {
-			ErrorMsg->Release();  // メモリ解放
-		}
-
-		std::wstring WideErrorMsg(ErrStr);
-		std::string FormattedMessage = MyAssert::FormatErrorMessage(WideErrorMsg, Result);
-		throw std::runtime_error(FormattedMessage);
-	}
 }

@@ -64,46 +64,29 @@ PMDActor::~PMDActor()
 
 
 HRESULT
-PMDActor::LoadPMDFile(const char* path) {
-	//PMDヘッダ構造体
-	struct PMDHeader {
-		float version; //例：00 00 80 3F == 1.00
-		char model_name[20];//モデル名
-		char comment[256];//モデルコメント
-	};
-	char signature[3];
-	PMDHeader pmdheader = {};
+PMDActor::LoadPMDFile(const char* path)
+{
+	char Signature[3];
+	PMDHeader Pmdheader = {};
 
-	std::string strModelPath = path;
+	std::string StrModelPath = path;
 
-	auto fp = fopen(strModelPath.c_str(), "rb");
+	FILE* fp;
+	auto err = fopen_s(&fp, "Data\\Model\\初音ミク.pmd", "rb");
 	if (fp == nullptr) {
-		//エラー処理
-		assert(0);
-		return ERROR_FILE_NOT_FOUND;
+		return -1;
 	}
-	fread(signature, sizeof(signature), 1, fp);
-	fread(&pmdheader, sizeof(pmdheader), 1, fp);
+	fread(Signature, sizeof(Signature), 1, fp);
+	fread(&Pmdheader, sizeof(Pmdheader), 1, fp);
 
 	unsigned int vertNum;//頂点数
 	fread(&vertNum, sizeof(vertNum), 1, fp);
 
-
-#pragma pack(1)//ここから1バイトパッキング…アライメントは発生しない
-	//PMDマテリアル構造体
-	struct PMDMaterial {
-		DirectX::XMFLOAT3 Diffuse; //ディフューズ色
-		float Alpha; // ディフューズα
-		float Specularity;//スペキュラの強さ(乗算値)
-		DirectX::XMFLOAT3 Specular; //スペキュラ色
-		DirectX::XMFLOAT3 Ambient; //アンビエント色
-		unsigned char ToonIdx; //トゥーン番号(後述)
-		unsigned char edgeFlg;//マテリアル毎の輪郭線フラグ
-		//2バイトのパディングが発生！！
-		unsigned int IndicesNum; //このマテリアルが割り当たるインデックス数
-		char texFilePath[20]; //テクスチャファイル名(プラスアルファ…後述)
-	};//70バイトのはず…でもパディングが発生するため72バイト
-#pragma pack()//1バイトパッキング解除
+	std::vector<PMDVertex> vertices(vertNum);//バッファ確保
+	for (unsigned int i = 0; i < vertNum; i++)
+	{
+		fread(&vertices[i], PmdVertexSize, 1, fp);
+	}
 
 	constexpr unsigned int pmdvertex_size = 38;//頂点1つあたりのサイズ
 	std::vector<unsigned char> vertices(vertNum*pmdvertex_size);//バッファ確保
@@ -187,15 +170,15 @@ PMDActor::LoadPMDFile(const char* path) {
 	for (int i = 0; i < pmdMaterials.size(); ++i) {
 		//トゥーンリソースの読み込み
 		char toonFilePath[32];
-		sprintf(toonFilePath, "toon/toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
+		sprintf_s(toonFilePath, "toon/toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
 		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 
-		if (strlen(pmdMaterials[i].texFilePath) == 0) {
+		if (strlen(pmdMaterials[i].TexFilePath) == 0) {
 			m_pTextureResource[i].Reset();
 			continue;
 		}
 
-		std::string TexFileName = pmdMaterials[i].texFilePath;
+		std::string TexFileName = pmdMaterials[i].TexFilePath;
 		std::string SphFileName = "";
 		std::string SpaFileName = "";
 		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {//スプリッタがある
@@ -219,29 +202,29 @@ PMDActor::LoadPMDFile(const char* path) {
 			}
 		}
 		else {
-			if (GetExtension(pmdMaterials[i].texFilePath) == "sph") {
-				SphFileName = pmdMaterials[i].texFilePath;
+			if (GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
+				SphFileName = pmdMaterials[i].TexFilePath;
 				TexFileName = "";
 			}
-			else if (GetExtension(pmdMaterials[i].texFilePath) == "spa") {
-				SpaFileName = pmdMaterials[i].texFilePath;
+			else if (GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
+				SpaFileName = pmdMaterials[i].TexFilePath;
 				TexFileName = "";
 			}
 			else {
-				TexFileName = pmdMaterials[i].texFilePath;
+				TexFileName = pmdMaterials[i].TexFilePath;
 			}
 		}
 		//モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
 		if (TexFileName != "") {
-			auto texFilePath = GetTexturePathFromModelAndTexPath(strModelPath, TexFileName.c_str());
-			m_pTextureResource[i] = m_pDx12.GetTextureByPath(texFilePath.c_str());
+			auto TexFilePath = GetTexturePathFromModelAndTexPath(StrModelPath, TexFileName.c_str());
+			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
 		}
 		if (SphFileName != "") {
-			auto sphFilePath = GetTexturePathFromModelAndTexPath(strModelPath, SphFileName.c_str());
+			auto sphFilePath = GetTexturePathFromModelAndTexPath(StrModelPath, SphFileName.c_str());
 			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
 		}
 		if (SpaFileName != "") {
-			auto spaFilePath = GetTexturePathFromModelAndTexPath(strModelPath, SpaFileName.c_str());
+			auto spaFilePath = GetTexturePathFromModelAndTexPath(StrModelPath, SpaFileName.c_str());
 			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
 		}
 	}
@@ -370,8 +353,8 @@ PMDActor::CreateMaterialAndTextureView() {
 		matDescHeapH.ptr += incSize;
 		matCBVDesc.BufferLocation += MaterialBuffSize;
 		if (m_pTextureResource[i].Get() == nullptr) {
-			srvDesc.Format = m_pRenderer._whiteTex->GetDesc().Format;
-			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer._whiteTex.Get(), &srvDesc, matDescHeapH);
+			srvDesc.Format = m_pRenderer.m_pWhiteTex->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer.m_pWhiteTex.Get(), &srvDesc, matDescHeapH);
 		}
 		else {
 			srvDesc.Format = m_pTextureResource[i]->GetDesc().Format;
@@ -380,8 +363,8 @@ PMDActor::CreateMaterialAndTextureView() {
 		matDescHeapH.Offset(incSize);
 
 		if (m_pSphResource[i].Get() == nullptr) {
-			srvDesc.Format = m_pRenderer._whiteTex->GetDesc().Format;
-			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer._whiteTex.Get(), &srvDesc, matDescHeapH);
+			srvDesc.Format = m_pRenderer.m_pWhiteTex->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer.m_pWhiteTex.Get(), &srvDesc, matDescHeapH);
 		}
 		else {
 			srvDesc.Format = m_pSphResource[i]->GetDesc().Format;
@@ -390,8 +373,8 @@ PMDActor::CreateMaterialAndTextureView() {
 		matDescHeapH.ptr += incSize;
 
 		if (m_pSpaResource[i].Get() == nullptr) {
-			srvDesc.Format = m_pRenderer._blackTex->GetDesc().Format;
-			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer._blackTex.Get(), &srvDesc, matDescHeapH);
+			srvDesc.Format = m_pRenderer.m_pBlackTex->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer.m_pBlackTex.Get(), &srvDesc, matDescHeapH);
 		}
 		else {
 			srvDesc.Format = m_pSpaResource[i]->GetDesc().Format;
@@ -401,8 +384,8 @@ PMDActor::CreateMaterialAndTextureView() {
 
 
 		if (m_pToonResource[i].Get() == nullptr) {
-			srvDesc.Format = m_pRenderer._gradTex->GetDesc().Format;
-			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer._gradTex.Get(), &srvDesc, matDescHeapH);
+			srvDesc.Format = m_pRenderer.m_pGradTex->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer.m_pGradTex.Get(), &srvDesc, matDescHeapH);
 		}
 		else {
 			srvDesc.Format = m_pToonResource[i]->GetDesc().Format;
@@ -423,25 +406,23 @@ PMDActor::Draw() {
 	m_pDx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_pVertexBufferView);
 	m_pDx12.GetCommandList()->IASetIndexBuffer(&m_pIndexBufferView);
 
-	ID3D12DescriptorHeap* transheaps[] = { m_pTransformHeap.Get()};
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, transheaps);
+	ID3D12DescriptorHeap* TransHeap[] = { m_pTransformHeap.Get()};
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, TransHeap);
 	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(1, m_pTransformHeap->GetGPUDescriptorHandleForHeapStart());
 
-
-
-	ID3D12DescriptorHeap* mdh[] = { m_pMaterialHeap.Get() };
+	ID3D12DescriptorHeap* MaterialHeap[] = { m_pMaterialHeap.Get() };
 	//マテリアル.
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, mdh);
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, MaterialHeap);
 
-	auto MaterialH = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
-	unsigned int idxOffset = 0;
+	auto MaterialHeapHandle = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
+	unsigned int IdxOffset = 0;
 
 	auto cbvsrvIncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
 	for (auto& m : m_pMaterial) {
-		m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialH);
-		m_pDx12.GetCommandList()->DrawIndexedInstanced(m->IndicesNum, 1, idxOffset, 0, 0);
-		MaterialH.ptr += cbvsrvIncSize;
-		idxOffset += m->IndicesNum;
+		m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
+		m_pDx12.GetCommandList()->DrawIndexedInstanced(m->IndicesNum, 1, IdxOffset, 0, 0);
+		MaterialHeapHandle.ptr += cbvsrvIncSize;
+		IdxOffset += m->IndicesNum;
 	}
 
 }

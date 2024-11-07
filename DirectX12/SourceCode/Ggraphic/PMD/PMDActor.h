@@ -14,6 +14,44 @@ class PMDActor
 	friend PMDRenderer;
 private:
 
+	// PMDヘッダー構造体.
+	struct PMDHeader
+	{
+		float Version;			// バージョン.
+		char ModelName[20];		// モデルの名前.
+		char ModelComment[256];	// モデルのコメント.
+	};
+
+	// TODO : パディングの対処法を考える.
+	//PMDマテリアル構造体
+#pragma pack(1)
+	struct PMDMaterial {
+		DirectX::XMFLOAT3 Diffuse;  // ディフューズ色				: 12Byte.
+		float	 Alpha;				// α値						:  4Byte.
+		float    Specularity;		// スペキュラの強さ			:  4Byte.
+		DirectX::XMFLOAT3 Specular; // スペキュラ色				: 12Byte.
+		DirectX::XMFLOAT3 Ambient;  // アンビエント色				: 12Byte.
+		uint8_t  ToonIdx;			// トゥーン番号				:  1Byte.
+		uint8_t  EdgeFlg;			// Material毎の輪郭線フラグ	:  1Byte.
+//		uint16_t Padding;			// パディング					:  2Byte.
+		uint32_t IndicesNum;		// 割り当たるインデックス数		:  4Byte.
+		char     TexFilePath[20];	// テクスチャファイル名		: 20Byte.
+	};								// 合計						: 70Byte(パディングなし).
+#pragma pack()
+
+	// PMD頂点構造体.
+	struct PMDVertex
+	{
+		DirectX::XMFLOAT3 Pos;		// 頂点座標		: 12Byte.
+		DirectX::XMFLOAT3 Normal;	// 法線ベクトル	: 12Byte.
+		DirectX::XMFLOAT2 uv;		// uv座標		:  8Byte.
+		uint16_t BoneNo[2];			// ボーン番号		:  4Byte.
+		uint8_t  BoneWeight;		// ボーン影響度	:  1Byte.
+		uint8_t  EdgeFlg;			// 輪郭線フラグ	:  1Byte.
+		uint16_t Padding;			// パディング		:  2Byte.
+	};								// 合計			: 40Byte.
+
+
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
 		DirectX::XMFLOAT3 Diffuse;		// ディフューズ色.		
