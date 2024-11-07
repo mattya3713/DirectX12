@@ -19,6 +19,8 @@ CDirectX12::CDirectX12()
 	, m_FenceValue		( 0 )
 	, m_pPipelineState	( nullptr )	
 	, m_pRootSignature	( nullptr )
+	, m_LoadLambdaTable	()
+	, m_ResourceTable	()
 {							 
 }
 
@@ -529,20 +531,96 @@ void CDirectX12::UpDate()
 
 void CDirectX12::BeginDraw()
 {
+	// DirectX処理.
+	// バックバッファのインデックスを取得.
+	auto BBIdx = m_pSwapChain->GetCurrentBackBufferIndex();
+	auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[BBIdx].Get(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_pCmdList->ResourceBarrier(1, &Barrier);
+
+	// レンダーターゲットを指定.
+	auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvH.ptr += BBIdx * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	// 深度を指定.
+	auto DSVHeap = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
+	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeap);
+	m_pCmdList->ClearDepthStencilView(DSVHeap, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+	// 画面クリア.
+	float ClearColor[] = { 1.0f,0.0f,1.0f,1.0f };//白色
+	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+
+	//ビューポート、シザー矩形のセット.
+	m_pCmdList->RSSetViewports(1, m_pViewport.get());
+	m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
 }
 
 void CDirectX12::Draw()
 {
+	
 }
 
 void CDirectX12::EndDraw()
 {
-	
+	auto BBIdx = m_pSwapChain->GetCurrentBackBufferIndex();
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[BBIdx].Get(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+	m_pCmdList->ResourceBarrier(1,
+		&barrier);
+
+	// 命令のクローズ.
+	m_pCmdList->Close();
+
+	// コマンドリストの実行.
+	ID3D12CommandList* cmdlists[] = { m_pCmdList.Get() };
+	m_pCmdQueue->ExecuteCommandLists(1, cmdlists);
+	////待ち
+	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
+
+	if (m_pFence->GetCompletedValue() < m_FenceValue) {
+		auto event = CreateEvent(nullptr, false, false, nullptr);
+		m_pFence->SetEventOnCompletion(m_FenceValue, event);
+		WaitForSingleObject(event, INFINITE);
+		CloseHandle(event);
+	}
+	// キューをクリア.
+	m_pCmdAllocator->Reset();
+	// 再びコマンドリストをためる準備.
+	m_pCmdList->Reset(m_pCmdAllocator.Get(), nullptr);
 }
 
-MyComPtr<IDXGISwapChain4> CDirectX12::GetSwapChain()
+// スワップチェーンを取得.
+const MyComPtr<IDXGISwapChain4> CDirectX12::GetSwapChain()
 {
 	return m_pSwapChain;
+}
+
+// DirectX12デバイスを取得.
+const MyComPtr<ID3D12Device> CDirectX12::GetDevice()
+{
+	return m_pDevice12;
+}
+
+// コマンドリストを取得.
+const MyComPtr<ID3D12GraphicsCommandList> CDirectX12::GetCommandList()
+{
+	return m_pCmdList;
+}
+
+MyComPtr<ID3D12Resource> CDirectX12::GetTextureByPath(const char* texpath)
+{
+	auto it = m_ResourceTable.find(texpath);
+	if (it != m_ResourceTable.end()) {
+		//テーブルに内にあったらロードするのではなくマップ内の
+		//リソースを返す
+		return m_ResourceTable[texpath];
+	}
+	else {
+		return MyComPtr<ID3D12Resource>(CreateTextureFromFile(texpath));
+	}
+
 }
 
 // DXGIの生成.
@@ -800,20 +878,20 @@ void CDirectX12::CreateFance(MyComPtr<ID3D12Fence>& Fence)
 // テクスチャロードテーブルの作成.
 void CDirectX12::CreateTextureLoadTable()
 {
-	LoadLambdaTable["sph"] =
-		LoadLambdaTable["spa"] =
-		LoadLambdaTable["bmp"] =
-		LoadLambdaTable["png"] =
-		LoadLambdaTable["jpg"] =
+	m_LoadLambdaTable["sph"] =
+		m_LoadLambdaTable["spa"] =
+		m_LoadLambdaTable["bmp"] =
+		m_LoadLambdaTable["png"] =
+		m_LoadLambdaTable["jpg"] =
 		[](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
 		return LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, meta, img);
 		};
 
-	LoadLambdaTable["tga"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+	m_LoadLambdaTable["tga"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
 		return LoadFromTGAFile(path.c_str(), meta, img);
 		};
 
-	LoadLambdaTable["dds"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
+	m_LoadLambdaTable["dds"] = [](const std::wstring& path, DirectX::TexMetadata* meta, DirectX::ScratchImage& img)->HRESULT {
 		return LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, meta, img);
 		};
 
@@ -949,11 +1027,11 @@ ID3D12Resource* CDirectX12::CreateBlackTexture() {
 // テクスチャ読み込み.
 ID3D12Resource* CDirectX12::LoadTextureFromFile(std::string& TexPath)
 {
-	auto it = _resourceTable.find(TexPath);
-	if (it != _resourceTable.end()) {
+	auto it = m_ResourceTable.find(TexPath);
+	if (it != m_ResourceTable.end()) {
 		// テーブルに内にあったらロードするのではなくマップ内の.
 		// リソースを返す.
-		return _resourceTable[TexPath];
+		return m_ResourceTable[TexPath].Get();
 	}
 
 	// WICテクスチャのロード.
@@ -966,9 +1044,10 @@ ID3D12Resource* CDirectX12::LoadTextureFromFile(std::string& TexPath)
 	// 拡張子を取得.
 	auto Extension = MyFilePath::GetExtension(TexPath);
 
-	auto Result = LoadLambdaTable[Extension](wTexPath,
+	auto Result = m_LoadLambdaTable[Extension](wTexPath,
 		&MetaData,
 		ScratchImg);
+
 	if (FAILED(Result)) {
 		return nullptr;
 	}
@@ -996,7 +1075,8 @@ ID3D12Resource* CDirectX12::LoadTextureFromFile(std::string& TexPath)
 	ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;									// レイアウトについては決定しない.
 	ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;										// とくにフラグなし.
 
-	ID3D12Resource* Texbuff = nullptr;
+	ID3D12Resource* Texbuff(nullptr);
+
 	MyAssert::IsFailed(
 		_T("テクスチャバッファの作成"),
 		&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(),
@@ -1018,7 +1098,68 @@ ID3D12Resource* CDirectX12::LoadTextureFromFile(std::string& TexPath)
 		static_cast<UINT>(Img->slicePitch)		// 全サイズ.
 	);
 
-	_resourceTable[TexPath] = Texbuff;
+	m_ResourceTable[TexPath] = MyComPtr<ID3D12Resource>(Texbuff);
+	return Texbuff;
+}
+
+ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
+{
+	std::string TexPath = Texpath;
+	//テクスチャのロード
+	DirectX::TexMetadata	Metadata = {};
+	DirectX::ScratchImage	ScratchImg = {};
+
+	//テクスチャのファイルパス. 
+	std::wstring wTexPath = MyString::StringToWString(TexPath);
+
+	//拡張子を取得.
+	auto Extension = MyFilePath::GetExtension(TexPath);
+
+	HRESULT Result = m_LoadLambdaTable[Extension](wTexPath,
+		&Metadata,
+		ScratchImg);
+
+	if (FAILED(Result)) {
+		return nullptr;
+	}
+
+	auto Image = ScratchImg.GetImage(0, 0, 0);//生データ抽出
+
+	//WriteToSubresourceで転送する用のヒープ設定
+	auto TexHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
+
+	auto ResDesc = 
+		CD3DX12_RESOURCE_DESC::Tex2D(
+			Metadata.format, 
+			Metadata.width, Metadata.height, 
+			Metadata.arraySize, 
+			Metadata.mipLevels);
+
+	ID3D12Resource* Texbuff = nullptr;
+	Result = m_pDevice12->CreateCommittedResource(
+		&TexHeapProp,
+		D3D12_HEAP_FLAG_NONE,//特に指定なし
+		&ResDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&Texbuff)
+	);
+
+	if (FAILED(Result)) {
+		return nullptr;
+	}
+
+	Result = Texbuff->WriteToSubresource(0,
+		nullptr,			// 全領域へコピー.
+		Image->pixels,		// 元データアドレス.
+		Image->rowPitch,	// 1ラインサイズ.
+		Image->slicePitch	// 全サイズ.
+	);
+
+	if (FAILED(Result)) {
+		return nullptr;
+	}
+
 	return Texbuff;
 }
 

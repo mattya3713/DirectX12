@@ -158,6 +158,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="SourceCode\Ggraphic\DirectX\CDirectX12.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMD\PMDActor.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMD\PMDRenderer.h" />
     <ClInclude Include="SourceCode\Global.h" />
     <ClInclude Include="SourceCode\Main\CMain.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
@@ -173,6 +175,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\Ggraphic\DirectX\CDirectX12.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMD\PMDActor.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMD\PMDRenderer.cpp" />
     <ClCompile Include="SourceCode\Main\CMain.cpp" />
     <ClCompile Include="SourceCode\Main\WinMain.cpp" />
     <ClCompile Include="SourceCode\stdafx.cpp">

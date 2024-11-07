@@ -2,7 +2,7 @@
 #include<d3dx12.h>
 #include<cassert>
 #include<d3dcompiler.h>
-#include"Dx12Wrapper.h"
+#include"../DirectX/CDirectX12.h"
 #include<string>
 #include<algorithm>
 
@@ -17,7 +17,7 @@ namespace {
 	}
 }
 
-PMDRenderer::PMDRenderer(Dx12Wrapper& dx12):_dx12(dx12)
+PMDRenderer::PMDRenderer(DirectX12& dx12):m_pDx12(dx12)
 {
 	assert(SUCCEEDED(CreateRootSignature()));
 	assert(SUCCEEDED(CreateGraphicsPipelineForPMD()));
@@ -46,7 +46,7 @@ PMDRenderer::CreateDefaultTexture(size_t width, size_t height) {
 	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 	ID3D12Resource* buff = nullptr;
-	auto result = _dx12.Device()->CreateCommittedResource(
+	auto result = m_pDx12.Device()->CreateCommittedResource(
 		&texHeapProp,
 		D3D12_HEAP_FLAG_NONE,//特に指定なし
 		&resDesc,
@@ -185,7 +185,7 @@ PMDRenderer::CreateGraphicsPipelineForPMD() {
 
 	gpipeline.SampleDesc.Count = 1;//サンプリングは1ピクセルにつき１
 	gpipeline.SampleDesc.Quality = 0;//クオリティは最低
-	result = _dx12.Device()->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipeline.ReleaseAndGetAddressOf()));
+	result = m_pDx12.Device()->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipeline.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) {
 		assert(SUCCEEDED(result));
 	}
@@ -222,7 +222,7 @@ PMDRenderer::CreateRootSignature() {
 		assert(SUCCEEDED(result));
 		return result;
 	}
-	result = _dx12.Device()->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(_rootSignature.ReleaseAndGetAddressOf()));
+	result = m_pDx12.Device()->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(_rootSignature.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) {
 		assert(SUCCEEDED(result));
 		return result;

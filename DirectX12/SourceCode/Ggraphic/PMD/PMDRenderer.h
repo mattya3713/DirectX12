@@ -2,16 +2,15 @@
 
 #include<d3d12.h>
 #include<vector>
-#include<wrl.h>
 #include<memory>
 
-class Dx12Wrapper;
+class CDirectX12;
 class PMDActor;
 class PMDRenderer
 {
 	friend PMDActor;
 private:
-	Dx12Wrapper& _dx12;
+	CDirectX12& m_pDx12;
 	template<typename T>
 	using ComPtr = Microsoft::WRL::ComPtr<T>;
 
@@ -36,7 +35,7 @@ private:
 	bool CheckShaderCompileResult(HRESULT result , ID3DBlob* error=nullptr);
 
 public:
-	PMDRenderer(Dx12Wrapper& dx12);
+	PMDRenderer(CDirectX12& dx12);
 	~PMDRenderer();
 	void Update();
 	void Draw();

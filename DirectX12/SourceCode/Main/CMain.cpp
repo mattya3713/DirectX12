@@ -52,7 +52,10 @@ void CMain::Update()
 void CMain::Draw()
 {
 	//‰æ–Ê‚É•\Ž¦.
-//m_pDx12->Present();
+	m_pDx12->BeginDraw();
+
+
+	m_pDx12->EndDraw();
 }
 
 

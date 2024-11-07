@@ -23,8 +23,8 @@ namespace MyFilePath {
 	* @param	Path	: 対象のパス文字列.
 	* @return			: 拡張子.
 	*******************************************/
-	/*static inline std::string GetExtension(const std::string& Path);
-	static inline std::wstring GetExtension(const std::wstring& Path);*/
+	static inline std::string GetExtension(const std::string& Path);
+	static inline std::wstring GetExtension(const std::wstring& Path);
 
 	/*******************************************
 	* モデルのパスとテクスチャのパスから合成パスを得る
@@ -32,7 +32,7 @@ namespace MyFilePath {
 	* @param TexPath	: PMDモデルから見たテクスチャのパス
 	* @return			: アプリケーションから見たテクスチャのパス
 	*******************************************/
-	//static inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath);
+	static inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath);
 }
 
 #include "FilePath.inl" // インライン実装を含むファイルをインクルード.

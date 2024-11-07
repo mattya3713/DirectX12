@@ -108,7 +108,16 @@ public:
 	void Draw();
 	void EndDraw();
 
-	MyComPtr<IDXGISwapChain4> GetSwapChain();
+	// スワップチェーン取得.
+	const MyComPtr<IDXGISwapChain4> GetSwapChain();
+
+	// DirextX12デバイス取得.
+	const MyComPtr<ID3D12Device> GetDevice();
+
+	// コマンドリスト取得.
+	const MyComPtr<ID3D12GraphicsCommandList> GetCommandList();
+
+	MyComPtr<ID3D12Resource> GetTextureByPath(const char* texpath);
 
 	//デバイスコンテキストを取得.
 	//ID3D12Device* GetDevice() const { return m_pDevice12; }
@@ -189,6 +198,14 @@ private:
 		LPCSTR Target,
 		ID3DBlob** ShaderBlob);
 
+	/*******************************************
+	* @brief	テクスチャ名からテクスチャバッファ作成、中身をコピーする.
+	* @param	ファイルパス.
+	* @param	リソースのポインタを返す.
+	*******************************************/
+	ID3D12Resource* CreateTextureFromFile(const char* Texpath);
+
+
 private:
 	HWND m_hWnd;	// ウィンドウハンドル.
 
@@ -222,9 +239,9 @@ private:
 	std::unique_ptr<D3D12_RECT>				m_pScissorRect;			// シザー矩形.
 
 	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
-	std::map<std::string, LoadLambda_t> LoadLambdaTable;
+	std::map<std::string, LoadLambda_t>		m_LoadLambdaTable;
 
 	// ファイル名パスとリソースのマップテーブル.
-	std::map<std::string, ID3D12Resource*> _resourceTable;
+	std::map<std::string, MyComPtr<ID3D12Resource>>	m_ResourceTable;
 
 };
