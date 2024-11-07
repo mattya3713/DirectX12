@@ -1,47 +1,10 @@
 #include "PMDActor.h"
 #include "PMDRenderer.h"
 #include "../DirectX/CDirectX12.h"	
+#include "Utility/String/FilePath/FilePath.h"
 #include <d3dx12.h>
 
-namespace {
-	///テクスチャのパスをセパレータ文字で分離する
-	///@param path 対象のパス文字列
-	///@param splitter 区切り文字
-	///@return 分離前後の文字列ペア
-	std::pair<std::string, std::string>
-		SplitFileName(const std::string& path, const char splitter = '*') {
-		int idx = path.find(splitter);
-		std::pair<std::string, std::string> ret;
-		ret.first = path.substr(0, idx);
-		ret.second = path.substr(idx + 1, path.length() - idx - 1);
-		return ret;
-	}
-	///ファイル名から拡張子を取得する
-	///@param path 対象のパス文字列
-	///@return 拡張子
-	std::string
-		GetExtension(const std::string& path) {
-		int idx = path.rfind('.');
-		return path.substr(idx + 1, path.length() - idx - 1);
-	}
-	///モデルのパスとテクスチャのパスから合成パスを得る
-	///@param modelPath アプリケーションから見たpmdモデルのパス
-	///@param texPath PMDモデルから見たテクスチャのパス
-	///@return アプリケーションから見たテクスチャのパス
-	std::string GetTexturePathFromModelAndTexPath(const std::string& modelPath, const char* texPath) {
-		//ファイルのフォルダ区切りは\と/の二種類が使用される可能性があり
-		//ともかく末尾の\か/を得られればいいので、双方のrfindをとり比較する
-		//int型に代入しているのは見つからなかった場合はrfindがepos(-1→0xffffffff)を返すため
-		int pathIndex1 = modelPath.rfind('/');
-		int pathIndex2 = modelPath.rfind('\\');
-		auto pathIndex = std::max(pathIndex1, pathIndex2);
-		auto folderPath = modelPath.substr(0, pathIndex + 1);
-		return folderPath + texPath;
-	}
-}
-
-void* 
-PMDActor::Transform::operator new(size_t size) {
+void* PMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);
 }
 
@@ -50,11 +13,19 @@ PMDActor::PMDActor(const char* filepath,PMDRenderer& renderer):
 	m_pDx12(renderer.m_pDx12),
 	_angle(0.0f)
 {
-	m_Transform.world = DirectX::XMMatrixIdentity();
-	LoadPMDFile(filepath);
-	CreateTransformView();
-	CreateMaterialData();
-	CreateMaterialAndTextureView();
+	try {
+		m_Transform.world = DirectX::XMMatrixIdentity();
+		LoadPMDFile(filepath);
+		CreateTransformView();
+		CreateMaterialData();
+		CreateMaterialAndTextureView();
+	}
+	catch (const std::runtime_error& Msg) {
+
+		// エラーメッセージを表示.
+		std::wstring WStr = MyString::StringToWString(Msg.what());
+		_ASSERT_EXPR(false, WStr.c_str());
+	}
 }
 
 
@@ -69,10 +40,8 @@ PMDActor::LoadPMDFile(const char* path)
 	char Signature[3];
 	PMDHeader Pmdheader = {};
 
-	std::string StrModelPath = path;
-
 	FILE* fp;
-	auto err = fopen_s(&fp, "Data\\Model\\初音ミク.pmd", "rb");
+	auto err = fopen_s(&fp, path, "rb");
 	if (fp == nullptr) {
 		return -1;
 	}
@@ -82,14 +51,7 @@ PMDActor::LoadPMDFile(const char* path)
 	unsigned int vertNum;//頂点数
 	fread(&vertNum, sizeof(vertNum), 1, fp);
 
-	std::vector<PMDVertex> vertices(vertNum);//バッファ確保
-	for (unsigned int i = 0; i < vertNum; i++)
-	{
-		fread(&vertices[i], PmdVertexSize, 1, fp);
-	}
-
-	constexpr unsigned int pmdvertex_size = 38;//頂点1つあたりのサイズ
-	std::vector<unsigned char> vertices(vertNum*pmdvertex_size);//バッファ確保
+	std::vector<unsigned char> vertices(vertNum * PmdVertexSize);//バッファ確保
 	fread(vertices.data(), vertices.size(), 1, fp);//一気に読み込み
 
 	unsigned int IndicesNum;//インデックス数
@@ -115,7 +77,7 @@ PMDActor::LoadPMDFile(const char* path)
 
 	m_pVertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();//バッファの仮想アドレス
 	m_pVertexBufferView.SizeInBytes = vertices.size();//全バイト数
-	m_pVertexBufferView.StrideInBytes = pmdvertex_size;//1頂点あたりのバイト数
+	m_pVertexBufferView.StrideInBytes = PmdVertexSize;//1頂点あたりのバイト数
 
 	std::vector<unsigned short> indices(IndicesNum);
 	fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);//一気に読み込み
@@ -182,31 +144,31 @@ PMDActor::LoadPMDFile(const char* path)
 		std::string SphFileName = "";
 		std::string SpaFileName = "";
 		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {//スプリッタがある
-			auto namepair = SplitFileName(TexFileName);
-			if (GetExtension(namepair.first) == "sph") {
+			auto namepair = MyFilePath::SplitFileName(TexFileName);
+			if (MyFilePath::GetExtension(namepair.first) == "sph") {
 				TexFileName = namepair.second;
 				SphFileName = namepair.first;
 			}
-			else if (GetExtension(namepair.first) == "spa") {
+			else if (MyFilePath::GetExtension(namepair.first) == "spa") {
 				TexFileName = namepair.second;
 				SpaFileName = namepair.first;
 			}
 			else {
 				TexFileName = namepair.first;
-				if (GetExtension(namepair.second) == "sph") {
+				if (MyFilePath::GetExtension(namepair.second) == "sph") {
 					SphFileName = namepair.second;
 				}
-				else if (GetExtension(namepair.second) == "spa") {
+				else if (MyFilePath::GetExtension(namepair.second) == "spa") {
 					SpaFileName = namepair.second;
 				}
 			}
 		}
 		else {
-			if (GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
+			if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
 				SphFileName = pmdMaterials[i].TexFilePath;
 				TexFileName = "";
 			}
-			else if (GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
+			else if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
 				SpaFileName = pmdMaterials[i].TexFilePath;
 				TexFileName = "";
 			}
@@ -216,15 +178,15 @@ PMDActor::LoadPMDFile(const char* path)
 		}
 		//モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
 		if (TexFileName != "") {
-			auto TexFilePath = GetTexturePathFromModelAndTexPath(StrModelPath, TexFileName.c_str());
+			auto TexFilePath = MyFilePath::GetTexPath(path, TexFileName.c_str());
 			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
 		}
 		if (SphFileName != "") {
-			auto sphFilePath = GetTexturePathFromModelAndTexPath(StrModelPath, SphFileName.c_str());
+			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
 			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
 		}
 		if (SpaFileName != "") {
-			auto spaFilePath = GetTexturePathFromModelAndTexPath(StrModelPath, SpaFileName.c_str());
+			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
 			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
 		}
 	}

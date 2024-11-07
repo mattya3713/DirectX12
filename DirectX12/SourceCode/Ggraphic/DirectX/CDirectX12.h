@@ -113,19 +113,6 @@ private:// 作っていくんだよねぇ.
 	// フェンスの作成.
 	void CreateFance(MyComPtr<ID3D12Fence>& Fence);
 
-	// グラフィックパイプラインステートの設定.
-	void CreateGraphicPipeline(MyComPtr<ID3D12PipelineState>& GraphicPipelineState);
-
-	//テクスチャローダテーブルの作成.
-	void CreateTextureLoadTable();
-
-	// textureの作成.
-	ID3D12Resource* CreateGrayGradationTexture();
-	ID3D12Resource* CreateWhiteTexture();
-	ID3D12Resource* CreateBlackTexture();
-	// 読み込み
-	ID3D12Resource* LoadTextureFromFile(std::string& texPath);
-
 
 private:
 	/*******************************************
@@ -146,6 +133,11 @@ private:
 	* @param	リソースのポインタを返す.
 	*******************************************/
 	ID3D12Resource* CreateTextureFromFile(const char* Texpath);
+
+	/*******************************************
+	* @brief	 テクスチャロードテーブルの作成.
+	*******************************************/
+	void CreateTextureLoadTable();
 
 
 private:
