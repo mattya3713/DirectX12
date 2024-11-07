@@ -8,7 +8,7 @@
 
 constexpr size_t PMDTexWide = 4;
 
-PMDRenderer::PMDRenderer(CDirectX12& dx12):m_pDx12(dx12)
+CPMDRenderer::CPMDRenderer(CDirectX12& dx12):m_pDx12(dx12)
 {
 	CreateRootSignature();
 	CreateGraphicsPipelineForPMD();
@@ -20,22 +20,22 @@ PMDRenderer::PMDRenderer(CDirectX12& dx12):m_pDx12(dx12)
 }
 
 
-PMDRenderer::~PMDRenderer()
+CPMDRenderer::~CPMDRenderer()
 {
 }
 
 
 void 
-PMDRenderer::Update() {
+CPMDRenderer::Update() {
 
 }
 void 
-PMDRenderer::Draw() {
+CPMDRenderer::Draw() {
 
 }
 
 // テクスチャの汎用素材を作成.
-ID3D12Resource* PMDRenderer::CreateDefaultTexture(size_t Width, size_t Height) {
+ID3D12Resource* CPMDRenderer::CreateDefaultTexture(size_t Width, size_t Height) {
 
 	// リソースの設定.
 	auto ResourceDesc = 
@@ -66,7 +66,7 @@ ID3D12Resource* PMDRenderer::CreateDefaultTexture(size_t Width, size_t Height) {
 }
 
 // 白テクスチャ作成.
-ID3D12Resource* PMDRenderer::CreateWhiteTexture()
+ID3D12Resource* CPMDRenderer::CreateWhiteTexture()
 {
 	// テクスチャリソースの作成.
 	ID3D12Resource* WhiteBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
@@ -83,7 +83,7 @@ ID3D12Resource* PMDRenderer::CreateWhiteTexture()
 
 	return WhiteBuff;
 }
-ID3D12Resource*	PMDRenderer::CreateBlackTexture() 
+ID3D12Resource*	CPMDRenderer::CreateBlackTexture() 
 {
 	// テクスチャリソースの作成.
 	ID3D12Resource* BlackBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
@@ -100,7 +100,7 @@ ID3D12Resource*	PMDRenderer::CreateBlackTexture()
 
 	return BlackBuff;
 }
-ID3D12Resource*	PMDRenderer::CreateGrayGradationTexture() 
+ID3D12Resource*	CPMDRenderer::CreateGrayGradationTexture() 
 {
 	ID3D12Resource* GradBuff = CreateDefaultTexture(4, 256);
 
@@ -124,7 +124,7 @@ ID3D12Resource*	PMDRenderer::CreateGrayGradationTexture()
 }
 
 //パイプライン初期化
-void PMDRenderer::CreateGraphicsPipelineForPMD() {
+void CPMDRenderer::CreateGraphicsPipelineForPMD() {
 
 	MyComPtr<ID3DBlob> VSBlob(nullptr);		// 頂点シェーダーのブロブ.
 	MyComPtr<ID3DBlob> PSBlob(nullptr);		// ピクセルシェーダーのブロブ.
@@ -194,7 +194,7 @@ void PMDRenderer::CreateGraphicsPipelineForPMD() {
 }
 
 //ルートシグネチャ初期化
-void PMDRenderer::CreateRootSignature() {
+void CPMDRenderer::CreateRootSignature() {
 	//レンジ
 	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};//テクスチャと定数の２つ
 	descTblRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);//定数[b0](ビュープロジェクション用)
@@ -239,7 +239,7 @@ void PMDRenderer::CreateRootSignature() {
 }
 
 // シェーダーのコンパイル.
-HRESULT PMDRenderer::CompileShaderFromFile(
+HRESULT CPMDRenderer::CompileShaderFromFile(
 	const std::wstring& FilePath,
 	LPCSTR EntryPoint,
 	LPCSTR Target,
@@ -261,13 +261,13 @@ HRESULT PMDRenderer::CompileShaderFromFile(
 }
 
 // PMD用のパイプラインステートを取得.
-ID3D12PipelineState* PMDRenderer::GetPipelineState()
+ID3D12PipelineState* CPMDRenderer::GetPipelineState()
 {
 	return m_pPipelineState.Get();
 }
 
 // PMD用のルート署名を取得.
-ID3D12RootSignature* PMDRenderer::GetRootSignature() 
+ID3D12RootSignature* CPMDRenderer::GetRootSignature() 
 {
 	return m_pRootSignature.Get();
 }

@@ -1,5 +1,7 @@
 #include "CMain.h"
 #include "Ggraphic/DirectX/CDirectX12.h"
+#include "Ggraphic/PMD/PMDActor.h"
+#include "Ggraphic/PMD/PMDRenderer.h"
 
 #ifdef _DEBUG
 	#include <crtdbg.h>
@@ -23,10 +25,15 @@ const TCHAR APP_NAME[]	= _T( "ゆきゆき合戦ごろごろ" );
 //=================================================
 CMain::CMain()
 	//初期化リスト.
-	: m_hWnd	( nullptr )
-	, m_pDx12	( nullptr )
+	: m_hWnd		( nullptr )
+	, m_pDx12		( nullptr )
+	, m_pPMDRenderer( nullptr )
+	, m_pPmdActor	( nullptr )
 {
-	m_pDx12 = new CDirectX12();
+	m_pDx12.reset(new CDirectX12());
+	m_pDx12->Create(m_hWnd);
+	m_pPMDRenderer.reset(new CPMDRenderer(*m_pDx12));
+	m_pPmdActor.reset(new CPMDActor("Model/初音ミク.pmd", *m_pPMDRenderer));
 }
 
 
@@ -35,8 +42,6 @@ CMain::CMain()
 //=================================================
 CMain::~CMain()
 {
-	SAFE_DELETE(m_pDx12);
-
 	DeleteObject( m_hWnd );
 }
 
@@ -51,11 +56,27 @@ void CMain::Update()
 // 描画処理.
 void CMain::Draw()
 {
-	//画面に表示.
+	// 全体の描画準備.
 	m_pDx12->BeginDraw();
 
+	//PMD用の描画パイプラインに合わせる
+	m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
+	//ルートシグネチャもPMD用に合わせる
+	m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMDRenderer->GetRootSignature());
 
+	m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	m_pDx12->SetScene();
+
+	m_pPmdActor->Update();
+	m_pPmdActor->Draw();
+
+	// 終了処理.
 	m_pDx12->EndDraw();
+
+	// フリップ
+	m_pDx12->GetSwapChain()->Present(1, 0);
+
 }
 
 
@@ -67,6 +88,7 @@ HRESULT CMain::Create()
 	{
 		return E_FAIL;
 	}
+
 	return S_OK;
 }
 

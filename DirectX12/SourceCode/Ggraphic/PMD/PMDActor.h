@@ -7,11 +7,11 @@
 
 // 前方宣言.
 class CDirectX12;
-class PMDRenderer;
+class CPMDRenderer;
 
-class PMDActor
+class CPMDActor
 {
-	friend PMDRenderer;
+	friend CPMDRenderer;
 private:
 
 	// PMDヘッダー構造体.
@@ -97,15 +97,15 @@ private:
 
 	float _angle;//テスト用Y軸回転
 public:
-	PMDActor(const char* filepath,PMDRenderer& renderer);
-	~PMDActor();
+	CPMDActor(const char* filepath,CPMDRenderer& renderer);
+	~CPMDActor();
 	///クローンは頂点およびマテリアルは共通のバッファを見るようにする
-	PMDActor* Clone();
+	CPMDActor* Clone();
 	void Update();
 	void Draw();
 
 private:
-	PMDRenderer& m_pRenderer;
+	CPMDRenderer& m_pRenderer;
 	CDirectX12& m_pDx12;
 
 	//頂点関連

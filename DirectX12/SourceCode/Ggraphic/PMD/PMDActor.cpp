@@ -4,11 +4,11 @@
 #include "Utility/String/FilePath/FilePath.h"
 #include <d3dx12.h>
 
-void* PMDActor::Transform::operator new(size_t size) {
+void* CPMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);
 }
 
-PMDActor::PMDActor(const char* filepath,PMDRenderer& renderer):
+CPMDActor::CPMDActor(const char* filepath,CPMDRenderer& renderer):
 	m_pRenderer(renderer),
 	m_pDx12(renderer.m_pDx12),
 	_angle(0.0f)
@@ -29,22 +29,25 @@ PMDActor::PMDActor(const char* filepath,PMDRenderer& renderer):
 }
 
 
-PMDActor::~PMDActor()
+CPMDActor::~CPMDActor()
 {
 }
 
 
-HRESULT
-PMDActor::LoadPMDFile(const char* path)
+HRESULT CPMDActor::LoadPMDFile(const char* path)
 {
+	// ヘッター読み込み用シグネクチャ.
 	char Signature[3];
 	PMDHeader Pmdheader = {};
 
 	FILE* fp;
-	auto err = fopen_s(&fp, path, "rb");
+
 	if (fp == nullptr) {
 		return -1;
 	}
+
+	auto err = fopen_s(&fp, path, "rb");
+
 	fread(Signature, sizeof(Signature), 1, fp);
 	fread(&Pmdheader, sizeof(Pmdheader), 1, fp);
 
@@ -195,7 +198,7 @@ PMDActor::LoadPMDFile(const char* path)
 }
 
 HRESULT 
-PMDActor::CreateTransformView() {
+CPMDActor::CreateTransformView() {
 	//GPUバッファ作成
 	auto buffSize = sizeof(Transform);
 	buffSize = (buffSize + 0xff)&~0xff;
@@ -245,7 +248,7 @@ PMDActor::CreateTransformView() {
 }
 
 HRESULT
-PMDActor::CreateMaterialData() {
+CPMDActor::CreateMaterialData() {
 	//マテリアルバッファを作成
 	auto MaterialBuffSize = sizeof(MaterialForHlsl);
 	MaterialBuffSize = (MaterialBuffSize + 0xff)&~0xff;
@@ -285,7 +288,7 @@ PMDActor::CreateMaterialData() {
 
 
 HRESULT 
-PMDActor::CreateMaterialAndTextureView() {
+CPMDActor::CreateMaterialAndTextureView() {
 	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
 	MaterialDescHeapDesc.NumDescriptors = m_pMaterial.size() * 5;//マテリアル数ぶん(定数1つ、テクスチャ3つ)
 	MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -359,12 +362,12 @@ PMDActor::CreateMaterialAndTextureView() {
 
 
 void 
-PMDActor::Update() {
+CPMDActor::Update() {
 	_angle += 0.03f;
 	m_MappedTransform->world =  DirectX::XMMatrixRotationY(_angle);
 }
 void 
-PMDActor::Draw() {
+CPMDActor::Draw() {
 	m_pDx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_pVertexBufferView);
 	m_pDx12.GetCommandList()->IASetIndexBuffer(&m_pIndexBufferView);
 

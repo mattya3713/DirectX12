@@ -114,6 +114,7 @@ private:// 作っていくんだよねぇ.
 	void CreateFance(MyComPtr<ID3D12Fence>& Fence);
 
 
+
 private:
 	/*******************************************
 	* @brief	アダプターを見つける.

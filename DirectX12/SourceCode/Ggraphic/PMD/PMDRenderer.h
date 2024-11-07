@@ -6,14 +6,14 @@
 
 // ‘O•ûéŒ¾.
 class CDirectX12;
-class PMDActor;
+class CPMDActor;
 
-class PMDRenderer
+class CPMDRenderer
 {
-	friend PMDActor;
+	friend CPMDActor;
 public:
-	PMDRenderer(CDirectX12& dx12);
-	~PMDRenderer();
+	CPMDRenderer(CDirectX12& dx12);
+	~CPMDRenderer();
 	void Update();
 	void Draw();
 

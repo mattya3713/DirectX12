@@ -3,6 +3,8 @@
 
 //クラスの前方宣言.
 class CDirectX12;
+class CPMDRenderer;
+class CPMDActor;
 class CGame;
 
 /**************************************************
@@ -38,6 +40,8 @@ private:
 	
 
 	HWND			m_hWnd;	 // ウィンドウハンドル.
-	CDirectX12*		m_pDx12; // DirectX12セットアップクラス.
 
+	std::shared_ptr<CDirectX12>		m_pDx12;			// DirectX12セットアップクラス.
+	std::shared_ptr<CPMDRenderer>	m_pPMDRenderer;
+	std::shared_ptr<CPMDActor>		m_pPmdActor;
 };
