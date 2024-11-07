@@ -4,9 +4,9 @@
 
 CDirectX12::CDirectX12()
 	: m_hWnd			( nullptr )
-	, m_pDevice12		( nullptr )
 	, m_pDxgiFactory	( nullptr )
 	, m_pSwapChain		( nullptr )
+	, m_pDevice12		( nullptr )
 	, m_pCmdAllocator	( nullptr )
 	, m_pCmdList		( nullptr )
 	, m_pCmdQueue		( nullptr )
@@ -339,31 +339,6 @@ bool CDirectX12::Create(HWND hWnd)
 
 		}
 
-		ID3DBlob* VSBlob = nullptr;	// 頂点シェーダーのブロブ.
-		ID3DBlob* PSBlob = nullptr;	// ピクセルシェーダーのブロブ.
-
-		// 頂点シェーダーの読み込み.
-		CompileShaderFromFile(
-			L"Data\\Shader\\Basic\\BasicVertexShader.hlsl",
-			"BasicVS", "vs_5_0",
-			&VSBlob);
-
-
-		CompileShaderFromFile(
-			L"Data\\Shader\\Basic\\BasicPixelShader.hlsl",
-			"BasicPS", "ps_5_0",
-			&PSBlob);
-
-		// TODO : 短くできそう.
-		D3D12_INPUT_ELEMENT_DESC InputLayout[] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "BONE_NO"	, 0, DXGI_FORMAT_R16G16_UINT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "WEIGHT"	, 0, DXGI_FORMAT_R8_UINT		, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			//{ "EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-		};
-
 		// グラフィックパイプラインステートの設定.
 		CreateGraphicPipeline(m_pPipelineState);
 
@@ -571,7 +546,7 @@ MyComPtr<IDXGISwapChain4> CDirectX12::GetSwapChain()
 }
 
 // DXGIの生成.
-void CDirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6> DxgiFactory)
+void CDirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 {
 #ifdef _DEBUG
 	MyAssert::IsFailed(
@@ -620,9 +595,9 @@ void CDirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6> DxgiFactory)
 
 // コマンド類の生成.
 void CDirectX12::CreateCommandObject(
-	MyComPtr<ID3D12CommandAllocator>	CmdAllocator,
-	MyComPtr<ID3D12GraphicsCommandList> CmdList,
-	MyComPtr<ID3D12CommandQueue>		CmdQueue)
+	MyComPtr<ID3D12CommandAllocator>&	CmdAllocator,
+	MyComPtr<ID3D12GraphicsCommandList>&CmdList,
+	MyComPtr<ID3D12CommandQueue>&		CmdQueue)
 {
 	MyAssert::IsFailed(
 		_T("コマンドリストアロケーターの生成"),
@@ -654,7 +629,7 @@ void CDirectX12::CreateCommandObject(
 }
 
 // スワップチェーンの作成.
-void CDirectX12::CreateSwapChain(MyComPtr<IDXGISwapChain4> SwapChain)
+void CDirectX12::CreateSwapChain(MyComPtr<IDXGISwapChain4>& SwapChain)
 {
 	// スワップ チェーン構造体の設定.
 	DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
@@ -684,8 +659,8 @@ void CDirectX12::CreateSwapChain(MyComPtr<IDXGISwapChain4> SwapChain)
 
 // レンダーターゲットの作成.
 void CDirectX12::CreateRenderTarget(
-	MyComPtr<ID3D12DescriptorHeap>			RenderTargetViewHeap,
-	std::vector<MyComPtr<ID3D12Resource>>	BackBuffer)
+	MyComPtr<ID3D12DescriptorHeap>&			RenderTargetViewHeap,
+	std::vector<MyComPtr<ID3D12Resource>>&	BackBuffer)
 {
 	// ディスクリプタヒープ構造体の作成.
 	D3D12_DESCRIPTOR_HEAP_DESC HeapDesc = {};
@@ -703,7 +678,7 @@ void CDirectX12::CreateRenderTarget(
 	// スワップチェーン構造体.
 	DXGI_SWAP_CHAIN_DESC SwcDesc = {};
 	MyAssert::IsFailed(
-		_T("ディスクリプタヒープの作成"),
+		_T("スワップチェーン構造体を取得."),
 		&IDXGISwapChain4::GetDesc, m_pSwapChain.Get(),
 		&SwcDesc);
 
@@ -711,7 +686,12 @@ void CDirectX12::CreateRenderTarget(
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle = RenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
 
 	// バックバッファをヒープの数分宣言.
-	std::vector<MyComPtr<ID3D12Resource>> BackBuffer(SwcDesc.BufferCount);
+	m_pBackBuffer.resize(SwcDesc.BufferCount);
+
+	// SRGBレンダーターゲットビュー設定.
+	D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
+	RTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 	// バックバファの数分.
 	for (int i = 0; i < static_cast<int>(SwcDesc.BufferCount); ++i)
@@ -720,23 +700,35 @@ void CDirectX12::CreateRenderTarget(
 			_T("%d個目のスワップチェーン内のバッファーとビューを関連づける", i + 1),
 			&IDXGISwapChain4::GetBuffer, m_pSwapChain.Get(),
 			static_cast<UINT>(i),
-			IID_PPV_ARGS(BackBuffer[i].GetAddressOf()));
+			IID_PPV_ARGS(m_pBackBuffer[i].GetAddressOf()));
+
+		RTVDesc.Format = m_pBackBuffer[i]->GetDesc().Format;
 
 		// レンダーターゲットビューを生成する.
 		m_pDevice12->CreateRenderTargetView(
 			BackBuffer[i].Get(),
-			nullptr,
+			&RTVDesc,
 			DescriptorHandle);
 
 		// ポインタをずらす.
 		DescriptorHandle.ptr += m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
+
+	DXGI_SWAP_CHAIN_DESC1 Desc = {};
+	MyAssert::IsFailed(
+		_T("画面幅を取得"),
+		&IDXGISwapChain4::GetDesc1, m_pSwapChain.Get(),
+		&Desc);
+
+	m_pViewport.reset(new CD3DX12_VIEWPORT(BackBuffer[0].Get()));
+	m_pScissorRect.reset(new CD3DX12_RECT(0, 0, Desc.Width, Desc.Height));
+
 }
 
 // 深度バッファ作成.
 void CDirectX12::CreateDepthDesc(
-	MyComPtr<ID3D12Resource>		DepthBuffer,
-	MyComPtr<ID3D12DescriptorHeap>	DepthHeap)
+	MyComPtr<ID3D12Resource>&		DepthBuffer,
+	MyComPtr<ID3D12DescriptorHeap>&	DepthHeap)
 {
 	// 深度バッファの仕様.
 	D3D12_RESOURCE_DESC DepthResourceDesc = {};
@@ -795,7 +787,7 @@ void CDirectX12::CreateDepthDesc(
 }
 
 // フェンスの作成.
-void CDirectX12::CreateFance(MyComPtr<ID3D12Fence> Fence)
+void CDirectX12::CreateFance(MyComPtr<ID3D12Fence>& Fence)
 {
 	MyAssert::IsFailed(
 		_T("フェンスの生成"),
@@ -1032,8 +1024,35 @@ ID3D12Resource* CDirectX12::LoadTextureFromFile(std::string& TexPath)
 
 // グラフィックパイプラインステートの設定.
 void CDirectX12::CreateGraphicPipeline(
-	MyComPtr<ID3D12PipelineState> GraphicPipelineState)
+	MyComPtr<ID3D12PipelineState>& GraphicPipelineState)
 {
+	ID3DBlob* VSBlob = nullptr;	// 頂点シェーダーのブロブ.
+	ID3DBlob* PSBlob = nullptr;	// ピクセルシェーダーのブロブ.
+	ID3DBlob* ErrerBlob = nullptr;	// ピクセルシェーダーのブロブ.
+	HRESULT   result = S_OK;
+
+	// 頂点シェーダーの読み込み.
+	CompileShaderFromFile(
+		L"Data\\Shader\\Basic\\BasicVertexShader.hlsl",
+		"BasicVS", "vs_5_0",
+		&VSBlob);
+
+
+	CompileShaderFromFile(
+		L"Data\\Shader\\Basic\\BasicPixelShader.hlsl",
+		"BasicPS", "ps_5_0",
+		&PSBlob);
+
+	// TODO : 短くできそう.
+	D3D12_INPUT_ELEMENT_DESC InputLayout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BONE_NO"	, 0, DXGI_FORMAT_R16G16_UINT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "WEIGHT"	, 0, DXGI_FORMAT_R8_UINT		, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
+	};
+
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
 	gpipeline.pRootSignature = nullptr;
@@ -1151,7 +1170,7 @@ void CDirectX12::CreateGraphicPipeline(
 	rootSignatureDesc.NumStaticSamplers = 2;
 
 	ID3DBlob* rootSigBlob = nullptr;
-	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
+	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &ErrerBlob);
 	result = m_pDevice12->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootsignature));
 	rootSigBlob->Release();
 

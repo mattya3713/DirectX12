@@ -1,5 +1,5 @@
 #include "CMain.h"
-#include "..\DirectX\CDirectX12.h"
+#include "Ggraphic/DirectX/CDirectX12.h"
 
 #ifdef _DEBUG
 	#include <crtdbg.h>

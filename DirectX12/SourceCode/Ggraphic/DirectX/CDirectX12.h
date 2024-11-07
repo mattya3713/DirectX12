@@ -117,29 +117,32 @@ public:
 private:// 作っていくんだよねぇ.
 
 	// DXGIの生成.
-	void CreateDXGIFactory(MyComPtr<IDXGIFactory6> DxgiFactory);
+	void CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory);
 
 	// コマンド類の生成.
 	void CreateCommandObject(
-		MyComPtr<ID3D12CommandAllocator>	CmdAllocator,
-		MyComPtr<ID3D12GraphicsCommandList>	CmdList,
-		MyComPtr<ID3D12CommandQueue>		CmdQueue);
+		MyComPtr<ID3D12CommandAllocator>&	CmdAllocator,
+		MyComPtr<ID3D12GraphicsCommandList>&CmdList,
+		MyComPtr<ID3D12CommandQueue>&		CmdQueue);
 
 	// スワップチェーンの作成.
-	void CreateSwapChain(MyComPtr<IDXGISwapChain4> SwapChain);
+	void CreateSwapChain(MyComPtr<IDXGISwapChain4>& SwapChain);
 
 	// レンダーターゲットの作成.
 	void CreateRenderTarget(
-		MyComPtr<ID3D12DescriptorHeap>			RenderTargetViewHeap,
-		std::vector<MyComPtr<ID3D12Resource>>	BackBuffer);
+		MyComPtr<ID3D12DescriptorHeap>&			RenderTargetViewHeap,
+		std::vector<MyComPtr<ID3D12Resource>>&	BackBuffer);
 
 	// 深度バッファの作成.
 	void CreateDepthDesc(
-		MyComPtr<ID3D12Resource>		DepthBuffer,
-		MyComPtr<ID3D12DescriptorHeap>	DepthHeap);
+		MyComPtr<ID3D12Resource>&		DepthBuffer,
+		MyComPtr<ID3D12DescriptorHeap>&	DepthHeap);
 
 	// フェンスの作成.
-	void CreateFance(MyComPtr<ID3D12Fence> Fence);
+	void CreateFance(MyComPtr<ID3D12Fence>& Fence);
+
+	// グラフィックパイプラインステートの設定.
+	void CreateGraphicPipeline(MyComPtr<ID3D12PipelineState>& GraphicPipelineState);
 
 	//テクスチャローダテーブルの作成.
 	void CreateTextureLoadTable();
@@ -151,8 +154,6 @@ private:// 作っていくんだよねぇ.
 	// 読み込み
 	ID3D12Resource* LoadTextureFromFile(std::string& texPath);
 
-	// グラフィックパイプラインステートの設定.
-	void CreateGraphicPipeline(MyComPtr<ID3D12PipelineState> GraphicPipelineState);
 
 private:
 	/*******************************************
@@ -191,12 +192,12 @@ private:
 private:
 	HWND m_hWnd;	// ウィンドウハンドル.
 
-	// DirectX12,DXGI.
-	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
+	// DXGI.
 	MyComPtr<IDXGIFactory6>					m_pDxgiFactory;			// ディスプレイに出力するためのAPI.
 	MyComPtr<IDXGISwapChain4>				m_pSwapChain;			// スワップチェーン.
 
-	// コマンド類.
+	// DirectX12.
+	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
 	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocator;		// コマンドアロケータ(命令をためておくメモリ領域).	
 	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
 	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// コマンドキュー.
@@ -217,6 +218,8 @@ private:
 	// 描画周りの設定.
 	MyComPtr<ID3D12PipelineState>			m_pPipelineState;		// 描画設定.
 	MyComPtr<ID3D12RootSignature>			m_pRootSignature;		// ルートシグネチャ.
+	std::unique_ptr<D3D12_VIEWPORT>			m_pViewport;			// ビューポート.
+	std::unique_ptr<D3D12_RECT>				m_pScissorRect;			// シザー矩形.
 
 	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
 	std::map<std::string, LoadLambda_t> LoadLambdaTable;
