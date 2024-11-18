@@ -96,7 +96,7 @@ namespace MyAssert {
 	* @param	¬Œ÷‚©‚Ç‚¤‚©.
 	* @param	ErroeBlob.
 	*******************************************/
-	void ErrorBlob(const HRESULT& Result, ID3DBlob* ErrorMsg)
+	static void ErrorBlob(const HRESULT& Result, ID3DBlob* ErrorMsg)
 	{
 		// ¬Œ÷‚È‚çˆ—‚ğ‚µ‚È‚¢.
 		if (SUCCEEDED(Result)) { return; }

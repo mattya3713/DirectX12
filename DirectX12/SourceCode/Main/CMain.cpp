@@ -4,275 +4,214 @@
 #include "Ggraphic/PMD/PMDRenderer.h"
 
 #ifdef _DEBUG
-	#include <crtdbg.h>
+#include <crtdbg.h>
 #endif
 
-//ウィンドウを画面中央で起動を有効にする.
+// ウィンドウを画面中央で起動を有効にする.
 #define ENABLE_WINDOWS_CENTERING
 
 //=================================================
-//	定数.
+// 定数.
 //=================================================
-const TCHAR WND_TITLE[] = _T( "ゆきゆき合戦ごろごろ" );
-const TCHAR APP_NAME[]	= _T( "ゆきゆき合戦ごろごろ" );
+const TCHAR WND_TITLE[] = _T("ゆきゆき合戦ごろごろ");
+const TCHAR APP_NAME[] = _T("ゆきゆき合戦ごろごろ");
 
-
-/********************************************************************************
-*	メインクラス.
-**/
 //=================================================
-//	コンストラクタ.
+// コンストラクタ.
 //=================================================
 CMain::CMain()
-	//初期化リスト.
-	: m_hWnd		( nullptr )
-	, m_pDx12		( nullptr )
-	, m_pPMDRenderer( nullptr )
-	, m_pPmdActor	( nullptr )
+    : m_hWnd(nullptr)
+    , m_pDx12(nullptr)
+    , m_pPMDRenderer(nullptr)
+    , m_pPmdActor(nullptr)
 {
-	m_pDx12.reset(new CDirectX12());
-	m_pDx12->Create(m_hWnd);
-	m_pPMDRenderer.reset(new CPMDRenderer(*m_pDx12));
-	m_pPmdActor.reset(new CPMDActor("Model/初音ミク.pmd", *m_pPMDRenderer));
 }
 
-
 //=================================================
-//	デストラクタ.
+// デストラクタ.
 //=================================================
 CMain::~CMain()
 {
-	DeleteObject( m_hWnd );
+    Release();
 }
 
-
-//更新処理.
+// 更新処理.
 void CMain::Update()
 {
-	// バックバッファをクリアにする.
-	//m_pDx12->ClearBackBuffer();
+    if (m_pPmdActor) {
+        m_pPmdActor->Update();
+    }
 }
 
 // 描画処理.
 void CMain::Draw()
 {
-	// 全体の描画準備.
-	m_pDx12->BeginDraw();
+    if (!m_pDx12) return;
+
+    // 全体の描画準備.
+    m_pDx12->BeginDraw();
 
 	//PMD用の描画パイプラインに合わせる
-	m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
-	//ルートシグネチャもPMD用に合わせる
-	m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMDRenderer->GetRootSignature());
+    m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
+    //ルートシグネチャもPMD用に合わせる
+    m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMDRenderer->GetRootSignature());
 
-	m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	m_pDx12->SetScene();
+    m_pDx12->SetScene();
 
-	m_pPmdActor->Update();
-	m_pPmdActor->Draw();
+    if (m_pPmdActor) {
+        m_pPmdActor->Draw();
+    }
 
-	// 終了処理.
-	m_pDx12->EndDraw();
+    // 終了処理.
+    m_pDx12->EndDraw();
 
-	// フリップ
-	m_pDx12->GetSwapChain()->Present(1, 0);
-
+    // フリップ.
+    m_pDx12->GetSwapChain()->Present(1, 0);
 }
 
-
-//構築処理.
+// 構築処理.
 HRESULT CMain::Create()
 {
-	// DirectX12構築.
-	if(m_pDx12->Create( m_hWnd ) )
-	{
-		return E_FAIL;
-	}
+    m_pDx12 = std::make_shared<CDirectX12>();
+    m_pDx12->Create(m_hWnd);
 
-	return S_OK;
+    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+    m_pPmdActor = std::make_shared<CPMDActor>("Data/Model/初音ミク.pmd", *m_pPMDRenderer);
+
+    return S_OK;
 }
 
-//データロード処理.
+// データロード処理.
 HRESULT CMain::LoadData()
 {
-	return S_OK;
+    // 必要に応じてデータロード処理を追加.
+    return S_OK;
 }
 
-
-//解放処理.
+// 解放処理.
 void CMain::Release()
 {
+    if (m_pPmdActor) {
+        m_pPmdActor.reset();
+    }
 
-	if (m_pDx12 != nullptr) {
-		//m_pDx12->Release();
-	}
+    if (m_pPMDRenderer) {
+        m_pPMDRenderer.reset();
+    }
+
+    if (m_pDx12) {
+        m_pDx12.reset();
+    }
 }
 
-
-//メッセージループ.
+// メッセージループ.
 void CMain::Loop()
 {
-	//------------------------------------------------
-	//	フレームレート調整準備.
-	//------------------------------------------------
-	float Rate = 0.0f;	//レート.
-	DWORD sync_old = timeGetTime();			//過去時間.
-	DWORD sync_now;							//現在時間.
-	
-	//メッセージループ.
-	MSG msg = { 0 };
-	ZeroMemory( &msg, sizeof( msg ) );
+    float rate = 0.0f;   // フレームレート制御用.
+    DWORD syncOld = timeGetTime();
+    DWORD syncNow;
 
-	while( msg.message != WM_QUIT )
-	{
-		sync_now = timeGetTime();	//現在の時間を取得.
+    MSG msg = {};
+    while (msg.message != WM_QUIT) {
+        syncNow = timeGetTime();
 
-		if( PeekMessage( &msg, nullptr, 0, 0, PM_REMOVE ) )
-		{
-			TranslateMessage( &msg );
-			DispatchMessage( &msg );
-		}
-		else if( sync_now - sync_old >= Rate )
-		{
-			sync_old = sync_now;	//現在時間に置き換え.
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        else if (syncNow - syncOld >= rate) {
+            syncOld = syncNow;
 
-			//更新処理.
-			Update();
-			Draw();
-		}
-	}
+            Update();
+            Draw();
+        }
+    }
 
-
-	//アプリケーションの終了.
-	Release();
+    Release();
 }
 
-//ウィンドウ初期化関数.
-HRESULT CMain::InitWindow(
-	HINSTANCE hInstance,	//インスタンス.
-	INT x, INT y,			//ウィンドウx,y座標.
-	INT width, INT height)	//ウィンドウ幅,高さ.
+// ウィンドウ初期化関数.
+HRESULT CMain::InitWindow(HINSTANCE hInstance, INT x, INT y, INT width, INT height)
 {
-	//ウィンドウの定義.
-	WNDCLASSEX wc;
-	ZeroMemory( &wc, sizeof( wc ) );//初期化(0を設定).
+    WNDCLASSEX wc = {};
+    wc.cbSize = sizeof(wc);
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = MsgProc;
+    wc.hInstance = hInstance;
+    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.lpszClassName = APP_NAME;
 
-	wc.cbSize			= sizeof( wc );
-	wc.style			= CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc		= MsgProc;//WndProc;
-	wc.hInstance		= hInstance;
-	wc.hIcon			= LoadIcon( nullptr, IDI_APPLICATION );
-	wc.hCursor			= LoadCursor( nullptr, IDC_ARROW );
-	wc.hbrBackground	= (HBRUSH)GetStockObject( LTGRAY_BRUSH );
-	wc.lpszClassName	= APP_NAME;
-	wc.hIconSm			= LoadIcon( nullptr, IDI_APPLICATION );
+    if (!RegisterClassEx(&wc)) {
+        return E_FAIL;
+    }
 
-	//ウィンドウクラスをWindowsに登録.
-	if( !RegisterClassEx( &wc ) ) {
-		_ASSERT_EXPR( false, _T( "ウィンドウクラスの登録に失敗" ) );
-		return E_FAIL;
-	}
+    RECT rect = { 0, 0, width, height };
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
 
-	//--------------------------------------.
-	//	ウィンドウ表示位置の調整.
-	//--------------------------------------.
-	//この関数内でのみ使用する構造体をここで定義.
-	struct RECT_WND
-	{
-		INT x, y, w, h;
-		RECT_WND() : x(), y(), w(), h() {}
-	} rectWindow;//ここに変数宣言もする.
+    INT winWidth = rect.right - rect.left;
+    INT winHeight = rect.bottom - rect.top;
+    INT winX = (GetSystemMetrics(SM_CXSCREEN) - winWidth) / 2;
+    INT winY = (GetSystemMetrics(SM_CYSCREEN) - winHeight) / 2;
 
-#ifdef ENABLE_WINDOWS_CENTERING
-	//ディスプレイの幅、高さを取得.
-	HWND hDeskWnd = nullptr;
-	RECT recDisplay;
-	hDeskWnd = GetDesktopWindow();
-	GetWindowRect( hDeskWnd, &recDisplay );
+    m_hWnd = CreateWindow(
+        APP_NAME, WND_TITLE,
+        WS_OVERLAPPEDWINDOW,
+        winX, winY, winWidth, winHeight,
+        nullptr, nullptr, hInstance, this
+    );
 
-	//センタリング.
-	rectWindow.x = ( recDisplay.right - width ) / 2;	//表示位置x座標.
-	rectWindow.y = ( recDisplay.bottom - height ) / 2;	//表示位置y座標.
-#endif//ENABLE_WINDOWS_CENTERING
+    if (!m_hWnd) {
+        return E_FAIL;
+    }
 
-	//--------------------------------------.
-	//	ウィンドウ領域の調整.
-	//--------------------------------------.
-	RECT	rect;		//矩形構造体.
-	DWORD	dwStyle;	//ウィンドウスタイル.
-	rect.top = 0;			//上.
-	rect.left = 0;			//左.
-	rect.right = width;		//右.
-	rect.bottom = height;	//下.
-	dwStyle = WS_OVERLAPPEDWINDOW;	//ウィンドウ種別.
+    ShowWindow(m_hWnd, SW_SHOW);
+    UpdateWindow(m_hWnd);
 
-	if( AdjustWindowRect(
-		&rect,			//(in)画面サイズが入った矩形構造体.(out)計算結果.
-		dwStyle,		//ウィンドウスタイル.
-		FALSE ) == 0 )	//メニューを持つかどうかの指定.
-	{
-		MessageBox(
-			nullptr,
-			_T( "ウィンドウ領域の調整に失敗" ),
-			_T( "エラーメッセージ" ),
-			MB_OK );
-		return 0;
-	}
-
-	//ウィンドウの幅高さ調節.
-	rectWindow.w = rect.right - rect.left;
-	rectWindow.h = rect.bottom - rect.top;
-
-	//ウィンドウの作成.
-	m_hWnd = CreateWindow(
-		APP_NAME,					//アプリ名.
-		WND_TITLE,					//ウィンドウタイトル.
-		dwStyle,					//ウィンドウ種別(普通).
-		rectWindow.x, rectWindow.y,	//表示位置x,y座標.
-		rectWindow.w, rectWindow.h,	//ウィンドウ幅,高さ.
-		nullptr,					//親ウィンドウハンドル.
-		nullptr,					//メニュー設定.
-		hInstance,					//インスタンス番号.
-		nullptr );					//ウィンドウ作成時に発生するイベントに渡すデータ.
-	if( !m_hWnd ) {
-		_ASSERT_EXPR( false, _T( "ウィンドウ作成失敗" ) );
-		return E_FAIL;
-	}
-
-	//ウィンドウの表示.
-	ShowWindow( m_hWnd, SW_SHOW );
-	UpdateWindow( m_hWnd );
-
-	return S_OK;
+    return S_OK;
 }
 
-//ウィンドウ関数（メッセージ毎の処理）.
-LRESULT CALLBACK CMain::MsgProc(
-	HWND hWnd, UINT uMsg,
-	WPARAM wParam, LPARAM lParam )
+// ウィンドウ関数（メッセージ毎の処理）.
+LRESULT CALLBACK CMain::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch( uMsg ) {
-	case WM_DESTROY://ウィンドウが破棄されたとき.
-		//アプリケーションの終了をWindowsに通知する.
-		PostQuitMessage( 0 );
-		break;
+    // hWndに関連付けられたCMainを取得.
+    // MEMO : ウィンドウが作成されるまでは nullptr になる可能性がある.
+    CMain* pMain = reinterpret_cast<CMain*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
-	case WM_KEYDOWN://キーボードが押されたとき.
-		//キー別の処理.
-		switch( static_cast<char>( wParam ) ) {
-		case VK_ESCAPE:	//ESCｷｰ.
-			if( MessageBox( nullptr,
-				_T( "ゲームを終了しますか？" ),
-				_T( "警告" ), MB_YESNO ) == IDYES )
-			{
-				//ウィンドウを破棄する.
-				DestroyWindow( hWnd );
-			}
-			break;
-		}
-		break;
-	}
+    // ウィンドウが初めて作成された時.
+    if (uMsg == WM_NCCREATE) {
+        // CREATESTRUCT構造体からCMainのポインタを取得.
+        CREATESTRUCT* pCreateStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
+        // SetWindowLongPtrを使用しhWndにCMainインスタンスを関連付ける.
+        SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+        // デフォルトのウィンドウプロシージャを呼び出して処理を進める.
+        return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    }
 
-	//メインに返す情報.
-	return DefWindowProc( hWnd, uMsg, wParam, lParam );
+    if (pMain) {
+        switch (uMsg) {
+            // ウィンドウが破棄されるとき.
+        case WM_DESTROY:
+            // GPUの終了を待ってからウィンドウを閉じる.
+            pMain->m_pDx12->WaitForGPU();
+            PostQuitMessage(0);
+            break;
+
+            // キーボードが押されたとき.
+        case WM_KEYDOWN:
+            if (wParam == VK_ESCAPE) {
+                if (MessageBox(hWnd, _T("ゲームを終了しますか？"), _T("警告"), MB_YESNO) == IDYES) {
+                    DestroyWindow(hWnd);
+                }
+            }
+            break;
+
+        default:
+            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+        }
+    }
+
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }

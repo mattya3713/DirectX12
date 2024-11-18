@@ -61,6 +61,13 @@ public:
 		AdditionalMaterial Additional;
 	};
 
+	// TODO : 仮シーンデータ.
+	struct SceneData {
+		DirectX::XMMATRIX view;//ビュー行列
+		DirectX::XMMATRIX proj;//プロジェクション行列
+		DirectX::XMFLOAT3 eye;//視点座標
+	};
+
 public:
 	CDirectX12();
 	~CDirectX12();
@@ -84,7 +91,10 @@ public:
 	// テクスチャを取得.
 	MyComPtr<ID3D12Resource> GetTextureByPath(const char* texpath);
 
+	void SetScene();
 
+	// GPUの完了待ち.
+	void WaitForGPU();
 
 private:// 作っていくんだよねぇ.
 
@@ -109,6 +119,12 @@ private:// 作っていくんだよねぇ.
 	void CreateDepthDesc(
 		MyComPtr<ID3D12Resource>&		DepthBuffer,
 		MyComPtr<ID3D12DescriptorHeap>&	DepthHeap);
+
+	// シーンビューの作成.
+	void CreateSceneDesc(
+		SceneData*						MappedSceneData,
+		MyComPtr<ID3D12Resource>&		SceneConstBuff,
+		MyComPtr<ID3D12DescriptorHeap>&	SceneDescHeap);
 
 	// フェンスの作成.
 	void CreateFance(MyComPtr<ID3D12Fence>& Fence);
@@ -162,6 +178,11 @@ private:
 	MyComPtr<ID3D12Resource>				m_pDepthBuffer;			// 深度バッファ.
 	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビューのデスクリプタヒープ. 
 	D3D12_CLEAR_VALUE						m_DepthClearValue;		// 深度のクリア値.
+
+	//シーンを構成するバッファまわり
+	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン.
+	SceneData*								m_pMappedSceneData;		// シーンの情報.
+	MyComPtr<ID3D12DescriptorHeap>			m_pSceneDescHeap;		// シーンの情報ヒープ.
 
 	// フェンス類.
 	MyComPtr<ID3D12Fence>					m_pFence;				// 処理待ち柵.

@@ -34,20 +34,18 @@ CPMDActor::~CPMDActor()
 }
 
 
-HRESULT CPMDActor::LoadPMDFile(const char* path)
+void CPMDActor::LoadPMDFile(const char* path)
 {
 	// ヘッター読み込み用シグネクチャ.
 	char Signature[3];
 	PMDHeader Pmdheader = {};
 
-	FILE* fp;
-
-	if (fp == nullptr) {
-		return -1;
-	}
+	FILE* fp = nullptr;
 
 	auto err = fopen_s(&fp, path, "rb");
 
+	
+	
 	fread(Signature, sizeof(Signature), 1, fp);
 	fread(&Pmdheader, sizeof(Pmdheader), 1, fp);
 
@@ -121,6 +119,10 @@ HRESULT CPMDActor::LoadPMDFile(const char* path)
 	m_pToonResource.resize(MaterialNum);
 	std::vector<PMDMaterial> pmdMaterials(MaterialNum);
 	fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
+
+	for (int i = 0; i < MaterialNum; ++i) {
+		m_pMaterial[i] = std::make_shared<Material>();
+	}
 	//コピー
 	for (int i = 0; i < pmdMaterials.size(); ++i) {
 		m_pMaterial[i]->IndicesNum = pmdMaterials[i].IndicesNum;
@@ -197,15 +199,16 @@ HRESULT CPMDActor::LoadPMDFile(const char* path)
 
 }
 
-HRESULT 
-CPMDActor::CreateTransformView() {
+void CPMDActor::CreateTransformView() {
 	//GPUバッファ作成
 	auto buffSize = sizeof(Transform);
 	buffSize = (buffSize + 0xff)&~0xff;
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(buffSize);
 
-	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
+	MyAssert::IsFailed(
+		_T("座標バッファ作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&resDesc,
@@ -213,42 +216,37 @@ CPMDActor::CreateTransformView() {
 		nullptr,
 		IID_PPV_ARGS(m_pTransformBuff.ReleaseAndGetAddressOf())
 	);
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
 
 	//マップとコピー
-	result = m_pTransformBuff->Map(0, nullptr, (void**)&m_MappedTransform);
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
+	MyAssert::IsFailed(
+		_T("座標のマップ"),
+		&ID3D12Resource::Map, m_pTransformBuff.Get(),
+		0, nullptr, 
+		(void**)&m_MappedTransform);
+
 	*m_MappedTransform = m_Transform;
 
-	//ビューの作成
+	// ビューの作成.
 	D3D12_DESCRIPTOR_HEAP_DESC transformDescHeapDesc = {};
-	transformDescHeapDesc.NumDescriptors = 1;//とりあえずワールドひとつ
+	transformDescHeapDesc.NumDescriptors = 1; // とりあえずワールドひとつ.
 	transformDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	transformDescHeapDesc.NodeMask = 0;
 
-	transformDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//デスクリプタヒープ種別
-	result = m_pDx12.GetDevice()->CreateDescriptorHeap(&transformDescHeapDesc, IID_PPV_ARGS(m_pTransformHeap.ReleaseAndGetAddressOf()));//生成
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
+	transformDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; // デスクリプタヒープ種別.
+
+	MyAssert::IsFailed(
+		_T("座標ヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDx12.GetDevice(),
+		&transformDescHeapDesc, 
+		IID_PPV_ARGS(m_pTransformHeap.ReleaseAndGetAddressOf()));//生成
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	cbvDesc.BufferLocation = m_pTransformBuff->GetGPUVirtualAddress();
 	cbvDesc.SizeInBytes = buffSize;
 	m_pDx12.GetDevice()->CreateConstantBufferView(&cbvDesc, m_pTransformHeap->GetCPUDescriptorHandleForHeapStart());
-
-	return S_OK;
 }
 
-HRESULT
-CPMDActor::CreateMaterialData() {
+void CPMDActor::CreateMaterialData() {
 	//マテリアルバッファを作成
 	auto MaterialBuffSize = sizeof(MaterialForHlsl);
 	MaterialBuffSize = (MaterialBuffSize + 0xff)&~0xff;
@@ -256,50 +254,48 @@ CPMDActor::CreateMaterialData() {
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(MaterialBuffSize * m_pMaterial.size());
 
-	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
+	MyAssert::IsFailed(
+		_T("マテリアル作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&resDesc,//勿体ないけど仕方ないですね
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(m_pMaterialHeap.ReleaseAndGetAddressOf())
-	);
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
+		IID_PPV_ARGS(m_pMaterialBuff.ReleaseAndGetAddressOf()));
 
 	//マップマテリアルにコピー
 	char* mapMaterial = nullptr;
-	result = m_pMaterialBuff->Map(0, nullptr, (void**)&mapMaterial);
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
+
+	MyAssert::IsFailed(
+		_T("マテリアルマップにコピー"),
+		&ID3D12Resource::Map, m_pMaterialBuff.Get(),
+		0, nullptr, 
+		(void**)&mapMaterial);
+
 	for (auto& m : m_pMaterial) {
 		*((MaterialForHlsl*)mapMaterial) = m->Material;//データコピー
 		mapMaterial += MaterialBuffSize;//次のアライメント位置まで進める
 	}
+
 	m_pMaterialBuff->Unmap(0, nullptr);
-
-	return S_OK;
-
 }
 
 
-HRESULT 
-CPMDActor::CreateMaterialAndTextureView() {
+void CPMDActor::CreateMaterialAndTextureView() {
 	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
 	MaterialDescHeapDesc.NumDescriptors = m_pMaterial.size() * 5;//マテリアル数ぶん(定数1つ、テクスチャ3つ)
 	MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	MaterialDescHeapDesc.NodeMask = 0;
 
 	MaterialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//デスクリプタヒープ種別
-	auto result = m_pDx12.GetDevice()->CreateDescriptorHeap(&MaterialDescHeapDesc, IID_PPV_ARGS(m_pMaterialHeap.ReleaseAndGetAddressOf()));//生成
-	if (FAILED(result)) {
-		assert(SUCCEEDED(result));
-		return result;
-	}
+
+	MyAssert::IsFailed(
+		_T("マテリアルヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDx12.GetDevice(),
+		&MaterialDescHeapDesc,
+		IID_PPV_ARGS(m_pMaterialHeap.ReleaseAndGetAddressOf()));
+
 	auto MaterialBuffSize = sizeof(MaterialForHlsl);
 	MaterialBuffSize = (MaterialBuffSize + 0xff)&~0xff;
 	D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
@@ -361,13 +357,12 @@ CPMDActor::CreateMaterialAndTextureView() {
 }
 
 
-void 
-CPMDActor::Update() {
+void CPMDActor::Update() {
 	_angle += 0.03f;
 	m_MappedTransform->world =  DirectX::XMMatrixRotationY(_angle);
 }
-void 
-CPMDActor::Draw() {
+
+void CPMDActor::Draw() {
 	m_pDx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_pVertexBufferView);
 	m_pDx12.GetCommandList()->IASetIndexBuffer(&m_pIndexBufferView);
 

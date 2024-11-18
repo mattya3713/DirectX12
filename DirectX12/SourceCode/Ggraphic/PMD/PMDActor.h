@@ -17,26 +17,46 @@ private:
 	// PMDヘッダー構造体.
 	struct PMDHeader
 	{
-		float Version;			// バージョン.
-		char ModelName[20];		// モデルの名前.
-		char ModelComment[256];	// モデルのコメント.
+		float Version;            // バージョン.
+		char ModelName[20];       // モデルの名前.
+		char ModelComment[256];   // モデルのコメント.
+
+		PMDHeader()
+			: Version(0.0f)
+		{
+			std::fill(std::begin(ModelName), std::end(ModelName), '\0');
+			std::fill(std::begin(ModelComment), std::end(ModelComment), '\0');
+		}
 	};
 
 	// TODO : パディングの対処法を考える.
 	//PMDマテリアル構造体
 #pragma pack(1)
 	struct PMDMaterial {
-		DirectX::XMFLOAT3 Diffuse;  // ディフューズ色				: 12Byte.
+		DirectX::XMFLOAT3 Diffuse;  // ディフューズ色			: 12Byte.
 		float	 Alpha;				// α値						:  4Byte.
 		float    Specularity;		// スペキュラの強さ			:  4Byte.
 		DirectX::XMFLOAT3 Specular; // スペキュラ色				: 12Byte.
-		DirectX::XMFLOAT3 Ambient;  // アンビエント色				: 12Byte.
+		DirectX::XMFLOAT3 Ambient;  // アンビエント色			: 12Byte.
 		uint8_t  ToonIdx;			// トゥーン番号				:  1Byte.
 		uint8_t  EdgeFlg;			// Material毎の輪郭線フラグ	:  1Byte.
-//		uint16_t Padding;			// パディング					:  2Byte.
-		uint32_t IndicesNum;		// 割り当たるインデックス数		:  4Byte.
+//		uint16_t Padding;			// パディング				:  2Byte.
+		uint32_t IndicesNum;		// 割り当たるインデックス数	:  4Byte.
 		char     TexFilePath[20];	// テクスチャファイル名		: 20Byte.
-	};								// 合計						: 70Byte(パディングなし).
+									// 合計						: 70Byte(パディングなし).
+	PMDMaterial()
+		: Diffuse(0.0f, 0.0f, 0.0f),
+		Alpha(1.0f),
+		Specularity(0.0f),
+		Specular(0.0f, 0.0f, 0.0f),
+		Ambient(0.0f, 0.0f, 0.0f),
+		ToonIdx(0),
+		EdgeFlg(0),
+		IndicesNum(0)
+	{
+		std::fill(std::begin(TexFilePath), std::end(TexFilePath), '\0');
+	}
+	};
 #pragma pack()
 
 	// PMD頂点構造体.
@@ -84,16 +104,16 @@ private:
 
 	
 	//読み込んだマテリアルをもとにマテリアルバッファを作成
-	HRESULT CreateMaterialData();
+	void CreateMaterialData();
 	
 	//マテリアル＆テクスチャのビューを作成
-	HRESULT CreateMaterialAndTextureView();
+	void CreateMaterialAndTextureView();
 
 	//座標変換用ビューの生成
-	HRESULT CreateTransformView();
+	void CreateTransformView();
 
 	//PMDファイルのロード
-	HRESULT LoadPMDFile(const char* path);
+	void LoadPMDFile(const char* path);
 
 	float _angle;//テスト用Y軸回転
 public:
@@ -122,7 +142,7 @@ private:
 	MyComPtr<ID3D12Resource>		m_pTransformBuff;		
 
 	//マテリアル関連
-	std::vector<MyComPtr<Material>>			m_pMaterial;			// マテリアル.
+	std::vector<std::shared_ptr<Material>>	m_pMaterial;		// マテリアル.
 	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// マテリアルバッファ.
 	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// 画像リソース.
 	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// Sphリソース.

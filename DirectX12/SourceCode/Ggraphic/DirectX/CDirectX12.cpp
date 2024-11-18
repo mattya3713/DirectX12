@@ -14,7 +14,10 @@ CDirectX12::CDirectX12()
 	, m_pBackBuffer		( )
 	, m_pDepthBuffer	( nullptr ) 
 	, m_pDepthHeap		( nullptr ) 
-	, m_DepthClearValue	(  ) 
+	, m_DepthClearValue	( ) 
+	, m_pSceneConstBuff	( nullptr )
+	, m_pMappedSceneData( nullptr )
+	, m_pSceneDescHeap	( nullptr )
 	, m_pFence			( nullptr )
 	, m_FenceValue		( 0 )
 	, m_pPipelineState	( nullptr )	
@@ -67,6 +70,12 @@ bool CDirectX12::Create(HWND hWnd)
 			m_pDepthBuffer, 
 			m_pDepthHeap);
 		
+		// ビューの設定.
+		CreateSceneDesc(
+			m_pMappedSceneData,
+			m_pSceneConstBuff,
+			m_pSceneDescHeap);
+
 		// フェンスの表示.
 		CreateFance(
 			m_pFence);
@@ -105,7 +114,7 @@ void CDirectX12::BeginDraw()
 	m_pCmdList->ClearDepthStencilView(DSVHeap, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// 画面クリア.
-	float ClearColor[] = { 1.0f,0.0f,1.0f,1.0f };//白色
+	float ClearColor[] = { 1.0f,1.0f,1.0f,1.0f };//白色
 	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
 	//ビューポート、シザー矩形のセット.
@@ -128,15 +137,8 @@ void CDirectX12::EndDraw()
 	// コマンドリストの実行.
 	ID3D12CommandList* cmdlists[] = { m_pCmdList.Get() };
 	m_pCmdQueue->ExecuteCommandLists(1, cmdlists);
-	////待ち
-	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
-
-	if (m_pFence->GetCompletedValue() < m_FenceValue) {
-		auto event = CreateEvent(nullptr, false, false, nullptr);
-		m_pFence->SetEventOnCompletion(m_FenceValue, event);
-		WaitForSingleObject(event, INFINITE);
-		CloseHandle(event);
-	}
+	// 待ち.
+	WaitForGPU();
 	// キューをクリア.
 	m_pCmdAllocator->Reset();
 	// 再びコマンドリストをためる準備.
@@ -174,6 +176,27 @@ MyComPtr<ID3D12Resource> CDirectX12::GetTextureByPath(const char* texpath)
 		return MyComPtr<ID3D12Resource>(CreateTextureFromFile(texpath));
 	}
 
+}
+
+void CDirectX12::SetScene()
+{	
+	//現在のシーン(ビュープロジェクション)をセット
+	ID3D12DescriptorHeap* sceneheaps[] = { m_pSceneDescHeap.Get() };
+	m_pCmdList->SetDescriptorHeaps(1, sceneheaps);
+	m_pCmdList->SetGraphicsRootDescriptorTable(0, m_pSceneDescHeap->GetGPUDescriptorHandleForHeapStart());
+}
+
+// GPUの完了待ち.
+void CDirectX12::WaitForGPU()
+{
+	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
+
+	if (m_pFence->GetCompletedValue() < m_FenceValue) {
+		auto event = CreateEvent(nullptr, false, false, nullptr);
+		m_pFence->SetEventOnCompletion(m_FenceValue, event);
+		WaitForSingleObject(event, INFINITE);
+		CloseHandle(event);
+	}
 }
 
 // DXGIの生成.
@@ -364,8 +387,8 @@ void CDirectX12::CreateDepthDesc(
 	// 深度バッファの仕様.
 	D3D12_RESOURCE_DESC DepthResourceDesc = {};
 	DepthResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;	// 2次元のテクスチャデータとして.
-	DepthResourceDesc.Width = WND_WF;									// 幅と高さはレンダーターゲットと同じ.
-	DepthResourceDesc.Height = WND_HF;									// 上に同じ.
+	DepthResourceDesc.Width = WND_W;									// 幅と高さはレンダーターゲットと同じ.
+	DepthResourceDesc.Height = WND_H;									// 上に同じ.
 	DepthResourceDesc.DepthOrArraySize = 1;								// テクスチャ配列でもないし3Dテクスチャでもない.
 	DepthResourceDesc.Format = DXGI_FORMAT_D32_FLOAT;					// 深度値書き込み用フォーマット.
 	DepthResourceDesc.SampleDesc.Count = 1;								// サンプルは1ピクセル当たり1つ.
@@ -415,6 +438,77 @@ void CDirectX12::CreateDepthDesc(
 		m_pDepthBuffer.Get(),								// 深度バッファ.
 		&DsvDesc,											// 深度ビューの設定.
 		DepthHeap->GetCPUDescriptorHandleForHeapStart());// ヒープ内の位置.
+}
+
+// シーンビューの作成.
+void CDirectX12::CreateSceneDesc(
+	SceneData* MappedSceneData, 
+	MyComPtr<ID3D12Resource>& SceneConstBuff,
+	MyComPtr<ID3D12DescriptorHeap>& SceneDescHeap)
+{
+	DXGI_SWAP_CHAIN_DESC1 desc = {};
+	auto result = m_pSwapChain->GetDesc1(&desc);
+	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneData) + 0xff) & ~0xff);
+
+	MyAssert::IsFailed(
+		_T("定数バッファ作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(),
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(SceneConstBuff.ReleaseAndGetAddressOf()));
+
+	MappedSceneData = nullptr;
+
+	MyAssert::IsFailed(
+		_T("シーン情報のマップ"),
+		&ID3D12Resource::Map, SceneConstBuff.Get(),
+		0, nullptr,
+		(void**)&MappedSceneData);
+
+	DirectX::XMFLOAT3 eye(0, 15, -15);
+	DirectX::XMFLOAT3 target(0, 15, 0);
+	DirectX::XMFLOAT3 up(0, 1, 0);
+	MappedSceneData->view =
+		DirectX::XMMatrixLookAtLH(
+			XMLoadFloat3(&eye), 
+			XMLoadFloat3(&target), 
+			XMLoadFloat3(&up));
+
+	MappedSceneData->proj =
+		DirectX::XMMatrixPerspectiveFovLH
+		(DirectX::XM_PIDIV4,//画角は45°
+		static_cast<float>(desc.Width) / static_cast<float>(desc.Height),//アス比
+		0.1f,//近い方
+		1000.0f//遠い方
+	);
+
+	MappedSceneData->eye = eye;
+
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
+	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	descHeapDesc.NodeMask = 0;
+	descHeapDesc.NumDescriptors = 1;//
+	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+	MyAssert::IsFailed(
+		_T(""),
+		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+		&descHeapDesc,
+		IID_PPV_ARGS(SceneDescHeap.ReleaseAndGetAddressOf()));
+
+	// デスクリプタの先頭ハンドルを取得しておく.
+	auto heapHandle = SceneDescHeap->GetCPUDescriptorHandleForHeapStart();
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = SceneConstBuff->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = SceneConstBuff->GetDesc().Width;
+
+	// 定数バッファビューの作成.
+	m_pDevice12->CreateConstantBufferView(&cbvDesc, heapHandle);
 }
 
 // フェンスの作成.

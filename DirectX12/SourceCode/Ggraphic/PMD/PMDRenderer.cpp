@@ -141,7 +141,7 @@ void CPMDRenderer::CreateGraphicsPipelineForPMD() {
 	CompileShaderFromFile(
 		L"Data\\Shader\\Basic\\BasicPixelShader.hlsl",
 		"BasicPS", "ps_5_0",
-		VSBlob.ReleaseAndGetAddressOf());
+		PSBlob.ReleaseAndGetAddressOf());
 
 	// TODO : ’Z‚­‚Å‚«‚»‚¤.
 	D3D12_INPUT_ELEMENT_DESC InputLayout[] = {
