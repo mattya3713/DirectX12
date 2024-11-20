@@ -22,41 +22,40 @@ private:
 		char ModelComment[256];   // モデルのコメント.
 
 		PMDHeader()
-			: Version(0.0f)
-		{
-			std::fill(std::begin(ModelName), std::end(ModelName), '\0');
-			std::fill(std::begin(ModelComment), std::end(ModelComment), '\0');
-		}
+			: Version		(0.0f)
+			, ModelName		{}
+			, ModelComment	{}
+		{}
 	};
 
 	// TODO : パディングの対処法を考える.
-	//PMDマテリアル構造体
+	// PMDマテリアル構造体.
 #pragma pack(1)
 	struct PMDMaterial {
 		DirectX::XMFLOAT3 Diffuse;  // ディフューズ色			: 12Byte.
-		float	 Alpha;				// α値						:  4Byte.
-		float    Specularity;		// スペキュラの強さ			:  4Byte.
-		DirectX::XMFLOAT3 Specular; // スペキュラ色				: 12Byte.
+		float	 Alpha;				// α値					:  4Byte.
+		float    Specularity;		// スペキュラの強さ		:  4Byte.
+		DirectX::XMFLOAT3 Specular; // スペキュラ色			: 12Byte.
 		DirectX::XMFLOAT3 Ambient;  // アンビエント色			: 12Byte.
-		uint8_t  ToonIdx;			// トゥーン番号				:  1Byte.
-		uint8_t  EdgeFlg;			// Material毎の輪郭線フラグ	:  1Byte.
+		uint8_t  ToonIdx;			// トゥーン番号			:  1Byte.
+		uint8_t  EdgeFlg;			// Material毎の輪郭線ﾌﾗｸﾞ	:  1Byte.
 //		uint16_t Padding;			// パディング				:  2Byte.
 		uint32_t IndicesNum;		// 割り当たるインデックス数	:  4Byte.
-		char     TexFilePath[20];	// テクスチャファイル名		: 20Byte.
-									// 合計						: 70Byte(パディングなし).
-	PMDMaterial()
-		: Diffuse(0.0f, 0.0f, 0.0f),
-		Alpha(1.0f),
-		Specularity(0.0f),
-		Specular(0.0f, 0.0f, 0.0f),
-		Ambient(0.0f, 0.0f, 0.0f),
-		ToonIdx(0),
-		EdgeFlg(0),
-		IndicesNum(0)
-	{
-		std::fill(std::begin(TexFilePath), std::end(TexFilePath), '\0');
-	}
+		char     TexFilePath[20];	// テクスチャファイル名	: 20Byte.
+									// 合計					: 70Byte(パディングなし).
+		PMDMaterial()
+			: Diffuse		(0.0f, 0.0f, 0.0f)
+			, Alpha			(1.0f)
+			, Specularity	(0.0f)
+			, Specular		(0.0f, 0.0f, 0.0f)
+			, Ambient		(0.0f, 0.0f, 0.0f)
+			, ToonIdx		(0)
+			, EdgeFlg		(0)
+			, IndicesNum	(0)
+			, TexFilePath	{}
+		{}
 	};
+	
 #pragma pack()
 
 	// PMD頂点構造体.
@@ -64,21 +63,38 @@ private:
 	{
 		DirectX::XMFLOAT3 Pos;		// 頂点座標		: 12Byte.
 		DirectX::XMFLOAT3 Normal;	// 法線ベクトル	: 12Byte.
-		DirectX::XMFLOAT2 uv;		// uv座標		:  8Byte.
+		DirectX::XMFLOAT2 UV;		// uv座標		:  8Byte.
 		uint16_t BoneNo[2];			// ボーン番号		:  4Byte.
 		uint8_t  BoneWeight;		// ボーン影響度	:  1Byte.
 		uint8_t  EdgeFlg;			// 輪郭線フラグ	:  1Byte.
 		uint16_t Padding;			// パディング		:  2Byte.
-	};								// 合計			: 40Byte.
-
+									// 合計			: 40Byte.
+		PMDVertex()
+			: Pos			(0.0f, 0.0f, 0.0f)
+			, Normal		(0.0f, 0.0f, 0.0f)
+			, UV			(0.0f, 0.0f)
+			, BoneNo		{}
+			, BoneWeight	(0)
+			, EdgeFlg		(0)
+			, Padding		(0)
+		{}
+	};								
 
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
-		DirectX::XMFLOAT3 Diffuse;		// ディフューズ色.		
-		float	 Alpha;					// α値.		
-		DirectX::XMFLOAT3 Specular;		// スペキュラの強.		
-		float	 Specularity;			// スペキュラ色.		
-		DirectX::XMFLOAT3 Ambient;		// アンビエント色.		
+		DirectX::XMFLOAT3	Diffuse;	// ディフューズ色.		
+		float				Alpha;		// α値.		
+		DirectX::XMFLOAT3	Specular;	// スペキュラの強.		
+		float				Specularity;// スペキュラ色.		
+		DirectX::XMFLOAT3	Ambient;	// アンビエント色.		
+
+		MaterialForHlsl()
+			: Diffuse		(0.0f, 0.0f, 0.0f)
+			, Alpha			(0.0f)
+			, Specular		(0.0f, 0.0f, 0.0f)
+			, Specularity	(0.0f)
+			, Ambient		(0.0f, 0.0f, 0.0f)
+		{}
 	};
 
 	// それ以外のマテリアルデータ.
@@ -86,13 +102,25 @@ private:
 		std::string TexPath;	// テクスチャファイルパス.
 		int			ToonIdx;	// トゥーン番号.
 		bool		EdgeFlg;	// マテリアル毎の輪郭線フラグ.
+
+		AdditionalMaterial()
+			: TexPath		{}
+			, ToonIdx		(0)
+			, EdgeFlg		(false)
+		{}
 	};
 
 	// まとめたもの.
 	struct Material {
-		unsigned int IndicesNum;	//インデックス数.
-		MaterialForHlsl Material;
-		AdditionalMaterial Additional;
+		unsigned int IndicesNum;		// インデックス数.
+		MaterialForHlsl Materialhlsl;	// シェーダ側に投げられるマテリアルデータ.
+		AdditionalMaterial Additional;	// それ以外のマテリアルデータ.
+		
+		Material()
+			: IndicesNum	(0)
+			, Materialhlsl	{}
+			, Additional	{}
+		{}
 	};
 
 	struct Transform {

@@ -29,22 +29,21 @@ class CDirectX12
 {
 public:
 
-	// 頂点構造体.
-	struct VerTex
-	{
-		DirectX::XMFLOAT3 Pos;	// xyz座標.
-		DirectX::XMFLOAT2 uv;	// uv座標.
-	};
-
-
-
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
-		DirectX::XMFLOAT3 Diffuse;		// ディフューズ色.		
-		float	 Alpha;					// α値.		
-		DirectX::XMFLOAT3 Specular;		// スペキュラの強.		
-		float	 Specularity;			// スペキュラ色.		
-		DirectX::XMFLOAT3 Ambient;		// アンビエント色.		
+		DirectX::XMFLOAT3	Diffuse;	// ディフューズ色.		
+		float				Alpha;		// α値.		
+		DirectX::XMFLOAT3	Specular;	// スペキュラの強.		
+		float				Specularity;// スペキュラ色.		
+		DirectX::XMFLOAT3	Ambient;	// アンビエント色.		
+
+		MaterialForHlsl()
+			: Diffuse		(0.0f, 0.0f, 0.0f)
+			, Alpha			(0.0f)
+			, Specular		(0.0f, 0.0f, 0.0f)
+			, Specularity	(0.0f)
+			, Ambient		(0.0f, 0.0f, 0.0f)
+		{}
 	};
 
 	// それ以外のマテリアルデータ.
@@ -52,13 +51,25 @@ public:
 		std::string TexPath;	// テクスチャファイルパス.
 		int			ToonIdx;	// トゥーン番号.
 		bool		EdgeFlg;	// マテリアル毎の輪郭線フラグ.
+
+		AdditionalMaterial()
+			: TexPath		{}
+			, ToonIdx		(0)
+			, EdgeFlg		(false)
+		{}
 	};
 
 	// まとめたもの.
 	struct Material {
-		unsigned int IndicesNum;	//インデックス数.
-		MaterialForHlsl Material;
-		AdditionalMaterial Additional;
+		unsigned int IndicesNum;		// インデックス数.
+		MaterialForHlsl Materialhlsl;	// シェーダ側に投げられるマテリアルデータ.
+		AdditionalMaterial Additional;	// それ以外のマテリアルデータ.
+		
+		Material()
+			: IndicesNum	(0)
+			, Materialhlsl	{}
+			, Additional	{}
+		{}
 	};
 
 	// TODO : 仮シーンデータ.
