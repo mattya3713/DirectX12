@@ -36,119 +36,106 @@ CPMDActor::~CPMDActor()
 
 void CPMDActor::LoadPMDFile(const char* path)
 {
-	// ヘッダー読み込み用シグネチャ
-	char Signature[3] = {};
+	// ヘッダー読み込み用のシグネチャ.
+	char Signature[3];
 	PMDHeader Pmdheader = {};
 
 	FILE* fp = nullptr;
-	if (fopen_s(&fp, path, "rb") != 0 || fp == nullptr) {
-		throw std::runtime_error("Failed to open PMD file.");
+
+	// ファイルをバイナリモードで開く.
+	auto err = fopen_s(&fp, path, "rb");
+	if (err != 0 || !fp) {
+		throw std::runtime_error("ファイルを開くことができませんでした。");
 	}
 
-	if (fread(Signature, sizeof(Signature), 1, fp) != 1 ||
-		fread(&Pmdheader, sizeof(Pmdheader), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read PMD header.");
-	}
+	// ヘッダー情報を読み込む.
+	fread(Signature, sizeof(Signature), 1, fp);
+	fread(&Pmdheader, sizeof(Pmdheader), 1, fp);
 
-	unsigned int vertNum = 0; // 頂点数
-	if (fread(&vertNum, sizeof(vertNum), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read vertex count.");
-	}
+	// 頂点数を読み込む.
+	unsigned int vertNum;
+	fread(&vertNum, sizeof(vertNum), 1, fp);
 
-	std::vector<unsigned char> vertices(vertNum * PmdVertexSize); // バッファ確保
-	if (fread(vertices.data(), vertices.size(), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read vertices.");
-	}
+	// 頂点データのバッファを確保し、一括読み込み.
+	std::vector<unsigned char> vertices(vertNum * PmdVertexSize);
+	fread(vertices.data(), vertices.size(), 1, fp);
 
-	unsigned int IndicesNum = 0; // インデックス数
-	if (fread(&IndicesNum, sizeof(IndicesNum), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read index count.");
-	}
-
+	// 頂点バッファ用のDirectX 12リソースを作成.
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size() * sizeof(vertices[0]));
 
-	// UPLOAD
-	if (FAILED(m_pDx12.GetDevice()->CreateCommittedResource(
+	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&resDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())))) {
-		fclose(fp);
-		throw std::runtime_error("Failed to create vertex buffer.");
-	}
+		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())
+	);
 
+	// 頂点データをGPUバッファにコピー.
 	unsigned char* vertMap = nullptr;
-	if (FAILED(m_pVertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&vertMap)))) {
-		fclose(fp);
-		throw std::runtime_error("Failed to map vertex buffer.");
-	}
+	result = m_pVertexBuffer->Map(0, nullptr, (void**)&vertMap);
 	std::copy(vertices.begin(), vertices.end(), vertMap);
 	m_pVertexBuffer->Unmap(0, nullptr);
 
+	// 頂点バッファビューの設定.
 	m_pVertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(vertices.size());
 	m_pVertexBufferView.StrideInBytes = PmdVertexSize;
 
+	// インデックス数を読み込む.
+	unsigned int IndicesNum;
+	fread(&IndicesNum, sizeof(IndicesNum), 1, fp);
+
+	// インデックスデータのバッファを確保し、一括読み込み.
 	std::vector<unsigned short> indices(IndicesNum);
-	if (fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read indices.");
-	}
+	fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
 
+	// インデックスバッファ用のDirectX 12リソースを作成.
 	auto resDescBuf = CD3DX12_RESOURCE_DESC::Buffer(indices.size() * sizeof(indices[0]));
-
-	if (FAILED(m_pDx12.GetDevice()->CreateCommittedResource(
+	result = m_pDx12.GetDevice()->CreateCommittedResource(
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&resDescBuf,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(m_pIndexBuffer.ReleaseAndGetAddressOf())))) {
-		fclose(fp);
-		throw std::runtime_error("Failed to create index buffer.");
-	}
+		IID_PPV_ARGS(m_pIndexBuffer.ReleaseAndGetAddressOf())
+	);
 
+	// インデックスデータをGPUバッファにコピー.
 	unsigned short* mappedIdx = nullptr;
-	if (FAILED(m_pIndexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedIdx)))) {
-		fclose(fp);
-		throw std::runtime_error("Failed to map index buffer.");
-	}
+	m_pIndexBuffer->Map(0, nullptr, (void**)&mappedIdx);
 	std::copy(indices.begin(), indices.end(), mappedIdx);
 	m_pIndexBuffer->Unmap(0, nullptr);
 
+	// インデックスバッファビューの設定.
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_pIndexBufferView.Format = DXGI_FORMAT_R16_UINT;
 	m_pIndexBufferView.SizeInBytes = static_cast<UINT>(indices.size() * sizeof(indices[0]));
 
-	int MaterialNum = 0;
-	if (fread(&MaterialNum, sizeof(MaterialNum), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read material count.");
-	}
+	// マテリアル数を読み込む.
+	int MaterialNum;
+	fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
+
+	// マテリアルやリソースのバッファをリサイズ.
 	m_pMaterial.resize(MaterialNum);
 	m_pTextureResource.resize(MaterialNum);
 	m_pSphResource.resize(MaterialNum);
 	m_pSpaResource.resize(MaterialNum);
 	m_pToonResource.resize(MaterialNum);
 
+	// マテリアルデータを読み込む.
 	std::vector<PMDMaterial> pmdMaterials(MaterialNum);
-	if (fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp) != 1) {
-		fclose(fp);
-		throw std::runtime_error("Failed to read materials.");
-	}
+	fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
 
+	// 各マテリアルを設定.
 	for (int i = 0; i < MaterialNum; ++i) {
 		m_pMaterial[i] = std::make_shared<Material>();
 	}
 
-	for (int i = 0; i < MaterialNum; ++i) {
+	// マテリアル情報をコピー.
+	for (int i = 0; i < pmdMaterials.size(); ++i) {
 		m_pMaterial[i]->IndicesNum = pmdMaterials[i].IndicesNum;
 		m_pMaterial[i]->Materialhlsl.Diffuse = pmdMaterials[i].Diffuse;
 		m_pMaterial[i]->Materialhlsl.Alpha = pmdMaterials[i].Alpha;
@@ -158,8 +145,77 @@ void CPMDActor::LoadPMDFile(const char* path)
 		m_pMaterial[i]->Additional.ToonIdx = pmdMaterials[i].ToonIdx;
 	}
 
+	// トゥーンリソースとテクスチャを設定.
+	for (int i = 0; i < pmdMaterials.size(); ++i) {
+		// トゥーンテクスチャのファイルパスを構築.
+		char toonFilePath[32];
+		sprintf_s(toonFilePath, "Data/Image/toon/toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
+		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
+
+		// テクスチャパスが空の場合、リソースをリセット.
+		if (strlen(pmdMaterials[i].TexFilePath) == 0) {
+			m_pTextureResource[i].Reset();
+			continue;
+		}
+
+		// テクスチャパスの分解とリソースのロード.
+		std::string TexFileName = pmdMaterials[i].TexFilePath;
+		std::string SphFileName = "";
+		std::string SpaFileName = "";
+
+		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {
+			auto namepair = MyFilePath::SplitFileName(TexFileName);
+			if (MyFilePath::GetExtension(namepair.first) == "sph") {
+				TexFileName = namepair.second;
+				SphFileName = namepair.first;
+			}
+			else if (MyFilePath::GetExtension(namepair.first) == "spa") {
+				TexFileName = namepair.second;
+				SpaFileName = namepair.first;
+			}
+			else {
+				TexFileName = namepair.first;
+				if (MyFilePath::GetExtension(namepair.second) == "sph") {
+					SphFileName = namepair.second;
+				}
+				else if (MyFilePath::GetExtension(namepair.second) == "spa") {
+					SpaFileName = namepair.second;
+				}
+			}
+		}
+		else {
+			if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
+				SphFileName = pmdMaterials[i].TexFilePath;
+				TexFileName = "";
+			}
+			else if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
+				SpaFileName = pmdMaterials[i].TexFilePath;
+				TexFileName = "";
+			}
+			else {
+				TexFileName = pmdMaterials[i].TexFilePath;
+			}
+		}
+
+		// リソースをロード.
+		if (!TexFileName.empty()) {
+			auto TexFilePath = MyFilePath::GetTexPath(path, TexFileName.c_str());
+			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
+		}
+		if (!SphFileName.empty()) {
+			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
+			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
+		}
+		if (!SpaFileName.empty()) {
+			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
+			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
+		}
+	}
+
+	// ファイルを閉じる.
 	fclose(fp);
 }
+
 
 void CPMDActor::CreateTransformView() {
 	//GPUバッファ作成

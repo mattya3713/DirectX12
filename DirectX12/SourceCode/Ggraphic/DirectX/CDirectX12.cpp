@@ -189,13 +189,21 @@ void CDirectX12::SetScene()
 // GPUの完了待ち.
 void CDirectX12::WaitForGPU()
 {
+
 	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
 
 	if (m_pFence->GetCompletedValue() < m_FenceValue) {
 		auto event = CreateEvent(nullptr, false, false, nullptr);
-		m_pFence->SetEventOnCompletion(m_FenceValue, event);
-		WaitForSingleObject(event, INFINITE);
-		CloseHandle(event);
+
+		// eventが正常に作成されたかを確認.
+		if (event != nullptr) {
+			m_pFence->SetEventOnCompletion(m_FenceValue, event);
+			WaitForSingleObject(event, INFINITE);
+			CloseHandle(event);
+		}
+		else {
+			OutputDebugString(L"Failed to create event!\n");
+		}
 	}
 }
 
@@ -351,7 +359,7 @@ void CDirectX12::CreateRenderTarget(
 	for (int i = 0; i < static_cast<int>(SwcDesc.BufferCount); ++i)
 	{
 		MyAssert::IsFailed(
-			_T("%d個目のスワップチェーン内のバッファーとビューを関連づける", i + 1),
+			_T("スワップチェーン内のバッファーとビューを関連づける"),
 			&IDXGISwapChain4::GetBuffer, m_pSwapChain.Get(),
 			static_cast<UINT>(i),
 			IID_PPV_ARGS(m_pBackBuffer[i].GetAddressOf()));
@@ -505,7 +513,7 @@ void CDirectX12::CreateSceneDesc(
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	cbvDesc.BufferLocation = SceneConstBuff->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = SceneConstBuff->GetDesc().Width;
+	cbvDesc.SizeInBytes = static_cast<UINT>(SceneConstBuff->GetDesc().Width);
 
 	// 定数バッファビューの作成.
 	m_pDevice12->CreateConstantBufferView(&cbvDesc, heapHandle);
@@ -563,6 +571,14 @@ ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
 		ScratchImg);
 
 	if (FAILED(Result)) {
+		// エラーメッセージを作成.
+		std::string ErrorMessage = "Failed to load texture file: " + TexPath +
+			"\nExtension: " + Extension +
+			"\nHRESULT: " + std::to_string(Result);
+
+		// メッセージボックスを表示.
+		MessageBoxA(nullptr, ErrorMessage.c_str(), "Texture Load Error", MB_OK | MB_ICONERROR);
+
 		return nullptr;
 	}
 
@@ -571,12 +587,19 @@ ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
 	//WriteToSubresourceで転送する用のヒープ設定
 	auto TexHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 
-	auto ResDesc = 
-		CD3DX12_RESOURCE_DESC::Tex2D(
-			Metadata.format, 
-			Metadata.width, Metadata.height, 
-			Metadata.arraySize, 
-			Metadata.mipLevels);
+	// テクスチャリソースのディスクリタ.
+	D3D12_RESOURCE_DESC ResDesc = {};
+	ResDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; // 2D テクスチャ.
+	ResDesc.Alignment = 0;                                 // デフォルトアライメント.
+	ResDesc.Width = Metadata.width;                        // テクスチャの幅.
+	ResDesc.Height = static_cast<UINT>(Metadata.height);   // テクスチャの高さ.
+	ResDesc.DepthOrArraySize = static_cast<UINT16>(Metadata.arraySize); // 配列のサイズ.
+	ResDesc.MipLevels = static_cast<UINT16>(Metadata.mipLevels);        // MIP レベル.
+	ResDesc.Format = Metadata.format;                     // テクスチャフォーマット.
+	ResDesc.SampleDesc.Count = 1;                         // サンプリング (マルチサンプルはしない).
+	ResDesc.SampleDesc.Quality = 0;                       // サンプリング品質 (デフォルト).
+	ResDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;        // レイアウト (ドライバーに任せる).
+	ResDesc.Flags = D3D12_RESOURCE_FLAG_NONE;             // 特殊なフラグなし.
 
 	ID3D12Resource* Texbuff = nullptr;
 	Result = m_pDevice12->CreateCommittedResource(
@@ -595,8 +618,8 @@ ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
 	Result = Texbuff->WriteToSubresource(0,
 		nullptr,			// 全領域へコピー.
 		Image->pixels,		// 元データアドレス.
-		Image->rowPitch,	// 1ラインサイズ.
-		Image->slicePitch	// 全サイズ.
+		static_cast<UINT>(Image->rowPitch),	// 1ラインサイズ.
+		static_cast<UINT>(Image->slicePitch)// 全サイズ.
 	);
 
 	if (FAILED(Result)) {

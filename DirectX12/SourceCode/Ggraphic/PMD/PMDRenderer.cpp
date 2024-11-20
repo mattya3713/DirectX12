@@ -41,7 +41,8 @@ ID3D12Resource* CPMDRenderer::CreateDefaultTexture(size_t Width, size_t Height) 
 	auto ResourceDesc = 
 		CD3DX12_RESOURCE_DESC::Tex2D(
 			DXGI_FORMAT_R8G8B8A8_UNORM,		// RGB8bitフォーマット.
-			Width, Height);					// 幅、高さ.
+			static_cast<UINT>(Width),		// 幅.
+			static_cast<UINT>(Height));		// 高さ.
 
 	// ヒープの設定.
 	auto TexHeapProp = 

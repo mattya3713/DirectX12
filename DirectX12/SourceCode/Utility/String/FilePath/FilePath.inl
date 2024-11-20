@@ -61,9 +61,9 @@ namespace MyFilePath {
     inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath) {
        
         // モデルパスの最後のスラッシュまたはバックスラッシュを探す.
-        auto pathIndex1 = ModelPath.rfind('/');
-        auto pathIndex2 = ModelPath.rfind('\\');
-        auto pathIndex = std::max(pathIndex1, pathIndex2);
+        int pathIndex1 = static_cast<int>(ModelPath.rfind('/'));
+        int pathIndex2 = static_cast<int>(ModelPath.rfind('\\'));
+        int pathIndex = std::max(pathIndex1, pathIndex2);
 
         // モデルパスの最後がスラッシュでない場合.
         if (pathIndex == std::string::npos) {

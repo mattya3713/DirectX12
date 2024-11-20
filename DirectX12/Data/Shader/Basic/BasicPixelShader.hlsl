@@ -27,7 +27,7 @@ float4 BasicPS(BasicType input) : SV_TARGET
     float3 lightColor = float3(1, 1, 1); //ライトのカラー(1,1,1で真っ白)
 
 	//ディフューズ計算
-    float diffuseB = saturate(dot(-light, input.normal));
+    float diffuseB = saturate(dot(-light, input.normal.xyz));
     float4 toonDif = toon.Sample(smpToon, float2(0, 1.0 - diffuseB));
 
 	//光の反射ベクトル
@@ -46,5 +46,5 @@ float4 BasicPS(BasicType input) : SV_TARGET
 		* sph.Sample(smp, sphereMapUV)) //スフィアマップ(乗算)
 		+ saturate(spa.Sample(smp, sphereMapUV) * texColor //スフィアマップ(加算)
 		+ float4(specularB * specular.rgb, 1)) //スペキュラー
-		+ float4(texColor * ambient * 0.5, 1); //アンビエント(明るくなりすぎるので0.5にしてます)
+		+ float4(texColor.xyz * ambient * 0.5, 1); //アンビエント(明るくなりすぎるので0.5にしてます)
 }
