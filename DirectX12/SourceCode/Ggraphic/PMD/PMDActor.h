@@ -56,6 +56,26 @@ private:
 		{}
 	};
 	
+	// PMDボーン構造体.
+	struct PMDBone
+	{
+		unsigned char	BoneName[20];	// ボーン名.
+		unsigned short	ParentNo;		// 親ボーン名.
+		unsigned short	NextNo;			// 先端のボーン番号.
+		unsigned char	TypeNo;			// ボーンの種類.
+		unsigned short	IKBoneNo;		// IKボーン番号.
+		DirectX::XMFLOAT3 Pos;			// ボーンの基準座標.
+
+		PMDBone()
+			: BoneName		{}
+			, ParentNo		(0)
+			, NextNo		(0)
+			, TypeNo		(0)
+			, IKBoneNo		(0)
+			, Pos			(0.0f, 0.0f, 0.0f)
+		{}
+	};
+
 #pragma pack()
 
 	// PMD頂点構造体.
@@ -80,6 +100,7 @@ private:
 		{}
 	};								
 
+	
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
 		DirectX::XMFLOAT3	Diffuse;	// ディフューズ色.		

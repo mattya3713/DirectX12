@@ -261,7 +261,9 @@ void CPMDActor::CreateTransformView() {
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	cbvDesc.BufferLocation = m_pTransformBuff->GetGPUVirtualAddress();
 	cbvDesc.SizeInBytes = static_cast<UINT>(buffSize);
-	m_pDx12.GetDevice()->CreateConstantBufferView(&cbvDesc, m_pTransformHeap->GetCPUDescriptorHandleForHeapStart());
+	m_pDx12.GetDevice()->CreateConstantBufferView(
+		&cbvDesc,
+		m_pTransformHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void CPMDActor::CreateMaterialData() {
