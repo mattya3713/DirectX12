@@ -79,7 +79,8 @@ HRESULT CMain::Create()
 
     m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
     m_pPmdActor = std::make_shared<CPMDActor>("Data/Model/‰‰¹ƒ~ƒN.pmd", *m_pPMDRenderer);
-
+    m_pPmdActor->LoadVMDFile("Data\\Model\\motion\\swing.vmd", "pose");
+    m_pPmdActor->PlayAnimation();
     return S_OK;
 }
 

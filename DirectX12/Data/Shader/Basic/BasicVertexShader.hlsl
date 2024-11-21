@@ -7,39 +7,54 @@ Texture2D<float4> toon : register(t3); //3”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒeƒNƒXƒ`ƒƒ(ƒgƒD
 SamplerState smp : register(s0); //0”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒTƒ“ƒvƒ‰
 SamplerState smpToon : register(s1); //1”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒTƒ“ƒvƒ‰
 
-//’è”ƒoƒbƒtƒ@0
+// ’è”ƒoƒbƒtƒ@0.
 cbuffer SceneData : register(b0)
 {
-    matrix view;
-    matrix proj; //ƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ
-    float3 eye;
+    matrix View;
+    matrix Proj; // ƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ.
+    float3 Eye;
 };
 cbuffer Transform : register(b1)
 {
-    matrix world; //ƒ[ƒ‹ƒh•ÏŠ·s—ñ
+    matrix World;       // ƒ[ƒ‹ƒh•ÏŠ·s—ñ
+	matrix Bones[256];  // ƒ{[ƒ“s—ñ.
 }
 
-//’è”ƒoƒbƒtƒ@1
-//ƒ}ƒeƒŠƒAƒ‹—p
+// ’è”ƒoƒbƒtƒ@1.
+// ƒ}ƒeƒŠƒAƒ‹—p.
 cbuffer Material : register(b2)
 {
-    float4 diffuse; //ƒfƒBƒtƒ…[ƒYF
-    float4 specular; //ƒXƒyƒLƒ…ƒ‰
-    float3 ambient; //ƒAƒ“ƒrƒGƒ“ƒg
+    float4 Diffuse;     // ƒfƒBƒtƒ…[ƒYF.
+    float4 Specular;    // ƒXƒyƒLƒ…ƒ‰.
+    float3 Ambient;     // ƒAƒ“ƒrƒGƒ“ƒg.
 };
 
 
-BasicType BasicVS(float4 pos : POSITION, float4 normal : NORMAL, float2 uv : TEXCOORD)
-{
-    BasicType output; //ƒsƒNƒZƒ‹ƒVƒF[ƒ_‚Ö“n‚·’l
-    pos = mul(world, pos);
-    output.svpos = mul(mul(proj, view), pos); //ƒVƒF[ƒ_‚Å‚Í—ñ—Dæ‚È‚Ì‚Å’ˆÓ
-    output.pos = mul(view, pos);
-    normal.w = 0; //‚±‚±d—v(•½sˆÚ“®¬•ª‚ğ–³Œø‚É‚·‚é)
-    output.normal = mul(world, normal); //–@ü‚É‚àƒ[ƒ‹ƒh•ÏŠ·‚ğs‚¤
-    output.vnormal = mul(view, output.normal);
-    output.uv = uv;
-    output.ray = normalize(pos.xyz - mul((float4x3)view, eye).xyz); //‹üƒxƒNƒgƒ‹
+BasicType BasicVS(
+    float4 Pos          : POSITION,
+    float4 Normal       : NORMAL,
+    float2 UV           : TEXCOORD,
+    min16uint Weight    : WEIGHT,
+    min16uint2 BoneNo   : BONENO)
+{ 
+    // ƒsƒNƒZƒ‹ƒVƒF[ƒ_‚Ö“n‚·’l.
+	BasicType output;
+    
+    // 0~100‚ğ0~1f‚ÉŠÛ‚ß‚é.
+	float w = Weight * 0.01f;
+    // ƒ{[ƒ“‚ğüŒ`•âŠÔ.
+	matrix Bone = Bones[BoneNo[0]] * w + Bones[BoneNo[1]] * (1 - w);
+    // ƒ{[ƒ“s—ñ‚ğæZ.
+	Pos = mul(Bones[BoneNo[0]], Pos);           
+	Pos = mul(World, Pos);
+	output.svpos = mul(mul(Proj, View), Pos);   // ƒVƒF[ƒ_‚Å‚Í—ñ—Dæ‚È‚Ì‚Å’ˆÓ
+	output.pos = mul(View, Pos);
+	Normal.w = 0;                               // ‚±‚±d—v(•½sˆÚ“®¬•ª‚ğ–³Œø‚É‚·‚é)
+	output.normal = mul(World, Normal);         // –@ü‚É‚àƒ[ƒ‹ƒh•ÏŠ·‚ğs‚¤
+    output.vnormal = mul(View, output.normal);
+	output.uv = UV;
+	output.ray = normalize(Pos.xyz - mul((float4x3) View, Eye).xyz); //‹üƒxƒNƒgƒ‹
 
+    return output;
     return output;
 }

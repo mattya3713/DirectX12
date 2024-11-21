@@ -8,6 +8,45 @@ void* CPMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);
 }
 
+// 回転情報を末端まで伝播させる再帰関数.
+void CPMDActor::RecursiveMatrixMultipy(
+	BoneNode* node, 
+	const DirectX::XMMATRIX& mat)
+{
+	m_BoneMatrix[node->BoneIndex] = mat;
+	for (auto& cnode : node->Children) {
+		// 子も同じ動作をする.
+		RecursiveMatrixMultipy(cnode, m_BoneMatrix[cnode->BoneIndex] * mat);
+	}
+}
+
+float CPMDActor::GetYFromXOnBezier(
+	float x,
+	const DirectX::XMFLOAT2& a,
+	const DirectX::XMFLOAT2& b, uint8_t n)
+{
+	if (a.x == a.y && b.x == b.y)return x;//計算不要
+	float t = x;
+	const float k0 = 1 + 3 * a.x - 3 * b.x;//t^3の係数
+	const float k1 = 3 * b.x - 6 * a.x;//t^2の係数
+	const float k2 = 3 * a.x;//tの係数
+
+	//誤差の範囲内かどうかに使用する定数
+	constexpr float epsilon = 0.0005f;
+
+	for (int i = 0; i < n; ++i) {
+		//f(t)求めまーす
+		auto ft = k0 * t * t * t + k1 * t * t + k2 * t - x;
+		//もし結果が0に近い(誤差の範囲内)なら打ち切り
+		if (ft <= epsilon && ft >= -epsilon)break;
+
+		t -= ft / 2;
+	}
+	//既に求めたいtは求めているのでyを計算する
+	auto r = 1 - t;
+	return t * t * t + 3 * t * t * r * b.y + 3 * t * r * r * a.y;
+}
+
 CPMDActor::CPMDActor(const char* filepath,CPMDRenderer& renderer):
 	m_pRenderer(renderer),
 	m_pDx12(renderer.m_pDx12),
@@ -212,14 +251,107 @@ void CPMDActor::LoadPMDFile(const char* path)
 		}
 	}
 
+	// ----------------
+	// ボーン数の取得.
+	unsigned short BoneNum = 0;
+	fread(&BoneNum, sizeof(BoneNum), 1, fp);
+
+	std::vector<PMDBone> PMDBones(BoneNum);
+	fread(PMDBones.data(), sizeof(PMDBone), BoneNum, fp);
+
+	std::vector<std::string> BoneNames(PMDBones.size());
+
+	// ボーンノードを作る.
+	for (size_t i = 0; i < PMDBones.size(); ++i)
+	{
+		PMDBone& PmdBone = PMDBones[i];
+		BoneNames[i] = std::string(reinterpret_cast<char*>(PmdBone.BoneName));
+		auto& Node = m_BoneNodeTable[std::string(reinterpret_cast<char*>(PmdBone.BoneName))];
+		Node.BoneIndex = static_cast<int>(i);
+		Node.StartPos = PmdBone.Pos;
+	}
+
+	// 親工関係の構築.
+	for (PMDBone& pb : PMDBones)
+	{
+		// ありえない番号ならとばす.
+		if (pb.ParentNo >= PMDBones.size()) { continue; }
+
+		auto ParentName = BoneNames[pb.ParentNo];
+		m_BoneNodeTable[ParentName].Children.emplace_back(&m_BoneNodeTable[std::string(reinterpret_cast<char*>(pb.BoneName))]);
+	}
+
+	//ボーン構築
+	m_BoneMatrix.resize(PMDBones.size());
+
+	// ボーンを初期化する.
+	std::fill(
+		m_BoneMatrix.begin(),
+		m_BoneMatrix.end(),
+		DirectX::XMMatrixIdentity()
+	);
+
 	// ファイルを閉じる.
 	fclose(fp);
 }
 
+void CPMDActor::LoadVMDFile(const char* FilePath, const char* Name)
+{
+	FILE* fp = nullptr;
+	// fopen_sを使ってファイルをバイナリモードで開く.
+	auto err = fopen_s(&fp, FilePath, "rb");
+	if (err != 0 || !fp) {
+		throw std::runtime_error("ファイルを開くことができませんでした。");
+	}
+	fseek(fp, 50, SEEK_SET);//最初の50バイトは飛ばしてOK
+	unsigned int keyframeNum = 0;
+	fread(&keyframeNum, sizeof(keyframeNum), 1, fp);
+
+	std::vector<VMDKeyFrame> Keyframes(keyframeNum);
+	for (auto& keyframe : Keyframes) {
+		fread(keyframe.BoneName, sizeof(keyframe.BoneName), 1, fp);	// ボーン名.
+		fread(&keyframe.FrameNo, sizeof(keyframe.FrameNo) +			// フレーム番号.
+			sizeof(keyframe.Location) +								// 位置(IKのときに使用予定).
+			sizeof(keyframe.Quaternion) +							// クオータニオン.
+			sizeof(keyframe.Bezier), 1, fp);						// 補間ベジェデータ.
+	}
+
+	//VMDのキーフレームデータから、実際に使用するキーフレームテーブルへ変換.
+	for (auto& f : Keyframes) {
+		m_MotionData[f.BoneName].emplace_back(
+			KeyFrame(
+				f.FrameNo,
+				DirectX::XMLoadFloat4(&f.Quaternion),
+				DirectX::XMFLOAT2((float)f.Bezier[3] / 127.0f, (float)f.Bezier[7] / 127.0f),
+				DirectX::XMFLOAT2((float)f.Bezier[11] / 127.0f, (float)f.Bezier[15] / 127.0f)
+			));
+	}
+
+	for (auto& motion : m_MotionData) {
+		std::sort(motion.second.begin(), motion.second.end(),
+			[](const KeyFrame& lval, const KeyFrame& rval) {
+				return lval.FrameNo <= rval.FrameNo;
+			});
+	}
+
+
+	for (auto& bonemotion : m_MotionData) {
+		auto node = m_BoneNodeTable[bonemotion.first];
+		auto& pos = node.StartPos;
+		auto mat = DirectX::XMMatrixTranslation(-pos.x, -pos.y, -pos.z) *
+			DirectX::XMMatrixRotationQuaternion(bonemotion.second[0].Quaternion) *
+			DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+		m_BoneMatrix[node.BoneIndex] = mat;
+	}
+
+	RecursiveMatrixMultipy(&m_BoneNodeTable["センター"], DirectX::XMMatrixIdentity());
+	std::copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
+
+}
 
 void CPMDActor::CreateTransformView() {
 	//GPUバッファ作成
-	auto buffSize = sizeof(Transform);
+	auto buffSize = sizeof(Transform) * (1 + m_BoneMatrix.size());
 	buffSize = (buffSize + 0xff)&~0xff;
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(buffSize);
@@ -240,9 +372,10 @@ void CPMDActor::CreateTransformView() {
 		_T("座標のマップ"),
 		&ID3D12Resource::Map, m_pTransformBuff.Get(),
 		0, nullptr, 
-		(void**)&m_MappedTransform);
+		(void**)&m_MappedMatrices);
 
-	*m_MappedTransform = m_Transform;
+	m_MappedMatrices[0] = m_Transform.world;
+	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
 
 	// ビューの作成.
 	D3D12_DESCRIPTOR_HEAP_DESC transformDescHeapDesc = {};
@@ -299,6 +432,32 @@ void CPMDActor::CreateMaterialData() {
 	}
 
 	m_pMaterialBuff->Unmap(0, nullptr);
+
+	// -- 仮.
+
+	m_MappedMatrices[0] = DirectX::XMMatrixRotationY(_angle);
+
+	auto armnode = m_BoneNodeTable["左腕"];
+	auto& armpos = armnode.StartPos;
+	auto armMat =
+		DirectX::XMMatrixTranslation(-armpos.x, -armpos.y, -armpos.x)
+		* DirectX::XMMatrixRotationZ(DirectX::XM_PIDIV2)
+		* DirectX::XMMatrixTranslation(armpos.x, armpos.y, armpos.x);
+	
+	auto elbowNode = m_BoneNodeTable["左ひじ"];
+	auto& elbowpos = elbowNode.StartPos;
+	auto elbowMat = DirectX::XMMatrixTranslation(-elbowpos.x, -elbowpos.y, -elbowpos.x)
+		* DirectX::XMMatrixRotationZ(-DirectX::XM_PIDIV2)
+		* DirectX::XMMatrixTranslation(elbowpos.x, elbowpos.y, elbowpos.x);
+
+	m_BoneMatrix[armnode.BoneIndex] = armMat;
+	m_BoneMatrix[elbowNode.BoneIndex] = elbowMat;
+
+	RecursiveMatrixMultipy(&m_BoneNodeTable ["センター"], DirectX::XMMatrixIdentity());
+
+
+	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
+	// -- 仮.
 }
 
 
@@ -379,7 +538,7 @@ void CPMDActor::CreateMaterialAndTextureView() {
 
 void CPMDActor::Update() {
 	_angle += 0.03f;
-	m_MappedTransform->world =  DirectX::XMMatrixRotationY(_angle);
+	MotionUpdate();
 }
 
 void CPMDActor::Draw() {
@@ -405,4 +564,63 @@ void CPMDActor::Draw() {
 		IdxOffset += m->IndicesNum;
 	}
 
+}
+
+// アニメーション開始.
+void CPMDActor::PlayAnimation()
+{
+	m_StartTime = timeGetTime();
+}
+
+void CPMDActor::MotionUpdate()
+{
+	// 経過時間を測る.
+	DWORD elapsedTime = timeGetTime() - m_StartTime;
+	unsigned int frameNo = 30 * static_cast<int>(elapsedTime / 1000.0f);
+
+	// MEMO : 前フレームのポーズが重ね掛けされてモデルが壊れる).
+	// 行列情報クリア
+	std::fill(m_BoneMatrix.begin(), m_BoneMatrix.end(), DirectX::XMMatrixIdentity());
+
+	// モーションデータ更新.
+	for (auto& bonemotion : m_MotionData) {
+
+		auto node = m_BoneNodeTable[bonemotion.first];
+
+		//合致するものを探す.
+		auto keyframes = bonemotion.second;
+
+		auto rit = find_if(keyframes.rbegin(), keyframes.rend(), [frameNo](const KeyFrame& keyframe) {
+			return keyframe.FrameNo <= frameNo;
+			});
+
+		// 合致するものがなければ飛ばす.
+		if (rit == keyframes.rend()) { continue; }
+
+		DirectX::XMMATRIX Rotation;
+
+		auto it = rit.base();
+
+		if (it != keyframes.end()) {
+
+			auto t = static_cast<float>(frameNo - rit->FrameNo) /
+				static_cast<float>(it->FrameNo - rit->FrameNo);
+			t = GetYFromXOnBezier(t, it->p1, it->p2, 12);
+
+			Rotation = DirectX::XMMatrixRotationQuaternion(
+				DirectX::XMQuaternionSlerp(rit->Quaternion, it->Quaternion, t)
+			);
+		}
+		else {
+			Rotation = DirectX::XMMatrixRotationQuaternion(rit->Quaternion);
+		}
+
+		auto& pos = node.StartPos;
+		auto mat = DirectX::XMMatrixTranslation(-pos.x, -pos.y, -pos.z) * //原点に戻し
+			Rotation * //回転
+			DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);//元の座標に戻す
+		m_BoneMatrix[node.BoneIndex] = mat;
+	}
+	RecursiveMatrixMultipy(&m_BoneNodeTable["センター"], DirectX::XMMatrixIdentity());
+	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
 }
