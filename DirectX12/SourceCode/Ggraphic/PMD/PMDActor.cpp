@@ -316,6 +316,13 @@ void CPMDActor::LoadVMDFile(const char* FilePath, const char* Name)
 			sizeof(keyframe.Bezier), 1, fp);						// 補間ベジェデータ.
 	}
 
+	for (auto& motion : m_MotionData) {
+		std::sort(motion.second.begin(), motion.second.end(),
+			[](const KeyFrame& lval, const KeyFrame& rval) {
+				return lval.FrameNo <= rval.FrameNo;
+			});
+	}
+
 	//VMDのキーフレームデータから、実際に使用するキーフレームテーブルへ変換.
 	for (auto& f : Keyframes) {
 		m_MotionData[f.BoneName].emplace_back(
@@ -326,14 +333,6 @@ void CPMDActor::LoadVMDFile(const char* FilePath, const char* Name)
 				DirectX::XMFLOAT2((float)f.Bezier[11] / 127.0f, (float)f.Bezier[15] / 127.0f)
 			));
 	}
-
-	for (auto& motion : m_MotionData) {
-		std::sort(motion.second.begin(), motion.second.end(),
-			[](const KeyFrame& lval, const KeyFrame& rval) {
-				return lval.FrameNo <= rval.FrameNo;
-			});
-	}
-
 
 	for (auto& bonemotion : m_MotionData) {
 		auto node = m_BoneNodeTable[bonemotion.first];
@@ -574,35 +573,26 @@ void CPMDActor::PlayAnimation()
 
 void CPMDActor::MotionUpdate()
 {
-	// 経過時間を測る.
-	DWORD elapsedTime = timeGetTime() - m_StartTime;
-	unsigned int frameNo = 30 * static_cast<int>(elapsedTime / 1000.0f);
+	auto elapsedTime = timeGetTime() - m_StartTime;
+	unsigned int frameNo = 30 * (elapsedTime / 1000.0f);
 
-	// MEMO : 前フレームのポーズが重ね掛けされてモデルが壊れる).
-	// 行列情報クリア
+
+	//行列情報クリア(してないと前フレームのポーズが重ね掛けされてモデルが壊れる)
 	std::fill(m_BoneMatrix.begin(), m_BoneMatrix.end(), DirectX::XMMatrixIdentity());
 
-	// モーションデータ更新.
+	//モーションデータ更新
 	for (auto& bonemotion : m_MotionData) {
-
 		auto node = m_BoneNodeTable[bonemotion.first];
-
-		//合致するものを探す.
+		//合致するものを探す
 		auto keyframes = bonemotion.second;
 
 		auto rit = find_if(keyframes.rbegin(), keyframes.rend(), [frameNo](const KeyFrame& keyframe) {
 			return keyframe.FrameNo <= frameNo;
 			});
-
-		// 合致するものがなければ飛ばす.
-		if (rit == keyframes.rend()) { continue; }
-
+		if (rit == keyframes.rend())continue;//合致するものがなければ飛ばす
 		DirectX::XMMATRIX Rotation;
-
 		auto it = rit.base();
-
 		if (it != keyframes.end()) {
-
 			auto t = static_cast<float>(frameNo - rit->FrameNo) /
 				static_cast<float>(it->FrameNo - rit->FrameNo);
 			t = GetYFromXOnBezier(t, it->p1, it->p2, 12);
