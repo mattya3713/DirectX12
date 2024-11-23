@@ -1,0 +1,26 @@
+[Info]
+Version = 3
+
+[Effect]
+Obj = shader\ExShadow\full_ES_pmx.fx
+Obj.show = true
+Obj[25] = shader\SHIRT\shirt_new.fx
+Obj[26] = shader\COLLAR\shirt_c.fx
+Obj[28] = shader\ExShadow\full_ES_pmx.fx
+Obj[30] = shader\SHIRT\shirt_new.fx
+Obj[44] = shader\SLEEVES\sleeves_n.fx
+Obj[45] = shader\SLEEVES\sleeves_n.fx
+Obj[48] = shader\SLEEVES\sleeves_n.fx
+Obj[49] = shader\SCREEN\slv_pl.fx
+Obj[50] = shader\NECKTIE\necktie.fx
+Obj[51] = shader\NECKTIE\necktie.fx
+Obj[52] = shader\NECKTIE\necktie.fx
+Obj[54] = shader\BOOTS\bt00.fx
+Obj[55] = shader\BOOTS\bt00.fx
+Obj[58] = shader\BOOTS\bt00.fx
+Obj[59] = shader\BOOTS\bt00.fx
+Obj[62] = shader\ExShadow\full_ES_pmx.fx
+Obj[63] = shader\ExShadow\full_ES_pmx.fx
+Obj[64] = shader\SKIRT\skirt.fx
+Obj[65] = shader\SKIRT\skirt.fx
+

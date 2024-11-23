@@ -1,7 +1,9 @@
 #include "CMain.h"
 #include "Ggraphic/DirectX/CDirectX12.h"
-#include "Ggraphic/PMD/PMDActor.h"
-#include "Ggraphic/PMD/PMDRenderer.h"
+#include "Ggraphic/PMD/CPMDActor.h"
+#include "Ggraphic/PMD/CPMDRenderer.h"
+#include "Ggraphic/PMX/CPMXActor.h"
+#include "Ggraphic/PMX/CPMXRenderer.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -20,10 +22,12 @@ const TCHAR APP_NAME[] = _T("ゆきゆき合戦ごろごろ");
 // コンストラクタ.
 //=================================================
 CMain::CMain()
-    : m_hWnd(nullptr)
-    , m_pDx12(nullptr)
-    , m_pPMDRenderer(nullptr)
-    , m_pPmdActor(nullptr)
+    : m_hWnd            ( nullptr )
+    , m_pDx12           ( nullptr )
+    , m_pPmdActor       ( nullptr )
+    , m_pPMDRenderer    ( nullptr )
+    , m_pPMXActor       ( nullptr )
+    , m_pPMXRenderer    ( nullptr )
 {
 }
 
@@ -40,6 +44,10 @@ void CMain::Update()
 {
     if (m_pPmdActor) {
         m_pPmdActor->Update();
+    }
+
+    if (m_pPMXActor) {
+        m_pPMXActor->Update();
     }
 }
 
@@ -64,6 +72,10 @@ void CMain::Draw()
         m_pPmdActor->Draw();
     }
 
+    if (m_pPMXActor) {
+        m_pPMXActor->Draw();
+    }
+
     // 終了処理.
     m_pDx12->EndDraw();
 
@@ -76,11 +88,13 @@ HRESULT CMain::Create()
 {
     m_pDx12 = std::make_shared<CDirectX12>();
     m_pDx12->Create(m_hWnd);
-
     m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<CPMDActor>("Data/Model/初音ミク.pmd", *m_pPMDRenderer);
-    m_pPmdActor->LoadVMDFile("Data\\Model\\motion\\swing.vmd", "pose");
-    m_pPmdActor->PlayAnimation();
+    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
+
+    m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
+    m_pPMXActor = std::make_shared<CPMXActor>("Data/Model/PMX/NK Miku Hatsune/NK Miku 1.0.pmx", *m_pPMXRenderer);
+
+
     return S_OK;
 }
 
@@ -100,6 +114,13 @@ void CMain::Release()
 
     if (m_pPMDRenderer) {
         m_pPMDRenderer.reset();
+    }
+    if (m_pPMXActor) {
+        m_pPMXActor.reset();
+    }
+
+    if (m_pPMXRenderer) {
+        m_pPMXRenderer.reset();
     }
 
     if (m_pDx12) {

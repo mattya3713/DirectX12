@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <unordered_set>
+#include <locale>
+#include <codecvt>
 #include "magic_enum.h"
 
 namespace MyString {
@@ -90,4 +92,10 @@ namespace MyString {
 
 	// マルチバイトをワイド文字に変換.
 	std::wstring StringToWString(const std::string& Str);
+
+	// UTF-16からUTF-8へ変換.
+	std::string UTF16ToUTF8(const std::u16string& utf16); 
+
+	// UTF-8からUTF-16へ変換.
+	std::u16string UTF8ToUTF16(const std::string& utf8); 
 }

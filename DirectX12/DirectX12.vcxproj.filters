@@ -63,9 +63,6 @@
     <ClInclude Include="SourceCode\stdafx.h">
       <Filter>SourceCode\Common</Filter>
     </ClInclude>
-    <ClInclude Include="SourceCode\DirectX\CDirectX12.h">
-      <Filter>SourceCode\Common\DirectX</Filter>
-    </ClInclude>
     <ClInclude Include="SourceCode\Utility\String\String.h">
       <Filter>SourceCode\Utility\String</Filter>
     </ClInclude>
@@ -92,13 +89,15 @@
     </ClInclude>
     <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
     <ClInclude Include="SourceCode\Utility\ComPtr\CComPtr.h" />
+    <ClInclude Include="SourceCode\Ggraphic\DirectX\CDirectX12.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMD\CPMDActor.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMD\CPMDRenderer.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXActor.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">
       <Filter>SourceCode\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="SourceCode\DirectX\CDirectX12.cpp">
-      <Filter>SourceCode\Common\DirectX</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\Utility\String\String.cpp">
       <Filter>SourceCode\Utility\String</Filter>
@@ -113,6 +112,11 @@
       <Filter>SourceCode\Common\Main</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\Utility\String\FilePath\FilePath.inl" />
+    <ClCompile Include="SourceCode\Ggraphic\DirectX\CDirectX12.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMD\CPMDActor.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMD\CPMDRenderer.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXActor.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SourceCode\Utility\Math\Math.inl">

@@ -107,14 +107,14 @@ namespace MyString
 	}
 
 	// ワイド文字をマルチバイトに変換.
-	std::string WStringToString(const std::wstring& wideStr)
+	std::string WStringToString(const std::wstring& WideStr)
 	{
 		// 変換後のバッファサイズを取得.
-		int Size = WideCharToMultiByte(CP_THREAD_ACP, 0, wideStr.c_str(), -1, (char*)  nullptr, 0, nullptr, nullptr);
+		int Size = WideCharToMultiByte(CP_THREAD_ACP, 0, WideStr.c_str(), -1, (char*)  nullptr, 0, nullptr, nullptr);
 		// 変換結果を格納するバッファを用意.
-		std::string result(Size - 1, 0); // 終端の NULL 文字を含めないようにする.
-		WideCharToMultiByte(CP_THREAD_ACP, 0, wideStr.c_str(), -1, &result[0], Size, nullptr, nullptr);
-		return result;
+		std::string StrBuf(Size - 1, 0); // 終端の NULL 文字を含めないようにする.
+		WideCharToMultiByte(CP_THREAD_ACP, 0, WideStr.c_str(), -1, &StrBuf[0], Size, nullptr, nullptr);
+		return StrBuf;
 	}
 
 	std::wstring StringToWString(const std::string& Str)
@@ -122,8 +122,39 @@ namespace MyString
 		// 変換後のバッファサイズを取得.
 		int Size = MultiByteToWideChar(CP_THREAD_ACP, 0, Str.c_str(), -1, nullptr, 0);
 		// 変換結果を格納するバッファを用意.
-		std::wstring result(Size - 1, 0); // 終端の NULL 文字を含めないようにする.
-		MultiByteToWideChar(CP_THREAD_ACP, 0, Str.c_str(), -1, &result[0], Size);
-		return result;
+		std::wstring WideStrBuf(Size - 1, 0); // 終端の NULL 文字を含めないようにする.
+		MultiByteToWideChar(CP_THREAD_ACP, 0, Str.c_str(), -1, &WideStrBuf[0], Size);
+		return WideStrBuf;
+	}
+
+	std::string UTF16ToUTF8(const std::u16string& UTF16)
+	{
+		// 変換後のバッファサイズを取得.
+		int Size = WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(UTF16.data()),
+			static_cast<int>(UTF16.size()), nullptr, 0, nullptr, nullptr);
+
+		// 変換結果を格納するバッファを用意.
+		std::string UTF8Buf(Size, 0);
+
+		// 実際に変換を行う.
+		WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(UTF16.data()),
+			static_cast<int>(UTF16.size()), &UTF8Buf[0], Size, nullptr, nullptr);
+
+		return UTF8Buf;
+	}
+
+	std::u16string UTF8ToUTF16(const std::string& UTF8)
+	{
+		// 変換後のバッファサイズを取得.
+		int Size = MultiByteToWideChar(CP_UTF8, 0, UTF8.c_str(), static_cast<int>(UTF8.size()), nullptr, 0);
+
+		// 変換結果を格納するバッファを用意.
+		std::u16string UTF16Buf(Size, 0);
+
+		// 実際に変換を行う.
+		MultiByteToWideChar(CP_UTF8, 0, UTF8.c_str(), static_cast<int>(UTF8.size()),
+			reinterpret_cast<wchar_t*>(&UTF16Buf[0]), Size);
+
+		return UTF16Buf;
 	}
 }
