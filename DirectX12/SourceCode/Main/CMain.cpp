@@ -92,7 +92,7 @@ HRESULT CMain::Create()
     m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
 
     m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<CPMXActor>("Data/Model/PMX/NK Miku Hatsune/NK Miku 1.0.pmx", *m_pPMXRenderer);
+    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
 
 
     return S_OK;

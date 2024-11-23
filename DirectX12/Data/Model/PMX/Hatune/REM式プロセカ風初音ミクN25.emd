@@ -1,0 +1,41 @@
+[Info]
+Version = 3
+
+[Effect]
+Obj = none
+Obj[0] = fx\skin.fx
+Obj[1] = fx\skin.fx
+Obj[2] = fx\skin.fx
+Obj[3] = fx\skin.fx
+Obj[9] = fx\skin.fx
+Obj[10] = fx\skin.fx
+Obj[11] = fx\skin.fx
+Obj[12] = fx\skin.fx
+Obj[14] = fx\skin.fx
+Obj[15] = fx\skin.fx
+Obj[16] = fx\skin.fx
+Obj[17] = fx\skin.fx
+Obj[32] = fx\fuku.fx
+Obj[33] = fx\fuku.fx
+Obj[61] = fx\fuku.fx
+Obj[62] = fx\fuku.fx
+Obj[63] = fx\fuku.fx
+Obj[64] = fx\fuku.fx
+Obj[65] = fx\fuku.fx
+Obj[66] = fx\fuku.fx
+Obj[67] = fx\fuku.fx
+Obj[68] = fx\fuku.fx
+Obj[69] = fx\fuku.fx
+Obj[70] = fx\fuku.fx
+Obj[71] = fx\fuku.fx
+Obj[72] = fx\fuku.fx
+Obj[73] = fx\fuku.fx
+Obj[74] = fx\fuku.fx
+Obj[78] = fx\fuku.fx
+Obj[79] = fx\fuku.fx
+Obj[80] = fx\dress.fx
+Obj[81] = fx\dress.fx
+Obj[82] = fx\dress.fx
+Obj[83] = fx\dress.fx
+Obj[84] = fx\dress.fx
+

@@ -130,30 +130,66 @@ namespace MyString
 	std::string UTF16ToUTF8(const std::u16string& UTF16)
 	{
 		// 変換後のバッファサイズを取得.
-		int Size = WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(UTF16.data()),
+		int Size = WideCharToMultiByte(CP_THREAD_ACP, 0, reinterpret_cast<const wchar_t*>(UTF16.data()),
 			static_cast<int>(UTF16.size()), nullptr, 0, nullptr, nullptr);
+
+		if (Size == 0) {
+			// 変換に失敗した場合のエラーハンドリング.
+			DWORD error = GetLastError();
+			std::cerr << "WideCharToMultiByte failed with error: " << error << std::endl;
+
+			// 失敗した場合は空の文字列を返す.
+			return std::string();
+		}
 
 		// 変換結果を格納するバッファを用意.
 		std::string UTF8Buf(Size, 0);
 
 		// 実際に変換を行う.
-		WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(UTF16.data()),
-			static_cast<int>(UTF16.size()), &UTF8Buf[0], Size, nullptr, nullptr);
+		if (WideCharToMultiByte(CP_THREAD_ACP, 0, reinterpret_cast<const wchar_t*>(UTF16.data()),
+			static_cast<int>(UTF16.size()), &UTF8Buf[0], Size, nullptr, nullptr) == 0) {
+
+			// 再度エラーハンドリング.
+			DWORD error = GetLastError();
+			std::cerr << "WideCharToMultiByte failed with error: " << error << std::endl;
+
+			// 失敗した場合は空の文字列を返す.
+			return std::string();
+		}
 
 		return UTF8Buf;
 	}
 
 	std::u16string UTF8ToUTF16(const std::string& UTF8)
 	{
+
 		// 変換後のバッファサイズを取得.
-		int Size = MultiByteToWideChar(CP_UTF8, 0, UTF8.c_str(), static_cast<int>(UTF8.size()), nullptr, 0);
+		int Size = MultiByteToWideChar(CP_THREAD_ACP, 0, UTF8.c_str(), static_cast<int>(UTF8.size()), nullptr, 0);
+
+		if (Size == 0) {
+			// 変換に失敗した場合のエラーハンドリング.
+			DWORD error = GetLastError();
+			std::cerr << "MultiByteToWideChar failed with error: " << error << std::endl;
+
+			// 失敗した場合は空の文字列を返す.
+			return std::u16string();
+		}
 
 		// 変換結果を格納するバッファを用意.
 		std::u16string UTF16Buf(Size, 0);
 
 		// 実際に変換を行う.
-		MultiByteToWideChar(CP_UTF8, 0, UTF8.c_str(), static_cast<int>(UTF8.size()),
+		int result = MultiByteToWideChar(CP_THREAD_ACP, 0, UTF8.c_str(), static_cast<int>(UTF8.size()),
 			reinterpret_cast<wchar_t*>(&UTF16Buf[0]), Size);
+
+		if (result == 0) {
+			// 再度エラーハンドリング.
+			DWORD error = GetLastError();
+			std::cerr << "MultiByteToWideChar failed with error: " << error << std::endl;
+
+			// 失敗した場合は空の文字列を返す.
+			return std::u16string();
+		}
 
 		return UTF16Buf;
 	}

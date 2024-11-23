@@ -135,6 +135,7 @@ void CPMXActor::LoadPMDFile(const char* path)
 	fseek(fp, CommentEnglishLength, SEEK_CUR);
 
 #else
+	// モデル情報の読み込み.
 	PMXModelInfo ModelInfo;
 
 	// モデル名の読み込み.
@@ -147,11 +148,12 @@ void CPMXActor::LoadPMDFile(const char* path)
 	if (Header.Encoding == 0) {
 		// UTF-16.
 		std::u16string UTF16ModelName(reinterpret_cast<char16_t*>(NameBuffer.data()), NameLength / 2);
-		ModelInfo.ModelName = MyString::UTF16ToUTF8(UTF16ModelName);
+		// UTF-16からUTF-8へ変換.
+		ModelInfo.ModelName = MyString::UTF16ToUTF8(UTF16ModelName);  
 	}
 	else {
 		// UTF-8.
-		ModelInfo.ModelName = std::string(NameBuffer.data(), NameBuffer.size());
+		ModelInfo.ModelName = std::string(NameBuffer.data(), NameLength);  
 	}
 
 	// モデル名英の読み込み.
@@ -163,46 +165,49 @@ void CPMXActor::LoadPMDFile(const char* path)
 	// モデル名英のエンコーディング処理.
 	if (Header.Encoding == 0) {
 		// UTF-16.
-		std::u16string UTF16ModelNameEnglish(reinterpret_cast<char16_t*>(NameEnglishBuffer.data()), NameEnglishLength / 2);
-		ModelInfo.ModelNameEnglish = MyString::UTF16ToUTF8(UTF16ModelNameEnglish);
+		std::u16string UTF16NameEnglish(reinterpret_cast<char16_t*>(NameEnglishBuffer.data()), NameEnglishLength / 2);
+		// UTF-16からUTF-8へ変換.
+		ModelInfo.ModelNameEnglish = MyString::UTF16ToUTF8(UTF16NameEnglish);
 	}
 	else {
 		// UTF-8.
-		ModelInfo.ModelNameEnglish = std::string(NameEnglishBuffer.data(), NameEnglishBuffer.size());
+		ModelInfo.ModelNameEnglish = std::string(NameEnglishBuffer.data(), NameEnglishLength); 
 	}
 
 	// コメントの読み込み.
-	uint32_t ModelCommentLength = 0;
-	fread(&ModelCommentLength, sizeof(ModelCommentLength), 1, fp);
-	std::vector<char> ModelCommentBuffer(ModelCommentLength);
-	fread(ModelCommentBuffer.data(), ModelCommentLength, 1, fp);
+	uint32_t CommentLength = 0;
+	fread(&CommentLength, sizeof(CommentLength), 1, fp);
+	std::vector<char> CommentBuffer(CommentLength);
+	fread(CommentBuffer.data(), CommentLength, 1, fp);
 
 	// コメントのエンコーディング処理.
 	if (Header.Encoding == 0) {
 		// UTF-16.
-		std::u16string utf16ModelComment(reinterpret_cast<char16_t*>(ModelCommentBuffer.data()), ModelCommentLength / 2);
-		ModelInfo.ModelComment = MyString::UTF16ToUTF8(utf16ModelComment);
+		std::u16string UTF16ModelComment(reinterpret_cast<char16_t*>(CommentBuffer.data()), CommentLength / 2);
+		// UTF-16からUTF-8へ変換.
+		ModelInfo.ModelComment = MyString::UTF16ToUTF8(UTF16ModelComment); 
 	}
 	else {
 		// UTF-8.
-		ModelInfo.ModelComment = std::string(ModelCommentBuffer.data(), ModelCommentBuffer.size());
+		ModelInfo.ModelComment = std::string(CommentBuffer.data(), CommentLength); 
 	}
 
 	// コメント英の読み込み.
-	uint32_t ModelCommentEnglishLength = 0;
-	fread(&ModelCommentEnglishLength, sizeof(ModelCommentEnglishLength), 1, fp);
-	std::vector<char> ModelCommentEnglishBuffer(ModelCommentEnglishLength);
-	fread(ModelCommentEnglishBuffer.data(), ModelCommentEnglishLength, 1, fp);
+	uint32_t CommentEnglishLength = 0;
+	fread(&CommentEnglishLength, sizeof(CommentEnglishLength), 1, fp);
+	std::vector<char> CommentEnglishBuffer(CommentEnglishLength);
+	fread(CommentEnglishBuffer.data(), CommentEnglishLength, 1, fp);
 
 	// コメント英のエンコーディング処理.
 	if (Header.Encoding == 0) {
 		// UTF-16.
-		std::u16string UTF16ModelCommentEnglish(reinterpret_cast<char16_t*>(ModelCommentEnglishBuffer.data()), ModelCommentEnglishLength / 2);
-		ModelInfo.ModelCommentEnglish = MyString::UTF16ToUTF8(UTF16ModelCommentEnglish);
+		std::u16string UTF16ModelCommentEnglish(reinterpret_cast<char16_t*>(CommentEnglishBuffer.data()), CommentEnglishLength / 2);
+		// UTF-16からUTF-8へ変換.
+		ModelInfo.ModelCommentEnglish = MyString::UTF16ToUTF8(UTF16ModelCommentEnglish); 
 	}
 	else {
-		// UTF-8.
-		ModelInfo.ModelCommentEnglish = std::string(ModelCommentEnglishBuffer.data(), ModelCommentEnglishBuffer.size());
+		// UTF-8
+		ModelInfo.ModelCommentEnglish = std::string(CommentEnglishBuffer.data(), CommentEnglishLength);  
 	}
 #endif
 
