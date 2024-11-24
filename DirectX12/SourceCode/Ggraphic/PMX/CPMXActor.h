@@ -26,8 +26,6 @@ private:
 		uint8_t BoneIndexSize;		// ボーンインデックスサイズ.
 		uint8_t MorphIndexSize;		// モーフインデックスサイズ.
 		uint8_t RigidBodyIndexSize; // 剛体インデックスサイズ.
-		std::string ModelName;      // モデル名（デコード後の文字列）.
-		std::string ModelComment;   // モデルコメント（デコード後の文字列）.
 
 		PMXHeader()
 			: Version			( 0.0f )
@@ -39,8 +37,6 @@ private:
 			, BoneIndexSize		( 0 )
 			, MorphIndexSize	( 0 )
 			, RigidBodyIndexSize( 0 )
-			, ModelName			("")
-			, ModelComment		("")
 		{}
 	};
 
@@ -102,29 +98,147 @@ private:
 
 #pragma pack()
 
-	// PMD頂点構造体.
-	struct PMDVertex
-	{
-		DirectX::XMFLOAT3 Pos;		// 頂点座標		: 12Byte.
-		DirectX::XMFLOAT3 Normal;	// 法線ベクトル	: 12Byte.
-		DirectX::XMFLOAT2 UV;		// uv座標		:  8Byte.
-		uint16_t BoneNo[2];			// ボーン番号		:  4Byte.
-		uint8_t  BoneWeight;		// ボーン影響度	:  1Byte.
-		uint8_t  EdgeFlg;			// 輪郭線フラグ	:  1Byte.
-		uint16_t Padding;			// パディング		:  2Byte.
-									// 合計			: 40Byte.
-		PMDVertex()
-			: Pos			(0.0f, 0.0f, 0.0f)
-			, Normal		(0.0f, 0.0f, 0.0f)
-			, UV			(0.0f, 0.0f)
-			, BoneNo		{}
-			, BoneWeight	(0)
-			, EdgeFlg		(0)
-			, Padding		(0)
-		{}
-	};								
+#include <DirectXMath.h>
 
-	
+	// BDEF1 ボーンウェイト (1ボーンの場合).
+	struct BDEF1Weight {
+		uint16_t BoneIndex;   // ウェイト1.0の単一ボーン(参照Index).
+
+		BDEF1Weight(uint16_t BoneIndex)
+			: BoneIndex(BoneIndex)
+		{}  // 初期化.
+	};
+
+	// BDEF2 ボーンウェイト (2ボーンの場合).
+	struct BDEF2Weight {
+		uint16_t BoneIndex1;  // ボーン1の参照Index.
+		uint16_t BoneIndex2;  // ボーン2の参照Index.
+		float Weight1;   // ボーン1のウェイト値(0～1.0), ボーン2のウェイト値は 1.0-ボーン1ウェイト
+
+		BDEF2Weight(uint16_t Bone1, uint16_t Bone2, float Weight)
+			: BoneIndex1	(Bone1)
+			, BoneIndex2	(Bone2)
+			, Weight1		(Weight) 
+		{}
+	};
+
+	// BDEF4 ボーンウェイト (4ボーンの場合).
+	struct BDEF4Weight {
+		uint16_t BoneIndex[4];  // ボーンインデックス (4ボーン).
+		float Weight[4];		// ボーンウェイト (それぞれのウェイト).
+
+		BDEF4Weight(uint16_t bone0, uint16_t bone1, uint16_t bone2, uint16_t bone3,
+			float weight0, float weight1, float weight2, float weight3)
+		{
+			BoneIndex[0] = bone0;
+			BoneIndex[1] = bone1;
+			BoneIndex[2] = bone2;
+			BoneIndex[3] = bone3;
+			Weight[0] = weight0;
+			Weight[1] = weight1;
+			Weight[2] = weight2;
+			Weight[3] = weight3;
+		}
+	};
+
+	// SDEF ボーンウェイト (SDEF方式)
+	struct SDEFWeight {
+		uint16_t BoneIndex1;      // ボーンインデックス1
+		uint16_t BoneIndex2;      // ボーンインデックス2
+		float Weight1;       // ボーン1のウェイト
+		DirectX::XMFLOAT3 C; // SDEF補正用C
+		DirectX::XMFLOAT3 R0; // SDEF補正用R0
+		DirectX::XMFLOAT3 R1; // SDEF補正用R1
+
+		SDEFWeight(int bone1, int bone2, float weight1,
+			const DirectX::XMFLOAT3& c, const DirectX::XMFLOAT3& r0, const DirectX::XMFLOAT3& r1)
+			: BoneIndex1(bone1), BoneIndex2(bone2), Weight1(weight1), C(c), R0(r0), R1(r1) {}
+	};
+
+	// ボーンウェイトを格納する構造体.
+	struct PMXBoneWeight {
+		uint8_t WeightType;  // ウェイトタイプ (BDEF1, BDEF2, BDEF4, SDEF).
+
+		union {
+			BDEF1Weight BDEF1;
+			BDEF2Weight BDEF2;
+			BDEF4Weight BDEF4;
+			SDEFWeight SDEF;
+		};
+		
+		// コンストラクタ.
+		PMXBoneWeight()		// デフォルトコンストラクタ (BDEF1で初期化)
+			: WeightType(0)
+			, BDEF1(0)
+		{}
+
+		// BDEF1用コンストラクタ.
+		PMXBoneWeight(int boneIndex) 
+			: WeightType(0), 
+			BDEF1(boneIndex)
+		{}
+
+		// BDEF2用コンストラクタ.
+		PMXBoneWeight (int bone1, int bone2, float weight1) 
+			: WeightType(1)
+			, BDEF2(bone1, bone2, weight1)
+		{}
+
+		// BDEF4用コンストラクタ.
+		PMXBoneWeight(int bone0, int bone1, int bone2, int bone3,
+			float weight0, float weight1, float weight2, float weight3)
+			: WeightType(2)
+			, BDEF4(bone0, bone1, bone2, bone3, weight0, weight1, weight2, weight3) 
+		{}
+
+		// SDEF用コンストラクタ.
+		PMXBoneWeight(int bone1, int bone2, float weight1,
+			const DirectX::XMFLOAT3& c, const DirectX::XMFLOAT3& r0, const DirectX::XMFLOAT3& r1)
+			: WeightType(3)
+			, SDEF(bone1, bone2, weight1, c, r0, r1)
+		{}
+	};
+
+	// PMX頂点構造体.
+	struct PMXVertex {
+		DirectX::XMFLOAT3               Position;		// 頂点位置.
+		DirectX::XMFLOAT3               Normal;			// 頂点法線.
+		DirectX::XMFLOAT2               UV;				// 頂点UV座標.
+		std::vector<DirectX::XMFLOAT4>  AdditionalUV;	// 追加UV座標(最大4つまで).
+		PMXBoneWeight					BoneWeight;		// ボーンウェイト.
+		float							Edge;			// エッジ倍率.
+
+		PMXVertex()
+			: Position		( 0.0f, 0.0f, 0.0f )
+			, Normal		( 0.0f, 0.0f, 0.0f )
+			, UV			( 0.0f, 0.0f )
+			, AdditionalUV	{ }
+			, BoneWeight	{ }
+			, Edge			( 0.0f )
+		{}
+	};
+
+	// PMX面構造体.
+	struct PMXFace {
+		std::array<uint32_t, 3> Index; // 3頂点インデックス.
+
+		PMXFace()
+			: Index	{}
+		{}
+	};
+
+
+	// PMXテクスチャ構造体.
+	struct TexturePath {
+		int							TextureCount;	// テクスチャの数.
+		std::vector<std::string>	TexturePaths;	// 各テクスチャのパス.
+
+		TexturePath()
+			: TextureCount	()
+			, TexturePaths	{}
+		{}
+	};
+
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
 		DirectX::XMFLOAT3	Diffuse;	// ディフューズ色.		
@@ -260,6 +374,13 @@ private:
 		const DirectX::XMFLOAT2& a, 
 		const DirectX::XMFLOAT2& b, uint8_t n = 12);
 
+	/*******************************************
+	* @brief	頂点の総数を読み込む.
+	* @param	読み込むファイル.
+	* @param    頂点のサイズ.
+	* @retrun	頂点数.
+	*******************************************/
+	uint32_t ReadIndicesNum(FILE* fp, uint8_t indexSize);
 
 public:
 	CPMXActor(const char* filepath,CPMXRenderer& renderer);
