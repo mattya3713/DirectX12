@@ -230,7 +230,7 @@ private:
 
 	// PMXテクスチャ構造体.
 	struct TexturePath {
-		int							TextureCount;	// テクスチャの数.
+		uint32_t					TextureCount;	// テクスチャの数.
 		std::vector<std::string>	TexturePaths;	// 各テクスチャのパス.
 
 		TexturePath()
@@ -238,6 +238,26 @@ private:
 			, TexturePaths	{}
 		{}
 	};
+
+#pragma pack(1)
+	struct PMXMaterial {
+		std::string		  Name;			// マテリアル名.
+		std::string		  EnglishName;  // マテリアル名(英語).
+		DirectX::XMFLOAT4 Diffuse;      // ディフューズ色 (RGBA).
+		DirectX::XMFLOAT3 Specular;     // スペキュラ色.
+		float Specularity;              // スペキュラ係数.
+		DirectX::XMFLOAT3 Ambient;      // アンビエント色.
+		DirectX::XMFLOAT4 EdgeColor;    // エッジカラー.
+		float EdgeSize;                 // エッジサイズ.
+		uint8_t SphereMode;             // スフィアモード.
+		uint8_t ToonFlag;               // トゥーンフラグ (0: 独自, 1: 共通).
+		uint32_t TextureIndex;          // テクスチャインデックス.
+		uint32_t SphereTextureIndex;    // スフィアテクスチャインデックス.
+		uint32_t ToonTextureIndex;      // トゥーンテクスチャインデックス.
+		uint32_t FaceCount;             // マテリアルに割り当てられる面数.
+		char Memo[256];                 // メモ情報 (PMX独自).
+	};
+#pragma pack()
 
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {

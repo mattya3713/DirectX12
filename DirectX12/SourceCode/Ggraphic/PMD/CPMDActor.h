@@ -84,10 +84,10 @@ private:
 		DirectX::XMFLOAT3 Pos;		// 頂点座標		: 12Byte.
 		DirectX::XMFLOAT3 Normal;	// 法線ベクトル	: 12Byte.
 		DirectX::XMFLOAT2 UV;		// uv座標		:  8Byte.
-		uint16_t BoneNo[2];			// ボーン番号		:  4Byte.
+		uint16_t BoneNo[2];			// ボーン番号	:  4Byte.
 		uint8_t  BoneWeight;		// ボーン影響度	:  1Byte.
 		uint8_t  EdgeFlg;			// 輪郭線フラグ	:  1Byte.
-		uint16_t Padding;			// パディング		:  2Byte.
+		uint16_t Padding;			// パディング	:  2Byte.
 									// 合計			: 40Byte.
 		PMDVertex()
 			: Pos			(0.0f, 0.0f, 0.0f)
