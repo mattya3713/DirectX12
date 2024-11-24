@@ -1,0 +1,3 @@
+;UV確認用テクスチャ
+img\uvTex.png
+
