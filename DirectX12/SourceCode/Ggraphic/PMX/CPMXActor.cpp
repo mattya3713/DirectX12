@@ -95,8 +95,8 @@ CPMXActor::CPMXActor(const char* filepath, CPMXRenderer& renderer):
 		m_Transform.world = DirectX::XMMatrixIdentity();
 		LoadPMDFile(filepath);
 		CreateTransformView();
-		CreateMaterialData();
-		CreateMaterialAndTextureView();
+		//CreateMaterialData();
+		//CreateMaterialAndTextureView();
 	}
 	catch (const std::runtime_error& Msg) {
 
@@ -123,11 +123,6 @@ void CPMXActor::LoadPMDFile(const char* path)
 	// PMXのシグネチャとバージョンを読み取る
 	char Signature[4];
 	fread(Signature, sizeof(Signature), 1, fp);
-
-	if (strncmp(Signature, "PMX ", 4) != 0) {
-		fclose(fp);
-		throw std::runtime_error("PMXファイルではありません。");
-	}
 
 	// ヘッダー情報を読み込む.
 	PMXHeader Header;
@@ -441,13 +436,12 @@ void CPMXActor::LoadPMDFile(const char* path)
 			// UTF-8.
 			TextureInfo.TexturePaths[i] = std::string(buffer.begin(), buffer.end());
 		}
-
 	}
 
 	// マテリアル読み込み.
 	uint32_t MaterialNum;
 	fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
-
+	
 	// マテリアル用バッファをリサイズ.
 	m_pMaterial.resize(MaterialNum);
 	m_pTextureResource.resize(MaterialNum);
@@ -455,100 +449,155 @@ void CPMXActor::LoadPMDFile(const char* path)
 	m_pSpaResource.resize(MaterialNum);
 	m_pToonResource.resize(MaterialNum);
 
-	std::vector<PMXMaterial> Materials(MaterialNum);
+	// マテリアルデータの読み込み.
+	std::vector<PMXMaterial> Materials; 
+	Materials.reserve(MaterialNum);
 
 	for (uint32_t i = 0; i < MaterialNum; ++i) {
-		PMXMaterial material{};
-
-		if (i == 13)
-		{
-			int i = 0;
-		}
+		Materials.emplace_back();
 
 		uint32_t NameLength = 0;
 		fread(&NameLength, sizeof(NameLength), 1, fp);
 		std::vector<char> NameBuffer(NameLength);
 		fread(NameBuffer.data(), NameLength, 1, fp);
 
+		uint32_t NameEnglishLength = 0;
+		fread(&NameEnglishLength, sizeof(NameEnglishLength), 1, fp);
+		std::vector<char> NameEnglishBuffer(NameEnglishLength);
+		fread(NameEnglishBuffer.data(), NameEnglishLength, 1, fp);
+
 		// パスエンコーディング処理.
 		if (Header.Encoding == 0) {
 			// UTF-16.
 			std::u16string UTF16Name(reinterpret_cast<char16_t*>(NameBuffer.data()), NameLength / 2);
-			material.Name = MyString::UTF16ToUTF8(UTF16Name);
+			Materials.back().Name = MyString::UTF16ToUTF8(UTF16Name);
 		}
 		else {
 			// UTF-8. 
-			material.Name = std::string(NameBuffer.begin(), NameBuffer.end());
+			Materials.back().Name = std::string(NameBuffer.begin(), NameBuffer.end());
 		}
-
-
-		uint32_t NameLengtha = 0;
-		fread(&NameLengtha, sizeof(NameLengtha), 1, fp);
-		std::vector<char> NameBuffera(NameLengtha);
-		fread(NameBuffera.data(), NameLengtha, 1, fp);
 
 		// パスエンコーディング処理.
 		if (Header.Encoding == 0) {
 			// UTF-16.
-			std::u16string UTF16Name(reinterpret_cast<char16_t*>(NameBuffera.data()), NameLengtha / 2);
-			material.EnglishName = MyString::UTF16ToUTF8(UTF16Name);
+			std::u16string UTF16Name(reinterpret_cast<char16_t*>(NameEnglishBuffer.data()), NameEnglishLength / 2);
+			Materials.back().EnglishName = MyString::UTF16ToUTF8(UTF16Name);
 		}
 		else {
 			// UTF-8.
-			material.EnglishName = std::string(NameBuffera.begin(), NameBuffera.end());
+			Materials.back().EnglishName = std::string(NameEnglishBuffer.begin(), NameEnglishBuffer.end());
 		}
 
 		// 固定部分読み取り
-		fread(&material.Diffuse, sizeof(DirectX::XMFLOAT4), 1, fp);
-		fread(&material.Specular, sizeof(DirectX::XMFLOAT3), 1, fp);
-		fread(&material.Specularity, sizeof(float), 1, fp);
-		fread(&material.Ambient, sizeof(DirectX::XMFLOAT3), 1, fp);
+		fread(&Materials.back().Diffuse, sizeof(DirectX::XMFLOAT4), 1, fp);
+		fread(&Materials.back().Specular, sizeof(DirectX::XMFLOAT3), 1, fp);
+		fread(&Materials.back().Specularity, sizeof(float), 1, fp);
+		fread(&Materials.back().Ambient, sizeof(DirectX::XMFLOAT3), 1, fp);
 
-		// 描画フラグ (bitFlag)
+		// 描画フラグ (bitFlag).
 		uint8_t bitFlag;
 		fread(&bitFlag, sizeof(uint8_t), 1, fp);
 
-		// エッジ色・サイズ
-		fread(&material.EdgeColor, sizeof(DirectX::XMFLOAT4), 1, fp);
-		fread(&material.EdgeSize, sizeof(float), 1, fp);
+		// エッジ色・サイズ.
+		fread(&Materials.back().EdgeColor, sizeof(DirectX::XMFLOAT4), 1, fp);
+		fread(&Materials.back().EdgeSize, sizeof(float), 1, fp);
 
-		// テクスチャIndex
-		fread(&material.TextureIndex, Header.TextureIndexSize, 1, fp);
+		// テクスチャIndex.
+		fread(&Materials.back().TextureIndex, Header.TextureIndexSize, 1, fp);
 
-		// スフィアテクスチャIndex
-		fread(&material.SphereTextureIndex, Header.TextureIndexSize, 1, fp);
+		// スフィアテクスチャIndex.
+		fread(&Materials.back().SphereTextureIndex, Header.TextureIndexSize, 1, fp);
 
-		// スフィアモード
-		fread(&material.SphereMode, sizeof(uint8_t), 1, fp);
+		// スフィアモード.
+		fread(&Materials.back().SphereMode, sizeof(uint8_t), 1, fp);
 
-		// 共有Toonフラグ
-		uint8_t toonFlag;
-		fread(&toonFlag, sizeof(uint8_t), 1, fp);
+		// 共有Toonフラグ.
+		fread(&Materials.back().ToonFlag, sizeof(uint8_t), 1, fp);
 
-		if (toonFlag == 0) {
-			// 個別Toonの場合.
-			fread(&material.ToonTextureIndex, material.ToonTextureIndex, 1, fp);
-		}
-		else {
-			// 共有Toonの場合.
-			uint8_t sharedToonIndex;
-			fread(&sharedToonIndex, sizeof(uint8_t), 1, fp);
-			material.ToonTextureIndex = sharedToonIndex; // 共有Toonのインデックス
-		}
+		fread(&Materials.back().ToonTextureIndex, sizeof(Materials.back().ToonTextureIndex), 1, fp);
+
 
 		// メモ (TextBuf)
-		uint32_t memoLength;
-		fread(&memoLength, sizeof(uint32_t), 1, fp);
-		std::string memo(memoLength, '\0');
-		fread(memo.data(), memoLength, 1, fp);
-		//material.Memo = memo.c_str();
+		uint32_t MemoLength = 0;
+		fread(&MemoLength, sizeof(MemoLength), 1, fp);
+		std::vector<char> MameBuffer(MemoLength);
+		fread(MameBuffer.data(), MameBuffer.size(), 1, fp);
 
 		// 面数
-		fread(&material.FaceCount, sizeof(uint32_t), 1, fp);
-		material.FaceCount /= 3;
-		// 読み取ったマテリアルをリストに追加
-		Materials[i] = material;
+		fread(&Materials.back().FaceCount, sizeof(uint32_t), 1, fp);
+		Materials.back().FaceCount /= 3;
 	}
+
+	// トゥーンリソースとテクスチャを設定.
+	for (int i = 0; i < Materials.size(); ++i) {
+		// トゥーンテクスチャのファイルパスを構築.
+		char toonFilePath[32];
+		sprintf_s(toonFilePath, "Data/Image/toon/toon%02d.bmp", ToonFlag[i].ToonIdx + 1);
+		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
+
+		// テクスチャパスが空の場合、リソースをリセット.
+		if (strlen(pmdMaterials[i].TexFilePath) == 0) {
+			m_pTextureResource[i].Reset();
+			continue;
+		}
+
+		// テクスチャパスの分解とリソースのロード.
+		std::string TexFileName = pmdMaterials[i].TexFilePath;
+		std::string SphFileName = "";
+		std::string SpaFileName = "";
+
+		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {
+			auto namepair = MyFilePath::SplitFileName(TexFileName);
+			if (MyFilePath::GetExtension(namepair.first) == "sph") {
+				TexFileName = namepair.second;
+				SphFileName = namepair.first;
+			}
+			else if (MyFilePath::GetExtension(namepair.first) == "spa") {
+				TexFileName = namepair.second;
+				SpaFileName = namepair.first;
+			}
+			else {
+				TexFileName = namepair.first;
+				if (MyFilePath::GetExtension(namepair.second) == "sph") {
+					SphFileName = namepair.second;
+				}
+				else if (MyFilePath::GetExtension(namepair.second) == "spa") {
+					SpaFileName = namepair.second;
+				}
+			}
+		}
+		else {
+			if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
+				SphFileName = pmdMaterials[i].TexFilePath;
+				TexFileName = "";
+			}
+			else if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
+				SpaFileName = pmdMaterials[i].TexFilePath;
+				TexFileName = "";
+			}
+			else {
+				TexFileName = pmdMaterials[i].TexFilePath;
+			}
+		}
+
+		// リソースをロード.
+		if (!TexFileName.empty()) {
+			auto TexFilePath = MyFilePath::GetTexPath(path, TexFileName.c_str());
+			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
+		}
+		if (!SphFileName.empty()) {
+			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
+			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
+		}
+		if (!SpaFileName.empty()) {
+			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
+			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
+		}
+	}
+
+
+	// ファイルを閉じる.
+	fclose(fp);
 
 	//// テクスチャリソースを設定.
 	//for (int i = 0; i < pmxMaterials.size(); ++i) {
@@ -567,8 +616,6 @@ void CPMXActor::LoadPMDFile(const char* path)
 	//}
 
 
-	// ファイルを閉じる.
-	fclose(fp);
 }
 
 void CPMXActor::LoadVMDFile(const char* FilePath, const char* Name)
@@ -813,7 +860,7 @@ void CPMXActor::CreateMaterialAndTextureView() {
 
 void CPMXActor::Update() {
 	_angle += 0.03f;
-	MotionUpdate();
+	//MotionUpdate();
 }
 
 void CPMXActor::Draw() {

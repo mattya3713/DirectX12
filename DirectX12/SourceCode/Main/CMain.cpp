@@ -89,7 +89,7 @@ HRESULT CMain::Create()
     m_pDx12 = std::make_shared<CDirectX12>();
     m_pDx12->Create(m_hWnd);
     m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
+   // m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
 
     m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
     m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);

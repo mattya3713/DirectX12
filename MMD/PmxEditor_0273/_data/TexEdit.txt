@@ -1,3 +1,0 @@
-;複数指定可能
-mspaint.exe
-;C:\Program Files\Paint.NET\PaintDotNet.exe

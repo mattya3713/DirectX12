@@ -113,7 +113,7 @@ private:
 	struct BDEF2Weight {
 		uint16_t BoneIndex1;  // ボーン1の参照Index.
 		uint16_t BoneIndex2;  // ボーン2の参照Index.
-		float Weight1;   // ボーン1のウェイト値(0～1.0), ボーン2のウェイト値は 1.0-ボーン1ウェイト
+		float Weight1;		  // ボーン1のウェイト値(0～1.0), ボーン2のウェイト値は 1.0-ボーン1ウェイト.
 
 		BDEF2Weight(uint16_t Bone1, uint16_t Bone2, float Weight)
 			: BoneIndex1	(Bone1)
@@ -141,14 +141,14 @@ private:
 		}
 	};
 
-	// SDEF ボーンウェイト (SDEF方式)
+	// SDEF ボーンウェイト (SDEF方式).
 	struct SDEFWeight {
-		uint16_t BoneIndex1;      // ボーンインデックス1
-		uint16_t BoneIndex2;      // ボーンインデックス2
-		float Weight1;       // ボーン1のウェイト
-		DirectX::XMFLOAT3 C; // SDEF補正用C
-		DirectX::XMFLOAT3 R0; // SDEF補正用R0
-		DirectX::XMFLOAT3 R1; // SDEF補正用R1
+		uint16_t BoneIndex1;    // ボーンインデックス1.
+		uint16_t BoneIndex2;    // ボーンインデックス2.
+		float Weight1;			// ボーン1のウェイト.
+		DirectX::XMFLOAT3 C;	// SDEF補正用C.
+		DirectX::XMFLOAT3 R0;	// SDEF補正用R0.
+		DirectX::XMFLOAT3 R1;	// SDEF補正用R1.
 
 		SDEFWeight(int bone1, int bone2, float weight1,
 			const DirectX::XMFLOAT3& c, const DirectX::XMFLOAT3& r0, const DirectX::XMFLOAT3& r1)
@@ -241,21 +241,39 @@ private:
 
 #pragma pack(1)
 	struct PMXMaterial {
-		std::string		  Name;			// マテリアル名.
-		std::string		  EnglishName;  // マテリアル名(英語).
-		DirectX::XMFLOAT4 Diffuse;      // ディフューズ色 (RGBA).
-		DirectX::XMFLOAT3 Specular;     // スペキュラ色.
-		float Specularity;              // スペキュラ係数.
-		DirectX::XMFLOAT3 Ambient;      // アンビエント色.
-		DirectX::XMFLOAT4 EdgeColor;    // エッジカラー.
-		float EdgeSize;                 // エッジサイズ.
-		uint8_t SphereMode;             // スフィアモード.
-		uint8_t ToonFlag;               // トゥーンフラグ (0: 独自, 1: 共通).
-		uint32_t TextureIndex;          // テクスチャインデックス.
-		uint32_t SphereTextureIndex;    // スフィアテクスチャインデックス.
-		uint32_t ToonTextureIndex;      // トゥーンテクスチャインデックス.
-		uint32_t FaceCount;             // マテリアルに割り当てられる面数.
-		char Memo[256];                 // メモ情報 (PMX独自).
+		std::string			Name;					// マテリアル名.
+		std::string			EnglishName;			// マテリアル名(英語).
+		DirectX::XMFLOAT4	Diffuse;				// ディフューズ色 (RGBA).
+		DirectX::XMFLOAT3	Specular;				// スペキュラ色.
+		float				Specularity;			// スペキュラ係数.
+		DirectX::XMFLOAT3	Ambient;				// アンビエント色.
+		DirectX::XMFLOAT4	EdgeColor;				// エッジカラー.
+		float				EdgeSize;				// エッジサイズ.
+		uint8_t				SphereMode;				// スフィアモード.
+		uint8_t				ToonFlag;				// トゥーンフラグ (0: 独自, 1: 共通).
+		uint8_t				SphereTextureIndex;		// スフィアテクスチャインデックス.
+		uint8_t				ToonTextureIndex;		// トゥーンテクスチャインデックス.
+		uint32_t			TextureIndex;			// テクスチャインデックス.
+		uint32_t			FaceCount;				// マテリアルに割り当てられる面数.
+		char				Memo[256];				// メモ情報 (PMX独自).
+
+		PMXMaterial()
+			: Name				("")
+			, EnglishName		("")
+			, Diffuse			( 0.0f, 0.0f, 0.0f, 0.0f )
+			, Specular			( 0.0f, 0.0f, 0.0f )
+			, Specularity		( 0.0f )
+			, Ambient			( 0.0f, 0.0f, 0.0f )
+			, EdgeColor			( 0.0f, 0.0f, 0.0f, 0.0f )
+			, EdgeSize			( 0.0f )
+			, SphereMode		( 0 )
+			, ToonFlag			( 0 )
+			, TextureIndex		( 0 )
+			, SphereTextureIndex( 0 )
+			, ToonTextureIndex	( 0 )
+			, FaceCount			( 0 )
+			, Memo				("")
+		{}
 	};
 #pragma pack()
 
