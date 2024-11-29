@@ -76,4 +76,24 @@ namespace MyFilePath {
         auto folderPath = ModelPath.substr(0, pathIndex + 1);
         return folderPath + TexPath;
     }
+
+    // 現在の階層を取得.
+    inline std::string GetCurrentHierarchy(const char* TexPath) {
+       
+        // モデルパスの最後のスラッシュまたはバックスラッシュを探す.
+        int pathIndex1 = static_cast<int>(TexPath.rfind('/'));
+        int pathIndex2 = static_cast<int>(TexPath.rfind('\\'));
+        int pathIndex = std::max(pathIndex1, pathIndex2);
+
+        // モデルパスの最後がスラッシュでない場合.
+        if (pathIndex == std::string::npos) {
+
+            // テクスチャパスを追加.
+            return ModelPath + TexPath;
+        }
+
+        // モデルパスからフォルダパスを取得し、テクスチャパスを追加.
+        auto folderPath = ModelPath.substr(0, pathIndex + 1);
+        return folderPath + TexPath;
+    }
 }

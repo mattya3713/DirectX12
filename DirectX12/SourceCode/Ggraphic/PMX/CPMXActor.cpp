@@ -530,9 +530,18 @@ void CPMXActor::LoadPMDFile(const char* path)
 
 	// トゥーンリソースとテクスチャを設定.
 	for (int i = 0; i < Materials.size(); ++i) {
+
 		// トゥーンテクスチャのファイルパスを構築.
 		char toonFilePath[32];
-		sprintf_s(toonFilePath, "Data/Image/toon/toon%02d.bmp", ToonFlag[i].ToonIdx + 1);
+
+		// 共通のテクスチャをロード.
+		if (Materials[i].ToonFlag) {
+			sprintf_s(toonFilePath, "Data\\Model\\PMX\\toon\\toon%02d.bmp", Materials[i].ToonTextureIndex + 1);
+		}
+		else {
+			sprintf_s(toonFilePath, path + , Materials[i].ToonTextureIndex + 1);
+		}
+
 		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 
 		// テクスチャパスが空の場合、リソースをリセット.
@@ -602,7 +611,7 @@ void CPMXActor::LoadPMDFile(const char* path)
 	//// テクスチャリソースを設定.
 	//for (int i = 0; i < pmxMaterials.size(); ++i) {
 	//	if (pmxMaterials[i].TextureIndex >= 0) {
-	//		auto TexFilePath = MyFilePath::GetTexPath(path, textureTable[pmxMaterials[i].TextureIndex].c_str());
+			auto TexFilePath = MyFilePath::GetTexPath(path, textureTable[pmxMaterials[i].TextureIndex].c_str());
 	//		m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
 	//	}
 	//	if (pmxMaterials[i].SphereTextureIndex >= 0) {
