@@ -5,6 +5,9 @@
 #include <d3dx12.h>
 #include <chrono>
 
+// PMXモデルデフォルトの共通トゥーン素材のパス.
+static constexpr char c_PMXCommonToonPath[] = "Data\\Model\\PMX\\toon\\toon%02d.bmp";
+
 void* CPMXActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);
 }
@@ -95,8 +98,8 @@ CPMXActor::CPMXActor(const char* filepath, CPMXRenderer& renderer):
 		m_Transform.world = DirectX::XMMatrixIdentity();
 		LoadPMDFile(filepath);
 		CreateTransformView();
-		//CreateMaterialData();
-		//CreateMaterialAndTextureView();
+		CreateMaterialData();
+		CreateMaterialAndTextureView();
 	}
 	catch (const std::runtime_error& Msg) {
 
@@ -401,6 +404,8 @@ void CPMXActor::LoadPMDFile(const char* path)
 
 	std::memcpy(mappedIdx, MappedIdx1, IndicesNum * sizeof(unsigned short));
 
+	delete[] MappedIdx1;
+
 	m_pIndexBuffer->Unmap(0, nullptr);
 
 	// インデックスバッファビューの設定.
@@ -430,12 +435,16 @@ void CPMXActor::LoadPMDFile(const char* path)
 		if (Header.Encoding == 0) {  
 			// UTF-16.
 			std::u16string UTF16Name(reinterpret_cast<char16_t*>(buffer.data()), bufferLength / 2);
-			TextureInfo.TexturePaths[i] = MyString::UTF16ToUTF8(UTF16Name);
+			// モデルからの相対パスをアプリからの相対パス変換し保存.
+			TextureInfo.TexturePaths[i] = MyFilePath::GetTexPath(path, MyString::UTF16ToUTF8(UTF16Name).c_str());
 		}
 		else {  
 			// UTF-8.
-			TextureInfo.TexturePaths[i] = std::string(buffer.begin(), buffer.end());
+			// モデルからの相対パスをアプリからの相対パス変換し保存.
+			TextureInfo.TexturePaths[i] = MyFilePath::GetTexPath(path, std::string(buffer.begin(), buffer.end()).c_str());
 		}
+
+		MyFilePath::ReplaceSlashWithBackslash(&TextureInfo.TexturePaths[i]);
 	}
 
 	// マテリアル読み込み.
@@ -443,7 +452,7 @@ void CPMXActor::LoadPMDFile(const char* path)
 	fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
 	
 	// マテリアル用バッファをリサイズ.
-	m_pMaterial.resize(MaterialNum);
+	m_pMaterials.resize(MaterialNum);
 	m_pTextureResource.resize(MaterialNum);
 	m_pSphResource.resize(MaterialNum);
 	m_pSpaResource.resize(MaterialNum);
@@ -453,8 +462,10 @@ void CPMXActor::LoadPMDFile(const char* path)
 	std::vector<PMXMaterial> Materials; 
 	Materials.reserve(MaterialNum);
 
+
 	for (uint32_t i = 0; i < MaterialNum; ++i) {
 		Materials.emplace_back();
+		m_pMaterials[i] = std::make_shared<Material>();
 
 		uint32_t NameLength = 0;
 		fread(&NameLength, sizeof(NameLength), 1, fp);
@@ -494,6 +505,12 @@ void CPMXActor::LoadPMDFile(const char* path)
 		fread(&Materials.back().Specularity, sizeof(float), 1, fp);
 		fread(&Materials.back().Ambient, sizeof(DirectX::XMFLOAT3), 1, fp);
 
+		m_pMaterials[i]->Materialhlsl.Diffuse = Materials.back().Diffuse;
+		m_pMaterials[i]->Materialhlsl.Specular = Materials.back().Specular;
+		m_pMaterials[i]->Materialhlsl.Specularity = Materials.back().Specularity;
+		m_pMaterials[i]->Materialhlsl.Ambient = Materials.back().Ambient;
+
+
 		// 描画フラグ (bitFlag).
 		uint8_t bitFlag;
 		fread(&bitFlag, sizeof(uint8_t), 1, fp);
@@ -526,7 +543,11 @@ void CPMXActor::LoadPMDFile(const char* path)
 		// 面数
 		fread(&Materials.back().FaceCount, sizeof(uint32_t), 1, fp);
 		Materials.back().FaceCount /= 3;
+
+		m_pMaterials[i]->IndicesNum = Materials.back().FaceCount;
 	}
+
+	std::vector<uint8_t> emp(Materials.size(), -1);
 
 	// トゥーンリソースとテクスチャを設定.
 	for (int i = 0; i < Materials.size(); ++i) {
@@ -534,24 +555,25 @@ void CPMXActor::LoadPMDFile(const char* path)
 		// トゥーンテクスチャのファイルパスを構築.
 		char toonFilePath[32];
 
+
 		// 共通のテクスチャをロード.
 		if (Materials[i].ToonFlag) {
-			sprintf_s(toonFilePath, "Data\\Model\\PMX\\toon\\toon%02d.bmp", Materials[i].ToonTextureIndex + 1);
+			sprintf_s(toonFilePath, c_PMXCommonToonPath, Materials[i].ToonTextureIndex + 1);
+			m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 		}
+		// モデル特有のテクスチャをロード.
 		else {
-			sprintf_s(toonFilePath, path + , Materials[i].ToonTextureIndex + 1);
+
+			// リソース数よりテクスチャインデックスが大きかったらcontinue.
+			// MEMO : トゥーンを使用してないと255が入ってる.
+			if (Materials[i].ToonTextureIndex + 1 >= TextureInfo.TexturePaths.size()) { continue; }
+
+			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo.TexturePaths[Materials[i].ToonTextureIndex + 1].c_str());
 		}
 
-		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
-
-		// テクスチャパスが空の場合、リソースをリセット.
-		if (strlen(pmdMaterials[i].TexFilePath) == 0) {
-			m_pTextureResource[i].Reset();
-			continue;
-		}
 
 		// テクスチャパスの分解とリソースのロード.
-		std::string TexFileName = pmdMaterials[i].TexFilePath;
+		std::string TexFileName = TextureInfo.TexturePaths[Materials[i].ToonTextureIndex + 1];
 		std::string SphFileName = "";
 		std::string SpaFileName = "";
 
@@ -576,23 +598,22 @@ void CPMXActor::LoadPMDFile(const char* path)
 			}
 		}
 		else {
-			if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "sph") {
-				SphFileName = pmdMaterials[i].TexFilePath;
+			if (MyFilePath::GetExtension(TexFileName) == "sph") {
+				SphFileName = TexFileName;
 				TexFileName = "";
 			}
-			else if (MyFilePath::GetExtension(pmdMaterials[i].TexFilePath) == "spa") {
-				SpaFileName = pmdMaterials[i].TexFilePath;
+			else if (MyFilePath::GetExtension(TexFileName) == "spa") {
+				SpaFileName = TexFileName;
 				TexFileName = "";
 			}
 			else {
-				TexFileName = pmdMaterials[i].TexFilePath;
+				TexFileName = TexFileName;
 			}
 		}
 
 		// リソースをロード.
 		if (!TexFileName.empty()) {
-			auto TexFilePath = MyFilePath::GetTexPath(path, TexFileName.c_str());
-			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
+			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFileName.c_str());
 		}
 		if (!SphFileName.empty()) {
 			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
@@ -604,27 +625,8 @@ void CPMXActor::LoadPMDFile(const char* path)
 		}
 	}
 
-
 	// ファイルを閉じる.
 	fclose(fp);
-
-	//// テクスチャリソースを設定.
-	//for (int i = 0; i < pmxMaterials.size(); ++i) {
-	//	if (pmxMaterials[i].TextureIndex >= 0) {
-			auto TexFilePath = MyFilePath::GetTexPath(path, textureTable[pmxMaterials[i].TextureIndex].c_str());
-	//		m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
-	//	}
-	//	if (pmxMaterials[i].SphereTextureIndex >= 0) {
-	//		auto SphFilePath = MyFilePath::GetTexPath(path, textureTable[pmxMaterials[i].SphereTextureIndex].c_str());
-	//		m_pSphResource[i] = m_pDx12.GetTextureByPath(SphFilePath.c_str());
-	//	}
-	//	if (pmxMaterials[i].ToonTextureIndex >= 0) {
-	//		auto ToonFilePath = MyFilePath::GetTexPath(path, textureTable[pmxMaterials[i].ToonTextureIndex].c_str());
-	//		m_pToonResource[i] = m_pDx12.GetTextureByPath(ToonFilePath.c_str());
-	//	}
-	//}
-
-
 }
 
 void CPMXActor::LoadVMDFile(const char* FilePath, const char* Name)
@@ -736,7 +738,7 @@ void CPMXActor::CreateMaterialData() {
 	MaterialBuffSize = (MaterialBuffSize + 0xff)&~0xff;
 
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(MaterialBuffSize * m_pMaterial.size());
+	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(MaterialBuffSize * m_pMaterials.size());
 
 	MyAssert::IsFailed(
 		_T("マテリアル作成"),
@@ -757,44 +759,44 @@ void CPMXActor::CreateMaterialData() {
 		0, nullptr, 
 		(void**)&mapMaterial);
 
-	for (auto& m : m_pMaterial) {
+	for (auto& m : m_pMaterials) {
 		*((MaterialForHlsl*)mapMaterial) = m->Materialhlsl;//データコピー
 		mapMaterial += MaterialBuffSize;//次のアライメント位置まで進める
 	}
 
 	m_pMaterialBuff->Unmap(0, nullptr);
 
-	// -- 仮.
+	//// -- 仮.
 
-	m_MappedMatrices[0] = DirectX::XMMatrixRotationY(_angle);
+	//m_MappedMatrices[0] = DirectX::XMMatrixRotationY(_angle);
 
-	auto armnode = m_BoneNodeTable["左腕"];
-	auto& armpos = armnode.StartPos;
-	auto armMat =
-		DirectX::XMMatrixTranslation(-armpos.x, -armpos.y, -armpos.x)
-		* DirectX::XMMatrixRotationZ(DirectX::XM_PIDIV2)
-		* DirectX::XMMatrixTranslation(armpos.x, armpos.y, armpos.x);
-	
-	auto elbowNode = m_BoneNodeTable["左ひじ"];
-	auto& elbowpos = elbowNode.StartPos;
-	auto elbowMat = DirectX::XMMatrixTranslation(-elbowpos.x, -elbowpos.y, -elbowpos.x)
-		* DirectX::XMMatrixRotationZ(-DirectX::XM_PIDIV2)
-		* DirectX::XMMatrixTranslation(elbowpos.x, elbowpos.y, elbowpos.x);
+	//auto armnode = m_BoneNodeTable["左腕"];
+	//auto& armpos = armnode.StartPos;
+	//auto armMat =
+	//	DirectX::XMMatrixTranslation(-armpos.x, -armpos.y, -armpos.x)
+	//	* DirectX::XMMatrixRotationZ(DirectX::XM_PIDIV2)
+	//	* DirectX::XMMatrixTranslation(armpos.x, armpos.y, armpos.x);
+	//
+	//auto elbowNode = m_BoneNodeTable["左ひじ"];
+	//auto& elbowpos = elbowNode.StartPos;
+	//auto elbowMat = DirectX::XMMatrixTranslation(-elbowpos.x, -elbowpos.y, -elbowpos.x)
+	//	* DirectX::XMMatrixRotationZ(-DirectX::XM_PIDIV2)
+	//	* DirectX::XMMatrixTranslation(elbowpos.x, elbowpos.y, elbowpos.x);
 
-	m_BoneMatrix[armnode.BoneIndex] = armMat;
-	m_BoneMatrix[elbowNode.BoneIndex] = elbowMat;
+	//m_BoneMatrix[armnode.BoneIndex] = armMat;
+	//m_BoneMatrix[elbowNode.BoneIndex] = elbowMat;
 
-	RecursiveMatrixMultipy(&m_BoneNodeTable ["センター"], DirectX::XMMatrixIdentity());
+	//RecursiveMatrixMultipy(&m_BoneNodeTable ["センター"], DirectX::XMMatrixIdentity());
 
 
-	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
-	// -- 仮.
+	//copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
+	//// -- 仮.
 }
 
 
 void CPMXActor::CreateMaterialAndTextureView() {
 	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
-	MaterialDescHeapDesc.NumDescriptors = static_cast<UINT>(m_pMaterial.size() * 5);//マテリアル数ぶん(定数1つ、テクスチャ3つ)
+	MaterialDescHeapDesc.NumDescriptors = static_cast<UINT>(m_pMaterials.size() * 5);//マテリアル数ぶん(定数1つ、テクスチャ3つ)
 	MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	MaterialDescHeapDesc.NodeMask = 0;
 
@@ -818,7 +820,7 @@ void CPMXActor::CreateMaterialAndTextureView() {
 	srvDesc.Texture2D.MipLevels = 1;//ミップマップは使用しないので1
 	CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(m_pMaterialHeap->GetCPUDescriptorHandleForHeapStart());
 	auto incSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	for (int i = 0; i < m_pMaterial.size(); ++i) {
+	for (int i = 0; i < m_pMaterials.size(); ++i) {
 		//マテリアル固定バッファビュー
 		m_pDx12.GetDevice()->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
 		matDescHeapH.ptr += incSize;
@@ -888,7 +890,7 @@ void CPMXActor::Draw() {
 	unsigned int IdxOffset = 0;
 
 	auto cbvsrvIncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
-	for (auto& m : m_pMaterial) {
+	for (auto& m : m_pMaterials) {
 		m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
 		m_pDx12.GetCommandList()->DrawIndexedInstanced(m->IndicesNum, 1, IdxOffset, 0, 0);
 		MaterialHeapHandle.ptr += cbvsrvIncSize;

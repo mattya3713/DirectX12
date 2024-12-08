@@ -166,16 +166,19 @@ const MyComPtr<ID3D12GraphicsCommandList> CDirectX12::GetCommandList()
 // テクスチャを取得.
 MyComPtr<ID3D12Resource> CDirectX12::GetTextureByPath(const char* texpath)
 {
-	auto it = m_ResourceTable.find(texpath);
-	if (it != m_ResourceTable.end()) {
-		//テーブルに内にあったらロードするのではなくマップ内の
-		//リソースを返す
-		return m_ResourceTable[texpath];
-	}
-	else {
-		return MyComPtr<ID3D12Resource>(CreateTextureFromFile(texpath));
+	// リソーステーブル内を検索.
+	auto [iterator, Result] = m_ResourceTable.emplace(
+		texpath,
+		nullptr 
+	);
+
+	if (Result) {
+		// パスが未定義だった場合生成する.
+		iterator->second = MyComPtr<ID3D12Resource>(CreateTextureFromFile(texpath));
 	}
 
+	// マップ内のリソースを返す
+	return iterator->second;
 }
 
 void CDirectX12::SetScene()
@@ -571,10 +574,9 @@ ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
 		ScratchImg);
 
 	if (FAILED(Result)) {
+
 		// エラーメッセージを作成.
-		std::string ErrorMessage = "Failed to load texture file: " + TexPath +
-			"\nExtension: " + Extension +
-			"\nHRESULT: " + std::to_string(Result);
+		std::string ErrorMessage = MyAssert::HResultToJapanese(Result);
 
 		// メッセージボックスを表示.
 		MessageBoxA(nullptr, ErrorMessage.c_str(), "Texture Load Error", MB_OK | MB_ICONERROR);

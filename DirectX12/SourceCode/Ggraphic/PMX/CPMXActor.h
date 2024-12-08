@@ -279,15 +279,13 @@ private:
 
 	// シェーダ側に投げられるマテリアルデータ.
 	struct MaterialForHlsl {
-		DirectX::XMFLOAT3	Diffuse;	// ディフューズ色.		
-		float				Alpha;		// α値.		
+		DirectX::XMFLOAT4	Diffuse;	// ディフューズ色.	
 		DirectX::XMFLOAT3	Specular;	// スペキュラの強.		
 		float				Specularity;// スペキュラ色.		
 		DirectX::XMFLOAT3	Ambient;	// アンビエント色.		
 
 		MaterialForHlsl()
-			: Diffuse		(0.0f, 0.0f, 0.0f)
-			, Alpha			(0.0f)
+			: Diffuse		(0.0f, 0.0f, 0.0f, 0.0f)
 			, Specular		(0.0f, 0.0f, 0.0f)
 			, Specularity	(0.0f)
 			, Ambient		(0.0f, 0.0f, 0.0f)
@@ -459,7 +457,7 @@ private:
 	MyComPtr<ID3D12Resource>		m_pTransformBuff;			// バッファ.
 
 	//マテリアル関連
-	std::vector<std::shared_ptr<Material>>	m_pMaterial;		// マテリアル.
+	std::vector<std::shared_ptr<Material>>	m_pMaterials;		// マテリアル.
 	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// マテリアルバッファ.
 	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// 画像リソース.
 	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// Sphリソース.

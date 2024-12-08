@@ -72,9 +72,6 @@
     <ClInclude Include="SourceCode\Utility\Math\Math.h">
       <Filter>SourceCode\Utility\Math</Filter>
     </ClInclude>
-    <ClInclude Include="SourceCode\Utility\Random\Random.h">
-      <Filter>SourceCode\Utility\Random</Filter>
-    </ClInclude>
     <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h">
       <Filter>SourceCode\Utility\OneTirrger</Filter>
     </ClInclude>

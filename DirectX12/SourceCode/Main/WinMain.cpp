@@ -15,7 +15,7 @@ INT WINAPI WinMain(
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	CMain* pCMain = new CMain();	//初期化＆クラス宣言.
-
+	
 	if (pCMain != nullptr)
 	{
 		//ウィンドウ作成成功したら.

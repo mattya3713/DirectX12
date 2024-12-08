@@ -10,22 +10,17 @@ public:
 
     // ポインタを受け取るコンストラクタ.
     explicit MyComPtr(T* ptr) : m_ptr(ptr) {
-        if (m_ptr) {
-            m_ptr->AddRef();
-        }
+        AddRef();
     }
 
     // コピーコンストラクタ.
     MyComPtr(const MyComPtr& other) : m_ptr(other.m_ptr) {
-        if (m_ptr) {
-            m_ptr->AddRef();
-        }
+        AddRef();
     }
 
     // ムーブコンストラクタ.
     MyComPtr(MyComPtr&& other) noexcept : m_ptr(other.m_ptr) {
-        // 移動元を無効にする.
-        other.m_ptr = nullptr;
+        other.m_ptr = nullptr; // 移動元を無効にする.
     }
 
     // コピー代入演算子.
@@ -33,9 +28,7 @@ public:
         if (this != &other) {
             Reset(); // 現在のポインタを解放.
             m_ptr = other.m_ptr;
-            if (m_ptr) {
-                m_ptr->AddRef();
-            }
+            AddRef();
         }
         return *this;
     }
@@ -96,5 +89,12 @@ public:
     }
 
 private:
+    // COM オブジェクトの参照カウントを増加させる
+    void AddRef() {
+        if (m_ptr) {
+            m_ptr->AddRef();
+        }
+    }
+
     T* m_ptr; // COM オブジェクトのポインタ.
 };

@@ -27,12 +27,19 @@ namespace MyFilePath {
 	static inline std::wstring GetExtension(const std::wstring& Path);
 
 	/*******************************************
-	* モデルのパスとテクスチャのパスから合成パスを得る
-	* @param ModelPath	: アプリケーションから見たpmdモデルのパス
-	* @param TexPath	: PMDモデルから見たテクスチャのパス
-	* @return			: アプリケーションから見たテクスチャのパス
+	* @brief			: モデルからの相対テクスチャパスをアプリから見たパスをに変換,取得する.
+	* @param ModelPath	: アプリから見たpmdモデルのパス.
+	* @param TexPath	: PMDモデルから見たテクスチャのパス.
+	* @return			: アプリから見たテクスチャのパス.
 	*******************************************/
 	static inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath);
+	
+	/*******************************************
+	* @brief			: ファイルパスなどの/を\\に変換.
+	* @param Path		: アプリから見たpmdモデルのパス.
+	*******************************************/
+	static inline void ReplaceSlashWithBackslash(std::string* Path);
+
 }
 
 #include "FilePath.inl" // インライン実装を含むファイルをインクルード.

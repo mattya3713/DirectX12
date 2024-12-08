@@ -170,7 +170,6 @@
     <ClInclude Include="SourceCode\Utility\Hash\Crc32Table\HashTable.h" />
     <ClInclude Include="SourceCode\Utility\Math\Math.h" />
     <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h" />
-    <ClInclude Include="SourceCode\Utility\Random\Random.h" />
     <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
     <ClInclude Include="SourceCode\Utility\String\magic_enum.h" />
     <ClInclude Include="SourceCode\Utility\String\String.h" />

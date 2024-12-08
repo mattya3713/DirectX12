@@ -58,6 +58,7 @@ namespace MyFilePath {
         return path.substr(Index + 1);
     }
 
+    // モデルからの相対テクスチャパスをアプリから見たパスをに変換,取得する.
     inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath) {
        
         // モデルパスの最後のスラッシュまたはバックスラッシュを探す.
@@ -77,23 +78,16 @@ namespace MyFilePath {
         return folderPath + TexPath;
     }
 
-    // 現在の階層を取得.
-    inline std::string GetCurrentHierarchy(const char* TexPath) {
-       
-        // モデルパスの最後のスラッシュまたはバックスラッシュを探す.
-        int pathIndex1 = static_cast<int>(TexPath.rfind('/'));
-        int pathIndex2 = static_cast<int>(TexPath.rfind('\\'));
-        int pathIndex = std::max(pathIndex1, pathIndex2);
+    // ファイルパスなどの/を\\に変換.
+    void ReplaceSlashWithBackslash(std::string* Path)
+    {
+        // nullptrチェック.
+        if (Path == nullptr) { return; }
 
-        // モデルパスの最後がスラッシュでない場合.
-        if (pathIndex == std::string::npos) {
-
-            // テクスチャパスを追加.
-            return ModelPath + TexPath;
+        for (char& c : *Path) {
+            if (c == '/') {
+                c = '\\';
+            }
         }
-
-        // モデルパスからフォルダパスを取得し、テクスチャパスを追加.
-        auto folderPath = ModelPath.substr(0, pathIndex + 1);
-        return folderPath + TexPath;
     }
 }
