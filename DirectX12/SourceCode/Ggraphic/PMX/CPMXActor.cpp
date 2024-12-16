@@ -293,37 +293,29 @@ void CPMXActor::LoadPMDFile(const char* path)
 		uint8_t WeightType;
 		fread(&WeightType, sizeof(WeightType), 1, fp);
 
-		if (!(WeightType == 0 ||
-			WeightType == 1 ||
-			WeightType == 2 ||
-			WeightType == 3)) {
-			int i = 0;
-
-		}
-
 		switch (WeightType) {
 		case 0: // BDEF1.
 		{
-			uint16_t BoneIndex1;
-			fread(&BoneIndex1, sizeof(BoneIndex1), 1, fp);
+			uint32_t BoneIndex1;
+			fread(&BoneIndex1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
 			Vertices.back().BoneWeight = PMXBoneWeight(BoneIndex1);
 		}
 		break;
 		case 1: // BDEF2.
 			uint16_t BoneIndex2_1, BoneIndex2_2;
 			float Weight2_1;
-			fread(&BoneIndex2_1, sizeof(BoneIndex2_1), 1, fp);
-			fread(&BoneIndex2_2, sizeof(BoneIndex2_2), 1, fp);
+			fread(&BoneIndex2_1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			fread(&BoneIndex2_2, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
 			fread(&Weight2_1, sizeof(Weight2_1), 1, fp);
 			Vertices.back().BoneWeight = PMXBoneWeight(BoneIndex2_1, BoneIndex2_2, Weight2_1);
 			break;
 		case 2: // BDEF4.
 			uint16_t BoneIndex4_1, BoneIndex4_2, BoneIndex4_3, BoneIndex4_4;
 			float Weight4_1, Weight4_2, Weight4_3, Weight4_4;
-			fread(&BoneIndex4_1, sizeof(BoneIndex4_1), 1, fp);
-			fread(&BoneIndex4_2, sizeof(BoneIndex4_2), 1, fp);
-			fread(&BoneIndex4_3, sizeof(BoneIndex4_3), 1, fp);
-			fread(&BoneIndex4_4, sizeof(BoneIndex4_4), 1, fp);
+			fread(&BoneIndex4_1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			fread(&BoneIndex4_2, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			fread(&BoneIndex4_3, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			fread(&BoneIndex4_4, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
 			fread(&Weight4_1, sizeof(Weight4_1), 1, fp);
 			fread(&Weight4_2, sizeof(Weight4_2), 1, fp);
 			fread(&Weight4_3, sizeof(Weight4_3), 1, fp);
@@ -334,8 +326,8 @@ void CPMXActor::LoadPMDFile(const char* path)
 			uint16_t BoneIndexSDEF_1, BoneIndexSDEF_2;
 			float WeightSDEF_1;
 			DirectX::XMFLOAT3 C, R0, R1;
-			fread(&BoneIndexSDEF_1, sizeof(BoneIndexSDEF_1), 1, fp);
-			fread(&BoneIndexSDEF_2, sizeof(BoneIndexSDEF_2), 1, fp);
+			fread(&BoneIndexSDEF_1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			fread(&BoneIndexSDEF_2, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
 			fread(&WeightSDEF_1, sizeof(WeightSDEF_1), 1, fp);
 			fread(&C, sizeof(DirectX::XMFLOAT3), 1, fp);
 			fread(&R0, sizeof(DirectX::XMFLOAT3), 1, fp);
@@ -385,8 +377,6 @@ void CPMXActor::LoadPMDFile(const char* path)
 	// インデックスバッファを読み込む.
 	std::vector<PMXFace> FlatIndices(IndicesNum / 3);
 	fread(FlatIndices.data(), sizeof(PMXFace), IndicesNum / 3, fp);
-
-	&FlatIndices;
 
 	// インデックスバッファ用のDirectX12リソースを作成.
 	auto ResDescBuf = CD3DX12_RESOURCE_DESC::Buffer(FlatIndices.size() * sizeof(FlatIndices[0]));
@@ -454,6 +444,7 @@ void CPMXActor::LoadPMDFile(const char* path)
 			TextureInfo.TexturePaths[i] = MyFilePath::GetTexPath(path, std::string(buffer.begin(), buffer.end()).c_str());
 		}
 
+		// ファイルパスの/を\\に統一.
 		MyFilePath::ReplaceSlashWithBackslash(&TextureInfo.TexturePaths[i]);
 	}
 

@@ -98,24 +98,24 @@ private:
 
 #pragma pack()
 
-#include <DirectXMath.h>
+	// TODO : すべて32bitにしてるからヘッダーのBoneIndexSizeに合わせるように調整.
 
 	// BDEF1 ボーンウェイト (1ボーンの場合).
 	struct BDEF1Weight {
-		uint16_t BoneIndex;   // ウェイト1.0の単一ボーン(参照Index).
+		uint32_t BoneIndex;   // ウェイト1.0の単一ボーン(参照Index).
 
-		BDEF1Weight(uint16_t BoneIndex)
+		BDEF1Weight(uint32_t BoneIndex)
 			: BoneIndex(BoneIndex)
 		{}  // 初期化.
 	};
 
 	// BDEF2 ボーンウェイト (2ボーンの場合).
 	struct BDEF2Weight {
-		uint16_t BoneIndex1;  // ボーン1の参照Index.
-		uint16_t BoneIndex2;  // ボーン2の参照Index.
+		uint32_t BoneIndex1;  // ボーン1の参照Index.
+		uint32_t BoneIndex2;  // ボーン2の参照Index.
 		float Weight1;		  // ボーン1のウェイト値(0～1.0), ボーン2のウェイト値は 1.0-ボーン1ウェイト.
 
-		BDEF2Weight(uint16_t Bone1, uint16_t Bone2, float Weight)
+		BDEF2Weight(uint32_t Bone1, uint32_t Bone2, float Weight)
 			: BoneIndex1	(Bone1)
 			, BoneIndex2	(Bone2)
 			, Weight1		(Weight) 
@@ -124,10 +124,10 @@ private:
 
 	// BDEF4 ボーンウェイト (4ボーンの場合).
 	struct BDEF4Weight {
-		uint16_t BoneIndex[4];  // ボーンインデックス (4ボーン).
+		uint32_t BoneIndex[4];  // ボーンインデックス (4ボーン).
 		float Weight[4];		// ボーンウェイト (それぞれのウェイト).
 
-		BDEF4Weight(uint16_t bone0, uint16_t bone1, uint16_t bone2, uint16_t bone3,
+		BDEF4Weight(uint32_t bone0, uint32_t bone1, uint32_t bone2, uint32_t bone3,
 			float weight0, float weight1, float weight2, float weight3)
 		{
 			BoneIndex[0] = bone0;
@@ -143,8 +143,8 @@ private:
 
 	// SDEF ボーンウェイト (SDEF方式).
 	struct SDEFWeight {
-		uint16_t BoneIndex1;    // ボーンインデックス1.
-		uint16_t BoneIndex2;    // ボーンインデックス2.
+		uint32_t BoneIndex1;    // ボーンインデックス1.
+		uint32_t BoneIndex2;    // ボーンインデックス2.
 		float Weight1;			// ボーン1のウェイト.
 		DirectX::XMFLOAT3 C;	// SDEF補正用C.
 		DirectX::XMFLOAT3 R0;	// SDEF補正用R0.
