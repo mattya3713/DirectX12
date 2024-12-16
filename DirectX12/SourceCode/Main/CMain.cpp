@@ -12,6 +12,8 @@
 // ウィンドウを画面中央で起動を有効にする.
 #define ENABLE_WINDOWS_CENTERING
 
+#define ISOMX 1
+
 //=================================================
 // 定数.
 //=================================================
@@ -43,15 +45,17 @@ HRESULT CMain::Create()
 {
     m_pDx12 = std::make_shared<CDirectX12>();
     m_pDx12->Create(m_hWnd);
-
-#if 0
+    
+#if ISOMX
     m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
-
+    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube.pmd", *m_pPMDRenderer);
+    
 #else 
     m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-
+    m_pPMXActor = std::make_shared<CPMXActor>("Data\Model\\PMX\\Cube\\Cube.pmx", *m_pPMXRenderer);
+    // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
+    // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
+    // Data\Model\\PMX\\Cube\\Cube.pmx"
 #endif
 
     return S_OK;
@@ -84,12 +88,19 @@ void CMain::Draw()
     // 全体の描画準備.
     m_pDx12->BeginDraw();
 
+#if ISOMX
 	//PMD用の描画パイプラインに合わせる
+    m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
+    //ルートシグネチャもPMD用に合わせる
+    m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMDRenderer->GetRootSignature());
+
+#else 
+    //PMD用の描画パイプラインに合わせる
     m_pDx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
     //ルートシグネチャもPMD用に合わせる
     m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
-
-    m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+#endif
+    m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_pDx12->SetScene();
 

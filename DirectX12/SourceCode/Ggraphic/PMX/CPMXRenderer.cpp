@@ -197,7 +197,7 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 //ルートシグネチャ初期化
 void CPMXRenderer::CreateRootSignature() {
 	//レンジ
-	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};//テクスチャと定数の２つ
+	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};
 	descTblRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);//定数[b0](ビュープロジェクション用)
 	descTblRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);//定数[b1](ワールド、ボーン用)
 	descTblRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);//定数[b2](マテリアル用)

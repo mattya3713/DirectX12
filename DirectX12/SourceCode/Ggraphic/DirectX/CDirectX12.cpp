@@ -256,6 +256,7 @@ void CDirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 			break;
 		}
 	}
+
 }
 
 // ÉRÉ}ÉìÉhóﬁÇÃê∂ê¨.

@@ -380,11 +380,13 @@ void CPMXActor::LoadPMDFile(const char* path)
 
 	// インデックス数を読み込む.
 	uint32_t IndicesNum;
-	IndicesNum = ReadIndicesNum(fp, Header.VertexIndexSize);
+	fread(&IndicesNum, sizeof(uint32_t), 1, fp);
 
 	// インデックスバッファを読み込む.
-	std::vector<PMXFace> FlatIndices(IndicesNum);
-	fread(FlatIndices.data(), sizeof(uint32_t), IndicesNum, fp);
+	std::vector<PMXFace> FlatIndices(IndicesNum / 3);
+	fread(FlatIndices.data(), sizeof(PMXFace), IndicesNum / 3, fp);
+
+	&FlatIndices;
 
 	// インデックスバッファ用のDirectX12リソースを作成.
 	auto ResDescBuf = CD3DX12_RESOURCE_DESC::Buffer(FlatIndices.size() * sizeof(FlatIndices[0]));
@@ -425,7 +427,7 @@ void CPMXActor::LoadPMDFile(const char* path)
 	TexturePath TextureInfo;
 
 	// テクスチャ数の読み込み.
-	fread(&TextureInfo.TextureCount, sizeof(int), 1, fp);
+	fread(&TextureInfo.TextureCount, sizeof(uint32_t), 1, fp);
 
 	TextureInfo.TexturePaths.resize(TextureInfo.TextureCount);
 
@@ -737,6 +739,7 @@ void CPMXActor::CreateTransformView() {
 	m_pDx12.GetDevice()->CreateConstantBufferView(
 		&cbvDesc,
 		m_pTransformHeap->GetCPUDescriptorHandleForHeapStart());
+
 }
 
 void CPMXActor::CreateMaterialData() {
@@ -885,23 +888,23 @@ void CPMXActor::Draw() {
 	m_pDx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_pVertexBufferView);
 	m_pDx12.GetCommandList()->IASetIndexBuffer(&m_pIndexBufferView);
 
-	ID3D12DescriptorHeap* TransHeap[] = { m_pTransformHeap.Get()};
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, TransHeap);
+	// 必要なディスクリプタヒープをすべて設定
+	ID3D12DescriptorHeap* heaps[] = { m_pTransformHeap.Get(), m_pMaterialHeap.Get() };
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
+
+	// トランスフォームヒープを設定
 	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(1, m_pTransformHeap->GetGPUDescriptorHandleForHeapStart());
 
-	ID3D12DescriptorHeap* MaterialHeap[] = { m_pMaterialHeap.Get() };
-	//マテリアル.
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, MaterialHeap);
-
+	// マテリアルヒープを設定
 	auto MaterialHeapHandle = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
-	unsigned int IdxOffset = 0;
+	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
 
+	unsigned int IdxOffset = 0;
 	auto cbvsrvIncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
 	for (auto& m : m_pMaterials) {
-		m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
 		m_pDx12.GetCommandList()->DrawIndexedInstanced(m->IndicesNum, 1, IdxOffset, 0, 0);
-		MaterialHeapHandle.ptr += cbvsrvIncSize;
 		IdxOffset += m->IndicesNum;
+		MaterialHeapHandle.ptr += cbvsrvIncSize;
 	}
 }
 
