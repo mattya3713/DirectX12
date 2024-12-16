@@ -480,7 +480,7 @@ void CDirectX12::CreateSceneDesc(
 		0, nullptr,
 		(void**)&MappedSceneData);
 
-	DirectX::XMFLOAT3 eye(0, 15, -15);
+	DirectX::XMFLOAT3 eye(0, 15, -50);
 	DirectX::XMFLOAT3 target(0, 15, 0);
 	DirectX::XMFLOAT3 up(0, 1, 0);
 	MappedSceneData->view =

@@ -37,7 +37,9 @@ float4 BasicPS(BasicType input) : SV_TARGET
 	//スフィアマップ用UV
     float2 sphereMapUV = input.vnormal.xy;
     sphereMapUV = (sphereMapUV + float2(1, -1)) * float2(0.5, -0.5);
-
+    
+	float4 ambCol = float4(ambient * 0.6, 1);
+    
     float4 texColor = tex.Sample(smp, input.uv); //テクスチャカラー
 
     return saturate(toonDif //輝度(トゥーン)

@@ -89,7 +89,7 @@ public:
     }
 
 private:
-    // COM オブジェクトの参照カウントを増加させる
+    // COM オブジェクトの参照カウントを増加させる.
     void AddRef() {
         if (m_ptr) {
             m_ptr->AddRef();

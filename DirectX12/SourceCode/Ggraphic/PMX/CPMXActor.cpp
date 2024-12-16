@@ -95,7 +95,15 @@ CPMXActor::CPMXActor(const char* filepath, CPMXRenderer& renderer):
 	_angle(0.0f)
 {
 	try {
+		// ワールド行列を初期化
 		m_Transform.world = DirectX::XMMatrixIdentity();
+
+		// Z 軸方向に少し奥に移動（例: Z = -5.0f）
+		DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, -5.0f);
+
+		// 平行移動を適用
+		m_Transform.world = translation;
+
 		LoadPMDFile(filepath);
 		CreateTransformView();
 		CreateMaterialData();
@@ -571,7 +579,6 @@ void CPMXActor::LoadPMDFile(const char* path)
 			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo.TexturePaths[Materials[i].ToonTextureIndex + 1].c_str());
 		}
 
-
 		// テクスチャパスの分解とリソースのロード.
 		std::string TexFileName = TextureInfo.TexturePaths[Materials[i].ToonTextureIndex + 1];
 		std::string SphFileName = "";
@@ -896,7 +903,6 @@ void CPMXActor::Draw() {
 		MaterialHeapHandle.ptr += cbvsrvIncSize;
 		IdxOffset += m->IndicesNum;
 	}
-
 }
 
 // アニメーション開始.

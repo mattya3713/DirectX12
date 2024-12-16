@@ -38,6 +38,32 @@ CMain::~CMain()
 {
 }
 
+// 構築処理.
+HRESULT CMain::Create()
+{
+    m_pDx12 = std::make_shared<CDirectX12>();
+    m_pDx12->Create(m_hWnd);
+
+#if 0
+    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
+
+#else 
+    m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
+    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
+
+#endif
+
+    return S_OK;
+}
+
+// データロード処理.
+HRESULT CMain::LoadData()
+{
+    // 必要に応じてデータロード処理を追加.
+    return S_OK;
+}
+
 // 更新処理.
 void CMain::Update()
 {
@@ -63,7 +89,7 @@ void CMain::Draw()
     //ルートシグネチャもPMD用に合わせる
     m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
 
-    m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 
     m_pDx12->SetScene();
 
@@ -80,32 +106,6 @@ void CMain::Draw()
 
     // フリップ.
     m_pDx12->GetSwapChain()->Present(1, 0);
-}
-
-// 構築処理.
-HRESULT CMain::Create()
-{
-    m_pDx12 = std::make_shared<CDirectX12>();
-    m_pDx12->Create(m_hWnd);
-
-#if 0
-    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\初音ミクVer2.pmd", *m_pPMDRenderer);
-
-#else 
-    m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-
-#endif
-
-    return S_OK;
-}
-
-// データロード処理.
-HRESULT CMain::LoadData()
-{
-    // 必要に応じてデータロード処理を追加.
-    return S_OK;
 }
 
 // 解放処理.

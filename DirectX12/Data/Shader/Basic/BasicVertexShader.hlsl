@@ -29,6 +29,17 @@ cbuffer Material : register(b2)
     float3 Ambient;     // アンビエント.
 };
 
+//頂点シェーダ→ピクセルシェーダへのやり取りに使用する
+//構造体
+struct Output
+{
+	float4 svpos : SV_POSITION; //システム用頂点座標
+	float4 pos : POSITION; //システム用頂点座標
+	float4 normal : NORMAL0; //法線ベクトル
+	float4 vnormal : NORMAL1; //法線ベクトル
+	float2 uv : TEXCOORD; //UV値
+	float3 ray : VECTOR; //ベクトル
+};
 
 BasicType BasicVS(
     float4 Pos          : POSITION,
@@ -38,7 +49,7 @@ BasicType BasicVS(
     min16uint2 BoneNo   : BONENO)
 { 
     // ピクセルシェーダへ渡す値.
-	BasicType output;
+	Output output;
     
     // 0~100を0~1fに丸める.
 	float w = Weight * 0.01f;
@@ -56,5 +67,32 @@ BasicType BasicVS(
 	output.ray = normalize(Pos.xyz - mul((float4x3) View, Eye).xyz); //視線ベクトル
 
     return output;
-    return output;
+}
+
+float4 BasicPS(Output input) : SV_TARGET
+{
+	float3 light = normalize(float3(1, -1, 1)); //光の向かうベクトル(平行光線)
+	float3 lightColor = float3(1, 1, 1); //ライトのカラー(1,1,1で真っ白)
+
+	//ディフューズ計算
+	float diffuseB = saturate(dot(-light, input.normal.xyz));
+	float4 toonDif = toon.Sample(smpToon, float2(0, 1.0 - diffuseB));
+
+	//光の反射ベクトル
+	float3 refLight = normalize(reflect(light, input.normal.xyz));
+	float specularB = pow(saturate(dot(refLight, -input.ray)), Specular.a);
+
+	//スフィアマップ用UV
+	float2 sphereMapUV = input.vnormal.xy;
+	sphereMapUV = (sphereMapUV + float2(1, -1)) * float2(0.5, -0.5);
+
+	float4 ambCol = float4(Ambient * 0.6, 1);
+	float4 texColor = tex.Sample(smp, input.uv); //テクスチャカラー
+	return saturate((toonDif //輝度(トゥーン)
+		* Diffuse + ambCol * 0.5) //ディフューズ色
+		* texColor //テクスチャカラー
+		* sph.Sample(smp, sphereMapUV) //スフィアマップ(乗算)
+		+ spa.Sample(smp, sphereMapUV) //スフィアマップ(加算)
+		+ float4(specularB * Specular.rgb, 1) //スペキュラー
+		);
 }
