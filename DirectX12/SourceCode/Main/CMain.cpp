@@ -45,7 +45,9 @@ HRESULT CMain::Create()
 {
     m_pDx12 = std::make_shared<CDirectX12>();
     m_pDx12->Create(m_hWnd);
-    
+
+    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
 #if ISOMX
     m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
     m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);

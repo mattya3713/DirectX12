@@ -52,7 +52,7 @@ float CPMXActor::GetYFromXOnBezier(
 }
 
 // 頂点の総数を読み込む.
-uint32_t CPMXActor::ReadIndicesNum(FILE* fp, uint8_t indexSize)
+uint32_t CPMXActor::ReadAndCastIndices(FILE* fp, uint8_t indexSize)
 {
     uint32_t IndexNum = 0;
 
@@ -83,7 +83,7 @@ uint32_t CPMXActor::ReadIndicesNum(FILE* fp, uint8_t indexSize)
         break;
     }
     default:
-        throw std::invalid_argument("Unsupported index size.");
+        throw std::invalid_argument("Ido't know this index size.");
     }
 
     return result;
@@ -274,6 +274,7 @@ void CPMXActor::LoadPMDFile(const char* path)
 	// 頂点情報の読み込み.
 	for (uint32_t i = 0; i < VerticesLength; ++i) {
 		// 空の頂点を直接ベクター内で構築.
+
 		Vertices.emplace_back();
 
 		// 頂点位置、頂点法線、頂点UV座標の読み込み.
@@ -297,37 +298,39 @@ void CPMXActor::LoadPMDFile(const char* path)
 		case 0: // BDEF1.
 		{
 			uint32_t BoneIndex1;
-			fread(&BoneIndex1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			BoneIndex1 = ReadAndCastIndices(fp, Header.BoneIndexSize);
 			Vertices.back().BoneWeight = PMXBoneWeight(BoneIndex1);
 		}
 		break;
 		case 1: // BDEF2.
-			uint16_t BoneIndex2_1, BoneIndex2_2;
+			uint32_t BoneIndex2_1, BoneIndex2_2;
 			float Weight2_1;
-			fread(&BoneIndex2_1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
-			fread(&BoneIndex2_2, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			BoneIndex2_1 = ReadAndCastIndices(fp, Header.BoneIndexSize);
+			BoneIndex2_2 = ReadAndCastIndices(fp, Header.BoneIndexSize);
 			fread(&Weight2_1, sizeof(Weight2_1), 1, fp);
 			Vertices.back().BoneWeight = PMXBoneWeight(BoneIndex2_1, BoneIndex2_2, Weight2_1);
 			break;
 		case 2: // BDEF4.
-			uint16_t BoneIndex4_1, BoneIndex4_2, BoneIndex4_3, BoneIndex4_4;
+			uint32_t BoneIndex4_1, BoneIndex4_2, BoneIndex4_3, BoneIndex4_4;
 			float Weight4_1, Weight4_2, Weight4_3, Weight4_4;
-			fread(&BoneIndex4_1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
-			fread(&BoneIndex4_2, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
-			fread(&BoneIndex4_3, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
-			fread(&BoneIndex4_4, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			BoneIndex4_1 = ReadAndCastIndices(fp, Header.BoneIndexSize);
+			BoneIndex4_2 = ReadAndCastIndices(fp, Header.BoneIndexSize);
+			BoneIndex4_3 = ReadAndCastIndices(fp, Header.BoneIndexSize);
+			BoneIndex4_4 = ReadAndCastIndices(fp, Header.BoneIndexSize);
 			fread(&Weight4_1, sizeof(Weight4_1), 1, fp);
 			fread(&Weight4_2, sizeof(Weight4_2), 1, fp);
 			fread(&Weight4_3, sizeof(Weight4_3), 1, fp);
 			fread(&Weight4_4, sizeof(Weight4_4), 1, fp);
-			Vertices.back().BoneWeight = PMXBoneWeight(BoneIndex4_1, BoneIndex4_2, BoneIndex4_3, BoneIndex4_4, Weight4_1, Weight4_2, Weight4_3, Weight4_4);
+			Vertices.back().BoneWeight = PMXBoneWeight(
+				BoneIndex4_1, BoneIndex4_2, BoneIndex4_3, BoneIndex4_4, 
+				Weight4_1, Weight4_2, Weight4_3, Weight4_4);
 			break;
 		case 3: // SDEF.
-			uint16_t BoneIndexSDEF_1, BoneIndexSDEF_2;
+			uint32_t BoneIndexSDEF_1, BoneIndexSDEF_2;
 			float WeightSDEF_1;
 			DirectX::XMFLOAT3 C, R0, R1;
-			fread(&BoneIndexSDEF_1, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
-			fread(&BoneIndexSDEF_2, static_cast<size_t>(Header.BoneIndexSize), 1, fp);
+			BoneIndexSDEF_1 = ReadAndCastIndices(fp, Header.BoneIndexSize);
+			BoneIndexSDEF_2 = ReadAndCastIndices(fp, Header.BoneIndexSize);
 			fread(&WeightSDEF_1, sizeof(WeightSDEF_1), 1, fp);
 			fread(&C, sizeof(DirectX::XMFLOAT3), 1, fp);
 			fread(&R0, sizeof(DirectX::XMFLOAT3), 1, fp);

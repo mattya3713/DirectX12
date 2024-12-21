@@ -10,3 +10,4 @@ struct BasicType
     float2 uv : TEXCOORD; //UV値
     float3 ray : VECTOR; //ベクトル
 };
+

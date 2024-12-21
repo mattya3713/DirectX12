@@ -12,6 +12,11 @@ class CPMXRenderer;
 class CPMXActor
 {
 	friend CPMXRenderer;
+public:
+
+	// モデルの頂点サイズ.
+	static constexpr size_t PMXVertexSize = 60;
+
 private:
 
 	// PMXヘッダー構造体.
@@ -49,7 +54,7 @@ private:
 	};
 
 	// TODO : パディングの対処法を考える.
-	// PMDマテリアル構造体.
+	// PMXマテリアル構造体.
 #pragma pack(1)
 	struct PMDMaterial {
 		DirectX::XMFLOAT3 Diffuse;  // ディフューズ色			: 12Byte.
@@ -411,12 +416,13 @@ private:
 		const DirectX::XMFLOAT2& b, uint8_t n = 12);
 
 	/*******************************************
-	* @brief	頂点の総数を読み込む.
-	* @param	読み込むファイル.
-	* @param    頂点のサイズ.
-	* @retrun	頂点数.
+	* @brief    指定されたサイズ分のデータを読み込み、4バイトの値として返す.
+	* @param    ファイルポインタ。読み込み対象のファイルを指します.
+	* @param    読み込むデータのサイズ(1,2,4バイトのどれか).
+	* @return   読み込んだデータを4バイトの`uint32_t`型に変換した値
+	* @throw	知らないサイズ.
 	*******************************************/
-	uint32_t ReadIndicesNum(FILE* fp, uint8_t indexSize);
+	uint32_t ReadAndCastIndices(FILE* fp, uint8_t indexSize);
 
 public:
 	CPMXActor(const char* filepath,CPMXRenderer& renderer);
