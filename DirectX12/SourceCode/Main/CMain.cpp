@@ -77,6 +77,7 @@ void CMain::Update()
         m_pPmdActor->Update();
     }
 
+
     if (m_pPMXActor) {
         m_pPMXActor->Update();
     }
