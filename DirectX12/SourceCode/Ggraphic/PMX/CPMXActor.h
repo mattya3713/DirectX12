@@ -14,8 +14,11 @@ class CPMXActor
 	friend CPMXRenderer;
 public:
 
-	// モデルの頂点サイズ.
-	static constexpr size_t PMXVertexSize = 60;
+	// PMXヘッダーサイズ.
+	static constexpr size_t PMXHeaderSize = 17;
+	
+	// 頂点バッファのサイズ.
+	const size_t GPUVertex = sizeof(PMXVertexForHLSL);
 
 private:
 
@@ -121,6 +124,16 @@ private:
 		float								Edge;			// エッジサイズ.
 	};
 
+	// GPU用頂点構造体.
+	struct PMXVertexForHLSL {
+		DirectX::XMFLOAT3 Position;    // 位置.
+		DirectX::XMFLOAT3 Normal;      // 法線.
+		DirectX::XMFLOAT2 UV;          // UV座標.
+		DirectX::XMFLOAT4 AdditionalUV[4]; // 追加UV(最大4つ).
+		uint32_t BoneIndices[4];       // ボーンインデックス(16bit x 4).
+		float BoneWeights[4];          // ボーンウェイト.
+		float EdgeFactor;              // エッジ倍率.
+	};
 
 	// PMX面構造体.
 	struct PMXFace {
@@ -133,14 +146,11 @@ private:
 
 
 	// PMXテクスチャ構造体.
-	struct TexturePath {
-		uint32_t					TextureCount;	// テクスチャの数.
-		std::vector<std::string>	TexturePaths;	// 各テクスチャのパス.
+	struct PMXTexturePath {
+		std::string			TexturePath;	// 各テクスチャのパス.
 
-		TexturePath()
-			: TextureCount	()
-			, TexturePaths	{}
-		{}
+		explicit PMXTexturePath(const std::string& path = "")
+			: TexturePath(path) {}
 	};
 
 #pragma pack(1)
@@ -303,6 +313,12 @@ private:
 	// PMXヘッター読み込み.
 	void ReadPMXHeader(FILE* fp, PMXHeader* Header);
 
+	// パスの変換.
+	void ConvertUTF16ToUTF8(const std::vector<uint8_t>& buffer, std::string& OutString); 
+	void ConvertUTF8(const std::vector<uint8_t>& buffer, std::string& OutString);
+	using PathConverterFunction = void(CPMXActor::*)(const std::vector<uint8_t>&, std::string&);
+	PathConverterFunction PathConverter = nullptr;
+
 	// インデックスを読み込む時の関数を選択するための関数ポインタ.
 	void ReadPMXIndices1Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMXFace>* Faces);
 	void ReadPMXIndices2Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMXFace>* Faces);
@@ -316,6 +332,9 @@ private:
 	* @param	読み込んだインデックス.
 	*******************************************/
 	void ReadPMXIndices(FILE* fp,std::vector<PMXFace>* Faces);
+
+
+	// テクスチャパスを読み込む時の関数を選択するための関数ポインタ.
 
 	/*******************************************
 	* @brief	回転情報を末端まで伝播させる再帰関数.
