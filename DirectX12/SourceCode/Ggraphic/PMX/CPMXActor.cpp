@@ -320,8 +320,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 		&ResDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())
-	);
+		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())	);
 
 	// データをGPUバッファにコピー.
 	unsigned char* vertMap = nullptr;
