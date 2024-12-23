@@ -25,12 +25,10 @@ CPMDRenderer::~CPMDRenderer()
 }
 
 
-void 
-CPMDRenderer::Update() {
+void CPMDRenderer::Update() {
 
 }
-void 
-CPMDRenderer::Draw() {
+void CPMDRenderer::Draw() {
 
 }
 

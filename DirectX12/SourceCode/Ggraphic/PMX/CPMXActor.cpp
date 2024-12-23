@@ -96,15 +96,7 @@ CPMXActor::CPMXActor(const char* filepath, CPMXRenderer& renderer):
 	_angle(0.0f)
 {
 	try {
-		// ワールド行列を初期化
 		m_Transform.world = DirectX::XMMatrixIdentity();
-
-		// Z 軸方向に少し奥に移動（例: Z = -5.0f）
-		DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, -5.0f);
-
-		// 平行移動を適用
-		m_Transform.world = translation;
-
 		LoadPMXFile(filepath);
 		CreateTransformView();
 		CreateMaterialData();
@@ -193,7 +185,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 	// コメントのエンコーディング処理.
 	(this->*PathConverter)(CommentBuffer, ModelInfo.ModelComment);
-	
+
 	// コメント英の読み込み.
 	uint32_t CommentEnglishLength = 0;
 	fread(&CommentEnglishLength, sizeof(CommentEnglishLength), 1, fp);
@@ -232,7 +224,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 		// 追加UV座標 (最大4つまで).
 		fread(Vertices.back().AdditionalUV.data(), sizeof(DirectX::XMFLOAT4) * static_cast<size_t>(Header.AdditionalUV), 1, fp);
-		
+
 		// ボーンウェイト系情報を読み込む.
 		uint8_t WeightType;
 		fread(&WeightType, sizeof(uint8_t), 1, fp);
@@ -248,7 +240,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 			fread(&Vertices.back().BoneIndices[0], BoneIndexSize, 1, fp);
 			break;
 		case 1: // BDEF2.
-			fread(&Vertices.back().BoneIndices[0], BoneIndexSize, 1, fp);	
+			fread(&Vertices.back().BoneIndices[0], BoneIndexSize, 1, fp);
 			fread(&Vertices.back().BoneIndices[1], BoneIndexSize, 1, fp);
 			fread(&Vertices.back().BoneWeights[0], sizeof(float), 1, fp);
 			break;
@@ -260,120 +252,128 @@ void CPMXActor::LoadPMXFile(const char* path)
 			fread(&Vertices.back().BoneWeights[0], sizeof(float), 1, fp);
 			fread(&Vertices.back().BoneWeights[1], sizeof(float), 1, fp);
 			fread(&Vertices.back().BoneWeights[2], sizeof(float), 1, fp);
-			fread(&Vertices.back().BoneWeights[3], sizeof(float), 1, fp); 
+			fread(&Vertices.back().BoneWeights[3], sizeof(float), 1, fp);
 			break;
 		case 3: // SDEF.
 			fread(&Vertices.back().BoneIndices[0], BoneIndexSize, 1, fp);
 			fread(&Vertices.back().BoneIndices[1], BoneIndexSize, 1, fp);
 			fread(&Vertices.back().BoneWeights[0], sizeof(float), 1, fp);
-			fread(&Vertices.back().SDEF_C,  sizeof(DirectX::XMFLOAT3), 1, fp);
+			fread(&Vertices.back().SDEF_C, sizeof(DirectX::XMFLOAT3), 1, fp);
 			fread(&Vertices.back().SDEF_R0, sizeof(DirectX::XMFLOAT3), 1, fp);
 			fread(&Vertices.back().SDEF_R1, sizeof(DirectX::XMFLOAT3), 1, fp);
 			PMXVertex copy = Vertices.back();
 			break;
 		default:
 			throw std::invalid_argument("Ido't know this WeightType.");;
-	
+
 		}
 
 		// エッジ倍率の読み込み.
 		fread(&Vertices.back().Edge, sizeof(float), 1, fp);
 	}
 
-	// GPUに送り出す情報だけ切り出す.
-	std::vector<PMXVertexForHLSL> VerticesForHLSL;
-	VerticesForHLSL.reserve(VerticesNum);
+	// GPU用の頂点データを作成.
+	std::vector<unsigned char> vertices(Vertices.size() * sizeof(PMXVertexForHLSL));
 
-	for (const auto& vertex : Vertices) {
-		// 空の頂点を直接ベクター内で構築.
-		VerticesForHLSL.emplace_back();
+	// 頂点データをGPU用に変換してバイト列に格納
+	for (size_t index = 0; index < Vertices.size(); ++index)
+	{
+		const PMXVertex& PmxVertex = Vertices[index];
 
-		VerticesForHLSL.back().Position = vertex.Position;
-		VerticesForHLSL.back().Normal = vertex.Normal;
-		VerticesForHLSL.back().UV = vertex.UV;
+		// GPU用の頂点データを作成
+		PMXVertexForHLSL GPUVertex;
+		GPUVertex.Position = PmxVertex.Position;
+		GPUVertex.Normal = PmxVertex.Normal;
+		GPUVertex.UV = PmxVertex.UV;
 
-		// 追加UVのコピー.
-		for (size_t i = 0; i < Header.AdditionalUV; ++i) {
-			VerticesForHLSL.back().AdditionalUV[i] = vertex.AdditionalUV[i];
+		// ボーンインデックスとウェイト
+		for (size_t i = 0; i < 2; ++i) {
+			GPUVertex.BoneIndices[i] = PmxVertex.BoneIndices[i];
 		}
 
-		// ボーンインデックスとウェイト.
-		for (size_t i = 0; i < 4; ++i) {
-			VerticesForHLSL.back().BoneIndices[i] = vertex.BoneIndices[i];
-			VerticesForHLSL.back().BoneWeights[i] = vertex.BoneWeights[i];
-		}
+		// エッジ倍率
+		GPUVertex.Edge = PmxVertex.Edge;
 
-		// エッジ.
-		VerticesForHLSL.back().EdgeFactor = vertex.Edge;
+		// GPU頂点データをunsigned charに変換してverticesに格納
+		unsigned char* vertexData = reinterpret_cast<unsigned char*>(&GPUVertex);
+		std::memcpy(&vertices[index * sizeof(PMXVertexForHLSL)], vertexData, sizeof(PMXVertexForHLSL));
 	}
-	
-	// DirectXバッファを作成.
-	auto HeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto ResDesc = CD3DX12_RESOURCE_DESC::Buffer(VerticesForHLSL.size() * GPUVertex);
 
-	MyAssert::IsFailed(
-		_T("頂点バッファの作成"),
-		&ID3D12Device::CreateCommittedResource,
-		m_pDx12.GetDevice().Get(),
-		&HeapProp,
+	// 頂点バッファ用のDirectX 12リソースを作成
+	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size());
+
+	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
+		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
-		&ResDesc,
+		&resDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())	);
+		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())
+	);
 
-	// データをGPUバッファにコピー.
+	// 頂点データをGPUバッファにコピー
 	unsigned char* vertMap = nullptr;
-	m_pVertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&vertMap));
+	result = m_pVertexBuffer->Map(0, nullptr, (void**)&vertMap);
+	if (result == S_OK && vertMap != nullptr) {
+		std::memcpy(vertMap, vertices.data(), vertices.size());
+		m_pVertexBuffer->Unmap(0, nullptr);
+	}
+	else {
+		OutputDebugString(L"Failed to map vertex buffer!\n");
+	}
 
-	// PMXVertexのデータをバッファにコピー.
-	std::memcpy(vertMap, Vertices.data(), Vertices.size() * sizeof(PMXVertex));
-
-	m_pVertexBuffer->Unmap(0, nullptr);
-
-	// 頂点バッファビューの設定.
+	// 頂点バッファビューの設定
 	m_pVertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
-	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(Vertices.size() * sizeof(PMXVertex));
-	m_pVertexBufferView.StrideInBytes = sizeof(PMXVertex);
+	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(vertices.size());
+	m_pVertexBufferView.StrideInBytes = sizeof(PMXVertexForHLSL); // 40バイトに設定
+
+
 
 	// インデックスバッファを読み込む.
 	std::vector<PMXFace> Faces;
-	ReadPMXIndices(fp, &Faces);
+	uint32_t IndicesNum;
+	ReadPMXIndices(fp, &Faces, &IndicesNum);
 
-	//// インデックスバッファ用のDirectX12リソースを作成.
-	//auto ResDescBuf = CD3DX12_RESOURCE_DESC::Buffer(FlatIndices.size() * sizeof(FlatIndices[0]));
-	//MyAssert::IsFailed(
-	//	_T("インデックスバッファの作成"),
-	//	&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice().Get(),
-	//	&heapProp,
-	//	D3D12_HEAP_FLAG_NONE,
-	//	&ResDescBuf,
-	//	D3D12_RESOURCE_STATE_GENERIC_READ,
-	//	nullptr,
-	//	IID_PPV_ARGS(m_pIndexBuffer.ReleaseAndGetAddressOf())
-	//);
+	// インデックスバッファ用のDirectX12リソースを作成.
+	auto ResDescBuf = CD3DX12_RESOURCE_DESC::Buffer(IndicesNum * sizeof(unsigned short));
 
-	//// インデックスデータのマッピングとGPU転送.
-	//unsigned short* MappedIdx1 = new unsigned short[IndicesNum];
-	//for (size_t i = 0; i < IndicesNum / 3; ++i) {
-	//	MappedIdx1[i * 3 + 0] = static_cast<unsigned short>(FlatIndices[i].Index[0]);
-	//	MappedIdx1[i * 3 + 1] = static_cast<unsigned short>(FlatIndices[i].Index[1]);
-	//	MappedIdx1[i * 3 + 2] = static_cast<unsigned short>(FlatIndices[i].Index[2]);
-	//}
+	MyAssert::IsFailed(
+		_T("インデックスバッファの作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice().Get(),
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&ResDescBuf,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(m_pIndexBuffer.ReleaseAndGetAddressOf())
+	);
 
-	//unsigned short* mappedIdx = nullptr;
-	//m_pIndexBuffer->Map(0, nullptr, (void**)&mappedIdx);
+	// インデックスデータの準備 (CPU側).
+	unsigned short* MappedIdx1 = new unsigned short[IndicesNum];  // ダイレクトにメモリ確保
+	for (size_t i = 0; i < IndicesNum / 3; ++i) {
+		MappedIdx1[i * 3 + 0] = static_cast<unsigned short>(Faces[i].Index[0]);
+		MappedIdx1[i * 3 + 1] = static_cast<unsigned short>(Faces[i].Index[1]);
+		MappedIdx1[i * 3 + 2] = static_cast<unsigned short>(Faces[i].Index[2]);
+	}
 
-	//std::memcpy(mappedIdx, MappedIdx1, IndicesNum * sizeof(unsigned short));
+	// GPUメモリにインデックスバッファをマップ
+	unsigned short* mappedIdx = nullptr;
+	m_pIndexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedIdx));
 
-	//delete[] MappedIdx1;
+	// メモリを一気にコピーする
+	std::memcpy(mappedIdx, MappedIdx1, IndicesNum * sizeof(unsigned short));
 
-	//m_pIndexBuffer->Unmap(0, nullptr);
+	// マッピング解除
+	m_pIndexBuffer->Unmap(0, nullptr);
 
-	//// インデックスバッファビューの設定.
-	//m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-	//m_pIndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-	//m_pIndexBufferView.SizeInBytes = static_cast<UINT>(FlatIndices.size() * sizeof(FlatIndices[0]));
+	// メモリを解放
+	delete[] MappedIdx1;
+
+	// インデックスバッファビューの設定
+	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
+	m_pIndexBufferView.Format = DXGI_FORMAT_R16_UINT;  // 16ビットインデックスなのでR16_UINT
+	m_pIndexBufferView.SizeInBytes = static_cast<UINT>(IndicesNum * sizeof(unsigned short));  // サイズを設定
 
 	// テクスチャの読み込み.
 
@@ -414,7 +414,6 @@ void CPMXActor::LoadPMXFile(const char* path)
 	// マテリアルデータの読み込み.
 	std::vector<PMXMaterial> Materials; 
 	Materials.reserve(MaterialNum);
-
 
 	for (uint32_t i = 0; i < MaterialNum; ++i) {
 		Materials.emplace_back();
@@ -657,15 +656,14 @@ void CPMXActor::ConvertUTF8(const std::vector<uint8_t>& buffer, std::string& Out
 }
 
 // PMXバイナリからインデックス数とインデックスを読み込む.
-void CPMXActor::ReadPMXIndices(FILE* fp, std::vector<PMXFace>* Faces)
+void CPMXActor::ReadPMXIndices(FILE* fp, std::vector<PMXFace>* Faces, uint32_t* IndicesNum)
 {
 	// インデックス数を読み込む.
-	uint32_t IndicesNum;
-	fread(&IndicesNum, sizeof(uint32_t), 1, fp);
+	fread(IndicesNum, sizeof(uint32_t), 1, fp);
 
 	// インデックスサイズに基づき読み込む.
 	if (ReadIndices) {
-		(this->*ReadIndices)(fp, IndicesNum, Faces);
+		(this->*ReadIndices)(fp, *IndicesNum, Faces);
 	}
 	else {
 		throw std::runtime_error("ReadIndicesFunctionPointer is not initialized.");
@@ -922,23 +920,23 @@ void CPMXActor::Draw() {
 	m_pDx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_pVertexBufferView);
 	m_pDx12.GetCommandList()->IASetIndexBuffer(&m_pIndexBufferView);
 
-	// 必要なディスクリプタヒープをすべて設定
-	ID3D12DescriptorHeap* heaps[] = { m_pTransformHeap.Get(), m_pMaterialHeap.Get() };
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(_countof(heaps), heaps);
-
-	// トランスフォームヒープを設定
+	ID3D12DescriptorHeap* TransHeap[] = { m_pTransformHeap.Get() };
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, TransHeap);
 	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(1, m_pTransformHeap->GetGPUDescriptorHandleForHeapStart());
 
-	// マテリアルヒープを設定
-	auto MaterialHeapHandle = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
-	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
+	ID3D12DescriptorHeap* MaterialHeap[] = { m_pMaterialHeap.Get() };
+	//マテリアル.
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, MaterialHeap);
 
+	auto MaterialHeapHandle = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
 	unsigned int IdxOffset = 0;
+
 	auto cbvsrvIncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
 	for (auto& m : m_pMaterials) {
+		m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
 		m_pDx12.GetCommandList()->DrawIndexedInstanced(m->IndicesNum, 1, IdxOffset, 0, 0);
-		IdxOffset += m->IndicesNum;
 		MaterialHeapHandle.ptr += cbvsrvIncSize;
+		IdxOffset += m->IndicesNum;
 	}
 }
 

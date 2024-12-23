@@ -17,9 +17,6 @@ public:
 	// PMXヘッダーサイズ.
 	static constexpr size_t PMXHeaderSize = 17;
 	
-	// 頂点バッファのサイズ.
-	const size_t GPUVertex = sizeof(PMXVertexForHLSL);
-
 private:
 
 	// PMXヘッダー構造体.
@@ -124,16 +121,19 @@ private:
 		float								Edge;			// エッジサイズ.
 	};
 
+
 	// GPU用頂点構造体.
 	struct PMXVertexForHLSL {
 		DirectX::XMFLOAT3 Position;    // 位置.
 		DirectX::XMFLOAT3 Normal;      // 法線.
 		DirectX::XMFLOAT2 UV;          // UV座標.
-		DirectX::XMFLOAT4 AdditionalUV[4]; // 追加UV(最大4つ).
-		uint32_t BoneIndices[4];       // ボーンインデックス(16bit x 4).
-		float BoneWeights[4];          // ボーンウェイト.
-		float EdgeFactor;              // エッジ倍率.
+		uint16_t BoneIndices[2];       // ボーンインデックス(16bit x 4).
+		uint8_t  BoneWeight;		// ボーン影響度	:  1Byte.
+		uint8_t Edge;					   // エッジ倍率.
 	};
+
+	// GPU用頂点バッファのサイズ.
+	static constexpr size_t GPUVertex = sizeof(PMXVertexForHLSL);
 
 	// PMX面構造体.
 	struct PMXFace {
@@ -331,7 +331,7 @@ private:
 	* @param	読み込みファイルポインタ.
 	* @param	読み込んだインデックス.
 	*******************************************/
-	void ReadPMXIndices(FILE* fp,std::vector<PMXFace>* Faces);
+	void ReadPMXIndices(FILE* fp, std::vector<PMXFace>* Faces, uint32_t* IndicesNum);
 
 
 	// テクスチャパスを読み込む時の関数を選択するための関数ポインタ.

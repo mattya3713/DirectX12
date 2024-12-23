@@ -44,7 +44,7 @@ BasicType PMXBasicVS(
     float4 Pos : POSITION,
     float4 Normal : NORMAL,
     float2 UV : TEXCOORD,
-    min16uint Weight : WEIGHT,
+    float4 Weight : WEIGHT,
     min16uint2 BoneNo : BONENO)
 {
     // ピクセルシェーダへ渡す値.
