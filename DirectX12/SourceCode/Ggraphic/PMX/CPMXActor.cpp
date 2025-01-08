@@ -275,18 +275,18 @@ void CPMXActor::LoadPMXFile(const char* path)
 	// GPU用の頂点データを作成.
 	std::vector<unsigned char> vertices(Vertices.size() * sizeof(PMXVertexForHLSL));
 
-	// 頂点データをGPU用に変換してバイト列に格納
+	// 頂点データをGPU用に変換してバイト列に格納.
 	for (size_t index = 0; index < Vertices.size(); ++index)
 	{
 		const PMXVertex& PmxVertex = Vertices[index];
 
-		// GPU用の頂点データを作成
+		// GPU用の頂点データを作成.
 		PMXVertexForHLSL GPUVertex;
 		GPUVertex.Position = PmxVertex.Position;
 		GPUVertex.Normal = PmxVertex.Normal;
 		GPUVertex.UV = PmxVertex.UV;
 
-		// ボーンインデックスとウェイト
+		// ボーンインデックスとウェイト.
 		for (size_t i = 0; i < 2; ++i) {
 			GPUVertex.BoneIndices[i] = PmxVertex.BoneIndices[i];
 		}
@@ -294,19 +294,19 @@ void CPMXActor::LoadPMXFile(const char* path)
 		// エッジ倍率
 		GPUVertex.Edge = PmxVertex.Edge;
 
-		// GPU頂点データをunsigned charに変換してverticesに格納
+		// GPU頂点データをunsigned charに変換してverticesに格納.
 		unsigned char* vertexData = reinterpret_cast<unsigned char*>(&GPUVertex);
 		std::memcpy(&vertices[index * sizeof(PMXVertexForHLSL)], vertexData, sizeof(PMXVertexForHLSL));
 	}
 
-	// 頂点バッファ用のDirectX 12リソースを作成
-	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size());
+	// 頂点バッファ用のDirectX 12リソースを作成.
+	D3D12_HEAP_PROPERTIES HeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	CD3DX12_RESOURCE_DESC ResDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size());
 
 	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
-		&heapProp,
+		&HeapProp,
 		D3D12_HEAP_FLAG_NONE,
-		&resDesc,
+		&ResDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())
@@ -323,12 +323,10 @@ void CPMXActor::LoadPMXFile(const char* path)
 		OutputDebugString(L"Failed to map vertex buffer!\n");
 	}
 
-	// 頂点バッファビューの設定
+	// 頂点バッファビューの設定.
 	m_pVertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(vertices.size());
 	m_pVertexBufferView.StrideInBytes = sizeof(PMXVertexForHLSL); // 40バイトに設定
-
-
 
 	// インデックスバッファを読み込む.
 	std::vector<PMXFace> Faces;
@@ -336,12 +334,12 @@ void CPMXActor::LoadPMXFile(const char* path)
 	ReadPMXIndices(fp, &Faces, &IndicesNum);
 
 	// インデックスバッファ用のDirectX12リソースを作成.
-	auto ResDescBuf = CD3DX12_RESOURCE_DESC::Buffer(IndicesNum * sizeof(unsigned short));
+	CD3DX12_RESOURCE_DESC ResDescBuf = CD3DX12_RESOURCE_DESC::Buffer(IndicesNum * sizeof(unsigned short));
 
 	MyAssert::IsFailed(
 		_T("インデックスバッファの作成"),
 		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice().Get(),
-		&heapProp,
+		&HeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&ResDescBuf,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -350,33 +348,32 @@ void CPMXActor::LoadPMXFile(const char* path)
 	);
 
 	// インデックスデータの準備 (CPU側).
-	unsigned short* MappedIdx1 = new unsigned short[IndicesNum];  // ダイレクトにメモリ確保
+	unsigned short* MappedIdx1 = new unsigned short[IndicesNum];
 	for (size_t i = 0; i < IndicesNum / 3; ++i) {
 		MappedIdx1[i * 3 + 0] = static_cast<unsigned short>(Faces[i].Index[0]);
 		MappedIdx1[i * 3 + 1] = static_cast<unsigned short>(Faces[i].Index[1]);
 		MappedIdx1[i * 3 + 2] = static_cast<unsigned short>(Faces[i].Index[2]);
 	}
 
-	// GPUメモリにインデックスバッファをマップ
+	// GPUメモリにインデックスバッファをマップ.
 	unsigned short* mappedIdx = nullptr;
 	m_pIndexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedIdx));
 
-	// メモリを一気にコピーする
+	// メモリを一気にコピーする.
 	std::memcpy(mappedIdx, MappedIdx1, IndicesNum * sizeof(unsigned short));
 
-	// マッピング解除
+	// マッピング解除.
 	m_pIndexBuffer->Unmap(0, nullptr);
 
-	// メモリを解放
+	// メモリを解放.
 	delete[] MappedIdx1;
 
-	// インデックスバッファビューの設定
+	// インデックスバッファビューの設定.
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_pIndexBufferView.Format = DXGI_FORMAT_R16_UINT;  // 16ビットインデックスなのでR16_UINT
 	m_pIndexBufferView.SizeInBytes = static_cast<UINT>(IndicesNum * sizeof(unsigned short));  // サイズを設定
 
 	// テクスチャの読み込み.
-
 	uint32_t TexturesNum;
 	fread(&TexturesNum, sizeof(uint32_t), 1, fp);
 	std::vector<PMXTexturePath> TextureInfo(TexturesNum);
@@ -661,6 +658,7 @@ void CPMXActor::ReadPMXIndices(FILE* fp, std::vector<PMXFace>* Faces, uint32_t* 
 	// インデックス数を読み込む.
 	fread(IndicesNum, sizeof(uint32_t), 1, fp);
 
+#if _DEBUG
 	// インデックスサイズに基づき読み込む.
 	if (ReadIndices) {
 		(this->*ReadIndices)(fp, *IndicesNum, Faces);
@@ -668,6 +666,10 @@ void CPMXActor::ReadPMXIndices(FILE* fp, std::vector<PMXFace>* Faces, uint32_t* 
 	else {
 		throw std::runtime_error("ReadIndicesFunctionPointer is not initialized.");
 	}
+#else
+	// インデックスサイズに基づき読み込む.
+	(this->*ReadIndices)(fp, *IndicesNum, Faces);
+#endif
 }
 
 void CPMXActor::LoadVMDFile(const char* FilePath, const char* Name)

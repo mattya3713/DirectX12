@@ -188,6 +188,10 @@ void CPMDActor::LoadPMDFile(const char* path)
 	for (int i = 0; i < pmdMaterials.size(); ++i) {
 		// トゥーンテクスチャのファイルパスを構築.
 		char toonFilePath[32];
+
+		// Idxが255ならなしなのでcontinue.
+		if (pmdMaterials[i].ToonIdx == 255) { continue; }
+
 		sprintf_s(toonFilePath, "Data/Image/toon/toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
 		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 

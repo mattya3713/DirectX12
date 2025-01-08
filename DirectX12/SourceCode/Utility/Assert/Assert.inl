@@ -1,200 +1,124 @@
-#pragma once
+ï»¿#pragma once
 
 #include <stdexcept>
 #include <type_traits>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <locale>
-#include <windows.h>	 // HRESULT ‚Æ Windows API ‚Ì’è‹`‚ªŠÜ‚Ü‚ê‚é
-
-#include <d3dcompiler.h> // Blob‚Ì’è‹`‚ªŠÜ‚Ü‚ê‚é.
+#include <windows.h>        // HRESULT ã¨ Windows API ã®å®šç¾©ãŒå«ã¾ã‚Œã‚‹
+#include <d3dcompiler.h>    // Blobã®å®šç¾©ãŒå«ã¾ã‚Œã‚‹.
 
 #include "Utility/String/String.h"
 
 namespace MyAssert {
 
-	// HRESULT‚ğ“ú–{Œê‚Æ‚µ‚Ä•Ô‚·.
-	static inline std::string HResultToJapanese(HRESULT Result)
-	{
-		switch (Result) {
-		case E_ABORT: return "‘€ì‚Í’†~‚³‚ê‚Ü‚µ‚½";
-		case E_ACCESSDENIED: return "ˆê”Ê“I‚ÈƒAƒNƒZƒX‹‘”ÛƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½";
-		case E_FAIL: return "•s“Á’è‚ÌƒGƒ‰[";
-		case E_HANDLE: return "–³Œø‚Èƒnƒ“ƒhƒ‹";
-		case E_INVALIDARG: return "1 ‚ÂˆÈã‚Ìˆø”‚ª–³Œø‚Å‚·";
-		case E_NOINTERFACE: return "‚»‚Ì‚æ‚¤‚ÈƒCƒ“ƒ^[ƒtƒFƒCƒX‚ÍƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB";
-		case E_NOTIMPL: return "–¢À‘•";
-		case E_OUTOFMEMORY: return "•K—v‚Èƒƒ‚ƒŠ‚ÌŠ„‚è“–‚Ä‚É¸”s‚µ‚Ü‚µ‚½";
-		case E_POINTER: return "–³Œø‚Èƒ|ƒCƒ“ƒ^[";
-		case E_UNEXPECTED: return "—\Šú‚µ‚È‚¢ƒGƒ‰[";
-		default: return "–¢’m‚ÌƒGƒ‰[";
-		};
-
-	}
-
-#if UNICODE
-	using runtime_error_msg = LPCWSTR;
-
-	static inline std::string FormatErrorMessage(const std::wstring& ErrorMsg, HRESULT Result) {
-		std::string NarrowErrorMsg = MyString::WStringToString(ErrorMsg);
-		std::string HResultMsg = HResultToJapanese(Result);
-		std::stringstream ss;
-		ss << NarrowErrorMsg << " ‚É¸”s,\n Œ´ˆö : " << std::hex << HResultMsg;
-		return ss.str();
-	}
-#else
-	using runtime_error_msg = LPCSTR;
-
-	static inline std::wstring NarrowToWide(const std::string& NarrowStr) {
-		int Size = MultiByteToWideChar(CP_UTF8, 0, NarrowStr.c_str(), -1, nullptr, 0);
-		if (Size <= 0) {
-			throw std::runtime_error("NarrowToWide conversion failed.");
-		}
-		std::wstring WideStr;
-		WideStr.resize(Size - 1); // I’[‚Ìnull•¶š‚ğœ‚­
-		MultiByteToWideChar(CP_UTF8, 0, NarrowStr.c_str(), -1, &WideStr[0], Size);
-		return WideStr;
-	}
-
-	static inline std::wstring FormatErrorMessage(const std::string& ErrorMsg, HRESULT Result) {
-		std::wstring WideErrorMsg = NarrowToWide(ErrorMsg);
-		std::wstringstream ss;
-		ss << WideErrorMsg << L" ‚É¸”s, Œ´ˆö : 0x" << std::hex << Result;
-		return ss.str();
-	}
-#endif
-	template<typename Func, typename ...Args,
-		std::enable_if_t<
-		std::is_same_v<std::invoke_result_t<Func, Args...>, bool> ||
-		std::is_same_v<std::invoke_result_t<Func, Args...>, HRESULT>, int>>
-		static inline bool IsFailed(
-			runtime_error_msg ErrorMsg,
-			Func&& func,
-			Args&&... args) noexcept(false)
-	{
-		HRESULT Result = S_OK;
-		std::tuple<Args...> Tup(std::forward<Args>(args)...);
-
-		Result = std::apply(std::forward<Func>(func), std::move(Tup));
-
-		if (FAILED(Result)) {
-			std::string FormattedMessage;
+    // HRESULTã‚’æ—¥æœ¬èªã¨ã—ã¦è¿”ã™.
+    static inline std::string_view HResultToJapanese(const HRESULT& Result)
+    {
+        switch (Result) {
+        case E_ABORT:           return "æ“ä½œã¯ä¸­æ­¢ã•ã‚Œã¾ã—ãŸ";
+        case E_ACCESSDENIED:    return "ä¸€èˆ¬çš„ãªã‚¢ã‚¯ã‚»ã‚¹æ‹’å¦ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ";
+        case E_FAIL:            return "ä¸ç‰¹å®šã®ã‚¨ãƒ©ãƒ¼";
+        case E_HANDLE:          return "ç„¡åŠ¹ãªãƒãƒ³ãƒ‰ãƒ«";
+        case E_INVALIDARG:      return "1 ã¤ä»¥ä¸Šã®å¼•æ•°ãŒç„¡åŠ¹ã§ã™";
+        case E_NOINTERFACE:     return "ãã®ã‚ˆã†ãªã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ã‚¤ã‚¹ã¯ã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚";
+        case E_NOTIMPL:         return "æœªå®Ÿè£…";
+        case E_OUTOFMEMORY:     return "å¿…è¦ãªãƒ¡ãƒ¢ãƒªã®å‰²ã‚Šå½“ã¦ã«å¤±æ•—ã—ã¾ã—ãŸ";
+        case E_POINTER:         return "ç„¡åŠ¹ãªãƒã‚¤ãƒ³ã‚¿ãƒ¼";
+        case E_UNEXPECTED:      return "äºˆæœŸã—ãªã„ã‚¨ãƒ©ãƒ¼";
+        default:                return "æœªçŸ¥ã®ã‚¨ãƒ©ãƒ¼";
+        }
+    }
 
 #if UNICODE
-			// LPCWSTR ‚ğ std::wstring ‚É•ÏŠ·.
-			std::wstring WideErrorMsg(ErrorMsg);
-			FormattedMessage = FormatErrorMessage(WideErrorMsg, Result);
+    using RuntimeErrorMsg = std::wstring_view;
+
+    static inline std::string FormatErrorMessage(RuntimeErrorMsg ErrorMsg, const HRESULT& Result) {
+        std::string NarrowErrorMsg = MyString::WStringToString(std::wstring(ErrorMsg));
+        std::string_view HResultMsg = HResultToJapanese(Result);
+        std::ostringstream ss;
+        ss << NarrowErrorMsg << " ã«å¤±æ•—,\n åŸå›  : " << HResultMsg;
+        return ss.str();
+    }
 #else
-			// LPCSTR ‚ğ std::string ‚É•ÏŠ·.
-			FormattedMessage = FormatErrorMessage(std::string(ErrorMsg), Result);
+    using RuntimeErrorMsg = std::string_view;
+
+    static inline std::string FormatErrorMessage(RuntimeErrorMsg ErrorMsg, HRESULT Result) {
+        std::string_view HResultMsg = HResultToJapanese(Result);
+        std::ostringstream ss;
+        ss << ErrorMsg << " ã«å¤±æ•—,\n åŸå›  : " << HResultMsg;
+        return ss.str();
+    }
 #endif
 
-			throw std::runtime_error(FormattedMessage);
-			return false;
-		}
-		return true;
-	}
+    /*******************************************
+    * @brief    HRESULT,boolãŒæˆ»ã‚Šå€¤ã®é–¢æ•°ã‚¨ãƒ©ãƒ¼ã‚’throw.
+    * @param    å®Ÿè¡Œã—ãŸã„é–¢æ•°ãƒã‚¤ãƒ³ã‚¿.
+    * @param    å¿…è¦ãªå¼•æ•°.
+    *******************************************/
+    template<typename FunctionPtr, typename ...FuncArgs,
+        std::enable_if_t<
+        std::is_same_v<std::invoke_result_t<FunctionPtr, FuncArgs...>, bool> ||
+        std::is_same_v<std::invoke_result_t<FunctionPtr, FuncArgs...>, HRESULT>, int> = 0 >
+    static inline bool IsFailed(
+        RuntimeErrorMsg ErrorMsg,
+        FunctionPtr && Func,
+        FuncArgs&&... Args) noexcept(false)
+    {
+        // é–¢æ•°ã®æˆ»ã‚Šå€¤å‹ã‚’å–å¾—.
+        using ResultType = std::invoke_result_t<FunctionPtr, FuncArgs...>;
 
-	/*******************************************
-	* @brief	ErroeBlob‚É“ü‚Á‚½ƒGƒ‰[‚ğo—Í.
-	* @param	¬Œ÷‚©‚Ç‚¤‚©.
-	* @param	ErroeBlob.
-	*******************************************/
-	static void ErrorBlob(const HRESULT& Result, ID3DBlob* ErrorMsg)
-	{
-		// ¬Œ÷‚È‚çˆ—‚ğ‚µ‚È‚¢.
-		if (SUCCEEDED(Result)) { return; }
+        // é–¢æ•°ã‚’å®Ÿè¡Œ.
+        ResultType Result = std::invoke(std::forward<FunctionPtr>(Func), std::forward<FuncArgs>(Args)...);
 
-		std::wstring ErrStr;
+        // ã‚¨ãƒ©ãƒ¼åˆ¤å®š(HRISULT).
+        if constexpr (std::is_same_v<ResultType, HRESULT>) {
+            if (FAILED(Result)) {
+                throw std::runtime_error(FormatErrorMessage(ErrorMsg, Result));
+                return false;
+            }
+        }
+        // ã‚¨ãƒ©ãƒ¼åˆ¤å®š(bool).
+        else if constexpr (std::is_same_v<ResultType, bool>) {
+            if (!Result) {
+                throw std::runtime_error(std::string(ErrorMsg));
+                return false;
+            }
+        }
 
-		if (Result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
-			ErrStr = L"ƒtƒ@ƒCƒ‹‚ªŒ©“–‚½‚è‚Ü‚¹‚ñ";
-		}
-		else {
-			if (ErrorMsg) {
-				// ErrorMsg ‚ª‚ ‚é‚Ìê‡.
-				ErrStr.resize(ErrorMsg->GetBufferSize());
-				std::copy_n(static_cast<const char*>(ErrorMsg->GetBufferPointer()), ErrorMsg->GetBufferSize(), ErrStr.begin());
-				ErrStr += L"\n";
-			}
-			else {
-				// ErrorMsg ‚ª‚È‚¢‚Ìê‡.
-				ErrStr = L"ErrorMsg is null";
-			}
-		}
-		if (ErrorMsg) {
-			ErrorMsg->Release();  // ƒƒ‚ƒŠ‰ğ•ú
-		}
+        return true;
+    }
 
-		std::wstring WideErrorMsg(ErrStr);
-		std::string FormattedMessage = MyAssert::FormatErrorMessage(WideErrorMsg, Result);
-		throw std::runtime_error(FormattedMessage);
-	}
-}#pragma once
-#include "Utility\StringConverter\StringConverter.h"
-class MyAssert
-{
-public:
-	/************************************************************
-	* @brief bool‚ÆHRESULT‚ğ”»’è‚µ‚Ä—áŠO‚ª‚ ‚é‚È‚ç—‚Æ‚·.
-	* @param msg    F•\¦ƒƒbƒZ[ƒW.
-	* @param func    FÀsŠÖ”.
-	* @param args    FÀsŠÖ”‚Ìˆø”.
-	************************************************************/
-	template<typename Func, typename ...Args,
-		std::enable_if_t<
-		std::is_same_v<std::invoke_result_t<Func, Args...>, bool> ||
-		std::is_same_v<std::invoke_result_t<Func, Args...>, HRESULT>, int> = 0>
-	static void Assert(const std::string msg, Func && func, Args&&... args);
-private:
-	/************************************************************
-	* @brief HRESULT‚ÌƒGƒ‰[“à—e‚ğ•¶š—ñ‚Å•Ô‚·.
-	* @param hrFƒGƒ‰[ƒR[ƒh.
-	************************************************************/
-	static const std::string GetErrorCode(const HRESULT hr);
+    /*******************************************
+    * @brief    ErrorBlobã«å…¥ã£ãŸã‚¨ãƒ©ãƒ¼ã‚’å‡ºåŠ›.
+    * @param    æˆåŠŸã‹ã©ã†ã‹.
+    * @param    ErrorBlob.
+    *******************************************/
+    static inline void ErrorBlob(const HRESULT& Result, ID3DBlob* ErrorMsg)
+    {
+        if (SUCCEEDED(Result)) {
+            return;
+        }
 
+        std::wstring ErrStr;
 
-	/************************************************************
-	* @brief ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒO‚ğs‚¤.
-	* @param msg    FƒGƒ‰[ƒƒbƒZ[ƒW.
-	* @param result    FƒGƒ‰[Œ‹‰Ê.
-	************************************************************/
-	template <typename Result>
-	static void HandleErrorResult(const std::string& msg, Result result);
-};
+        if (Result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+            ErrStr = L"ãƒ•ã‚¡ã‚¤ãƒ«ãŒè¦‹å½“ãŸã‚Šã¾ã›ã‚“";
+        }
+        else if (ErrorMsg) {
+            ErrStr.assign(static_cast<const wchar_t*>(ErrorMsg->GetBufferPointer()), ErrorMsg->GetBufferSize() / sizeof(wchar_t));
+        }
+        else {
+            ErrStr = L"ErrorMsg is null";
+        }
 
-//------------------------------------------------------------------------------------------.
+        if (ErrorMsg) {
+            ErrorMsg->Release();
+        }
 
-template<typename Func, typename ...Args,
-	std::enable_if_t<
-	std::is_same_v<std::invoke_result_t<Func, Args...>, bool> ||
-	std::is_same_v<std::invoke_result_t<Func, Args...>, HRESULT>, int>>
-	inline void MyAssert::Assert(const std::string msg, Func&& func, Args && ...args)
-{
-	std::tuple<Args...> tup(std::forward<Args>(args)...);
+        throw std::runtime_error(FormatErrorMessage(ErrStr, Result));
+    }
 
-	// ”»’è.
-	auto result = std::apply(std::forward<Func>(func), std::move(tup));
-
-	// ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒO.
-	HandleErrorResult(msg, result);
-}
-
-//------------------------------------------------------------------------------------------.
-
-template<typename Result>
-inline void MyAssert::HandleErrorResult(const std::string& msg, Result result)
-{
-	// HRESULT‚Ìê‡.
-	if constexpr (std::is_same_v<Result, HRESULT>)
-	{
-		std::string errorMsg = msg + "F" + GetErrorCode(result);
-		_ASSERT_EXPR(SUCCEEDED(result), StringConverter::StringToWStirng(errorMsg).c_str());
-	}
-	// bool‚Ìê‡.
-	else if constexpr (std::is_same_v<Result, bool>)
-	{
-		_ASSERT_EXPR(SUCCEEDED(result), StringConverter::StringToWStirng(msg).c_str());
-	}
-}pppppp
+} // namespace MyAssert
