@@ -28,8 +28,8 @@ INT WINAPI WinMain(
 			//Dx11用の初期化.
 			if( SUCCEEDED( pCMain->Create() ))
 			{
-				//メッセージループ.
-				pCMain->Loop();
+				//メインループ.
+				pCMain->Convert();
 			}
 		}
 		//終了.

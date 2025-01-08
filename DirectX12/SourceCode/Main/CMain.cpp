@@ -4,6 +4,7 @@
 #include "Ggraphic/PMD/CPMDRenderer.h"
 #include "Ggraphic/PMX/CPMXActor.h"
 #include "Ggraphic/PMX/CPMXRenderer.h"
+#include "Mesh/CMeshManager.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -46,19 +47,31 @@ HRESULT CMain::Create()
     m_pDx12 = std::make_shared<CDirectX12>();
     m_pDx12->Create(m_hWnd);
 
-    //m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
-#if ISOMX
-    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
-    
-#else 
-    m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Cube\\Cube.pmx", *m_pPMXRenderer);
-    // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
-    // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
-    // Data\\Model\\PMX\\Cube\\Cube.pmx"
-#endif
+      m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+//    //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
+//#if ISOMX
+//    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+//    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
+//    
+//#else 
+//    m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
+//    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Cube\\Cube.pmx", *m_pPMXRenderer);
+//    // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
+//    // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
+//    // Data\\Model\\PMX\\Cube\\Cube.pmx"
+//#endif
+
+    CMeshManager::LoadPMDMesh(*m_pDx12, *m_pPMDRenderer);
+
+    return S_OK;
+}
+
+HRESULT CMain::Convert()
+{
+    for (auto& Mesh : CMeshManager::GetPMDMeshList())
+    {
+        CMeshManager::GetPMDMesh(Mesh)->SaveAsX();
+    }
 
     return S_OK;
 }
