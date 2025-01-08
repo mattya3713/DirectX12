@@ -864,6 +864,7 @@ bool CPMDActor::SaveAsX() {
 		}
 	}
 	outFile << "}\n";
+	outFile << "}\n";
 
 
 
