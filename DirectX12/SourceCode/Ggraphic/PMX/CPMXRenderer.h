@@ -8,6 +8,11 @@
 class CDirectX12;
 class CPMXActor;
 
+/**************************************************
+*	PMX用描画パイプラインクラス.
+*	担当：淵脇 未来
+**/
+
 class CPMXRenderer
 {
 	friend CPMXActor;

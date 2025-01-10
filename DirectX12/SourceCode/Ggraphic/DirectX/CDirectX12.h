@@ -24,6 +24,7 @@ constexpr size_t PmdVertexSize = 38;
 
 /**************************************************
 *	DirectX12セットアップ.
+*	担当：淵脇 未来
 **/
 class CDirectX12
 {

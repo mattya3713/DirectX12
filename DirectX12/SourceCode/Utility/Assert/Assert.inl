@@ -121,4 +121,4 @@ namespace MyAssert {
         throw std::runtime_error(FormatErrorMessage(ErrStr, Result));
     }
 
-} // namespace MyAssert
+} // namespace MyAssert.

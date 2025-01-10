@@ -168,6 +168,7 @@
     <ClInclude Include="SourceCode\Ggraphic\PMD\CPMDRenderer.h" />
     <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXActor.h" />
     <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXRenderer.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Global.h" />
     <ClInclude Include="SourceCode\Main\CMain.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
