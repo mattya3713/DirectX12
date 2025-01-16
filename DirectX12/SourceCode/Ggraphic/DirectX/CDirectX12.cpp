@@ -339,7 +339,7 @@ void CDirectX12::CreateRenderTarget(
 		_T("ディスクリプタヒープの作成"),
 		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
 		&HeapDesc,														// ディスクリプタヒープ構造体を登録.
-		IID_PPV_ARGS(RenderTargetViewHeap.ReleaseAndGetAddressOf()));// (Out)ディスクリプタヒープ.
+		IID_PPV_ARGS(RenderTargetViewHeap.ReleaseAndGetAddressOf()));	// (Out)ディスクリプタヒープ.
 
 	// スワップチェーン構造体.
 	DXGI_SWAP_CHAIN_DESC SwcDesc = {};
@@ -360,12 +360,12 @@ void CDirectX12::CreateRenderTarget(
 	RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 	// バックバファの数分.
-	for (int i = 0; i < static_cast<int>(SwcDesc.BufferCount); ++i)
+	for (UINT i = 0; i < (SwcDesc.BufferCount); ++i)
 	{
 		MyAssert::IsFailed(
 			_T("スワップチェーン内のバッファーとビューを関連づける"),
 			&IDXGISwapChain4::GetBuffer, m_pSwapChain.Get(),
-			static_cast<UINT>(i),
+			i,
 			IID_PPV_ARGS(m_pBackBuffer[i].GetAddressOf()));
 
 		RTVDesc.Format = m_pBackBuffer[i]->GetDesc().Format;
@@ -570,7 +570,8 @@ ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
 	//拡張子を取得.
 	auto Extension = MyFilePath::GetExtension(TexPath);
 
-	HRESULT Result = m_LoadLambdaTable[Extension](wTexPath,
+	HRESULT Result = m_LoadLambdaTable[Extension](
+		wTexPath,
 		&Metadata,
 		ScratchImg);
 

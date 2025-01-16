@@ -122,7 +122,8 @@ private:
 
 	// インデックス関連.
 	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// インデックスバッファ.
-	PMX::Face*				m_MappedIndex;				// 頂点マップ.
+	std::vector<PMX::Face>			m_Faces;					// インデックス.
+	PMX::Face*						m_MappedIndex;				// 頂点マップ.
 	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// インデックスバッファビュー.
 
 
@@ -138,12 +139,12 @@ private:
 	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// マテリアルバッファ.
 	char*									m_pMappedMaterial;	// マテリアルマップ
 	MyComPtr<ID3D12DescriptorHeap>			m_pMaterialHeap;	// マテリアルヒープ.
-	std::vector<PMX::Material>				m_MaterialForHLSL;	// GPUに送るマテリアル情報.
+	std::vector<PMX::Material>				m_Materials;		// マテリアル.
+	std::vector<PMX::MaterialForHLSL>		m_MaterialsForHLSL;	// GPUに送るマテリアル情報.
 
 
 	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// 画像リソース.
 	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// Sphリソース.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pSpaResource;		// Spaリソース.
 	std::vector<MyComPtr<ID3D12Resource>>	m_pToonResource;	// トゥーンリソ－ス.
 
 

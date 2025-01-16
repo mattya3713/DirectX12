@@ -26,17 +26,17 @@ namespace PMX {
 		uint8_t				RigidBodyIndexSize;	// 剛体インデックスサイズ.
 
 		Header()
-			: Signature{}
-			, Version(0.0f)
-			, Encoding(0)
-			, NextDataSize(0)
-			, AdditionalUV(0)
-			, VertexIndexSize(0)
-			, TextureIndexSize(0)
-			, MaterialIndexSize(0)
-			, BoneIndexSize(0)
-			, MorphIndexSize(0)
-			, RigidBodyIndexSize(0)
+			: Signature			{ }
+			, Version			( 0.0f )
+			, Encoding			( 0 )
+			, NextDataSize		( 0 )
+			, AdditionalUV		( 0 )
+			, VertexIndexSize	( 0 )
+			, TextureIndexSize	( 0 )
+			, MaterialIndexSize	( 0 )
+			, BoneIndexSize		( 0 )
+			, MorphIndexSize	( 0 )
+			, RigidBodyIndexSize( 0 )
 		{}
 	};
 

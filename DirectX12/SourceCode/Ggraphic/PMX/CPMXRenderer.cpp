@@ -11,7 +11,7 @@ constexpr size_t PMDTexWide = 4;
 CPMXRenderer::CPMXRenderer(CDirectX12& dx12):m_pDx12(dx12)
 {
 	CreateRootSignature();
-	CreateGraphicsPipelineForPMD();
+	CreateGraphicsPipelineForPMX();
 
 	// PMD用汎用テクスチャの生成.
 	m_pWhiteTex = MyComPtr<ID3D12Resource>(CreateWhiteTexture());
@@ -25,12 +25,11 @@ CPMXRenderer::~CPMXRenderer()
 }
 
 
-void 
-CPMXRenderer::Update() {
+void CPMXRenderer::Update() {
 
 }
-void 
-CPMXRenderer::Draw() {
+
+void CPMXRenderer::Draw() {
 
 }
 
@@ -84,6 +83,7 @@ ID3D12Resource* CPMXRenderer::CreateWhiteTexture()
 
 	return WhiteBuff;
 }
+
 ID3D12Resource* CPMXRenderer::CreateBlackTexture()
 {
 	// テクスチャリソースの作成.
@@ -101,6 +101,7 @@ ID3D12Resource* CPMXRenderer::CreateBlackTexture()
 
 	return BlackBuff;
 }
+
 ID3D12Resource* CPMXRenderer::CreateGrayGradationTexture()
 {
 	ID3D12Resource* GradBuff = CreateDefaultTexture(4, 256);
@@ -125,7 +126,7 @@ ID3D12Resource* CPMXRenderer::CreateGrayGradationTexture()
 }
 
 //パイプライン初期化
-void CPMXRenderer::CreateGraphicsPipelineForPMD() {
+void CPMXRenderer::CreateGraphicsPipelineForPMX() {
 
 	MyComPtr<ID3DBlob> VSBlob(nullptr);		// 頂点シェーダーのブロブ.
 	MyComPtr<ID3DBlob> PSBlob(nullptr);		// ピクセルシェーダーのブロブ.
@@ -134,13 +135,13 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 
 	// 頂点シェーダーの読み込み.
 	CompileShaderFromFile(
-		L"Data\\Shader\\Basic\\BasicVertexShader.hlsl",
-		"BasicVS", "vs_5_0",
+		L"Data\\Shader\\PMX\\PMXBasicVertexShader.hlsl",
+		"VS", "vs_5_0",
 		VSBlob.ReleaseAndGetAddressOf());
 
 	CompileShaderFromFile(
-		L"Data\\Shader\\Basic\\BasicPixelShader.hlsl",
-		"BasicPS", "ps_5_0",
+		L"Data\\Shader\\PMX\\PMXBasicPixelShader.hlsl",
+		"PS", "ps_5_0",
 		PSBlob.ReleaseAndGetAddressOf());
 
 	// TODO : 短くできそう.
@@ -148,9 +149,6 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BONENO"	, 0, DXGI_FORMAT_R16G16_UINT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "WEIGHT"	, 0, DXGI_FORMAT_R8_UINT		, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		//{ "EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
 	};
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
@@ -159,7 +157,6 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 	gpipeline.PS = CD3DX12_SHADER_BYTECODE(PSBlob.Get());
 
 	gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;//中身は0xffffffff
-
 
 	gpipeline.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
@@ -184,6 +181,7 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 	gpipeline.SampleDesc.Count = 1;//サンプリングは1ピクセルにつき１
 	gpipeline.SampleDesc.Quality = 0;//クオリティは最低
 
+
 	MyAssert::IsFailed(
 		_T("グラフィックパイプラインの作成"),
 		&ID3D12Device::CreateGraphicsPipelineState, m_pDx12.GetDevice(),
@@ -194,26 +192,55 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 }
 
 //ルートシグネチャ初期化
-void CPMXRenderer::CreateRootSignature() {
-	//レンジ
-	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};
-	descTblRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);//定数[b0](ビュープロジェクション用)
-	descTblRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);//定数[b1](ワールド、ボーン用)
-	descTblRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);//定数[b2](マテリアル用)
-	descTblRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0);//テクスチャ４つ(基本とsphとspaとトゥーン)
+void CPMXRenderer::CreateRootSignature() 
+{
+	// ディスクリプタレンジの作成.
+	D3D12_DESCRIPTOR_RANGE DescRanges[4] = {};
 
-	//ルートパラメータ
-	CD3DX12_ROOT_PARAMETER rootParams[3] = {};
-	rootParams[0].InitAsDescriptorTable(1, &descTblRanges[0]);//ビュープロジェクション変換
-	rootParams[1].InitAsDescriptorTable(1, &descTblRanges[1]);//ワールド・ボーン変換
-	rootParams[2].InitAsDescriptorTable(2, &descTblRanges[2]);//マテリアル周り
+	//定数[b0](ビュープロジェクション用).
+	DescRanges[0].NumDescriptors = 1;
+	DescRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	DescRanges[0].BaseShaderRegister = 0;
+	DescRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	CD3DX12_STATIC_SAMPLER_DESC samplerDescs[2] = {};
-	samplerDescs[0].Init(0);
-	samplerDescs[1].Init(1, D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+	//定数[b1](ワールド、ボーン用).
+	DescRanges[1].NumDescriptors = 1;
+	DescRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	DescRanges[1].BaseShaderRegister = 1;
+	DescRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-	rootSignatureDesc.Init(3, rootParams, 2, samplerDescs, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	//定数[b2](マテリアル用).
+	DescRanges[2].NumDescriptors = 1;
+	DescRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	DescRanges[2].BaseShaderRegister = 2;
+	DescRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	//テクスチャ3つ(基本とsphとトゥーン).
+	DescRanges[3].NumDescriptors = 3;
+	DescRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	DescRanges[3].BaseShaderRegister = 0;
+	DescRanges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; 
+	
+	// ルートパラメータの作成.
+	CD3DX12_ROOT_PARAMETER RootParameters[3] = {};
+	RootParameters[0].InitAsDescriptorTable(1, &DescRanges[0]);	// ビュープロジェクション変換.
+	RootParameters[1].InitAsDescriptorTable(1, &DescRanges[1]);	// ワールド・ボーン変換.
+	RootParameters[2].InitAsDescriptorTable(2, &DescRanges[2]);	// マテリアル周り.
+	
+	// ルートシグネクチャの作成.
+	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = {};
+
+	RootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	RootSignatureDesc.pParameters = RootParameters;
+	RootSignatureDesc.NumParameters = 3; 
+	
+	// サンプラーの作成.
+	CD3DX12_STATIC_SAMPLER_DESC SamplerDesc[2] = {};
+	SamplerDesc[0].Init(0);
+	SamplerDesc[1].Init(1, D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+
+	RootSignatureDesc.pStaticSamplers = SamplerDesc;
+	RootSignatureDesc.NumStaticSamplers = 2;
 
 	MyComPtr<ID3DBlob> RootSigBlob(nullptr);
 	MyComPtr<ID3DBlob> ErrorBlob(nullptr);
@@ -221,7 +248,7 @@ void CPMXRenderer::CreateRootSignature() {
 	MyAssert::IsFailed(
 		_T("ルートシグネクチャをシリアライズする"),
 		&D3D12SerializeRootSignature,
-		&rootSignatureDesc,
+		&RootSignatureDesc,
 		D3D_ROOT_SIGNATURE_VERSION_1,
 		RootSigBlob.GetAddressOf(),
 		ErrorBlob.GetAddressOf()
@@ -270,4 +297,19 @@ ID3D12PipelineState* CPMXRenderer::GetPipelineState()
 ID3D12RootSignature* CPMXRenderer::GetRootSignature()
 {
 	return m_pRootSignature.Get();
+}
+
+MyComPtr<ID3D12Resource>& CPMXRenderer::GetWhiteTex()
+{
+	return m_pWhiteTex;
+}
+
+MyComPtr<ID3D12Resource>& CPMXRenderer::GetBlackTex()
+{
+	return m_pBlackTex;
+}
+
+MyComPtr<ID3D12Resource>& CPMXRenderer::GetGradTex()
+{
+	return m_pGradTex;
 }

@@ -27,6 +27,13 @@ public:
 
 	// PMD用のルート署名を取得.
 	ID3D12RootSignature* GetRootSignature();
+	
+	// デフォルトの白テクスチャを取得.
+	MyComPtr<ID3D12Resource>& GetWhiteTex();
+	// デフォルトの黒テクスチャを取得.
+	MyComPtr<ID3D12Resource>& GetBlackTex();
+	// デフォルトの白<->黒テクスチャを取得.
+	MyComPtr<ID3D12Resource>& GetGradTex();
 
 private:
 	// テクスチャの汎用素材を作成.
@@ -39,7 +46,7 @@ private:
 	ID3D12Resource* CreateGrayGradationTexture();
 
 	// パイプライン初期化.
-	void CreateGraphicsPipelineForPMD();
+	void CreateGraphicsPipelineForPMX();
 	// ルートシグネチャ初期化.
 	void CreateRootSignature();
 
@@ -62,7 +69,7 @@ private:
 	MyComPtr<ID3D12PipelineState>	m_pPipelineState;		// パイプライン.
 	MyComPtr<ID3D12RootSignature>	m_pRootSignature;		// ルートシグネチャ.
 
-	//PMD用共通テクスチャ.
+	//PMX用共通テクスチャ.
 	MyComPtr<ID3D12Resource>		m_pWhiteTex;			// 白色のテクスチャ.
 	MyComPtr<ID3D12Resource>		m_pBlackTex;			// 黒色のテクスチャ.
 	MyComPtr<ID3D12Resource>		m_pGradTex;				// 白<->黒グラデーションのテクスチャ.

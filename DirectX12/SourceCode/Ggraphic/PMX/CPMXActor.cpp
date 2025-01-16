@@ -41,25 +41,31 @@ void CPMXActor::Update() {
 void CPMXActor::Draw() {
 	m_pDx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_pVertexBufferView);
 	m_pDx12.GetCommandList()->IASetIndexBuffer(&m_pIndexBufferView);
+	m_pDx12.GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	ID3D12DescriptorHeap* TransHeap[] = { m_pTransformHeap.Get() };
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, TransHeap);
+	ID3D12DescriptorHeap* transheap[] = { m_pTransformHeap.Get() };
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, transheap);
 	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(1, m_pTransformHeap->GetGPUDescriptorHandleForHeapStart());
 
-	ID3D12DescriptorHeap* MaterialHeap[] = { m_pMaterialHeap.Get() };
-	//マテリアル.
-	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, MaterialHeap);
+	ID3D12DescriptorHeap* mdh[] = { m_pMaterialHeap.Get() };
 
-	auto MaterialHeapHandle = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
-	unsigned int IdxOffset = 0;
+	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, mdh);
 
-	auto cbvsrvIncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
-	//for (auto& m : m_pMaterials) {
-	//	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, MaterialHeapHandle);
-	//	m_pDx12.GetCommandList()->DrawIndexedInstanced(m->IndicesNum, 1, IdxOffset, 0, 0);
-	//	MaterialHeapHandle.ptr += cbvsrvIncSize;
-	//	IdxOffset += m->IndicesNum;
-	//}
+	auto cbvSrvIncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 4;
+
+	auto materialH = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
+	unsigned int idxOffset = 0;
+
+	for (int i = 0; i < m_Materials.size(); i++)
+	{
+		unsigned int numFaceVertices = m_Faces[i].Index;
+
+		dx.CommandList()->SetGraphicsRootDescriptorTable(2, materialH);
+		dx.CommandList()->DrawIndexedInstanced(numFaceVertices, 1, idxOffset, 0, 0);
+
+		materialH.ptr += cbvSrvIncSize;
+		idxOffset += numFaceVertices;
+	}
 }
 
 // アニメーション開始.
@@ -326,9 +332,8 @@ void CPMXActor::LoadPMXFile(const char* path)
 	m_pVertexBufferView.StrideInBytes = PMX::GPU_VERTEX_SIZE;
 
 	// インデックスバッファを読み込む.
-	std::vector<PMX::Face> Faces;
 	uint32_t IndicesNum;
-	ReadPMXIndices(fp, &Faces, &IndicesNum);
+	ReadPMXIndices(fp, &m_Faces, &IndicesNum);
 
 	// インデックスバッファ用にサイズを変更.
 	ResDesc.Width = IndicesNum * sizeof(uint32_t);
@@ -348,7 +353,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 		&ID3D12Resource::Map, m_pIndexBuffer.Get(),
 		0, nullptr, (void**)&m_MappedIndex);
 
-	std::copy(std::begin(Faces), std::end(Faces), m_MappedIndex);
+	std::copy(std::begin(m_Faces), std::end(m_Faces), m_MappedIndex);
 	m_pIndexBuffer->Unmap(0, nullptr);
 
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
@@ -396,7 +401,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	CBVDesc.SizeInBytes = static_cast<UINT>(BuffSize);
 
 	auto Handle = m_pTransformHeap->GetCPUDescriptorHandleForHeapStart();
-	auto IncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+//	auto IncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_pDx12.GetDevice()->CreateConstantBufferView(&CBVDesc, Handle);
 
@@ -419,61 +424,58 @@ void CPMXActor::LoadPMXFile(const char* path)
 	// マテリアル読み込み.
 	uint32_t MaterialNum;
 	fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
-	std::vector<PMX::Material> Materials; 
-	Materials.reserve(MaterialNum);
+	m_Materials.reserve(MaterialNum);
 
 	// マテリアル用バッファをリサイズ.
-	/*m_pMaterials.resize(MaterialNum);
 	m_pTextureResource.resize(MaterialNum);
 	m_pSphResource.resize(MaterialNum);
-	m_pSpaResource.resize(MaterialNum);
-	m_pToonResource.resize(MaterialNum);*/
+	m_pToonResource.resize(MaterialNum);
 
 	for (uint32_t i = 0; i < MaterialNum; ++i) {
-		Materials.emplace_back();
+		m_Materials.emplace_back();
 
 		// 名前読み込み.
-		ReadString(fp, Materials.back().Name);
-		ReadString(fp, Materials.back().EnglishName);
+		ReadString(fp, m_Materials.back().Name);
+		ReadString(fp, m_Materials.back().EnglishName);
 
 		// 固定部分読み取り.
-		fread(&Materials.back().Diffuse		, sizeof(DirectX::XMFLOAT4), 1, fp);
-		fread(&Materials.back().Specular	, sizeof(DirectX::XMFLOAT3), 1, fp);
-		fread(&Materials.back().Specularity	, sizeof(float), 1, fp);
-		fread(&Materials.back().Ambient		, sizeof(DirectX::XMFLOAT3), 1, fp);
+		fread(&m_Materials.back().Diffuse		, sizeof(DirectX::XMFLOAT4), 1, fp);
+		fread(&m_Materials.back().Specular	, sizeof(DirectX::XMFLOAT3), 1, fp);
+		fread(&m_Materials.back().Specularity	, sizeof(float), 1, fp);
+		fread(&m_Materials.back().Ambient		, sizeof(DirectX::XMFLOAT3), 1, fp);
 
 		// 描画フラグ.
-		fread(&Materials.back().DrawMode, sizeof(uint8_t), 1, fp);
+		fread(&m_Materials.back().DrawMode, sizeof(uint8_t), 1, fp);
 
 		// エッジ色・サイズ.
-		fread(&Materials.back().EdgeColor, sizeof(DirectX::XMFLOAT4), 1, fp);
-		fread(&Materials.back().EdgeSize, sizeof(float), 1, fp);
+		fread(&m_Materials.back().EdgeColor, sizeof(DirectX::XMFLOAT4), 1, fp);
+		fread(&m_Materials.back().EdgeSize, sizeof(float), 1, fp);
 
 		// テクスチャIndex.
-		fread(&Materials.back().TextureIndex, Header.TextureIndexSize, 1, fp);
+		fread(&m_Materials.back().TextureIndex, Header.TextureIndexSize, 1, fp);
 
 		// スフィアテクスチャIndex.
-		fread(&Materials.back().SphereTextureIndex, Header.TextureIndexSize, 1, fp);
+		fread(&m_Materials.back().SphereTextureIndex, Header.TextureIndexSize, 1, fp);
 
 		// スフィアモード.
-		fread(&Materials.back().SphereMode, sizeof(uint8_t), 1, fp);
+		fread(&m_Materials.back().SphereMode, sizeof(uint8_t), 1, fp);
 
 		// 共有Toonフラグ.
-		fread(&Materials.back().ToonFlag, sizeof(uint8_t), 1, fp);
+		fread(&m_Materials.back().ToonFlag, sizeof(uint8_t), 1, fp);
 
-		if (Materials.back().ToonFlag == 0) {
-			fread(&Materials.back().ToonTextureIndex, Header.TextureIndexSize, 1, fp);
+		if (m_Materials.back().ToonFlag == 0) {
+			fread(&m_Materials.back().ToonTextureIndex, Header.TextureIndexSize, 1, fp);
 		}
 		else {
-			fread(&Materials.back().ToonTextureIndex, sizeof(uint8_t), 1, fp);
+			fread(&m_Materials.back().ToonTextureIndex, sizeof(uint8_t), 1, fp);
 		}
 
 		// メモ.
-		ReadString(fp, Materials.back().Memo);
+		ReadString(fp, m_Materials.back().Memo);
 
 		// 面数.
-		fread(&Materials.back().NumFaceCount, sizeof(uint32_t), 1, fp);
-		Materials.back().NumFaceCount /= 3;
+		fread(&m_Materials.back().NumFaceCount, sizeof(uint32_t), 1, fp);
+		m_Materials.back().NumFaceCount /= 3;
 	}
 
 	// サイズを256アライアンス.
@@ -495,20 +497,20 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 	m_pMaterialBuff->Map(0, nullptr, (void**)&m_pMappedMaterial);
 
-	m_MaterialForHLSL.resize(MaterialNum);
+	m_MaterialsForHLSL.resize(MaterialNum);
 
 	char* MappedMaterialPtr = m_pMappedMaterial;
 	int MaterialIndex = 0;
-	for (const auto& Material : Materials)
+	for (const auto& Material : m_Materials)
 	{
 		//m_MaterialForHLSL[MaterialIndex].visible		= true;
-		m_MaterialForHLSL[MaterialIndex].Name			= Material.Name;
-		m_MaterialForHLSL[MaterialIndex].Diffuse		= Material.Diffuse;
-		m_MaterialForHLSL[MaterialIndex].Specular		= Material.Specular;
-		m_MaterialForHLSL[MaterialIndex].Specularity	= Material.Specularity;
-		m_MaterialForHLSL[MaterialIndex].Ambient		= Material.Ambient;
+//		m_MaterialsForHLSL[MaterialIndex].Name			= Material.Name;
+		m_MaterialsForHLSL[MaterialIndex].Diffuse		= Material.Diffuse;
+		m_MaterialsForHLSL[MaterialIndex].Specular		= Material.Specular;
+		m_MaterialsForHLSL[MaterialIndex].SpecularPower	= Material.Specularity;
+		m_MaterialsForHLSL[MaterialIndex].Ambient		= Material.Ambient;
 		//m_MaterialForHLSL[MaterialIndex].isTransparent	= false;
-		MaterialIndex++;
+		++MaterialIndex;
 
 		PMX::MaterialForHLSL* UpLoadMat = reinterpret_cast<PMX::MaterialForHLSL*>(MappedMaterialPtr);
 		UpLoadMat->Diffuse = Material.Diffuse;
@@ -520,6 +522,85 @@ void CPMXActor::LoadPMXFile(const char* path)
 	}
 
 	m_pMaterialBuff->Unmap(0, nullptr);
+
+	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
+	MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	MaterialDescHeapDesc.NodeMask = 0;
+	MaterialDescHeapDesc.NumDescriptors = MaterialNum * 4;
+	MaterialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+	MyAssert::IsFailed(
+		_T("マテリアルヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDx12.GetDevice(),
+		&MaterialDescHeapDesc,
+		IID_PPV_ARGS(m_pMaterialHeap.ReleaseAndGetAddressOf()));
+
+	// サイズを256アライアンス.
+	int MaterialBuffSize = PMX::GPU_MATERIAL_SIZE;
+	MaterialBuffSize = (MaterialBuffSize + 0xff) & ~0xff;
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC MaterialCBVDesc = {};
+	MaterialCBVDesc.BufferLocation = m_pMaterialBuff->GetGPUVirtualAddress();
+	MaterialCBVDesc.SizeInBytes = MaterialBuffSize;
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+	SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	SRVDesc.Texture2D.MipLevels = 1;
+
+	auto MaterialDescHeapH = m_pMaterialHeap->GetCPUDescriptorHandleForHeapStart();
+	auto IncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	for (int i = 0; i < MaterialNum; ++i)
+	{
+		m_pDx12.GetDevice()->CreateConstantBufferView(&MaterialCBVDesc, MaterialDescHeapH);
+
+		MaterialDescHeapH.ptr += IncSize;
+		MaterialCBVDesc.BufferLocation += MaterialBuffSize;
+
+		if (m_pTextureResource[i].Get() == nullptr)
+		{
+			MyComPtr<ID3D12Resource>& WhiteTexture = m_pRenderer.GetWhiteTex();
+			SRVDesc.Format = WhiteTexture->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(WhiteTexture.Get(), &SRVDesc, MaterialDescHeapH);
+		}
+		else
+		{
+			SRVDesc.Format = m_pTextureResource[i]->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pTextureResource[i].Get(), &SRVDesc, MaterialDescHeapH);
+		}
+		
+		MaterialDescHeapH.ptr += IncSize;
+
+		if (m_pToonResource[i].Get() == nullptr)
+		{
+			MyComPtr<ID3D12Resource>& BlackTexture = m_pRenderer.GetBlackTex();
+			SRVDesc.Format = BlackTexture->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(BlackTexture.Get(), &SRVDesc, MaterialDescHeapH);
+		}
+		else
+		{
+			SRVDesc.Format = m_pToonResource[i]->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pToonResource[i].Get(), &SRVDesc, MaterialDescHeapH);
+		}
+
+		MaterialDescHeapH.ptr += IncSize;
+
+		if (m_pSphResource[i].Get() == nullptr)
+		{
+			MyComPtr<ID3D12Resource>& WhiteTexture = m_pRenderer.GetWhiteTex();
+			SRVDesc.Format = WhiteTexture->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(WhiteTexture.Get(), &SRVDesc, MaterialDescHeapH);
+		}
+		else
+		{
+			SRVDesc.Format = m_pSphResource[i]->GetDesc().Format;
+			m_pDx12.GetDevice()->CreateShaderResourceView(m_pSphResource[i].Get(), &SRVDesc, MaterialDescHeapH);
+		}
+
+		MaterialDescHeapH.ptr += IncSize;
+	}
+
 
 	/*
 	// トゥーンリソースとテクスチャを設定.
@@ -1102,6 +1183,7 @@ void CPMXActor::CreateMaterialAndTextureView() {
 	//srvDesc.Texture2D.MipLevels = 1;//ミップマップは使用しないので1
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(m_pMaterialHeap->GetCPUDescriptorHandleForHeapStart());
 	//auto incSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 	//for (int i = 0; i < m_pMaterials.size(); ++i) {
 	//	//マテリアル固定バッファビュー
 	//	m_pDx12.GetDevice()->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
