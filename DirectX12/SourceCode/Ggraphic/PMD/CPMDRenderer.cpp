@@ -1,8 +1,8 @@
 #include "CPMDRenderer.h"
-#include<d3dx12.h>
+#include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 #include<cassert>
 #include<d3dcompiler.h>
-#include"../DirectX/CDirectX12.h"
+#include"..\\DirectX\\CDirectX12.h"
 #include<string>
 #include<algorithm>
 

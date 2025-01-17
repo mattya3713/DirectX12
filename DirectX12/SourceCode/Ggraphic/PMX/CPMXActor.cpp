@@ -1,8 +1,8 @@
 ﻿#include "CPMXActor.h"
 #include "CPMXRenderer.h"
-#include "../DirectX/CDirectX12.h"	
-#include "Utility/String/FilePath/FilePath.h"
-#include <d3dx12.h>
+#include "..\\DirectX\\CDirectX12.h"	
+#include "Utility\\String\\FilePath\\FilePath.h"
+#include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 #include <chrono>
 
 // PMXモデルデフォルトの共通トゥーン素材のパス.
@@ -58,10 +58,10 @@ void CPMXActor::Draw() {
 
 	for (int i = 0; i < m_Materials.size(); i++)
 	{
-		unsigned int numFaceVertices = m_Faces[i].Index;
+		unsigned int numFaceVertices = m_Materials[i].NumFaceCount;
 
-		dx.CommandList()->SetGraphicsRootDescriptorTable(2, materialH);
-		dx.CommandList()->DrawIndexedInstanced(numFaceVertices, 1, idxOffset, 0, 0);
+		m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, materialH);
+		m_pDx12.GetCommandList()->DrawIndexedInstanced(numFaceVertices, 1, idxOffset, 0, 0);
 
 		materialH.ptr += cbvSrvIncSize;
 		idxOffset += numFaceVertices;
@@ -220,7 +220,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	uint32_t VerticesNum;
 	fread(&VerticesNum, sizeof(VerticesNum), 1, fp);
 	Vertices.reserve(VerticesNum);
-	m_VerticesForHLSL.resize(VerticesNum);
+	m_VerticesForHLSL.reserve(VerticesNum);
 
 	// サイズ計算用頂点構造体.
 	struct VertexSize {
@@ -551,7 +551,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	auto MaterialDescHeapH = m_pMaterialHeap->GetCPUDescriptorHandleForHeapStart();
 	auto IncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	for (int i = 0; i < MaterialNum; ++i)
+	for (int i = 0; i < static_cast<int>(MaterialNum); ++i)
 	{
 		m_pDx12.GetDevice()->CreateConstantBufferView(&MaterialCBVDesc, MaterialDescHeapH);
 

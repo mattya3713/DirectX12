@@ -1,8 +1,8 @@
 #include "CPMDActor.h"
 #include "CPMDRenderer.h"
-#include "../DirectX/CDirectX12.h"	
-#include "Utility/String/FilePath/FilePath.h"
-#include <d3dx12.h>
+#include "..\\DirectX\\CDirectX12.h"	
+#include "Utility\\String\\FilePath\\FilePath.h"
+#include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 
 void* CPMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);

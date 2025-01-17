@@ -1,14 +1,15 @@
 #include "CPMXRenderer.h"
-#include<d3dx12.h>
+#include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 #include<cassert>
 #include<d3dcompiler.h>
-#include"../DirectX/CDirectX12.h"
+#include"..\\DirectX\\CDirectX12.h"
 #include<string>
 #include<algorithm>
 
 constexpr size_t PMDTexWide = 4;
 
-CPMXRenderer::CPMXRenderer(CDirectX12& dx12):m_pDx12(dx12)
+CPMXRenderer::CPMXRenderer(CDirectX12& dx12)
+	: m_pDx12	(dx12)
 {
 	CreateRootSignature();
 	CreateGraphicsPipelineForPMX();

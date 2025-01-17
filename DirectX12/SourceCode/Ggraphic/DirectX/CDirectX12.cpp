@@ -114,7 +114,7 @@ void CDirectX12::BeginDraw()
 	m_pCmdList->ClearDepthStencilView(DSVHeap, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// 画面クリア.
-	float ClearColor[] = { 1.0f,1.0f,1.0f,1.0f };//白色
+	float ClearColor[] = { 0.0f,0.0f,0.0f,1.0f };//白色
 	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
 	//ビューポート、シザー矩形のセット.
@@ -182,7 +182,7 @@ MyComPtr<ID3D12Resource> CDirectX12::GetTextureByPath(const char* texpath)
 }
 
 void CDirectX12::SetScene()
-{	
+{
 	//現在のシーン(ビュープロジェクション)をセット
 	ID3D12DescriptorHeap* sceneheaps[] = { m_pSceneDescHeap.Get() };
 	m_pCmdList->SetDescriptorHeaps(1, sceneheaps);
@@ -192,7 +192,6 @@ void CDirectX12::SetScene()
 // GPUの完了待ち.
 void CDirectX12::WaitForGPU()
 {
-
 	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
 
 	if (m_pFence->GetCompletedValue() < m_FenceValue) {
@@ -214,6 +213,8 @@ void CDirectX12::WaitForGPU()
 void CDirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 {
 #ifdef _DEBUG
+	//HRESULT result = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(DxgiFactory.ReleaseAndGetAddressOf()));
+
 	MyAssert::IsFailed(
 		_T("DXGIの生成"),
 		&CreateDXGIFactory2,

@@ -25,20 +25,16 @@
 #include <string>       // 文字列.
 #include <fstream>		// ファイル入出力.	
 
-#include "Utility/Assert/Assert.inl"	// HRESULTのtrycatchをする.
-#include "Utility/Macro/Macro.h"		// マクロ.
-#include "Utility/Math/Math.h"			// 算数系.	
+#include "Utility\\Assert\\Assert.inl"	// HRESULTのtrycatchをする.
+#include "Utility\\Macro\\Macro.h"		// マクロ.
+#include "Utility\\Math\\Math.h"			// 算数系.	
 
-#include "Utility/ComPtr/CComPtr.h"		// Microsoft::WRL::ComPtrのようなもの.	
+#include "Utility\\ComPtr\\CComPtr.h"		// Microsoft::WRL::ComPtrのようなもの.	
 
 // DirectX12.
 #include <D3D12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
-
-// ヘッターを設定しなくてはならない.
-// プロパティからヘッターまでのパスの環境変数をつくり$(DXTEXDIR)をC++>全般>追加のインクルードディテクトリに追加.
-#include<DirectXTex.h>
 
 // DirectSound.
 #include <dsound.h>
@@ -64,5 +60,3 @@ static constexpr float	WND_WF	= 1280.f;	// ウィンドウの幅.
 static constexpr int	WND_H	= 720;		// ウィンドウの高さ.
 static constexpr float	WND_HF	= 720.f;	// ウィンドウの高さ.
 static constexpr int	FPS		= 60;			// フレームレート.
-static constexpr float SNOW_SIZE_MIN = 20.f;	// 雪玉の最小サイズ.
-static constexpr float SNOW_SIZE_MAX = 100.f;	// 雪玉の最大サイズ.

@@ -6,10 +6,11 @@
 //ヘッダ読込.
 #include <D3D12.h>
 #include <d3d12.h>
-#include <d3dx12.h>
+#include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
-#include <DirectXTex.h>
+#include "..\\Data\\Library\\DirectXTex\\DirectXTex\\DirectXTex.h"
+
 
 // XXX : 昔のヘッダーがincludeされてしまうため直パス.
 #include "d3dcompiler.h"	
