@@ -93,6 +93,9 @@
     <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXRenderer.h" />
     <ClInclude Include="SourceCode\Ggraphic\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
+    <ClInclude Include="SourceCode\Utility\Property\Property.h" />
+    <ClInclude Include="SourceCode\Utility\Property\Setter.h" />
+    <ClInclude Include="SourceCode\Utility\Property\Getter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">

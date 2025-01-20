@@ -36,6 +36,7 @@ CPMXActor::~CPMXActor()
 void CPMXActor::Update() {
 	_angle += 0.03f;
 	//MotionUpdate();
+	m_MappedMatrices[0] = DirectX::XMMatrixRotationY(_angle);
 }
 
 void CPMXActor::Draw() {
@@ -336,7 +337,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	ReadPMXIndices(fp, &m_Faces, &IndicesNum);
 
 	// インデックスバッファ用にサイズを変更.
-	ResDesc.Width = IndicesNum * sizeof(uint32_t);
+	ResDesc.Width = IndicesNum * PMX::GPU_INDEX_SIZE;
 
 	MyAssert::IsFailed(
 		_T("インデックスバッファの作成"),
@@ -358,7 +359,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_pIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_pIndexBufferView.SizeInBytes = sizeof(uint32_t) * IndicesNum;
+	m_pIndexBufferView.SizeInBytes = PMX::GPU_INDEX_SIZE * IndicesNum;
 
 	auto BuffSize = sizeof(DirectX::XMMATRIX);
 	BuffSize = (BuffSize + 0xff) & ~0xff;
@@ -1131,7 +1132,6 @@ void CPMXActor::CreateMaterialData() {
 
 	//// -- 仮.
 
-	//m_MappedMatrices[0] = DirectX::XMMatrixRotationY(_angle);
 
 	//auto armnode = m_BoneNodeTable["左腕"];
 	//auto& armpos = armnode.StartPos;

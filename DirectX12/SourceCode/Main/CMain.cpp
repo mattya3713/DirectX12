@@ -54,7 +54,7 @@ HRESULT CMain::Create()
     
 #else 
     m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
+    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Cube\\Cube.pmx", *m_pPMXRenderer);
     // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
     // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
     // Data\\Model\\PMX\\Cube\\Cube.pmx"

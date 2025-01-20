@@ -114,7 +114,7 @@ void CDirectX12::BeginDraw()
 	m_pCmdList->ClearDepthStencilView(DSVHeap, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// 画面クリア.
-	float ClearColor[] = { 0.0f,0.0f,0.0f,1.0f };//白色
+	float ClearColor[] = { 0.0f,0.0f,0.0f,1.0f };
 	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
 	//ビューポート、シザー矩形のセット.

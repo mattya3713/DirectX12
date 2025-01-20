@@ -91,6 +91,9 @@ namespace PMX {
 		{}
 	};
 
+	// GPU用頂点バッファのサイズ.
+	static constexpr size_t GPU_INDEX_SIZE = sizeof(Face);
+
 	// PMXテクスチャ情報.
 	struct TexturePath {
 		std::string			Path;	// 各テクスチャのパス.
