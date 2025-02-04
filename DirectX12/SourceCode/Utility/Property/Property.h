@@ -19,7 +19,9 @@ class MyClass {
 public:
 
     RWField(int, Speed, "/*‚±‚±‚É•Ï”–¼‚Ìà–¾‚ª“ü‚é*/")
-    RWField(int, Speed, "/*‚±‚±‚É•Ï”–¼‚Ìà–¾‚ª“ü‚é*/")
+        RWField(int, Speed, "/*‚±‚±‚É•Ï”–¼‚Ìà–¾‚ª“ü‚é*/")
+
+        int m_Speed; // aaa.
 
 public:
         MyClass() 
