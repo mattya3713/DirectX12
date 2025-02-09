@@ -138,14 +138,13 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 		"BasicVS", "vs_5_0",
 		VSBlob.ReleaseAndGetAddressOf());
 
-
 	CompileShaderFromFile(
 		L"Data\\Shader\\Basic\\BasicPixelShader.hlsl",
 		"BasicPS", "ps_5_0",
 		PSBlob.ReleaseAndGetAddressOf());
 
 	// TODO : 短くできそう.
-	D3D12_INPUT_ELEMENT_DESC InputLayout[] = {
+	D3D12_INPUT_ELEMENT_DESC PMXInputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -173,8 +172,8 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 	gpipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	gpipeline.DepthStencilState.StencilEnable = false;
 
-	gpipeline.InputLayout.pInputElementDescs = InputLayout;//レイアウト先頭アドレス
-	gpipeline.InputLayout.NumElements = _countof(InputLayout);//レイアウト配列数
+	gpipeline.InputLayout.pInputElementDescs = PMXInputLayout;//レイアウト先頭アドレス
+	gpipeline.InputLayout.NumElements = _countof(PMXInputLayout);//レイアウト配列数
 
 	gpipeline.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;//ストリップ時のカットなし
 	gpipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;//三角形で構成
@@ -197,7 +196,7 @@ void CPMXRenderer::CreateGraphicsPipelineForPMD() {
 //ルートシグネチャ初期化
 void CPMXRenderer::CreateRootSignature() {
 	//レンジ
-	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};//テクスチャと定数の２つ
+	CD3DX12_DESCRIPTOR_RANGE  descTblRanges[4] = {};
 	descTblRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);//定数[b0](ビュープロジェクション用)
 	descTblRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);//定数[b1](ワールド、ボーン用)
 	descTblRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);//定数[b2](マテリアル用)

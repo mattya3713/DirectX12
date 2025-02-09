@@ -3,6 +3,141 @@
 #include "../DirectX/CDirectX12.h"	
 #include "Utility/String/FilePath/FilePath.h"
 #include <d3dx12.h>
+#include <iomanip>  // std::setprecision を使うために必要
+
+static constexpr char AFTERCONVERSIONFILEPATH[] = "Out\\";
+// テンプレート文字列を格納
+static constexpr char TEMPLATESTRING[] = R"(template Header {
+ <3D82AB43-62DA-11cf-AB39-0020AF71E433>
+ WORD major;
+ WORD minor;
+ DWORD flags;
+}
+
+template Vector {
+ <3D82AB5E-62DA-11cf-AB39-0020AF71E433>
+ FLOAT x;
+ FLOAT y;
+ FLOAT z;
+}
+
+template Coords2d {
+ <F6F23F44-7686-11cf-8F52-0040333594A3>
+ FLOAT u;
+ FLOAT v;
+}
+
+template Matrix4x4 {
+ <F6F23F45-7686-11cf-8F52-0040333594A3>
+ array FLOAT matrix[16];
+}
+
+template ColorRGBA {
+ <35FF44E0-6C7C-11cf-8F52-0040333594A3>
+ FLOAT red;
+ FLOAT green;
+ FLOAT blue;
+ FLOAT alpha;
+}
+
+template ColorRGB {
+ <D3E16E81-7835-11cf-8F52-0040333594A3>
+ FLOAT red;
+ FLOAT green;
+ FLOAT blue;
+}
+
+template IndexedColor {
+ <1630B820-7842-11cf-8F52-0040333594A3>
+ DWORD index;
+ ColorRGBA indexColor;
+}
+
+template Boolean {
+ <4885AE61-78E8-11cf-8F52-0040333594A3>
+ WORD truefalse;
+}
+
+template Boolean2d {
+ <4885AE63-78E8-11cf-8F52-0040333594A3>
+ Boolean u;
+ Boolean v;
+}
+
+template MaterialWrap {
+ <4885AE60-78E8-11cf-8F52-0040333594A3>
+ Boolean u;
+ Boolean v;
+}
+
+template TextureFilename {
+ <A42790E1-7810-11cf-8F52-0040333594A3>
+ STRING filename;
+}
+
+template Material {
+ <3D82AB4D-62DA-11cf-AB39-0020AF71E433>
+ ColorRGBA faceColor;
+ FLOAT power;
+ ColorRGB specularColor;
+ ColorRGB emissiveColor;
+ [...]
+}
+
+template MeshFace {
+ <3D82AB5F-62DA-11cf-AB39-0020AF71E433>
+ DWORD nFaceVertexIndices;
+ array DWORD faceVertexIndices[nFaceVertexIndices];
+}
+
+template MeshFaceWraps {
+ <4885AE62-78E8-11cf-8F52-0040333594A3>
+ DWORD nFaceWrapValues;
+ Boolean2d faceWrapValues;
+}
+
+template MeshTextureCoords {
+ <F6F23F40-7686-11cf-8F52-0040333594A3>
+ DWORD nTextureCoords;
+ array Coords2d textureCoords[nTextureCoords];
+}
+
+template MeshMaterialList {
+ <F6F23F42-7686-11cf-8F52-0040333594A3>
+ DWORD nMaterials;
+ DWORD nFaceIndexes;
+ array DWORD faceIndexes[nFaceIndexes];
+ [Material]
+}
+
+template MeshNormals {
+ <F6F23F43-7686-11cf-8F52-0040333594A3>
+ DWORD nNormals;
+ array Vector normals[nNormals];
+ DWORD nFaceNormals;
+ array MeshFace faceNormals[nFaceNormals];
+}
+
+template MeshVertexColors {
+ <1630B821-7842-11cf-8F52-0040333594A3>
+ DWORD nVertexColors;
+ array IndexedColor vertexColors[nVertexColors];
+}
+
+template Mesh {
+ <3D82AB44-62DA-11cf-AB39-0020AF71E433>
+ DWORD nVertices;
+ array Vector vertices[nVertices];
+ DWORD nFaces;
+ array MeshFace faces[nFaces];
+ [...]
+}
+
+Header{
+1;
+0;
+1;
+})";
 
 void* CPMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);
@@ -53,6 +188,14 @@ CPMDActor::CPMDActor(const char* filepath,CPMDRenderer& renderer):
 	_angle(0.0f)
 {
 	try {
+
+		m_Name = filepath;
+
+		MyFilePath::ReplaceSlashWithBackslash(&m_Name);
+		std::string Names = MyFilePath::GetFileNameFromPath(m_Name);
+		std::pair Name = MyFilePath::SplitFileName(Names, '.');
+		m_Name = Name.first;
+		
 		m_Transform.world = DirectX::XMMatrixIdentity();
 		LoadPMDFile(filepath);
 		CreateTransformView();
@@ -96,12 +239,12 @@ void CPMDActor::LoadPMDFile(const char* path)
 	fread(&vertNum, sizeof(vertNum), 1, fp);
 
 	// 頂点データのバッファを確保し、一括読み込み.
-	std::vector<unsigned char> vertices(vertNum * PmdVertexSize);
-	fread(vertices.data(), vertices.size(), 1, fp);
+	m_vertices.resize(vertNum * PmdVertexSize);
+	fread(m_vertices.data(), m_vertices.size(), 1, fp);
 
 	// 頂点バッファ用のDirectX 12リソースを作成.
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size() * sizeof(vertices[0]));
+	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(m_vertices.size() * sizeof(m_vertices[0]));
 
 	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
 		&heapProp,
@@ -115,20 +258,19 @@ void CPMDActor::LoadPMDFile(const char* path)
 	// 頂点データをGPUバッファにコピー.
 	unsigned char* vertMap = nullptr;
 	result = m_pVertexBuffer->Map(0, nullptr, (void**)&vertMap);
-	std::copy(vertices.begin(), vertices.end(), vertMap);
+	std::copy(m_vertices.begin(), m_vertices.end(), vertMap);
 	m_pVertexBuffer->Unmap(0, nullptr);
 
 	// 頂点バッファビューの設定.
 	m_pVertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
-	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(vertices.size());
+	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(m_vertices.size());
 	m_pVertexBufferView.StrideInBytes = PmdVertexSize;
 
 	// インデックス数を読み込む.
-	unsigned int IndicesNum;
-	fread(&IndicesNum, sizeof(IndicesNum), 1, fp);
+	fread(&m_IndicesNum, sizeof(m_IndicesNum), 1, fp);
 
 	// インデックスデータのバッファを確保し、一括読み込み.
-	std::vector<unsigned short> indices(IndicesNum);
+	std::vector<unsigned short> indices(m_IndicesNum);
 	fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
 
 	// インデックスバッファ用のDirectX 12リソースを作成.
@@ -188,6 +330,10 @@ void CPMDActor::LoadPMDFile(const char* path)
 	for (int i = 0; i < pmdMaterials.size(); ++i) {
 		// トゥーンテクスチャのファイルパスを構築.
 		char toonFilePath[32];
+
+		// Idxが255ならなしなのでcontinue.
+		if (pmdMaterials[i].ToonIdx == 255) { continue; }
+
 		sprintf_s(toonFilePath, "Data/Image/toon/toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
 		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 
@@ -563,6 +709,167 @@ void CPMDActor::Draw() {
 		IdxOffset += m->IndicesNum;
 	}
 
+}
+
+// Xファイルの変換出力.
+bool CPMDActor::SaveAsX() {
+	// 頂点とインデックスデータを格納する変数
+	std::vector<unsigned short> indices; // インデックスデータ
+
+	// 頂点データを取得
+	{
+		void* pData = nullptr;
+		HRESULT hr = m_pVertexBuffer->Map(0, nullptr, &pData);
+		if (FAILED(hr)) {
+			std::cerr << "Failed to map vertex buffer." << std::endl;
+			return false;
+		}
+
+	}
+
+	// インデックスデータを取得
+	{
+		void* pData = nullptr;
+		HRESULT hr = m_pIndexBuffer->Map(0, nullptr, &pData);
+		if (FAILED(hr)) {
+			std::cerr << "Failed to map index buffer." << std::endl;
+			return false;
+		}
+
+		indices.assign(static_cast<unsigned short*>(pData),
+			static_cast<unsigned short*>(pData) +
+			(m_pIndexBuffer->GetDesc().Width / sizeof(unsigned short)));
+
+		m_pIndexBuffer->Unmap(0, nullptr);
+	}
+
+	// Xファイルの書き込み
+	std::ofstream outFile(AFTERCONVERSIONFILEPATH + m_Name + "3.x");
+	if (!outFile.is_open()) {
+		std::cerr << "Failed to open file: " << AFTERCONVERSIONFILEPATH << std::endl;
+		return false;
+	}
+
+	// Xファイルのヘッダー
+	outFile << "xof 0302txt 0064\n";
+	outFile << TEMPLATESTRING;
+
+	// Mesh セクションの開始
+	outFile << "\n\n";
+	outFile << "Mesh {\n";
+	outFile << " " << m_vertices.size() / 38 << ";\n";
+
+	// 頂点データの書き込み
+	for (size_t i = 0; i < m_vertices.size() / 38; ++i) {
+		// char型のデータをPMDVertex構造体として扱う
+		PMDVertex& vertex = *reinterpret_cast<PMDVertex*>(&m_vertices[i * 38]);
+
+		outFile << std::fixed << std::setprecision(6)  // 小数点以下6桁に設定
+			<< vertex.Pos.x << ";" << vertex.Pos.y << ";" << vertex.Pos.z << ";"; // 座標を書き込む
+
+		if (i < m_vertices.size() / 38 - 1) {
+			outFile << ",\n"; // 次の頂点がある場合、カンマと改行を追加
+		}
+		else {
+			outFile << ";\n"; // 最後の頂点の場合はセミコロンと改行を追加
+		}
+	}
+
+	outFile << "\n";
+
+	// インデックスデータの書き込み
+	outFile << indices.size() / 3 << ";\n";
+	for (size_t i = 0; i < indices.size(); i += 3) {
+		outFile << "3;" << indices[i] << "," << indices[i + 1] << "," << indices[i + 2] << ";";
+		if (i < indices.size() - 3) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";\n";
+		}
+	}
+
+	outFile << "\n";
+
+	// Material情報の記述
+	outFile << "MeshMaterialList {\n";
+	outFile << " 1;\n"; // マテリアル数
+	outFile << indices.size() / 3 << ";\n"; // 面数
+	for (size_t i = 0; i < indices.size() / 3; ++i) {
+		outFile << "0";
+		if (i < indices.size() / 3 - 1) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";;\n";
+		}
+	}
+
+
+	// デフォルトのMaterialを記述
+	outFile << " Material {\n";
+	outFile << "  1.000000;1.000000;1.000000;1.000000;;\n";
+	outFile << "  0.000000;\n";
+	outFile << "  0.000000;0.000000;0.000000;;\n";
+	outFile << "  0.000000;0.000000;0.000000;;\n";
+	outFile << " }\n";
+	outFile << "}\n";
+
+	outFile << "MeshNormals {\n";
+	outFile << indices.size() / 3 << ";\n";
+
+	for (size_t i = 0; i < indices.size() / 3; ++i)
+	{
+		outFile << "1.000000;1.000000;1.000000;"; 
+		
+		if (i < indices.size() / 3 - 1) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";\n";
+		}
+	}
+
+	outFile << indices.size() / 3 << ";\n";
+
+	for (size_t i = 0; i < indices.size() / 3; ++i)
+	{
+		outFile << 3 << ";" << i << ","<< i << ","<< i << ";";
+		if (i < indices.size() / 3 - 1) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";\n";
+		}
+	}
+	outFile << "}\n";
+
+	int i = m_vertices.size() / 38;
+
+	outFile << "MeshTextureCoords {\n" << m_vertices.size() / 38 << ";\n";
+	
+	// 頂点データの書き込み
+	for (size_t i = 0; i < m_vertices.size() / 38; ++i) {
+		// char型のデータをPMDVertex構造体として扱う
+		PMDVertex& vertex = *reinterpret_cast<PMDVertex*>(&m_vertices[i * 38]);
+
+		outFile << std::fixed << std::setprecision(6)  // 小数点以下6桁に設定
+		<< vertex.UV.x << ";" << vertex.UV.y << ";";  // 座標を書き込む
+
+		if (i < m_vertices.size() /38 - 1) {
+			outFile << ",\n"; // 次の頂点がある場合、カンマと改行を追加
+		}
+		else {
+			outFile << ";\n"; // 最後の頂点の場合はセミコロンと改行を追加
+		}
+	}
+	outFile << "}\n";
+	outFile << "}\n";
+
+
+
+	outFile.close();
+	return true;
 }
 
 // アニメーション開始.

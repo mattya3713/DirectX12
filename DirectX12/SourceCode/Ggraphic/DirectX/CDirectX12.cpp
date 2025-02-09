@@ -256,6 +256,7 @@ void CDirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 			break;
 		}
 	}
+
 }
 
 // コマンド類の生成.
@@ -576,10 +577,10 @@ ID3D12Resource* CDirectX12::CreateTextureFromFile(const char* Texpath)
 	if (FAILED(Result)) {
 
 		// エラーメッセージを作成.
-		std::string ErrorMessage = MyAssert::HResultToJapanese(Result);
+		std::string_view ErrorMessage = MyAssert::HResultToJapanese(Result);
 
 		// メッセージボックスを表示.
-		MessageBoxA(nullptr, ErrorMessage.c_str(), "Texture Load Error", MB_OK | MB_ICONERROR);
+		MessageBoxA(nullptr, std::string(ErrorMessage).c_str(), "Texture Load Error", MB_OK | MB_ICONERROR);
 
 		return nullptr;
 	}

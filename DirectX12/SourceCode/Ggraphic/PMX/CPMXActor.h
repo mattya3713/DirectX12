@@ -12,24 +12,33 @@ class CPMXRenderer;
 class CPMXActor
 {
 	friend CPMXRenderer;
+public:
+
+	// PMXヘッダーサイズ.
+	static constexpr size_t PMXHeaderSize = 17;
+	
 private:
 
 	// PMXヘッダー構造体.
 	struct PMXHeader
 	{
-		float Version;				// バージョン.
-		uint8_t Encoding;			// テキストエンコーディング（0: UTF16, 1: UTF8）.
-		uint8_t AdditionalUV;		// 追加UV数.
-		uint8_t VertexIndexSize;	// 頂点インデックスサイズ.
-		uint8_t TextureIndexSize;	// テクスチャインデックスサイズ.
-		uint8_t MaterialIndexSize;	// マテリアルインデックスサイズ.
-		uint8_t BoneIndexSize;		// ボーンインデックスサイズ.
-		uint8_t MorphIndexSize;		// モーフインデックスサイズ.
-		uint8_t RigidBodyIndexSize; // 剛体インデックスサイズ.
+		std::array<uint8_t, 4>	Signature;		// シグネチャ.
+		float				Version;			// バージョン.
+		uint8_t				NextDataSize;		// 後続データ列のサイズ(PMX 2.0の場合は8).
+		uint8_t				Encoding;			// テキストエンコーディング(0: UTF16, 1: UTF8).
+		uint8_t				AdditionalUV;		// 追加UV数.
+		uint8_t				VertexIndexSize;	// 頂点インデックスサイズ.
+		uint8_t				TextureIndexSize;	// テクスチャインデックスサイズ.
+		uint8_t				MaterialIndexSize;	// マテリアルインデックスサイズ.
+		uint8_t				BoneIndexSize;		// ボーンインデックスサイズ.
+		uint8_t				MorphIndexSize;		// モーフインデックスサイズ.
+		uint8_t				RigidBodyIndexSize;	// 剛体インデックスサイズ.
 
 		PMXHeader()
-			: Version			( 0.0f )
+			: Signature			{}
+			, Version			( 0.0f )
 			, Encoding			( 0 )
+			, NextDataSize		( 0 )
 			, AdditionalUV		( 0 )
 			, VertexIndexSize	( 0 )
 			, TextureIndexSize	( 0 )
@@ -49,7 +58,7 @@ private:
 	};
 
 	// TODO : パディングの対処法を考える.
-	// PMDマテリアル構造体.
+	// PMXマテリアル構造体.
 #pragma pack(1)
 	struct PMDMaterial {
 		DirectX::XMFLOAT3 Diffuse;  // ディフューズ色			: 12Byte.
@@ -98,125 +107,33 @@ private:
 
 #pragma pack()
 
-#include <DirectXMath.h>
-
-	// BDEF1 ボーンウェイト (1ボーンの場合).
-	struct BDEF1Weight {
-		uint16_t BoneIndex;   // ウェイト1.0の単一ボーン(参照Index).
-
-		BDEF1Weight(uint16_t BoneIndex)
-			: BoneIndex(BoneIndex)
-		{}  // 初期化.
+	struct PMXVertex
+	{
+		DirectX::XMFLOAT3					Position;		// 座標.
+		DirectX::XMFLOAT3					Normal;			// 法線.
+		DirectX::XMFLOAT2					UV;				// UV.	
+		std::array<DirectX::XMFLOAT4, 4>	AdditionalUV;	// 追加のUV.
+		std::array<uint32_t, 4>				BoneIndices;	// ボーンインデックス.
+		std::array<float   , 4>				BoneWeights;	// ボーンウェイト.
+		DirectX::XMFLOAT3					SDEF_C;			// SDEF_C値.
+		DirectX::XMFLOAT3					SDEF_R0;		// SDEF_R0値.
+		DirectX::XMFLOAT3					SDEF_R1;		// SDEF_R1値.
+		float								Edge;			// エッジサイズ.
 	};
 
-	// BDEF2 ボーンウェイト (2ボーンの場合).
-	struct BDEF2Weight {
-		uint16_t BoneIndex1;  // ボーン1の参照Index.
-		uint16_t BoneIndex2;  // ボーン2の参照Index.
-		float Weight1;		  // ボーン1のウェイト値(0～1.0), ボーン2のウェイト値は 1.0-ボーン1ウェイト.
 
-		BDEF2Weight(uint16_t Bone1, uint16_t Bone2, float Weight)
-			: BoneIndex1	(Bone1)
-			, BoneIndex2	(Bone2)
-			, Weight1		(Weight) 
-		{}
+	// GPU用頂点構造体.
+	struct PMXVertexForHLSL {
+		DirectX::XMFLOAT3 Position;    // 位置.
+		DirectX::XMFLOAT3 Normal;      // 法線.
+		DirectX::XMFLOAT2 UV;          // UV座標.
+		uint16_t BoneIndices[2];       // ボーンインデックス(16bit x 4).
+		uint8_t  BoneWeight;		// ボーン影響度	:  1Byte.
+		uint8_t Edge;					   // エッジ倍率.
 	};
 
-	// BDEF4 ボーンウェイト (4ボーンの場合).
-	struct BDEF4Weight {
-		uint16_t BoneIndex[4];  // ボーンインデックス (4ボーン).
-		float Weight[4];		// ボーンウェイト (それぞれのウェイト).
-
-		BDEF4Weight(uint16_t bone0, uint16_t bone1, uint16_t bone2, uint16_t bone3,
-			float weight0, float weight1, float weight2, float weight3)
-		{
-			BoneIndex[0] = bone0;
-			BoneIndex[1] = bone1;
-			BoneIndex[2] = bone2;
-			BoneIndex[3] = bone3;
-			Weight[0] = weight0;
-			Weight[1] = weight1;
-			Weight[2] = weight2;
-			Weight[3] = weight3;
-		}
-	};
-
-	// SDEF ボーンウェイト (SDEF方式).
-	struct SDEFWeight {
-		uint16_t BoneIndex1;    // ボーンインデックス1.
-		uint16_t BoneIndex2;    // ボーンインデックス2.
-		float Weight1;			// ボーン1のウェイト.
-		DirectX::XMFLOAT3 C;	// SDEF補正用C.
-		DirectX::XMFLOAT3 R0;	// SDEF補正用R0.
-		DirectX::XMFLOAT3 R1;	// SDEF補正用R1.
-
-		SDEFWeight(int bone1, int bone2, float weight1,
-			const DirectX::XMFLOAT3& c, const DirectX::XMFLOAT3& r0, const DirectX::XMFLOAT3& r1)
-			: BoneIndex1(bone1), BoneIndex2(bone2), Weight1(weight1), C(c), R0(r0), R1(r1) {}
-	};
-
-	// ボーンウェイトを格納する構造体.
-	struct PMXBoneWeight {
-		uint8_t WeightType;  // ウェイトタイプ (BDEF1, BDEF2, BDEF4, SDEF).
-
-		union {
-			BDEF1Weight BDEF1;
-			BDEF2Weight BDEF2;
-			BDEF4Weight BDEF4;
-			SDEFWeight SDEF;
-		};
-		
-		// コンストラクタ.
-		PMXBoneWeight()		// デフォルトコンストラクタ (BDEF1で初期化)
-			: WeightType(0)
-			, BDEF1(0)
-		{}
-
-		// BDEF1用コンストラクタ.
-		PMXBoneWeight(int boneIndex) 
-			: WeightType(0), 
-			BDEF1(boneIndex)
-		{}
-
-		// BDEF2用コンストラクタ.
-		PMXBoneWeight (int bone1, int bone2, float weight1) 
-			: WeightType(1)
-			, BDEF2(bone1, bone2, weight1)
-		{}
-
-		// BDEF4用コンストラクタ.
-		PMXBoneWeight(int bone0, int bone1, int bone2, int bone3,
-			float weight0, float weight1, float weight2, float weight3)
-			: WeightType(2)
-			, BDEF4(bone0, bone1, bone2, bone3, weight0, weight1, weight2, weight3) 
-		{}
-
-		// SDEF用コンストラクタ.
-		PMXBoneWeight(int bone1, int bone2, float weight1,
-			const DirectX::XMFLOAT3& c, const DirectX::XMFLOAT3& r0, const DirectX::XMFLOAT3& r1)
-			: WeightType(3)
-			, SDEF(bone1, bone2, weight1, c, r0, r1)
-		{}
-	};
-
-	// PMX頂点構造体.
-	struct PMXVertex {
-		DirectX::XMFLOAT3               Position;		// 頂点位置.
-		DirectX::XMFLOAT3               Normal;			// 頂点法線.
-		DirectX::XMFLOAT2               UV;				// 頂点UV座標.
-		std::vector<DirectX::XMFLOAT4>  AdditionalUV;	// 追加UV座標(最大4つまで).
-		PMXBoneWeight					BoneWeight;		// ボーンウェイト.
-		float							Edge;			// エッジ倍率.
-
-		PMXVertex()
-			: Position		( 0.0f, 0.0f, 0.0f )
-			, Normal		( 0.0f, 0.0f, 0.0f )
-			, UV			( 0.0f, 0.0f )
-			, AdditionalUV	{ }
-			, BoneWeight	{ }
-			, Edge			( 0.0f )
-		{}
-	};
+	// GPU用頂点バッファのサイズ.
+	static constexpr size_t GPUVertex = sizeof(PMXVertexForHLSL);
 
 	// PMX面構造体.
 	struct PMXFace {
@@ -229,14 +146,11 @@ private:
 
 
 	// PMXテクスチャ構造体.
-	struct TexturePath {
-		uint32_t					TextureCount;	// テクスチャの数.
-		std::vector<std::string>	TexturePaths;	// 各テクスチャのパス.
+	struct PMXTexturePath {
+		std::string			TexturePath;	// 各テクスチャのパス.
 
-		TexturePath()
-			: TextureCount	()
-			, TexturePaths	{}
-		{}
+		explicit PMXTexturePath(const std::string& path = "")
+			: TexturePath(path) {}
 	};
 
 #pragma pack(1)
@@ -384,17 +298,43 @@ private:
 		{}
 	};
 
-	//読み込んだマテリアルをもとにマテリアルバッファを作成
+	// 読み込んだマテリアルをもとにマテリアルバッファを作成.
 	void CreateMaterialData();
 	
-	//マテリアル＆テクスチャのビューを作成
+	// マテリアル＆テクスチャのビューを作成.
 	void CreateMaterialAndTextureView();
 
-	//座標変換用ビューの生成
+	// 座標変換用ビューの生成.
 	void CreateTransformView();
 
-	//PMDファイルのロード
-	void LoadPMDFile(const char* FilePath);
+	// PMDファイルのロード.
+	void LoadPMXFile(const char* FilePath);
+	
+	// PMXヘッター読み込み.
+	void ReadPMXHeader(FILE* fp, PMXHeader* Header);
+
+	// パスの変換.
+	void ConvertUTF16ToUTF8(const std::vector<uint8_t>& buffer, std::string& OutString); 
+	void ConvertUTF8(const std::vector<uint8_t>& buffer, std::string& OutString);
+	using PathConverterFunction = void(CPMXActor::*)(const std::vector<uint8_t>&, std::string&);
+	PathConverterFunction PathConverter = nullptr;
+
+	// インデックスを読み込む時の関数を選択するための関数ポインタ.
+	void ReadPMXIndices1Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMXFace>* Faces);
+	void ReadPMXIndices2Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMXFace>* Faces);
+	void ReadPMXIndices4Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMXFace>* Faces);
+	using ReadIndicesFunction = void(CPMXActor::*)(FILE*, const uint32_t&, std::vector<PMXFace>*);
+	ReadIndicesFunction ReadIndices = nullptr;
+
+	/*******************************************
+	* @brief	PMXバイナリからインデックス数とインデックスを読み込む.
+	* @param	読み込みファイルポインタ.
+	* @param	読み込んだインデックス.
+	*******************************************/
+	void ReadPMXIndices(FILE* fp, std::vector<PMXFace>* Faces, uint32_t* IndicesNum);
+
+
+	// テクスチャパスを読み込む時の関数を選択するための関数ポインタ.
 
 	/*******************************************
 	* @brief	回転情報を末端まで伝播させる再帰関数.
@@ -411,12 +351,13 @@ private:
 		const DirectX::XMFLOAT2& b, uint8_t n = 12);
 
 	/*******************************************
-	* @brief	頂点の総数を読み込む.
-	* @param	読み込むファイル.
-	* @param    頂点のサイズ.
-	* @retrun	頂点数.
+	* @brief    指定されたサイズ分のデータを読み込み、4バイトの値として返す.
+	* @param    ファイルポインタ。読み込み対象のファイルを指します.
+	* @param    読み込むデータのサイズ(1,2,4バイトのどれか).
+	* @return   読み込んだデータを4バイトの`uint32_t`型に変換した値
+	* @throw	知らないサイズ.
 	*******************************************/
-	uint32_t ReadIndicesNum(FILE* fp, uint8_t indexSize);
+	uint32_t ReadAndCastIndices(FILE* fp, uint8_t indexSize);
 
 public:
 	CPMXActor(const char* filepath,CPMXRenderer& renderer);

@@ -18,7 +18,7 @@ cbuffer Material : register(b2)
     float3 ambient; //アンビエント
 };
 
-float4 BasicPS(BasicType input) : SV_TARGET
+float4 PMXBasicPS(BasicType input) : SV_TARGET
 {
     float3 light = normalize(float3(1, -1, 1)); //光の向かうベクトル(平行光線)
     float3 lightColor = float3(1, 1, 1); //ライトのカラー(1,1,1で真っ白)
@@ -35,7 +35,7 @@ float4 BasicPS(BasicType input) : SV_TARGET
     float2 sphereMapUV = input.vnormal.xy;
     sphereMapUV = (sphereMapUV + float2(1, -1)) * float2(0.5, -0.5);
     
-	float4 ambCol = float4(ambient * 0.6, 1);
+    float4 ambCol = float4(ambient * 0.6, 1);
     
     float4 texColor = tex.Sample(smp, input.uv); //テクスチャカラー
 

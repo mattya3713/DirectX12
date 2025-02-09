@@ -91,6 +91,8 @@
     <ClInclude Include="SourceCode\Ggraphic\PMD\CPMDRenderer.h" />
     <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXActor.h" />
     <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXRenderer.h" />
+    <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
+    <ClInclude Include="SourceCode\Mesh\CMeshManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">
@@ -114,6 +116,7 @@
     <ClCompile Include="SourceCode\Ggraphic\PMD\CPMDRenderer.cpp" />
     <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXActor.cpp" />
     <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXRenderer.cpp" />
+    <ClCompile Include="SourceCode\Mesh\CMeshManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SourceCode\Utility\Math\Math.inl">
@@ -122,9 +125,7 @@
     <None Include="SourceCode\Utility\Assert\Assert.inl">
       <Filter>SourceCode\Utility\Assert</Filter>
     </None>
-    <None Include="Data\Shader\Basic\BasicShaderHeader.hlsli">
-      <Filter>Shader</Filter>
-    </None>
+    <None Include="Data\Shader\BasicShaderHeader.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\Shader\Basic\BasicPixelShader.hlsl">
@@ -133,5 +134,7 @@
     <FxCompile Include="Data\Shader\Basic\BasicVertexShader.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="Data\Shader\PMX\PMXBasicPixelShader.hlsl" />
+    <FxCompile Include="Data\Shader\PMX\PMXBasicVertexShader.hlsl" />
   </ItemGroup>
 </Project>

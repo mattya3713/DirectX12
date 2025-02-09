@@ -245,6 +245,8 @@ public:
 	void Update();
 	void Draw();
 
+	// Xファイルの変換出力.
+	bool SaveAsX(); 
 	// アニメーション開始.
 	void PlayAnimation();
 
@@ -261,6 +263,11 @@ public:
 private:
 	CPMDRenderer& m_pRenderer;
 	CDirectX12& m_pDx12;
+
+	std::string m_Name;
+	std::vector<unsigned char> m_vertices;
+
+	unsigned int m_IndicesNum;
 
 	//頂点関連
 	MyComPtr<ID3D12Resource>		m_pVertexBuffer;			// 頂点バッファ.
@@ -284,7 +291,6 @@ private:
 	std::vector<MyComPtr<ID3D12Resource>>	m_pToonResource;	// トゥーンリソ－ス.
 
 	MyComPtr<ID3D12DescriptorHeap> m_pMaterialHeap;				// マテリアルヒープ(5個ぶん)
-
 	// ボーン関連.
 	std::vector<DirectX::XMMATRIX>	m_BoneMatrix;				// ボーン座標.
 	std::map<std::string, BoneNode> m_BoneNodeTable;			// ボーンの階層.
