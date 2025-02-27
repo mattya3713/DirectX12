@@ -90,4 +90,24 @@ namespace MyFilePath {
             }
         }
     }
+
+    // ファイルパスの最後を取り出す.
+    std::string GetFileNameFromPath(const std::string& Path)
+    {
+        // パスが空でないか確認
+        if (Path.empty()) {
+            return "";
+        }
+
+        // 最後のバックスラッシュ（'\\'）またはスラッシュ（'/'）の位置を探す
+        size_t pos = Path.find_last_of("/\\");
+
+        // 見つからなければ、ファイル名はパス全体（パスがファイル名だけである場合）
+        if (pos == std::string::npos) {
+            return Path;
+        }
+
+        // 見つかった場合、その位置の次からファイル名を取り出す
+        return Path.substr(pos + 1);
+    }
 }

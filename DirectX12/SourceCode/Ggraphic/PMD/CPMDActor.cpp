@@ -3,19 +3,153 @@
 #include "..\\DirectX\\CDirectX12.h"	
 #include "Utility\\String\\FilePath\\FilePath.h"
 #include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
+#include <iomanip>  // std::setprecision ã‚’ä½¿ã†ãŸã‚ã«å¿…è¦
+static constexpr char AFTERCONVERSIONFILEPATH[] = "Out\\";
+// ãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆæ–‡å­—åˆ—ã‚’æ ¼ç´
+static constexpr char TEMPLATESTRING[] = R"(template Header {
+ <3D82AB43-62DA-11cf-AB39-0020AF71E433>
+ WORD major;
+ WORD minor;
+ DWORD flags;
+}
+
+template Vector {
+ <3D82AB5E-62DA-11cf-AB39-0020AF71E433>
+ FLOAT x;
+ FLOAT y;
+ FLOAT z;
+}
+
+template Coords2d {
+ <F6F23F44-7686-11cf-8F52-0040333594A3>
+ FLOAT u;
+ FLOAT v;
+}
+
+template Matrix4x4 {
+ <F6F23F45-7686-11cf-8F52-0040333594A3>
+ array FLOAT matrix[16];
+}
+
+template ColorRGBA {
+ <35FF44E0-6C7C-11cf-8F52-0040333594A3>
+ FLOAT red;
+ FLOAT green;
+ FLOAT blue;
+ FLOAT alpha;
+}
+
+template ColorRGB {
+ <D3E16E81-7835-11cf-8F52-0040333594A3>
+ FLOAT red;
+ FLOAT green;
+ FLOAT blue;
+}
+
+template IndexedColor {
+ <1630B820-7842-11cf-8F52-0040333594A3>
+ DWORD index;
+ ColorRGBA indexColor;
+}
+
+template Boolean {
+ <4885AE61-78E8-11cf-8F52-0040333594A3>
+ WORD truefalse;
+}
+
+template Boolean2d {
+ <4885AE63-78E8-11cf-8F52-0040333594A3>
+ Boolean u;
+ Boolean v;
+}
+
+template MaterialWrap {
+ <4885AE60-78E8-11cf-8F52-0040333594A3>
+ Boolean u;
+ Boolean v;
+}
+
+template TextureFilename {
+ <A42790E1-7810-11cf-8F52-0040333594A3>
+ STRING filename;
+}
+
+template Material {
+ <3D82AB4D-62DA-11cf-AB39-0020AF71E433>
+ ColorRGBA faceColor;
+ FLOAT power;
+ ColorRGB specularColor;
+ ColorRGB emissiveColor;
+ [...]
+}
+
+template MeshFace {
+ <3D82AB5F-62DA-11cf-AB39-0020AF71E433>
+ DWORD nFaceVertexIndices;
+ array DWORD faceVertexIndices[nFaceVertexIndices];
+}
+
+template MeshFaceWraps {
+ <4885AE62-78E8-11cf-8F52-0040333594A3>
+ DWORD nFaceWrapValues;
+ Boolean2d faceWrapValues;
+}
+
+template MeshTextureCoords {
+ <F6F23F40-7686-11cf-8F52-0040333594A3>
+ DWORD nTextureCoords;
+ array Coords2d textureCoords[nTextureCoords];
+}
+
+template MeshMaterialList {
+ <F6F23F42-7686-11cf-8F52-0040333594A3>
+ DWORD nMaterials;
+ DWORD nFaceIndexes;
+ array DWORD faceIndexes[nFaceIndexes];
+ [Material]
+}
+
+template MeshNormals {
+ <F6F23F43-7686-11cf-8F52-0040333594A3>
+ DWORD nNormals;
+ array Vector normals[nNormals];
+ DWORD nFaceNormals;
+ array MeshFace faceNormals[nFaceNormals];
+}
+
+template MeshVertexColors {
+ <1630B821-7842-11cf-8F52-0040333594A3>
+ DWORD nVertexColors;
+ array IndexedColor vertexColors[nVertexColors];
+}
+
+template Mesh {
+ <3D82AB44-62DA-11cf-AB39-0020AF71E433>
+ DWORD nVertices;
+ array Vector vertices[nVertices];
+ DWORD nFaces;
+ array MeshFace faces[nFaces];
+ [...]
+}
+
+Header{
+1;
+0;
+1;
+})";
 
 void* CPMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);
 }
 
-// ‰ñ“]î•ñ‚ğ––’[‚Ü‚Å“`”d‚³‚¹‚éÄ‹AŠÖ”.
+// å›è»¢æƒ…å ±ã‚’æœ«ç«¯ã¾ã§ä¼æ’­ã•ã›ã‚‹å†å¸°é–¢æ•°.
 void CPMDActor::RecursiveMatrixMultipy(
 	BoneNode* node, 
 	const DirectX::XMMATRIX& mat)
 {
 	m_BoneMatrix[node->BoneIndex] = mat;
 	for (auto& cnode : node->Children) {
-		// q‚à“¯‚¶“®ì‚ğ‚·‚é.
+		// å­ã‚‚åŒã˜å‹•ä½œã‚’ã™ã‚‹.
 		RecursiveMatrixMultipy(cnode, m_BoneMatrix[cnode->BoneIndex] * mat);
 	}
 }
@@ -25,24 +159,24 @@ float CPMDActor::GetYFromXOnBezier(
 	const DirectX::XMFLOAT2& a,
 	const DirectX::XMFLOAT2& b, uint8_t n)
 {
-	if (a.x == a.y && b.x == b.y)return x;//ŒvZ•s—v
+	if (a.x == a.y && b.x == b.y)return x;//è¨ˆç®—ä¸è¦
 	float t = x;
-	const float k0 = 1 + 3 * a.x - 3 * b.x;//t^3‚ÌŒW”
-	const float k1 = 3 * b.x - 6 * a.x;//t^2‚ÌŒW”
-	const float k2 = 3 * a.x;//t‚ÌŒW”
+	const float k0 = 1 + 3 * a.x - 3 * b.x;//t^3ã®ä¿‚æ•°
+	const float k1 = 3 * b.x - 6 * a.x;//t^2ã®ä¿‚æ•°
+	const float k2 = 3 * a.x;//tã®ä¿‚æ•°
 
-	//Œë·‚Ì”ÍˆÍ“à‚©‚Ç‚¤‚©‚Ég—p‚·‚é’è”
+	//èª¤å·®ã®ç¯„å›²å†…ã‹ã©ã†ã‹ã«ä½¿ç”¨ã™ã‚‹å®šæ•°
 	constexpr float epsilon = 0.0005f;
 
 	for (int i = 0; i < n; ++i) {
-		//f(t)‹‚ß‚Ü[‚·
+		//f(t)æ±‚ã‚ã¾ãƒ¼ã™
 		auto ft = k0 * t * t * t + k1 * t * t + k2 * t - x;
-		//‚à‚µŒ‹‰Ê‚ª0‚É‹ß‚¢(Œë·‚Ì”ÍˆÍ“à)‚È‚ç‘Å‚¿Ø‚è
+		//ã‚‚ã—çµæœãŒ0ã«è¿‘ã„(èª¤å·®ã®ç¯„å›²å†…)ãªã‚‰æ‰“ã¡åˆ‡ã‚Š
 		if (ft <= epsilon && ft >= -epsilon)break;
 
 		t -= ft / 2;
 	}
-	//Šù‚É‹‚ß‚½‚¢t‚Í‹‚ß‚Ä‚¢‚é‚Ì‚Åy‚ğŒvZ‚·‚é
+	//æ—¢ã«æ±‚ã‚ãŸã„tã¯æ±‚ã‚ã¦ã„ã‚‹ã®ã§yã‚’è¨ˆç®—ã™ã‚‹
 	auto r = 1 - t;
 	return t * t * t + 3 * t * t * r * b.y + 3 * t * r * r * a.y;
 }
@@ -53,6 +187,14 @@ CPMDActor::CPMDActor(const char* filepath,CPMDRenderer& renderer):
 	_angle(0.0f)
 {
 	try {
+
+		m_Name = filepath;
+
+		MyFilePath::ReplaceSlashWithBackslash(&m_Name);
+		std::string Names = MyFilePath::GetFileNameFromPath(m_Name);
+		std::pair Name = MyFilePath::SplitFileName(Names, '.');
+		m_Name = Name.first;
+		
 		m_Transform.world = DirectX::XMMatrixIdentity();
 		LoadPMDFile(filepath);
 		CreateTransformView();
@@ -61,7 +203,7 @@ CPMDActor::CPMDActor(const char* filepath,CPMDRenderer& renderer):
 	}
 	catch (const std::runtime_error& Msg) {
 
-		// ƒGƒ‰[ƒƒbƒZ[ƒW‚ğ•\¦.
+		// ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤º.
 		std::wstring WStr = MyString::StringToWString(Msg.what());
 		_ASSERT_EXPR(false, WStr.c_str());
 	}
@@ -75,33 +217,33 @@ CPMDActor::~CPMDActor()
 
 void CPMDActor::LoadPMDFile(const char* path)
 {
-	// ƒwƒbƒ_[“Ç‚İ‚İ—p‚ÌƒVƒOƒlƒ`ƒƒ.
+	// ãƒ˜ãƒƒãƒ€ãƒ¼èª­ã¿è¾¼ã¿ç”¨ã®ã‚·ã‚°ãƒãƒãƒ£.
 	char Signature[3];
 	PMDHeader Pmdheader = {};
 
 	FILE* fp = nullptr;
 
-	// ƒtƒ@ƒCƒ‹‚ğƒoƒCƒiƒŠƒ‚[ƒh‚ÅŠJ‚­.
+	// ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒã‚¤ãƒŠãƒªãƒ¢ãƒ¼ãƒ‰ã§é–‹ã.
 	auto err = fopen_s(&fp, path, "rb");
 	if (err != 0 || !fp) {
-		throw std::runtime_error("ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚ª‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½B");
+		throw std::runtime_error("ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ãŒã§ãã¾ã›ã‚“ã§ã—ãŸã€‚");
 	}
 
-	// ƒwƒbƒ_[î•ñ‚ğ“Ç‚İ‚Ş.
+	// ãƒ˜ãƒƒãƒ€ãƒ¼æƒ…å ±ã‚’èª­ã¿è¾¼ã‚€.
 	fread(Signature, sizeof(Signature), 1, fp);
 	fread(&Pmdheader, sizeof(Pmdheader), 1, fp);
 
-	// ’¸“_”‚ğ“Ç‚İ‚Ş.
+	// é ‚ç‚¹æ•°ã‚’èª­ã¿è¾¼ã‚€.
 	unsigned int vertNum;
 	fread(&vertNum, sizeof(vertNum), 1, fp);
 
-	// ’¸“_ƒf[ƒ^‚Ìƒoƒbƒtƒ@‚ğŠm•Û‚µAˆêŠ‡“Ç‚İ‚İ.
-	std::vector<unsigned char> vertices(vertNum * PmdVertexSize);
-	fread(vertices.data(), vertices.size(), 1, fp);
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã®ãƒãƒƒãƒ•ã‚¡ã‚’ç¢ºä¿ã—ã€ä¸€æ‹¬èª­ã¿è¾¼ã¿.
+	m_vertices.resize(vertNum * PmdVertexSize);
+	fread(m_vertices.data(), m_vertices.size(), 1, fp);
 
-	// ’¸“_ƒoƒbƒtƒ@—p‚ÌDirectX 12ƒŠƒ\[ƒX‚ğì¬.
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ç”¨ã®DirectX 12ãƒªã‚½ãƒ¼ã‚¹ã‚’ä½œæˆ.
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size() * sizeof(vertices[0]));
+	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(m_vertices.size() * sizeof(m_vertices[0]));
 
 	auto result = m_pDx12.GetDevice()->CreateCommittedResource(
 		&heapProp,
@@ -112,26 +254,25 @@ void CPMDActor::LoadPMDFile(const char* path)
 		IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf())
 	);
 
-	// ’¸“_ƒf[ƒ^‚ğGPUƒoƒbƒtƒ@‚ÉƒRƒs[.
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã‚’GPUãƒãƒƒãƒ•ã‚¡ã«ã‚³ãƒ”ãƒ¼.
 	unsigned char* vertMap = nullptr;
 	result = m_pVertexBuffer->Map(0, nullptr, (void**)&vertMap);
-	std::copy(vertices.begin(), vertices.end(), vertMap);
+	std::copy(m_vertices.begin(), m_vertices.end(), vertMap);
 	m_pVertexBuffer->Unmap(0, nullptr);
 
-	// ’¸“_ƒoƒbƒtƒ@ƒrƒ…[‚Ìİ’è.
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼ã®è¨­å®š.
 	m_pVertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
-	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(vertices.size());
+	m_pVertexBufferView.SizeInBytes = static_cast<UINT>(m_vertices.size());
 	m_pVertexBufferView.StrideInBytes = PmdVertexSize;
 
-	// ƒCƒ“ƒfƒbƒNƒX”‚ğ“Ç‚İ‚Ş.
-	unsigned int IndicesNum;
-	fread(&IndicesNum, sizeof(IndicesNum), 1, fp);
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°ã‚’èª­ã¿è¾¼ã‚€.
+	fread(&m_IndicesNum, sizeof(m_IndicesNum), 1, fp);
 
-	// ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚Ìƒoƒbƒtƒ@‚ğŠm•Û‚µAˆêŠ‡“Ç‚İ‚İ.
-	std::vector<unsigned short> indices(IndicesNum);
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã®ãƒãƒƒãƒ•ã‚¡ã‚’ç¢ºä¿ã—ã€ä¸€æ‹¬èª­ã¿è¾¼ã¿.
+	std::vector<unsigned short> indices(m_IndicesNum);
 	fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
 
-	// ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@—p‚ÌDirectX 12ƒŠƒ\[ƒX‚ğì¬.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡ç”¨ã®DirectX 12ãƒªã‚½ãƒ¼ã‚¹ã‚’ä½œæˆ.
 	auto resDescBuf = CD3DX12_RESOURCE_DESC::Buffer(indices.size() * sizeof(indices[0]));
 	result = m_pDx12.GetDevice()->CreateCommittedResource(
 		&heapProp,
@@ -142,38 +283,38 @@ void CPMDActor::LoadPMDFile(const char* path)
 		IID_PPV_ARGS(m_pIndexBuffer.ReleaseAndGetAddressOf())
 	);
 
-	// ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ğGPUƒoƒbƒtƒ@‚ÉƒRƒs[.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã‚’GPUãƒãƒƒãƒ•ã‚¡ã«ã‚³ãƒ”ãƒ¼.
 	unsigned short* mappedIdx = nullptr;
 	m_pIndexBuffer->Map(0, nullptr, (void**)&mappedIdx);
 	std::copy(indices.begin(), indices.end(), mappedIdx);
 	m_pIndexBuffer->Unmap(0, nullptr);
 
-	// ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@ƒrƒ…[‚Ìİ’è.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼ã®è¨­å®š.
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_pIndexBufferView.Format = DXGI_FORMAT_R16_UINT;
 	m_pIndexBufferView.SizeInBytes = static_cast<UINT>(indices.size() * sizeof(indices[0]));
 
-	// ƒ}ƒeƒŠƒAƒ‹”‚ğ“Ç‚İ‚Ş.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«æ•°ã‚’èª­ã¿è¾¼ã‚€.
 	int MaterialNum;
 	fread(&MaterialNum, sizeof(MaterialNum), 1, fp);
 
-	// ƒ}ƒeƒŠƒAƒ‹‚âƒŠƒ\[ƒX‚Ìƒoƒbƒtƒ@‚ğƒŠƒTƒCƒY.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ã‚„ãƒªã‚½ãƒ¼ã‚¹ã®ãƒãƒƒãƒ•ã‚¡ã‚’ãƒªã‚µã‚¤ã‚º.
 	m_pMaterial.resize(MaterialNum);
 	m_pTextureResource.resize(MaterialNum);
 	m_pSphResource.resize(MaterialNum);
 	m_pSpaResource.resize(MaterialNum);
 	m_pToonResource.resize(MaterialNum);
 
-	// ƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^‚ğ“Ç‚İ‚Ş.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€.
 	std::vector<PMDMaterial> pmdMaterials(MaterialNum);
 	fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
 
-	// Šeƒ}ƒeƒŠƒAƒ‹‚ğİ’è.
+	// å„ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’è¨­å®š.
 	for (int i = 0; i < MaterialNum; ++i) {
 		m_pMaterial[i] = std::make_shared<Material>();
 	}
 
-	// ƒ}ƒeƒŠƒAƒ‹î•ñ‚ğƒRƒs[.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«æƒ…å ±ã‚’ã‚³ãƒ”ãƒ¼.
 	for (int i = 0; i < pmdMaterials.size(); ++i) {
 		m_pMaterial[i]->IndicesNum = pmdMaterials[i].IndicesNum;
 		m_pMaterial[i]->Materialhlsl.Diffuse = pmdMaterials[i].Diffuse;
@@ -184,24 +325,24 @@ void CPMDActor::LoadPMDFile(const char* path)
 		m_pMaterial[i]->Additional.ToonIdx = pmdMaterials[i].ToonIdx;
 	}
 
-	// ƒgƒD[ƒ“ƒŠƒ\[ƒX‚ÆƒeƒNƒXƒ`ƒƒ‚ğİ’è.
+	// ãƒˆã‚¥ãƒ¼ãƒ³ãƒªã‚½ãƒ¼ã‚¹ã¨ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’è¨­å®š.
 	for (int i = 0; i < pmdMaterials.size(); ++i) {
-		// ƒgƒD[ƒ“ƒeƒNƒXƒ`ƒƒ‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚ğ\’z.
+		// ãƒˆã‚¥ãƒ¼ãƒ³ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã‚’æ§‹ç¯‰.
 		char toonFilePath[32];
 
-		// Idx‚ª255‚È‚ç‚È‚µ‚È‚Ì‚Åcontinue.
+		// IdxãŒ255ãªã‚‰ãªã—ãªã®ã§continue.
 		if (pmdMaterials[i].ToonIdx == 255) { continue; }
 
 		sprintf_s(toonFilePath, "Data/Image/toon/toon%02d.bmp", pmdMaterials[i].ToonIdx + 1);
 		m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 
-		// ƒeƒNƒXƒ`ƒƒƒpƒX‚ª‹ó‚Ìê‡AƒŠƒ\[ƒX‚ğƒŠƒZƒbƒg.
+		// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ãŒç©ºã®å ´åˆã€ãƒªã‚½ãƒ¼ã‚¹ã‚’ãƒªã‚»ãƒƒãƒˆ.
 		if (strlen(pmdMaterials[i].TexFilePath) == 0) {
 			m_pTextureResource[i].Reset();
 			continue;
 		}
 
-		// ƒeƒNƒXƒ`ƒƒƒpƒX‚Ì•ª‰ğ‚ÆƒŠƒ\[ƒX‚Ìƒ[ƒh.
+		// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã®åˆ†è§£ã¨ãƒªã‚½ãƒ¼ã‚¹ã®ãƒ­ãƒ¼ãƒ‰.
 		std::string TexFileName = pmdMaterials[i].TexFilePath;
 		std::string SphFileName = "";
 		std::string SpaFileName = "";
@@ -240,7 +381,7 @@ void CPMDActor::LoadPMDFile(const char* path)
 			}
 		}
 
-		// ƒŠƒ\[ƒX‚ğƒ[ƒh.
+		// ãƒªã‚½ãƒ¼ã‚¹ã‚’ãƒ­ãƒ¼ãƒ‰.
 		if (!TexFileName.empty()) {
 			auto TexFilePath = MyFilePath::GetTexPath(path, TexFileName.c_str());
 			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFilePath.c_str());
@@ -256,7 +397,7 @@ void CPMDActor::LoadPMDFile(const char* path)
 	}
 
 	// ----------------
-	// ƒ{[ƒ“”‚Ìæ“¾.
+	// ãƒœãƒ¼ãƒ³æ•°ã®å–å¾—.
 	unsigned short BoneNum = 0;
 	fread(&BoneNum, sizeof(BoneNum), 1, fp);
 
@@ -265,7 +406,7 @@ void CPMDActor::LoadPMDFile(const char* path)
 
 	std::vector<std::string> BoneNames(PMDBones.size());
 
-	// ƒ{[ƒ“ƒm[ƒh‚ğì‚é.
+	// ãƒœãƒ¼ãƒ³ãƒãƒ¼ãƒ‰ã‚’ä½œã‚‹.
 	for (size_t i = 0; i < PMDBones.size(); ++i)
 	{
 		PMDBone& PmdBone = PMDBones[i];
@@ -275,49 +416,49 @@ void CPMDActor::LoadPMDFile(const char* path)
 		Node.StartPos = PmdBone.Pos;
 	}
 
-	// eHŠÖŒW‚Ì\’z.
+	// è¦ªå·¥é–¢ä¿‚ã®æ§‹ç¯‰.
 	for (PMDBone& pb : PMDBones)
 	{
-		// ‚ ‚è‚¦‚È‚¢”Ô†‚È‚ç‚Æ‚Î‚·.
+		// ã‚ã‚Šãˆãªã„ç•ªå·ãªã‚‰ã¨ã°ã™.
 		if (pb.ParentNo >= PMDBones.size()) { continue; }
 
 		auto ParentName = BoneNames[pb.ParentNo];
 		m_BoneNodeTable[ParentName].Children.emplace_back(&m_BoneNodeTable[std::string(reinterpret_cast<char*>(pb.BoneName))]);
 	}
 
-	//ƒ{[ƒ“\’z
+	//ãƒœãƒ¼ãƒ³æ§‹ç¯‰
 	m_BoneMatrix.resize(PMDBones.size());
 
-	// ƒ{[ƒ“‚ğ‰Šú‰»‚·‚é.
+	// ãƒœãƒ¼ãƒ³ã‚’åˆæœŸåŒ–ã™ã‚‹.
 	std::fill(
 		m_BoneMatrix.begin(),
 		m_BoneMatrix.end(),
 		DirectX::XMMatrixIdentity()
 	);
 
-	// ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é.
+	// ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹.
 	fclose(fp);
 }
 
 void CPMDActor::LoadVMDFile(const char* FilePath, const char* Name)
 {
 	FILE* fp = nullptr;
-	// fopen_s‚ğg‚Á‚Äƒtƒ@ƒCƒ‹‚ğƒoƒCƒiƒŠƒ‚[ƒh‚ÅŠJ‚­.
+	// fopen_sã‚’ä½¿ã£ã¦ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒã‚¤ãƒŠãƒªãƒ¢ãƒ¼ãƒ‰ã§é–‹ã.
 	auto err = fopen_s(&fp, FilePath, "rb");
 	if (err != 0 || !fp) {
-		throw std::runtime_error("ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚ª‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½B");
+		throw std::runtime_error("ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ãŒã§ãã¾ã›ã‚“ã§ã—ãŸã€‚");
 	}
-	fseek(fp, 50, SEEK_SET);//Å‰‚Ì50ƒoƒCƒg‚Í”ò‚Î‚µ‚ÄOK
+	fseek(fp, 50, SEEK_SET);//æœ€åˆã®50ãƒã‚¤ãƒˆã¯é£›ã°ã—ã¦OK
 	unsigned int keyframeNum = 0;
 	fread(&keyframeNum, sizeof(keyframeNum), 1, fp);
 
 	std::vector<VMDKeyFrame> Keyframes(keyframeNum);
 	for (auto& keyframe : Keyframes) {
-		fread(keyframe.BoneName, sizeof(keyframe.BoneName), 1, fp);	// ƒ{[ƒ“–¼.
-		fread(&keyframe.FrameNo, sizeof(keyframe.FrameNo) +			// ƒtƒŒ[ƒ€”Ô†.
-			sizeof(keyframe.Location) +								// ˆÊ’u(IK‚Ì‚Æ‚«‚Ég—p—\’è).
-			sizeof(keyframe.Quaternion) +							// ƒNƒI[ƒ^ƒjƒIƒ“.
-			sizeof(keyframe.Bezier), 1, fp);						// •âŠÔƒxƒWƒFƒf[ƒ^.
+		fread(keyframe.BoneName, sizeof(keyframe.BoneName), 1, fp);	// ãƒœãƒ¼ãƒ³å.
+		fread(&keyframe.FrameNo, sizeof(keyframe.FrameNo) +			// ãƒ•ãƒ¬ãƒ¼ãƒ ç•ªå·.
+			sizeof(keyframe.Location) +								// ä½ç½®(IKã®ã¨ãã«ä½¿ç”¨äºˆå®š).
+			sizeof(keyframe.Quaternion) +							// ã‚¯ã‚ªãƒ¼ã‚¿ãƒ‹ã‚ªãƒ³.
+			sizeof(keyframe.Bezier), 1, fp);						// è£œé–“ãƒ™ã‚¸ã‚§ãƒ‡ãƒ¼ã‚¿.
 	}
 
 	for (auto& motion : m_MotionData) {
@@ -327,7 +468,7 @@ void CPMDActor::LoadVMDFile(const char* FilePath, const char* Name)
 			});
 	}
 
-	//VMD‚ÌƒL[ƒtƒŒ[ƒ€ƒf[ƒ^‚©‚çAÀÛ‚Ég—p‚·‚éƒL[ƒtƒŒ[ƒ€ƒe[ƒuƒ‹‚Ö•ÏŠ·.
+	//VMDã®ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ‡ãƒ¼ã‚¿ã‹ã‚‰ã€å®Ÿéš›ã«ä½¿ç”¨ã™ã‚‹ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ†ãƒ¼ãƒ–ãƒ«ã¸å¤‰æ›.
 	for (auto& f : Keyframes) {
 		m_MotionData[f.BoneName].emplace_back(
 			KeyFrame(
@@ -347,20 +488,20 @@ void CPMDActor::LoadVMDFile(const char* FilePath, const char* Name)
 		m_BoneMatrix[node.BoneIndex] = mat;
 	}
 
-	RecursiveMatrixMultipy(&m_BoneNodeTable["ƒZƒ“ƒ^["], DirectX::XMMatrixIdentity());
+	RecursiveMatrixMultipy(&m_BoneNodeTable["ã‚»ãƒ³ã‚¿ãƒ¼"], DirectX::XMMatrixIdentity());
 	std::copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
 
 }
 
 void CPMDActor::CreateTransformView() {
-	//GPUƒoƒbƒtƒ@ì¬
+	//GPUãƒãƒƒãƒ•ã‚¡ä½œæˆ
 	auto buffSize = sizeof(Transform) * (1 + m_BoneMatrix.size());
 	buffSize = (buffSize + 0xff)&~0xff;
 	auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(buffSize);
 
 	MyAssert::IsFailed(
-		_T("À•Wƒoƒbƒtƒ@ì¬"),
+		_T("åº§æ¨™ãƒãƒƒãƒ•ã‚¡ä½œæˆ"),
 		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
@@ -370,9 +511,9 @@ void CPMDActor::CreateTransformView() {
 		IID_PPV_ARGS(m_pTransformBuff.ReleaseAndGetAddressOf())
 	);
 
-	//ƒ}ƒbƒv‚ÆƒRƒs[
+	//ãƒãƒƒãƒ—ã¨ã‚³ãƒ”ãƒ¼
 	MyAssert::IsFailed(
-		_T("À•W‚Ìƒ}ƒbƒv"),
+		_T("åº§æ¨™ã®ãƒãƒƒãƒ—"),
 		&ID3D12Resource::Map, m_pTransformBuff.Get(),
 		0, nullptr, 
 		(void**)&m_MappedMatrices);
@@ -380,19 +521,19 @@ void CPMDActor::CreateTransformView() {
 	m_MappedMatrices[0] = m_Transform.world;
 	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
 
-	// ƒrƒ…[‚Ìì¬.
+	// ãƒ“ãƒ¥ãƒ¼ã®ä½œæˆ.
 	D3D12_DESCRIPTOR_HEAP_DESC transformDescHeapDesc = {};
-	transformDescHeapDesc.NumDescriptors = 1; // ‚Æ‚è‚ ‚¦‚¸ƒ[ƒ‹ƒh‚Ğ‚Æ‚Â.
+	transformDescHeapDesc.NumDescriptors = 1; // ã¨ã‚Šã‚ãˆãšãƒ¯ãƒ¼ãƒ«ãƒ‰ã²ã¨ã¤.
 	transformDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	transformDescHeapDesc.NodeMask = 0;
 
-	transformDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; // ƒfƒXƒNƒŠƒvƒ^ƒq[ƒví•Ê.
+	transformDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; // ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ’ãƒ¼ãƒ—ç¨®åˆ¥.
 
 	MyAssert::IsFailed(
-		_T("À•Wƒq[ƒv‚Ìì¬"),
+		_T("åº§æ¨™ãƒ’ãƒ¼ãƒ—ã®ä½œæˆ"),
 		&ID3D12Device::CreateDescriptorHeap, m_pDx12.GetDevice(),
 		&transformDescHeapDesc, 
-		IID_PPV_ARGS(m_pTransformHeap.ReleaseAndGetAddressOf()));//¶¬
+		IID_PPV_ARGS(m_pTransformHeap.ReleaseAndGetAddressOf()));//ç”Ÿæˆ
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	cbvDesc.BufferLocation = m_pTransformBuff->GetGPUVirtualAddress();
@@ -403,7 +544,7 @@ void CPMDActor::CreateTransformView() {
 }
 
 void CPMDActor::CreateMaterialData() {
-	//ƒ}ƒeƒŠƒAƒ‹ƒoƒbƒtƒ@‚ğì¬
+	//ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ•ã‚¡ã‚’ä½œæˆ
 	auto MaterialBuffSize = sizeof(MaterialForHlsl);
 	MaterialBuffSize = (MaterialBuffSize + 0xff)&~0xff;
 
@@ -411,43 +552,43 @@ void CPMDActor::CreateMaterialData() {
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(MaterialBuffSize * m_pMaterial.size());
 
 	MyAssert::IsFailed(
-		_T("ƒ}ƒeƒŠƒAƒ‹ì¬"),
+		_T("ãƒãƒ†ãƒªã‚¢ãƒ«ä½œæˆ"),
 		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
 		&heapProp,
 		D3D12_HEAP_FLAG_NONE,
-		&resDesc,//–Ü‘Ì‚È‚¢‚¯‚Çd•û‚È‚¢‚Å‚·‚Ë
+		&resDesc,//å‹¿ä½“ãªã„ã‘ã©ä»•æ–¹ãªã„ã§ã™ã­
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(m_pMaterialBuff.ReleaseAndGetAddressOf()));
 
-	//ƒ}ƒbƒvƒ}ƒeƒŠƒAƒ‹‚ÉƒRƒs[
+	//ãƒãƒƒãƒ—ãƒãƒ†ãƒªã‚¢ãƒ«ã«ã‚³ãƒ”ãƒ¼
 	char* mapMaterial = nullptr;
 
 	MyAssert::IsFailed(
-		_T("ƒ}ƒeƒŠƒAƒ‹ƒ}ƒbƒv‚ÉƒRƒs["),
+		_T("ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ—ã«ã‚³ãƒ”ãƒ¼"),
 		&ID3D12Resource::Map, m_pMaterialBuff.Get(),
 		0, nullptr, 
 		(void**)&mapMaterial);
 
 	for (auto& m : m_pMaterial) {
-		*((MaterialForHlsl*)mapMaterial) = m->Materialhlsl;//ƒf[ƒ^ƒRƒs[
-		mapMaterial += MaterialBuffSize;//Ÿ‚ÌƒAƒ‰ƒCƒƒ“ƒgˆÊ’u‚Ü‚Åi‚ß‚é
+		*((MaterialForHlsl*)mapMaterial) = m->Materialhlsl;//ãƒ‡ãƒ¼ã‚¿ã‚³ãƒ”ãƒ¼
+		mapMaterial += MaterialBuffSize;//æ¬¡ã®ã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆä½ç½®ã¾ã§é€²ã‚ã‚‹
 	}
 
 	m_pMaterialBuff->Unmap(0, nullptr);
 
-	// -- ‰¼.
+	// -- ä»®.
 
 	m_MappedMatrices[0] = DirectX::XMMatrixRotationY(_angle);
 
-	auto armnode = m_BoneNodeTable["¶˜r"];
+	auto armnode = m_BoneNodeTable["å·¦è…•"];
 	auto& armpos = armnode.StartPos;
 	auto armMat =
 		DirectX::XMMatrixTranslation(-armpos.x, -armpos.y, -armpos.x)
 		* DirectX::XMMatrixRotationZ(DirectX::XM_PIDIV2)
 		* DirectX::XMMatrixTranslation(armpos.x, armpos.y, armpos.x);
 	
-	auto elbowNode = m_BoneNodeTable["¶‚Ğ‚¶"];
+	auto elbowNode = m_BoneNodeTable["å·¦ã²ã˜"];
 	auto& elbowpos = elbowNode.StartPos;
 	auto elbowMat = DirectX::XMMatrixTranslation(-elbowpos.x, -elbowpos.y, -elbowpos.x)
 		* DirectX::XMMatrixRotationZ(-DirectX::XM_PIDIV2)
@@ -456,24 +597,24 @@ void CPMDActor::CreateMaterialData() {
 	m_BoneMatrix[armnode.BoneIndex] = armMat;
 	m_BoneMatrix[elbowNode.BoneIndex] = elbowMat;
 
-	RecursiveMatrixMultipy(&m_BoneNodeTable ["ƒZƒ“ƒ^["], DirectX::XMMatrixIdentity());
+	RecursiveMatrixMultipy(&m_BoneNodeTable ["ã‚»ãƒ³ã‚¿ãƒ¼"], DirectX::XMMatrixIdentity());
 
 
 	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
-	// -- ‰¼.
+	// -- ä»®.
 }
 
 
 void CPMDActor::CreateMaterialAndTextureView() {
 	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
-	MaterialDescHeapDesc.NumDescriptors = static_cast<UINT>(m_pMaterial.size() * 5);//ƒ}ƒeƒŠƒAƒ‹”‚Ô‚ñ(’è”1‚ÂAƒeƒNƒXƒ`ƒƒ3‚Â)
+	MaterialDescHeapDesc.NumDescriptors = static_cast<UINT>(m_pMaterial.size() * 5);//ãƒãƒ†ãƒªã‚¢ãƒ«æ•°ã¶ã‚“(å®šæ•°1ã¤ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£3ã¤)
 	MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	MaterialDescHeapDesc.NodeMask = 0;
 
-	MaterialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//ƒfƒXƒNƒŠƒvƒ^ƒq[ƒví•Ê
+	MaterialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;//ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ’ãƒ¼ãƒ—ç¨®åˆ¥
 
 	MyAssert::IsFailed(
-		_T("ƒ}ƒeƒŠƒAƒ‹ƒq[ƒv‚Ìì¬"),
+		_T("ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ’ãƒ¼ãƒ—ã®ä½œæˆ"),
 		&ID3D12Device::CreateDescriptorHeap, m_pDx12.GetDevice(),
 		&MaterialDescHeapDesc,
 		IID_PPV_ARGS(m_pMaterialHeap.ReleaseAndGetAddressOf()));
@@ -485,13 +626,13 @@ void CPMDActor::CreateMaterialAndTextureView() {
 	matCBVDesc.SizeInBytes = static_cast<UINT>(MaterialBuffSize);
 	
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;//Œãq
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2DƒeƒNƒXƒ`ƒƒ
-	srvDesc.Texture2D.MipLevels = 1;//ƒ~ƒbƒvƒ}ƒbƒv‚Íg—p‚µ‚È‚¢‚Ì‚Å1
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;//å¾Œè¿°
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2Dãƒ†ã‚¯ã‚¹ãƒãƒ£
+	srvDesc.Texture2D.MipLevels = 1;//ãƒŸãƒƒãƒ—ãƒãƒƒãƒ—ã¯ä½¿ç”¨ã—ãªã„ã®ã§1
 	CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(m_pMaterialHeap->GetCPUDescriptorHandleForHeapStart());
 	auto incSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	for (int i = 0; i < m_pMaterial.size(); ++i) {
-		//ƒ}ƒeƒŠƒAƒ‹ŒÅ’èƒoƒbƒtƒ@ƒrƒ…[
+		//ãƒãƒ†ãƒªã‚¢ãƒ«å›ºå®šãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼
 		m_pDx12.GetDevice()->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
 		matDescHeapH.ptr += incSize;
 		matCBVDesc.BufferLocation += MaterialBuffSize;
@@ -553,7 +694,7 @@ void CPMDActor::Draw() {
 	m_pDx12.GetCommandList()->SetGraphicsRootDescriptorTable(1, m_pTransformHeap->GetGPUDescriptorHandleForHeapStart());
 
 	ID3D12DescriptorHeap* MaterialHeap[] = { m_pMaterialHeap.Get() };
-	//ƒ}ƒeƒŠƒAƒ‹.
+	//ãƒãƒ†ãƒªã‚¢ãƒ«.
 	m_pDx12.GetCommandList()->SetDescriptorHeaps(1, MaterialHeap);
 
 	auto MaterialHeapHandle = m_pMaterialHeap->GetGPUDescriptorHandleForHeapStart();
@@ -569,7 +710,168 @@ void CPMDActor::Draw() {
 
 }
 
-// ƒAƒjƒ[ƒVƒ‡ƒ“ŠJn.
+// Xãƒ•ã‚¡ã‚¤ãƒ«ã®å¤‰æ›å‡ºåŠ›.
+bool CPMDActor::SaveAsX() {
+	// é ‚ç‚¹ã¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹å¤‰æ•°
+	std::vector<unsigned short> indices; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿
+
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—
+	{
+		void* pData = nullptr;
+		HRESULT hr = m_pVertexBuffer->Map(0, nullptr, &pData);
+		if (FAILED(hr)) {
+			std::cerr << "Failed to map vertex buffer." << std::endl;
+			return false;
+		}
+
+	}
+
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—
+	{
+		void* pData = nullptr;
+		HRESULT hr = m_pIndexBuffer->Map(0, nullptr, &pData);
+		if (FAILED(hr)) {
+			std::cerr << "Failed to map index buffer." << std::endl;
+			return false;
+		}
+
+		indices.assign(static_cast<unsigned short*>(pData),
+			static_cast<unsigned short*>(pData) +
+			(m_pIndexBuffer->GetDesc().Width / sizeof(unsigned short)));
+
+		m_pIndexBuffer->Unmap(0, nullptr);
+	}
+
+	// Xãƒ•ã‚¡ã‚¤ãƒ«ã®æ›¸ãè¾¼ã¿
+	std::ofstream outFile(AFTERCONVERSIONFILEPATH + m_Name + "3.x");
+	if (!outFile.is_open()) {
+		std::cerr << "Failed to open file: " << AFTERCONVERSIONFILEPATH << std::endl;
+		return false;
+	}
+
+	// Xãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ˜ãƒƒãƒ€ãƒ¼
+	outFile << "xof 0302txt 0064\n";
+	outFile << TEMPLATESTRING;
+
+	// Mesh ã‚»ã‚¯ã‚·ãƒ§ãƒ³ã®é–‹å§‹
+	outFile << "\n\n";
+	outFile << "Mesh {\n";
+	outFile << " " << m_vertices.size() / 38 << ";\n";
+
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã®æ›¸ãè¾¼ã¿
+	for (size_t i = 0; i < m_vertices.size() / 38; ++i) {
+		// charå‹ã®ãƒ‡ãƒ¼ã‚¿ã‚’PMDVertexæ§‹é€ ä½“ã¨ã—ã¦æ‰±ã†
+		PMDVertex& vertex = *reinterpret_cast<PMDVertex*>(&m_vertices[i * 38]);
+
+		outFile << std::fixed << std::setprecision(6)  // å°æ•°ç‚¹ä»¥ä¸‹6æ¡ã«è¨­å®š
+			<< vertex.Pos.x << ";" << vertex.Pos.y << ";" << vertex.Pos.z << ";"; // åº§æ¨™ã‚’æ›¸ãè¾¼ã‚€
+
+		if (i < m_vertices.size() / 38 - 1) {
+			outFile << ",\n"; // æ¬¡ã®é ‚ç‚¹ãŒã‚ã‚‹å ´åˆã€ã‚«ãƒ³ãƒã¨æ”¹è¡Œã‚’è¿½åŠ 
+		}
+		else {
+			outFile << ";\n"; // æœ€å¾Œã®é ‚ç‚¹ã®å ´åˆã¯ã‚»ãƒŸã‚³ãƒ­ãƒ³ã¨æ”¹è¡Œã‚’è¿½åŠ 
+		}
+	}
+
+	outFile << "\n";
+
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã®æ›¸ãè¾¼ã¿
+	outFile << indices.size() / 3 << ";\n";
+	for (size_t i = 0; i < indices.size(); i += 3) {
+		outFile << "3;" << indices[i] << "," << indices[i + 1] << "," << indices[i + 2] << ";";
+		if (i < indices.size() - 3) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";\n";
+		}
+	}
+
+	outFile << "\n";
+
+	// Materialæƒ…å ±ã®è¨˜è¿°
+	outFile << "MeshMaterialList {\n";
+	outFile << " 1;\n"; // ãƒãƒ†ãƒªã‚¢ãƒ«æ•°
+	outFile << indices.size() / 3 << ";\n"; // é¢æ•°
+	for (size_t i = 0; i < indices.size() / 3; ++i) {
+		outFile << "0";
+		if (i < indices.size() / 3 - 1) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";;\n";
+		}
+	}
+
+
+	// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®Materialã‚’è¨˜è¿°
+	outFile << " Material {\n";
+	outFile << "  1.000000;1.000000;1.000000;1.000000;;\n";
+	outFile << "  0.000000;\n";
+	outFile << "  0.000000;0.000000;0.000000;;\n";
+	outFile << "  0.000000;0.000000;0.000000;;\n";
+	outFile << " }\n";
+	outFile << "}\n";
+
+	outFile << "MeshNormals {\n";
+	outFile << indices.size() / 3 << ";\n";
+
+	for (size_t i = 0; i < indices.size() / 3; ++i)
+	{
+		outFile << "1.000000;1.000000;1.000000;"; 
+		
+		if (i < indices.size() / 3 - 1) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";\n";
+		}
+	}
+
+	outFile << indices.size() / 3 << ";\n";
+
+	for (size_t i = 0; i < indices.size() / 3; ++i)
+	{
+		outFile << 3 << ";" << i << ","<< i << ","<< i << ";";
+		if (i < indices.size() / 3 - 1) {
+			outFile << ",\n";
+		}
+		else {
+			outFile << ";\n";
+		}
+	}
+	outFile << "}\n";
+
+	int i = m_vertices.size() / 38;
+
+	outFile << "MeshTextureCoords {\n" << m_vertices.size() / 38 << ";\n";
+	
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã®æ›¸ãè¾¼ã¿
+	for (size_t i = 0; i < m_vertices.size() / 38; ++i) {
+		// charå‹ã®ãƒ‡ãƒ¼ã‚¿ã‚’PMDVertexæ§‹é€ ä½“ã¨ã—ã¦æ‰±ã†
+		PMDVertex& vertex = *reinterpret_cast<PMDVertex*>(&m_vertices[i * 38]);
+
+		outFile << std::fixed << std::setprecision(6)  // å°æ•°ç‚¹ä»¥ä¸‹6æ¡ã«è¨­å®š
+		<< vertex.UV.x << ";" << vertex.UV.y << ";";  // åº§æ¨™ã‚’æ›¸ãè¾¼ã‚€
+
+		if (i < m_vertices.size() /38 - 1) {
+			outFile << ",\n"; // æ¬¡ã®é ‚ç‚¹ãŒã‚ã‚‹å ´åˆã€ã‚«ãƒ³ãƒã¨æ”¹è¡Œã‚’è¿½åŠ 
+		}
+		else {
+			outFile << ";\n"; // æœ€å¾Œã®é ‚ç‚¹ã®å ´åˆã¯ã‚»ãƒŸã‚³ãƒ­ãƒ³ã¨æ”¹è¡Œã‚’è¿½åŠ 
+		}
+	}
+	outFile << "}\n";
+	outFile << "}\n";
+
+
+
+	outFile.close();
+	return true;
+}
+
+// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³é–‹å§‹.
 void CPMDActor::PlayAnimation()
 {
 	m_StartTime = timeGetTime();
@@ -581,19 +883,19 @@ void CPMDActor::MotionUpdate()
 	unsigned int frameNo = 30 * (elapsedTime / 1000.0f);
 
 
-	//s—ñî•ñƒNƒŠƒA(‚µ‚Ä‚È‚¢‚Æ‘OƒtƒŒ[ƒ€‚Ìƒ|[ƒY‚ªd‚ËŠ|‚¯‚³‚ê‚Äƒ‚ƒfƒ‹‚ª‰ó‚ê‚é)
+	//è¡Œåˆ—æƒ…å ±ã‚¯ãƒªã‚¢(ã—ã¦ãªã„ã¨å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã®ãƒãƒ¼ã‚ºãŒé‡ã­æ›ã‘ã•ã‚Œã¦ãƒ¢ãƒ‡ãƒ«ãŒå£Šã‚Œã‚‹)
 	std::fill(m_BoneMatrix.begin(), m_BoneMatrix.end(), DirectX::XMMatrixIdentity());
 
-	//ƒ‚[ƒVƒ‡ƒ“ƒf[ƒ^XV
+	//ãƒ¢ãƒ¼ã‚·ãƒ§ãƒ³ãƒ‡ãƒ¼ã‚¿æ›´æ–°
 	for (auto& bonemotion : m_MotionData) {
 		auto node = m_BoneNodeTable[bonemotion.first];
-		//‡’v‚·‚é‚à‚Ì‚ğ’T‚·
+		//åˆè‡´ã™ã‚‹ã‚‚ã®ã‚’æ¢ã™
 		auto keyframes = bonemotion.second;
 
 		auto rit = find_if(keyframes.rbegin(), keyframes.rend(), [frameNo](const KeyFrame& keyframe) {
 			return keyframe.FrameNo <= frameNo;
 			});
-		if (rit == keyframes.rend())continue;//‡’v‚·‚é‚à‚Ì‚ª‚È‚¯‚ê‚Î”ò‚Î‚·
+		if (rit == keyframes.rend())continue;//åˆè‡´ã™ã‚‹ã‚‚ã®ãŒãªã‘ã‚Œã°é£›ã°ã™
 		DirectX::XMMATRIX Rotation;
 		auto it = rit.base();
 		if (it != keyframes.end()) {
@@ -610,11 +912,11 @@ void CPMDActor::MotionUpdate()
 		}
 
 		auto& pos = node.StartPos;
-		auto mat = DirectX::XMMatrixTranslation(-pos.x, -pos.y, -pos.z) * //Œ´“_‚É–ß‚µ
-			Rotation * //‰ñ“]
-			DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);//Œ³‚ÌÀ•W‚É–ß‚·
+		auto mat = DirectX::XMMatrixTranslation(-pos.x, -pos.y, -pos.z) * //åŸç‚¹ã«æˆ»ã—
+			Rotation * //å›è»¢
+			DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);//å…ƒã®åº§æ¨™ã«æˆ»ã™
 		m_BoneMatrix[node.BoneIndex] = mat;
 	}
-	RecursiveMatrixMultipy(&m_BoneNodeTable["ƒZƒ“ƒ^["], DirectX::XMMatrixIdentity());
+	RecursiveMatrixMultipy(&m_BoneNodeTable["ã‚»ãƒ³ã‚¿ãƒ¼"], DirectX::XMMatrixIdentity());
 	copy(m_BoneMatrix.begin(), m_BoneMatrix.end(), m_MappedMatrices + 1);
 }

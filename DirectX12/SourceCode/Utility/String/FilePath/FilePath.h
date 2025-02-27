@@ -36,9 +36,16 @@ namespace MyFilePath {
 	
 	/*******************************************
 	* @brief			: ファイルパスなどの/を\\に変換.
-	* @param Path		: アプリから見たpmdモデルのパス.
+	* @param Path		: 変換後のパス.
 	*******************************************/
 	static inline void ReplaceSlashWithBackslash(std::string* Path);
+	
+	/*******************************************
+	* @brief          : ファイルパスの最後を取り出す.
+	* @param Path     : 取り出したパス.
+	* @return         : ファイル名(パスの最後の部分).
+	*******************************************/
+	static inline std::string GetFileNameFromPath(const std::string& Path);
 
 }
 

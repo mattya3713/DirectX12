@@ -9,19 +9,19 @@
 #include <crtdbg.h>
 #endif
 
-// ƒEƒBƒ“ƒhƒE‚ğ‰æ–Ê’†‰›‚Å‹N“®‚ğ—LŒø‚É‚·‚é.
+// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ç”»é¢ä¸­å¤®ã§èµ·å‹•ã‚’æœ‰åŠ¹ã«ã™ã‚‹.
 #define ENABLE_WINDOWS_CENTERING
 
 #define ISOMX 0
 
 //=================================================
-// ’è”.
+// å®šæ•°.
 //=================================================
-const TCHAR WND_TITLE[] = _T("‚ä‚«‚ä‚«‡í‚²‚ë‚²‚ë");
-const TCHAR APP_NAME[] = _T("‚ä‚«‚ä‚«‡í‚²‚ë‚²‚ë");
+const TCHAR WND_TITLE[] = _T("ã‚†ãã‚†ãåˆæˆ¦ã”ã‚ã”ã‚");
+const TCHAR APP_NAME[] = _T("ã‚†ãã‚†ãåˆæˆ¦ã”ã‚ã”ã‚");
 
 //=================================================
-// ƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
 //=================================================
 CMain::CMain()
     : m_hWnd            ( nullptr )
@@ -34,19 +34,19 @@ CMain::CMain()
 }
 
 //=================================================
-// ƒfƒXƒgƒ‰ƒNƒ^.
+// ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
 //=================================================
 CMain::~CMain()
 {
 }
 
-// \’zˆ—.
+// æ§‹ç¯‰å‡¦ç†.
 HRESULT CMain::Create()
 {
     m_pDx12 = std::make_shared<CDirectX12>();
     m_pDx12->Create(m_hWnd);
 
-    //m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+      m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
     //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
 #if ISOMX
     m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
@@ -55,22 +55,34 @@ HRESULT CMain::Create()
 #else 
     m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
     m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Cube\\Cube.pmx", *m_pPMXRenderer);
-    // Data\\Model\\PMX\\Hatune\\REM®ƒvƒƒZƒJ•—‰‰¹ƒ~ƒNN25.pmx
-    // Data\\Model\\PMX\\HatuneVer2\\‰‰¹ƒ~ƒNVer2.pmx
+    // Data\\Model\\PMX\\Hatune\\REMå¼ãƒ—ãƒ­ã‚»ã‚«é¢¨åˆéŸ³ãƒŸã‚¯N25.pmx
+    // Data\\Model\\PMX\\HatuneVer2\\åˆéŸ³ãƒŸã‚¯Ver2.pmx
     // Data\\Model\\PMX\\Cube\\Cube.pmx"
 #endif
 
+    //CMeshManager::LoadPMDMesh(*m_pDx12, *m_pPMDRenderer);
+
     return S_OK;
 }
 
-// ƒf[ƒ^ƒ[ƒhˆ—.
+HRESULT CMain::Convert()
+{
+    for (auto& Mesh : CMeshManager::GetPMDMeshList())
+    {
+        CMeshManager::GetPMDMesh(Mesh)->SaveAsX();
+    }
+
+    return S_OK;
+}
+
+// ãƒ‡ãƒ¼ã‚¿ãƒ­ãƒ¼ãƒ‰å‡¦ç†.
 HRESULT CMain::LoadData()
 {
-    // •K—v‚É‰‚¶‚Äƒf[ƒ^ƒ[ƒhˆ—‚ğ’Ç‰Á.
+    // å¿…è¦ã«å¿œã˜ã¦ãƒ‡ãƒ¼ã‚¿ãƒ­ãƒ¼ãƒ‰å‡¦ç†ã‚’è¿½åŠ .
     return S_OK;
 }
 
-// XVˆ—.
+// æ›´æ–°å‡¦ç†.
 void CMain::Update()
 {
     if (m_pPmdActor) {
@@ -83,24 +95,24 @@ void CMain::Update()
     }
 }
 
-// •`‰æˆ—.
+// æç”»å‡¦ç†.
 void CMain::Draw()
 {
     if (!m_pDx12) return;
 
-    // ‘S‘Ì‚Ì•`‰æ€”õ.
+    // å…¨ä½“ã®æç”»æº–å‚™.
     m_pDx12->BeginDraw();
 
 #if ISOMX
-	//PMD—p‚Ì•`‰æƒpƒCƒvƒ‰ƒCƒ“‚É‡‚í‚¹‚é
+	//PMDç”¨ã®æç”»ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã«åˆã‚ã›ã‚‹
     m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
-    //ƒ‹[ƒgƒVƒOƒlƒ`ƒƒ‚àPMD—p‚É‡‚í‚¹‚é
+    //ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒãƒãƒ£ã‚‚PMDç”¨ã«åˆã‚ã›ã‚‹
     m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMDRenderer->GetRootSignature());
 
 #else 
-    //PMD—p‚Ì•`‰æƒpƒCƒvƒ‰ƒCƒ“‚É‡‚í‚¹‚é
+    //PMDç”¨ã®æç”»ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã«åˆã‚ã›ã‚‹
     m_pDx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
-    //ƒ‹[ƒgƒVƒOƒlƒ`ƒƒ‚àPMD—p‚É‡‚í‚¹‚é
+    //ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒãƒãƒ£ã‚‚PMDç”¨ã«åˆã‚ã›ã‚‹
     m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
 #endif
     m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -115,14 +127,14 @@ void CMain::Draw()
         m_pPMXActor->Draw();
     }
 
-    // I—¹ˆ—.
+    // çµ‚äº†å‡¦ç†.
     m_pDx12->EndDraw();
 
-    // ƒtƒŠƒbƒv.
+    // ãƒ•ãƒªãƒƒãƒ—.
     m_pDx12->GetSwapChain()->Present(1, 0);
 }
 
-// ‰ğ•úˆ—.
+// è§£æ”¾å‡¦ç†.
 void CMain::Release()
 {
     if (m_pPmdActor) {
@@ -141,7 +153,7 @@ void CMain::Release()
     }
 
 #if _DEBUG
-    // ƒIƒuƒWƒFƒNƒg‚Ì‰ğ•úƒ~ƒX‚ğŒŸo.
+    // ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®è§£æ”¾ãƒŸã‚¹ã‚’æ¤œå‡º.
     MyComPtr<ID3D12DebugDevice> debugDevice;
     if (SUCCEEDED(m_pDx12->GetDevice()->QueryInterface(IID_PPV_ARGS(debugDevice.GetAddressOf())))) {
         debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
@@ -153,11 +165,11 @@ void CMain::Release()
     }
 }
 
-// ƒƒbƒZ[ƒWƒ‹[ƒv.
+// ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ãƒ«ãƒ¼ãƒ—.
 
 void CMain::Loop()
 {
-    float rate = 0.0f;   // ƒtƒŒ[ƒ€ƒŒ[ƒg§Œä—p.
+    float rate = 0.0f;   // ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¬ãƒ¼ãƒˆåˆ¶å¾¡ç”¨.
     DWORD syncOld = timeGetTime();
     DWORD syncNow;
 
@@ -178,7 +190,7 @@ void CMain::Loop()
     }
 }
 
-// ƒEƒBƒ“ƒhƒE‰Šú‰»ŠÖ”.
+// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦åˆæœŸåŒ–é–¢æ•°.
 HRESULT CMain::InitWindow(HINSTANCE hInstance, INT x, INT y, INT width, INT height)
 {
     WNDCLASSEX wc = {};
@@ -219,36 +231,36 @@ HRESULT CMain::InitWindow(HINSTANCE hInstance, INT x, INT y, INT width, INT heig
     return S_OK;
 }
 
-// ƒEƒBƒ“ƒhƒEŠÖ”iƒƒbƒZ[ƒW–ˆ‚Ìˆ—j.
+// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦é–¢æ•°ï¼ˆãƒ¡ãƒƒã‚»ãƒ¼ã‚¸æ¯ã®å‡¦ç†ï¼‰.
 LRESULT CALLBACK CMain::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    // hWnd‚ÉŠÖ˜A•t‚¯‚ç‚ê‚½CMain‚ğæ“¾.
-    // MEMO : ƒEƒBƒ“ƒhƒE‚ªì¬‚³‚ê‚é‚Ü‚Å‚Í nullptr ‚É‚È‚é‰Â”\«‚ª‚ ‚é.
+    // hWndã«é–¢é€£ä»˜ã‘ã‚‰ã‚ŒãŸCMainã‚’å–å¾—.
+    // MEMO : ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒä½œæˆã•ã‚Œã‚‹ã¾ã§ã¯ nullptr ã«ãªã‚‹å¯èƒ½æ€§ãŒã‚ã‚‹.
     CMain* pMain = reinterpret_cast<CMain*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
-    // ƒEƒBƒ“ƒhƒE‚ª‰‚ß‚Äì¬‚³‚ê‚½.
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒåˆã‚ã¦ä½œæˆã•ã‚ŒãŸæ™‚.
     if (uMsg == WM_NCCREATE) {
-        // CREATESTRUCT\‘¢‘Ì‚©‚çCMain‚Ìƒ|ƒCƒ“ƒ^‚ğæ“¾.
+        // CREATESTRUCTæ§‹é€ ä½“ã‹ã‚‰CMainã®ãƒã‚¤ãƒ³ã‚¿ã‚’å–å¾—.
         CREATESTRUCT* pCreateStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
-        // SetWindowLongPtr‚ğg—p‚µhWnd‚ÉCMainƒCƒ“ƒXƒ^ƒ“ƒX‚ğŠÖ˜A•t‚¯‚é.
+        // SetWindowLongPtrã‚’ä½¿ç”¨ã—hWndã«CMainã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’é–¢é€£ä»˜ã‘ã‚‹.
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
-        // ƒfƒtƒHƒ‹ƒg‚ÌƒEƒBƒ“ƒhƒEƒvƒƒV[ƒWƒƒ‚ğŒÄ‚Ño‚µ‚Äˆ—‚ği‚ß‚é.
+        // ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ—ãƒ­ã‚·ãƒ¼ã‚¸ãƒ£ã‚’å‘¼ã³å‡ºã—ã¦å‡¦ç†ã‚’é€²ã‚ã‚‹.
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
     }
 
     if (pMain) {
         switch (uMsg) {
-            // ƒEƒBƒ“ƒhƒE‚ª”jŠü‚³‚ê‚é‚Æ‚«.
+            // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒç ´æ£„ã•ã‚Œã‚‹ã¨ã.
         case WM_DESTROY:
-            // GPU‚ÌI—¹‚ğ‘Ò‚Á‚Ä‚©‚çƒEƒBƒ“ƒhƒE‚ğ•Â‚¶‚é.
+            // GPUã®çµ‚äº†ã‚’å¾…ã£ã¦ã‹ã‚‰ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’é–‰ã˜ã‚‹.
             pMain->m_pDx12->WaitForGPU();
             PostQuitMessage(0);
             break;
 
-            // ƒL[ƒ{[ƒh‚ª‰Ÿ‚³‚ê‚½‚Æ‚«.
+            // ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ãŒæŠ¼ã•ã‚ŒãŸã¨ã.
         case WM_KEYDOWN:
             if (wParam == VK_ESCAPE) {
-                if (MessageBox(hWnd, _T("ƒQ[ƒ€‚ğI—¹‚µ‚Ü‚·‚©H"), _T("Œx"), MB_YESNO) == IDYES) {
+                if (MessageBox(hWnd, _T("ã‚²ãƒ¼ãƒ ã‚’çµ‚äº†ã—ã¾ã™ã‹ï¼Ÿ"), _T("è­¦å‘Š"), MB_YESNO) == IDYES) {
                     DestroyWindow(hWnd);
                 }
             }

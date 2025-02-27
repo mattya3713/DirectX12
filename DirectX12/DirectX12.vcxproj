@@ -171,6 +171,7 @@
     <ClInclude Include="SourceCode\Ggraphic\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Global.h" />
     <ClInclude Include="SourceCode\Main\CMain.h" />
+    <ClInclude Include="SourceCode\Mesh\CMeshManager.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
     <ClInclude Include="SourceCode\Utility\ComPtr\CComPtr.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
@@ -193,6 +194,7 @@
     <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXRenderer.cpp" />
     <ClCompile Include="SourceCode\Main\CMain.cpp" />
     <ClCompile Include="SourceCode\Main\WinMain.cpp" />
+    <ClCompile Include="SourceCode\Mesh\CMeshManager.cpp" />
     <ClCompile Include="SourceCode\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
