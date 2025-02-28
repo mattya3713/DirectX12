@@ -123,7 +123,7 @@ private:
 	// インデックス関連.
 	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// インデックスバッファ.
 	std::vector<PMX::Face>			m_Faces;					// インデックス.
-	PMX::Face*						m_MappedIndex;				// 頂点マップ.
+	uint32_t*						m_MappedIndex;				// 頂点マップ.
 	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// インデックスバッファビュー.
 
 

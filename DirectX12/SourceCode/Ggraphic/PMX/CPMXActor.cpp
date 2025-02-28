@@ -155,22 +155,22 @@ void CPMXActor::LoadPMXFile(const char* path)
 	// モデル情報を読み飛ばす.
 
 	// モデル名(日本).
-	uint32_t NameLength = 0;
+	uint32_t NameLength = {};
 	fread(&NameLength, sizeof(NameLength), 1, fp);
 	fseek(fp, NameLength, SEEK_CUR);
 
 	// モデル名(英語).
-	uint32_t NameEnglishLength = 0;
+	uint32_t NameEnglishLength = {};
 	fread(&NameEnglishLength, sizeof(NameEnglishLength), 1, fp);
 	fseek(fp, NameEnglishLength, SEEK_CUR);
 
 	// モデルコメント(日本).
-	uint32_t CommentLength = 0;
+	uint32_t CommentLength = {};
 	fread(&CommentLength, sizeof(CommentLength), 1, fp);
 	fseek(fp, CommentLength, SEEK_CUR);
 
 	// モデルコメント(英語).
-	uint32_t CommentEnglishLength = 0;
+	uint32_t CommentEnglishLength = {};
 	fread(&CommentEnglishLength, sizeof(CommentEnglishLength), 1, fp);
 	fseek(fp, CommentEnglishLength, SEEK_CUR);
 
@@ -179,7 +179,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	PMXModelInfo ModelInfo;
 
 	// モデル名の読み込み.
-	uint32_t NameLength = 0;
+	uint32_t NameLength = {};
 	fread(&NameLength, sizeof(NameLength), 1, fp);
 	std::vector<uint8_t> NameBuffer(NameLength);
 	fread(NameBuffer.data(), NameLength, 1, fp);
@@ -188,7 +188,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	(this->*PathConverter)(NameBuffer, ModelInfo.ModelName);
 
 	// モデル名英の読み込み.
-	uint32_t NameEnglishLength = 0;
+	uint32_t NameEnglishLength = {};
 	fread(&NameEnglishLength, sizeof(NameEnglishLength), 1, fp);
 	std::vector<uint8_t> NameEnglishBuffer(NameEnglishLength);
 	fread(NameEnglishBuffer.data(), NameEnglishLength, 1, fp);
@@ -197,7 +197,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	(this->*PathConverter)(NameEnglishBuffer, ModelInfo.ModelNameEnglish);
 
 	// コメントの読み込み.
-	uint32_t CommentLength = 0;
+	uint32_t CommentLength = {};
 	fread(&CommentLength, sizeof(CommentLength), 1, fp);
 	std::vector<uint8_t> CommentBuffer(CommentLength);
 	fread(CommentBuffer.data(), CommentLength, 1, fp);
@@ -206,7 +206,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	(this->*PathConverter)(CommentBuffer, ModelInfo.ModelComment);
 
 	// コメント英の読み込み.
-	uint32_t CommentEnglishLength = 0;
+	uint32_t CommentEnglishLength = {};
 	fread(&CommentEnglishLength, sizeof(CommentEnglishLength), 1, fp);
 	std::vector<uint8_t> CommentEnglishBuffer(CommentEnglishLength);
 	fread(CommentEnglishBuffer.data(), CommentEnglishLength, 1, fp);
@@ -217,8 +217,8 @@ void CPMXActor::LoadPMXFile(const char* path)
 	// 処理.
 
 	// 頂点データの読み込み
-	std::vector<PMX::Vertex> Vertices;
-	uint32_t VerticesNum;
+	std::vector<PMX::Vertex> Vertices = {};
+	uint32_t VerticesNum = {};
 	fread(&VerticesNum, sizeof(VerticesNum), 1, fp);
 	Vertices.reserve(VerticesNum);
 	m_VerticesForHLSL.reserve(VerticesNum);
@@ -332,12 +332,13 @@ void CPMXActor::LoadPMXFile(const char* path)
 	m_pVertexBufferView.SizeInBytes = PMX::GPU_VERTEX_SIZE * VerticesNum;
 	m_pVertexBufferView.StrideInBytes = PMX::GPU_VERTEX_SIZE;
 
+	// インデックスの数.
+	uint32_t IndicesNum = {};
 	// インデックスバッファを読み込む.
-	uint32_t IndicesNum;
 	ReadPMXIndices(fp, &m_Faces, &IndicesNum);
 
 	// インデックスバッファ用にサイズを変更.
-	ResDesc.Width = IndicesNum * PMX::GPU_INDEX_SIZE;
+	ResDesc.Width = IndicesNum * sizeof(uint32_t);
 
 	MyAssert::IsFailed(
 		_T("インデックスバッファの作成"),
@@ -353,8 +354,15 @@ void CPMXActor::LoadPMXFile(const char* path)
 		_T("インデックスをマップする"),
 		&ID3D12Resource::Map, m_pIndexBuffer.Get(),
 		0, nullptr, (void**)&m_MappedIndex);
+	// m_MappedIndex は uint32_t* 型と仮定
 
-	std::copy(std::begin(m_Faces), std::end(m_Faces), m_MappedIndex);
+	 // インデックスをコピー.
+	for (const auto& face : m_Faces) {
+		*m_MappedIndex++ = face.Index[0]; 
+		*m_MappedIndex++ = face.Index[1];
+		*m_MappedIndex++ = face.Index[2];
+	}
+
 	m_pIndexBuffer->Unmap(0, nullptr);
 
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
@@ -476,7 +484,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 		// 面数.
 		fread(&m_Materials.back().NumFaceCount, sizeof(uint32_t), 1, fp);
-		m_Materials.back().NumFaceCount /= 3;
+		m_Materials.back().NumFaceCount;
 	}
 
 	// サイズを256アライアンス.
