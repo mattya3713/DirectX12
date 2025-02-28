@@ -757,7 +757,6 @@ void CPMXActor::LoadPMXFile(const char* path)
 		}
 	}
 
-
 	// もーふの読み込み.
 	uint32_t MorphNum;
 	fread(&MorphNum, sizeof(MorphNum), 1, fp);

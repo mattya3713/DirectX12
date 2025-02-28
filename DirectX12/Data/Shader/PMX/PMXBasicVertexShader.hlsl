@@ -9,5 +9,6 @@ Output VS(
 	pos = mul(world, pos);
 	output.svpos = mul(mul(proj, view), pos);
 	output.uv = uv;
+	output.normal = float4(normal,1);
 	return output;
 }

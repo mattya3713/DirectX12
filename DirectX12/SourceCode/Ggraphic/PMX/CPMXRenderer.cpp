@@ -182,14 +182,12 @@ void CPMXRenderer::CreateGraphicsPipelineForPMX() {
 	gpipeline.SampleDesc.Count = 1;//サンプリングは1ピクセルにつき１
 	gpipeline.SampleDesc.Quality = 0;//クオリティは最低
 
-
 	MyAssert::IsFailed(
 		_T("グラフィックパイプラインの作成"),
 		&ID3D12Device::CreateGraphicsPipelineState, m_pDx12.GetDevice(),
 		&gpipeline,
 		IID_PPV_ARGS(m_pPipelineState.ReleaseAndGetAddressOf())
 	);
-
 }
 
 //ルートシグネチャ初期化
