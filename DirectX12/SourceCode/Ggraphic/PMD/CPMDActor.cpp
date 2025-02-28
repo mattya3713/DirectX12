@@ -525,7 +525,6 @@ void CPMDActor::CreateMaterialAndTextureView() {
 		}
 		matDescHeapH.ptr += incSize;
 
-
 		if (m_pToonResource[i].Get() == nullptr) {
 			srvDesc.Format = m_pRenderer.m_pGradTex->GetDesc().Format;
 			m_pDx12.GetDevice()->CreateShaderResourceView(m_pRenderer.m_pGradTex.Get(), &srvDesc, matDescHeapH);
