@@ -216,7 +216,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 #endif
 	// 処理.
 
-	// 頂点データの読み込み
+	// 頂点データの読み込み.
 	std::vector<PMX::Vertex> Vertices = {};
 	uint32_t VerticesNum = {};
 	fread(&VerticesNum, sizeof(VerticesNum), 1, fp);
@@ -354,15 +354,9 @@ void CPMXActor::LoadPMXFile(const char* path)
 		_T("インデックスをマップする"),
 		&ID3D12Resource::Map, m_pIndexBuffer.Get(),
 		0, nullptr, (void**)&m_MappedIndex);
-	// m_MappedIndex は uint32_t* 型と仮定
 
-	 // インデックスをコピー.
-	for (const auto& face : m_Faces) {
-		*m_MappedIndex++ = face.Index[0]; 
-		*m_MappedIndex++ = face.Index[1];
-		*m_MappedIndex++ = face.Index[2];
-	}
-
+	// インデックスをコピー.
+	std::copy(std::begin(m_Faces), std::end(m_Faces), m_MappedIndex);
 	m_pIndexBuffer->Unmap(0, nullptr);
 
 	m_pIndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
@@ -871,47 +865,41 @@ void CPMXActor::LoadPMXFile(const char* path)
 }
 
 // インデックスを読み込む(1Byte).
-void CPMXActor::ReadPMXIndices1Byte(FILE* fp, const uint32_t& IndicesNum, std::vector<PMX::Face>* Faces)
+void CPMXActor::ReadPMXIndices1Byte(FILE* fp, const uint32_t& IndicesNum, std::vector<uint32_t>* Faces)
 {
 	std::vector<uint8_t> TempIndices(IndicesNum);
 	fread(TempIndices.data(), sizeof(uint8_t), IndicesNum, fp);
 
-	Faces->resize(IndicesNum / 3);
+	Faces->resize(IndicesNum);
 	for (size_t i = 0; i < Faces->size(); ++i)
 	{
-		(*Faces)[i].Index[0] = static_cast<uint32_t>(TempIndices[i * 3 + 0]);
-		(*Faces)[i].Index[1] = static_cast<uint32_t>(TempIndices[i * 3 + 1]);
-		(*Faces)[i].Index[2] = static_cast<uint32_t>(TempIndices[i * 3 + 2]);
+		(*Faces)[i] = static_cast<uint32_t>(TempIndices[i]);
 	}
 }
 
 // インデックスを読み込む(2Byte).
-void CPMXActor::ReadPMXIndices2Byte(FILE* fp, const uint32_t& IndicesNum, std::vector<PMX::Face>* Faces)
+void CPMXActor::ReadPMXIndices2Byte(FILE* fp, const uint32_t& IndicesNum, std::vector<uint32_t>* Faces)
 {
 	std::vector<uint16_t> TempIndices(IndicesNum);
 	fread(TempIndices.data(), sizeof(uint16_t), IndicesNum, fp);
 
-	Faces->resize(IndicesNum / 3);
+	Faces->resize(IndicesNum);
 	for (size_t i = 0; i < Faces->size(); ++i)
 	{
-		(*Faces)[i].Index[0] = static_cast<uint32_t>(TempIndices[i * 3 + 0]);
-		(*Faces)[i].Index[1] = static_cast<uint32_t>(TempIndices[i * 3 + 1]);
-		(*Faces)[i].Index[2] = static_cast<uint32_t>(TempIndices[i * 3 + 2]);
+		(*Faces)[i] = static_cast<uint32_t>(TempIndices[i]);
 	}
 }
 
 // インデックスを読み込む(4Byte).
-void CPMXActor::ReadPMXIndices4Byte(FILE* fp, const uint32_t& IndicesNum, std::vector<PMX::Face>* Faces)
+void CPMXActor::ReadPMXIndices4Byte(FILE* fp, const uint32_t& IndicesNum, std::vector<uint32_t>* Faces)
 {
 	std::vector<uint32_t> TempIndices(IndicesNum);
 	fread(TempIndices.data(), sizeof(uint32_t), IndicesNum, fp);
 
-	Faces->resize(IndicesNum / 3);
+	Faces->resize(IndicesNum);
 	for (size_t i = 0; i < Faces->size(); ++i)
 	{
-		(*Faces)[i].Index[0] = TempIndices[i * 3 + 0];
-		(*Faces)[i].Index[1] = TempIndices[i * 3 + 1];
-		(*Faces)[i].Index[2] = TempIndices[i * 3 + 2];
+		(*Faces)[i] = static_cast<uint32_t>(TempIndices[i]);
 	}
 }
 
@@ -981,7 +969,7 @@ void CPMXActor::ConvertUTF8(const std::vector<uint8_t>& buffer, std::string& Out
 }
 
 // PMXバイナリからインデックス数とインデックスを読み込む.
-void CPMXActor::ReadPMXIndices(FILE* fp, std::vector<PMX::Face>* Faces, uint32_t* IndicesNum)
+void CPMXActor::ReadPMXIndices(FILE* fp, std::vector<uint32_t>* Faces, uint32_t* IndicesNum)
 {
 	// インデックス数を読み込む.
 	fread(IndicesNum, sizeof(uint32_t), 1, fp);

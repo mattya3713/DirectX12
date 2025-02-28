@@ -74,10 +74,10 @@ private:
 	PathConverterFunction PathConverter = nullptr;
 
 	// インデックスを読み込む時の関数を選択するための関数ポインタ.
-	void ReadPMXIndices1Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMX::Face>* Faces);
-	void ReadPMXIndices2Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMX::Face>* Faces);
-	void ReadPMXIndices4Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<PMX::Face>* Faces);
-	using ReadIndicesFunction = void(CPMXActor::*)(FILE*, const uint32_t&, std::vector<PMX::Face>*);
+	void ReadPMXIndices1Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<uint32_t>* Faces);
+	void ReadPMXIndices2Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<uint32_t>* Faces);
+	void ReadPMXIndices4Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<uint32_t>* Faces);
+	using ReadIndicesFunction = void(CPMXActor::*)(FILE*, const uint32_t&, std::vector<uint32_t>*);
 	ReadIndicesFunction ReadIndices = nullptr;
 
 	/*******************************************
@@ -85,7 +85,7 @@ private:
 	* @param	読み込みファイルポインタ.
 	* @param	読み込んだインデックス.
 	*******************************************/
-	void ReadPMXIndices(FILE* fp, std::vector<PMX::Face>* Faces, uint32_t* IndicesNum);
+	void ReadPMXIndices(FILE* fp, std::vector<uint32_t>* Faces, uint32_t* IndicesNum);
 
 	/*******************************************
 	* @brief	回転情報を末端まで伝播させる再帰関数.
@@ -122,7 +122,7 @@ private:
 
 	// インデックス関連.
 	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// インデックスバッファ.
-	std::vector<PMX::Face>			m_Faces;					// インデックス.
+	std::vector<uint32_t>			m_Faces;					// インデックス.
 	uint32_t*						m_MappedIndex;				// 頂点マップ.
 	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// インデックスバッファビュー.
 
