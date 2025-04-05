@@ -58,3 +58,4 @@
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
 DirectX12/Data/Library/DirectXTex/* filter=lfs diff=lfs merge=lfs -text
+"DirectX12/Data/Library/DirectXTex/* filter=lfs diff=lfs merge=lfs -text" 
