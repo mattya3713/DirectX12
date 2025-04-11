@@ -404,7 +404,6 @@ void CPMXActor::LoadPMXFile(const char* path)
 	CBVDesc.SizeInBytes = static_cast<UINT>(BuffSize);
 
 	auto Handle = m_pTransformHeap->GetCPUDescriptorHandleForHeapStart();
-//	auto IncSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_pDx12.GetDevice()->CreateConstantBufferView(&CBVDesc, Handle);
 
@@ -443,28 +442,28 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 		// 固定部分読み取り.
 		fread(&m_Materials.back().Diffuse		, sizeof(DirectX::XMFLOAT4), 1, fp);
-		fread(&m_Materials.back().Specular	, sizeof(DirectX::XMFLOAT3), 1, fp);
+		fread(&m_Materials.back().Specular		, sizeof(DirectX::XMFLOAT3), 1, fp);
 		fread(&m_Materials.back().Specularity	, sizeof(float), 1, fp);
 		fread(&m_Materials.back().Ambient		, sizeof(DirectX::XMFLOAT3), 1, fp);
 
 		// 描画フラグ.
-		fread(&m_Materials.back().DrawMode, sizeof(uint8_t), 1, fp);
+		fread(&m_Materials.back().DrawMode		, sizeof(uint8_t), 1, fp);
 
 		// エッジ色・サイズ.
-		fread(&m_Materials.back().EdgeColor, sizeof(DirectX::XMFLOAT4), 1, fp);
-		fread(&m_Materials.back().EdgeSize, sizeof(float), 1, fp);
+		fread(&m_Materials.back().EdgeColor		, sizeof(DirectX::XMFLOAT4), 1, fp);
+		fread(&m_Materials.back().EdgeSize		, sizeof(float), 1, fp);
 
 		// テクスチャIndex.
-		fread(&m_Materials.back().TextureIndex, Header.TextureIndexSize, 1, fp);
+		fread(&m_Materials.back().TextureIndex	, Header.TextureIndexSize, 1, fp);
 
 		// スフィアテクスチャIndex.
 		fread(&m_Materials.back().SphereTextureIndex, Header.TextureIndexSize, 1, fp);
 
 		// スフィアモード.
-		fread(&m_Materials.back().SphereMode, sizeof(uint8_t), 1, fp);
+		fread(&m_Materials.back().SphereMode	, sizeof(uint8_t), 1, fp);
 
 		// 共有Toonフラグ.
-		fread(&m_Materials.back().ToonFlag, sizeof(uint8_t), 1, fp);
+		fread(&m_Materials.back().ToonFlag		, sizeof(uint8_t), 1, fp);
 
 		if (m_Materials.back().ToonFlag == 0) {
 			fread(&m_Materials.back().ToonTextureIndex, Header.TextureIndexSize, 1, fp);
