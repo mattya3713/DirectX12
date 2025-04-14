@@ -500,8 +500,8 @@ void CPMXActor::LoadPMXFile(const char* path)
 	m_pMaterialBuff->Map(0, nullptr, (void**)&m_pMappedMaterial);
 
 	m_MaterialsForHLSL.resize(MaterialNum);
-
 	char* MappedMaterialPtr = m_pMappedMaterial;
+	
 	int MaterialIndex = 0;
 	for (const auto& Material : m_Materials)
 	{
@@ -514,7 +514,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 		//m_MaterialForHLSL[MaterialIndex].isTransparent	= false;
 		++MaterialIndex;
 
-		PMX::MaterialForHLSL* UpLoadMat = reinterpret_cast<PMX::MaterialForHLSL*>(MappedMaterialPtr);
+		PMX::MaterialForHLSL* UpLoadMat = reinterpret_cast<PMX::MaterialForHLSL*>(m_pMappedMaterial);
 		UpLoadMat->Diffuse = Material.Diffuse;
 		UpLoadMat->Specular = Material.Specular;
 		UpLoadMat->SpecularPower = Material.Specularity;
@@ -523,6 +523,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 		MappedMaterialPtr += MaterialBufferSize;
 	}
 
+	//std::copy(std::begin(m_MaterialsForHLSL), std::end(m_MaterialsForHLSL), m_pMappedMaterial);
 	m_pMaterialBuff->Unmap(0, nullptr);
 
 	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};

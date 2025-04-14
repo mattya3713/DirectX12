@@ -1,18 +1,18 @@
-#pragma once
+ï»¿#pragma once
 
 #include<d3d12.h>
 #include<DirectXMath.h>
 #include<vector>
 #include<string>
-#include"PMXStructHeader.h"	// PMX—p\‘¢‘Ì‚Ü‚Æ‚ß.
+#include"PMXStructHeader.h"	// PMXç”¨æ§‹é€ ä½“ã¾ã¨ã‚.
 
-// ‘O•ûéŒ¾.
+// å‰æ–¹å®£è¨€.
 class CDirectX12;
 class CPMXRenderer;
 
 /**************************************************
-*	PMXƒ‚ƒfƒ‹ƒNƒ‰ƒX.
-*	’S“–F•£˜e –¢—ˆ
+*	PMXãƒ¢ãƒ‡ãƒ«ã‚¯ãƒ©ã‚¹.
+*	æ‹…å½“ï¼šæ·µè„‡ æœªæ¥
 **/
 
 class CPMXActor
@@ -22,58 +22,58 @@ class CPMXActor
 public:
 	CPMXActor(const char* filepath, CPMXRenderer& renderer);
 	~CPMXActor();
-	///ƒNƒ[ƒ“‚Í’¸“_‚¨‚æ‚Ñƒ}ƒeƒŠƒAƒ‹‚Í‹¤’Ê‚Ìƒoƒbƒtƒ@‚ğŒ©‚é‚æ‚¤‚É‚·‚é
+	///ã‚¯ãƒ­ãƒ¼ãƒ³ã¯é ‚ç‚¹ãŠã‚ˆã³ãƒãƒ†ãƒªã‚¢ãƒ«ã¯å…±é€šã®ãƒãƒƒãƒ•ã‚¡ã‚’è¦‹ã‚‹ã‚ˆã†ã«ã™ã‚‹
 	CPMXActor* Clone();
 	void Update();
 	void Draw();
 
-	// ƒAƒjƒ[ƒVƒ‡ƒ“ŠJn.
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³é–‹å§‹.
 	void PlayAnimation();
 
-	// ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌXV.
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®æ›´æ–°.
 	void MotionUpdate();
 
 	/*******************************************
-	* @brief	VMD‚Ìƒ[ƒh.
-	* @param	ƒtƒ@ƒCƒ‹ƒpƒX.
-	* @param	ƒ€[ƒr[–¼.
+	* @brief	VMDã®ãƒ­ãƒ¼ãƒ‰.
+	* @param	ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹.
+	* @param	ãƒ ãƒ¼ãƒ“ãƒ¼å.
 	*******************************************/
 	void LoadVMDFile(const char* FilePath, const char* Name);
 
 private:
 
 	struct Transform {
-		// “à•”‚É‚Á‚Ä‚éXMMATRIXƒƒ“ƒo‚ª16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg‚Å‚ ‚é‚½‚ß.
-		// Transform‚ğnew‚·‚éÛ‚É‚Í16ƒoƒCƒg‹«ŠE‚ÉŠm•Û‚·‚é.
+		// å†…éƒ¨ã«æŒã£ã¦ã‚‹XMMATRIXãƒ¡ãƒ³ãƒãŒ16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆã§ã‚ã‚‹ãŸã‚.
+		// Transformã‚’newã™ã‚‹éš›ã«ã¯16ãƒã‚¤ãƒˆå¢ƒç•Œã«ç¢ºä¿ã™ã‚‹.
 		void* operator new(size_t size);
 		DirectX::XMMATRIX world;
 	};
 
-	// “Ç‚İ‚ñ‚¾ƒ}ƒeƒŠƒAƒ‹‚ğ‚à‚Æ‚Éƒ}ƒeƒŠƒAƒ‹ƒoƒbƒtƒ@‚ğì¬.
+	// èª­ã¿è¾¼ã‚“ã ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’ã‚‚ã¨ã«ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ•ã‚¡ã‚’ä½œæˆ.
 	void CreateMaterialData();
 	
-	// ƒ}ƒeƒŠƒAƒ‹•ƒeƒNƒXƒ`ƒƒ‚Ìƒrƒ…[‚ğì¬.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ï¼†ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ“ãƒ¥ãƒ¼ã‚’ä½œæˆ.
 	void CreateMaterialAndTextureView();
 
-	// À•W•ÏŠ·—pƒrƒ…[‚Ì¶¬.
+	// åº§æ¨™å¤‰æ›ç”¨ãƒ“ãƒ¥ãƒ¼ã®ç”Ÿæˆ.
 	void CreateTransformView();
 
-	// PMDƒtƒ@ƒCƒ‹‚Ìƒ[ƒh.
+	// PMDãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ­ãƒ¼ãƒ‰.
 	void LoadPMXFile(const char* FilePath);
 	
-	// PMXƒwƒbƒ^[“Ç‚İ‚İ.
+	// PMXãƒ˜ãƒƒã‚¿ãƒ¼èª­ã¿è¾¼ã¿.
 	void ReadPMXHeader(FILE* fp, PMX::Header* Header);
 
-	// •¶š—ñ‚Ì“Ç‚İ‚İ.
+	// æ–‡å­—åˆ—ã®èª­ã¿è¾¼ã¿.
 	void ReadString(FILE* fp, std::string& Name);
 
-	// ƒpƒX‚Ì•ÏŠ·‚ÌŠÖ”ƒ|ƒCƒ“ƒ^.
+	// ãƒ‘ã‚¹ã®å¤‰æ›ã®é–¢æ•°ãƒã‚¤ãƒ³ã‚¿.
 	void ConvertUTF16ToUTF8(const std::vector<uint8_t>& buffer, std::string& OutString); 
 	void ConvertUTF8(const std::vector<uint8_t>& buffer, std::string& OutString);
 	using PathConverterFunction = void(CPMXActor::*)(const std::vector<uint8_t>&, std::string&);
 	PathConverterFunction PathConverter = nullptr;
 
-	// ƒCƒ“ƒfƒbƒNƒX‚ğ“Ç‚İ‚Ş‚ÌŠÖ”‚ğ‘I‘ğ‚·‚é‚½‚ß‚ÌŠÖ”ƒ|ƒCƒ“ƒ^.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’èª­ã¿è¾¼ã‚€æ™‚ã®é–¢æ•°ã‚’é¸æŠã™ã‚‹ãŸã‚ã®é–¢æ•°ãƒã‚¤ãƒ³ã‚¿.
 	void ReadPMXIndices1Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<uint32_t>* Faces);
 	void ReadPMXIndices2Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<uint32_t>* Faces);
 	void ReadPMXIndices4Byte(FILE* fp,const uint32_t& IndicesNum, std::vector<uint32_t>* Faces);
@@ -81,20 +81,20 @@ private:
 	ReadIndicesFunction ReadIndices = nullptr;
 
 	/*******************************************
-	* @brief	PMXƒoƒCƒiƒŠ‚©‚çƒCƒ“ƒfƒbƒNƒX”‚ÆƒCƒ“ƒfƒbƒNƒX‚ğ“Ç‚İ‚Ş.
-	* @param	“Ç‚İ‚İƒtƒ@ƒCƒ‹ƒ|ƒCƒ“ƒ^.
-	* @param	“Ç‚İ‚ñ‚¾ƒCƒ“ƒfƒbƒNƒX.
+	* @brief	PMXãƒã‚¤ãƒŠãƒªã‹ã‚‰ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°ã¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’èª­ã¿è¾¼ã‚€.
+	* @param	èª­ã¿è¾¼ã¿ãƒ•ã‚¡ã‚¤ãƒ«ãƒã‚¤ãƒ³ã‚¿.
+	* @param	èª­ã¿è¾¼ã‚“ã ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
 	*******************************************/
 	void ReadPMXIndices(FILE* fp, std::vector<uint32_t>* Faces, uint32_t* IndicesNum);
 
 	/*******************************************
-	* @brief	‰ñ“]î•ñ‚ğ––’[‚Ü‚Å“`”d‚³‚¹‚éÄ‹AŠÖ”.
-	* @param	‰ñ“]‚³‚¹‚½‚¢ƒ{[ƒ“ƒm[ƒh.
-	* @param    ‰ñ“]s—ñ.
+	* @brief	å›è»¢æƒ…å ±ã‚’æœ«ç«¯ã¾ã§ä¼æ’­ã•ã›ã‚‹å†å¸°é–¢æ•°.
+	* @param	å›è»¢ã•ã›ãŸã„ãƒœãƒ¼ãƒ³ãƒãƒ¼ãƒ‰.
+	* @param    å›è»¢è¡Œåˆ—.
 	*******************************************/
 	//void RecursiveMatrixMultipy(BoneNode* node, const DirectX::XMMATRIX& mat);
 
-	float _angle;//ƒeƒXƒg—pY²‰ñ“]
+	float _angle;//ãƒ†ã‚¹ãƒˆç”¨Yè»¸å›è»¢
 
 	float GetYFromXOnBezier(
 		float x, 
@@ -102,11 +102,11 @@ private:
 		const DirectX::XMFLOAT2& b, uint8_t n = 12);
 
 	/*******************************************
-	* @brief    w’è‚³‚ê‚½ƒTƒCƒY•ª‚Ìƒf[ƒ^‚ğ“Ç‚İ‚İA4ƒoƒCƒg‚Ì’l‚Æ‚µ‚Ä•Ô‚·.
-	* @param    ƒtƒ@ƒCƒ‹ƒ|ƒCƒ“ƒ^B“Ç‚İ‚İ‘ÎÛ‚Ìƒtƒ@ƒCƒ‹‚ğw‚µ‚Ü‚·.
-	* @param    “Ç‚İ‚Şƒf[ƒ^‚ÌƒTƒCƒY(1,2,4ƒoƒCƒg‚Ì‚Ç‚ê‚©).
-	* @return   “Ç‚İ‚ñ‚¾ƒf[ƒ^‚ğ4ƒoƒCƒg‚Ì`uint32_t`Œ^‚É•ÏŠ·‚µ‚½’l
-	* @throw	’m‚ç‚È‚¢ƒTƒCƒY.
+	* @brief    æŒ‡å®šã•ã‚ŒãŸã‚µã‚¤ã‚ºåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã¿ã€4ãƒã‚¤ãƒˆã®å€¤ã¨ã—ã¦è¿”ã™.
+	* @param    ãƒ•ã‚¡ã‚¤ãƒ«ãƒã‚¤ãƒ³ã‚¿ã€‚èª­ã¿è¾¼ã¿å¯¾è±¡ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡ã—ã¾ã™.
+	* @param    èª­ã¿è¾¼ã‚€ãƒ‡ãƒ¼ã‚¿ã®ã‚µã‚¤ã‚º(1,2,4ãƒã‚¤ãƒˆã®ã©ã‚Œã‹).
+	* @return   èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã‚’4ãƒã‚¤ãƒˆã®`uint32_t`å‹ã«å¤‰æ›ã—ãŸå€¤
+	* @throw	çŸ¥ã‚‰ãªã„ã‚µã‚¤ã‚º.
 	*******************************************/
 	uint32_t ReadAndCastIndices(FILE* fp, uint8_t indexSize);
 
@@ -114,38 +114,38 @@ private:
 	CPMXRenderer& m_pRenderer;
 	CDirectX12& m_pDx12;
 
-	// ’¸“_ŠÖ˜A.
-	MyComPtr<ID3D12Resource>		m_pVertexBuffer;			// ’¸“_ƒoƒbƒtƒ@.
-	PMX::VertexForHLSL*				m_pMappedVertex;			// ’¸“_ƒ}ƒbƒv.
-	std::vector<PMX::VertexForHLSL>	m_VerticesForHLSL;			// GPU‚É‘—‚é’¸“_À•W.
-	D3D12_VERTEX_BUFFER_VIEW		m_pVertexBufferView;		// ’¸“_ƒoƒbƒtƒ@ƒrƒ…[.
+	// é ‚ç‚¹é–¢é€£.
+	MyComPtr<ID3D12Resource>		m_pVertexBuffer;			// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡.
+	PMX::VertexForHLSL*				m_pMappedVertex;			// é ‚ç‚¹ãƒãƒƒãƒ—.
+	std::vector<PMX::VertexForHLSL>	m_VerticesForHLSL;			// GPUã«é€ã‚‹é ‚ç‚¹åº§æ¨™.
+	D3D12_VERTEX_BUFFER_VIEW		m_pVertexBufferView;		// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼.
 
-	// ƒCƒ“ƒfƒbƒNƒXŠÖ˜A.
-	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@.
-	std::vector<uint32_t>			m_Faces;					// ƒCƒ“ƒfƒbƒNƒX.
-	uint32_t*						m_MappedIndex;				// ’¸“_ƒ}ƒbƒv.
-	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@ƒrƒ…[.
-
-
-	MyComPtr<ID3D12Resource>		m_pTransformMat;			// À•W•ÏŠ·s—ñ(¡‚Íƒ[ƒ‹ƒh‚Ì‚İ).
-
-	// À•WŠÖ˜A.
-	Transform						m_Transform;				// À•W.		
-	MyComPtr<ID3D12DescriptorHeap>	m_pTransformHeap;			// À•W•ÏŠ·ƒq[ƒv.
-	DirectX::XMMATRIX*				m_MappedMatrices;			// GPU‚Æ‚İ‚éÀ•W.					
-	MyComPtr<ID3D12Resource>		m_pTransformBuffer;			// ƒoƒbƒtƒ@.
-
-	//ƒ}ƒeƒŠƒAƒ‹ŠÖ˜A.
-	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// ƒ}ƒeƒŠƒAƒ‹ƒoƒbƒtƒ@.
-	char*									m_pMappedMaterial;	// ƒ}ƒeƒŠƒAƒ‹ƒ}ƒbƒv
-	MyComPtr<ID3D12DescriptorHeap>			m_pMaterialHeap;	// ƒ}ƒeƒŠƒAƒ‹ƒq[ƒv.
-	std::vector<PMX::Material>				m_Materials;		// ƒ}ƒeƒŠƒAƒ‹.
-	std::vector<PMX::MaterialForHLSL>		m_MaterialsForHLSL;	// GPU‚É‘—‚éƒ}ƒeƒŠƒAƒ‹î•ñ.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹é–¢é€£.
+	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡.
+	std::vector<uint32_t>			m_Faces;					// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+	uint32_t*						m_MappedIndex;				// é ‚ç‚¹ãƒãƒƒãƒ—.
+	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼.
 
 
-	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// ‰æ‘œƒŠƒ\[ƒX.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// SphƒŠƒ\[ƒX.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pToonResource;	// ƒgƒD[ƒ“ƒŠƒ\|ƒX.
+	MyComPtr<ID3D12Resource>		m_pTransformMat;			// åº§æ¨™å¤‰æ›è¡Œåˆ—(ä»Šã¯ãƒ¯ãƒ¼ãƒ«ãƒ‰ã®ã¿).
+
+	// åº§æ¨™é–¢é€£.
+	Transform						m_Transform;				// åº§æ¨™.		
+	MyComPtr<ID3D12DescriptorHeap>	m_pTransformHeap;			// åº§æ¨™å¤‰æ›ãƒ’ãƒ¼ãƒ—.
+	DirectX::XMMATRIX*				m_MappedMatrices;			// GPUã¨ã¿ã‚‹åº§æ¨™.					
+	MyComPtr<ID3D12Resource>		m_pTransformBuffer;			// ãƒãƒƒãƒ•ã‚¡.
+
+	//ãƒãƒ†ãƒªã‚¢ãƒ«é–¢é€£.
+	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ•ã‚¡.
+	char*									m_pMappedMaterial;	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ—
+	MyComPtr<ID3D12DescriptorHeap>			m_pMaterialHeap;	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ’ãƒ¼ãƒ—.
+	std::vector<PMX::Material>				m_Materials;		// ãƒãƒ†ãƒªã‚¢ãƒ«.
+	std::vector<PMX::MaterialForHLSL>		m_MaterialsForHLSL;	// GPUã«é€ã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«æƒ…å ±.
+
+
+	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// ç”»åƒãƒªã‚½ãƒ¼ã‚¹.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// Sphãƒªã‚½ãƒ¼ã‚¹.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pToonResource;	// ãƒˆã‚¥ãƒ¼ãƒ³ãƒªã‚½ï¼ã‚¹.
 
 
 

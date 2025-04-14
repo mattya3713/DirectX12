@@ -1,9 +1,9 @@
-#pragma once
+ï»¿#pragma once
 
-//Œx‚É‚Â‚¢‚Ä‚ÌƒR[ƒh•ªÍ‚ğ–³Œø‚É‚·‚é.4005:Ä’è‹`.
+//è­¦å‘Šã«ã¤ã„ã¦ã®ã‚³ãƒ¼ãƒ‰åˆ†æã‚’ç„¡åŠ¹ã«ã™ã‚‹.4005:å†å®šç¾©.
 #pragma warning(disable:4005)
 
-//ƒwƒbƒ_“Ç.
+//ãƒ˜ãƒƒãƒ€èª­è¾¼.
 #include <D3D12.h>
 #include <d3d12.h>
 #include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
@@ -12,32 +12,32 @@
 #include "..\\Data\\Library\\DirectXTex\\DirectXTex\\DirectXTex.h"
 
 
-// XXX : Ì‚Ìƒwƒbƒ_[‚ªinclude‚³‚ê‚Ä‚µ‚Ü‚¤‚½‚ß’¼ƒpƒX.
+// XXX : æ˜”ã®ãƒ˜ãƒƒãƒ€ãƒ¼ãŒincludeã•ã‚Œã¦ã—ã¾ã†ãŸã‚ç›´ãƒ‘ã‚¹.
 #include "d3dcompiler.h"	
 
-//ƒ‰ƒCƒuƒ‰ƒŠ“Ç‚İ‚İ.
+//ãƒ©ã‚¤ãƒ–ãƒ©ãƒªèª­ã¿è¾¼ã¿.
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
-// ƒ‚ƒfƒ‹‚Ì’¸“_ƒTƒCƒY.
+// ãƒ¢ãƒ‡ãƒ«ã®é ‚ç‚¹ã‚µã‚¤ã‚º.
 constexpr size_t PmdVertexSize = 38;
 
 /**************************************************
-*	DirectX12ƒZƒbƒgƒAƒbƒv.
-*	’S“–F•£˜e –¢—ˆ
+*	DirectX12ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—.
+*	æ‹…å½“ï¼šæ·µè„‡ æœªæ¥
 **/
 class CDirectX12
 {
 public:
 
-	// ƒVƒF[ƒ_‘¤‚É“Š‚°‚ç‚ê‚éƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^.
+	// ã‚·ã‚§ãƒ¼ãƒ€å´ã«æŠ•ã’ã‚‰ã‚Œã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿.
 	struct MaterialForHlsl {
-		DirectX::XMFLOAT3	Diffuse;	// ƒfƒBƒtƒ…[ƒYF.		
-		float				Alpha;		// ƒ¿’l.		
-		DirectX::XMFLOAT3	Specular;	// ƒXƒyƒLƒ…ƒ‰‚Ì‹­.		
-		float				Specularity;// ƒXƒyƒLƒ…ƒ‰F.		
-		DirectX::XMFLOAT3	Ambient;	// ƒAƒ“ƒrƒGƒ“ƒgF.		
+		DirectX::XMFLOAT3	Diffuse;	// ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰².		
+		float				Alpha;		// Î±å€¤.		
+		DirectX::XMFLOAT3	Specular;	// ã‚¹ãƒšã‚­ãƒ¥ãƒ©ã®å¼·.		
+		float				Specularity;// ã‚¹ãƒšã‚­ãƒ¥ãƒ©è‰².		
+		DirectX::XMFLOAT3	Ambient;	// ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰².		
 
 		MaterialForHlsl()
 			: Diffuse		(0.0f, 0.0f, 0.0f)
@@ -48,11 +48,11 @@ public:
 		{}
 	};
 
-	// ‚»‚êˆÈŠO‚Ìƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^.
+	// ãã‚Œä»¥å¤–ã®ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿.
 	struct AdditionalMaterial {
-		std::string TexPath;	// ƒeƒNƒXƒ`ƒƒƒtƒ@ƒCƒ‹ƒpƒX.
-		int			ToonIdx;	// ƒgƒD[ƒ“”Ô†.
-		bool		EdgeFlg;	// ƒ}ƒeƒŠƒAƒ‹–ˆ‚Ì—ÖŠsüƒtƒ‰ƒO.
+		std::string TexPath;	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹.
+		int			ToonIdx;	// ãƒˆã‚¥ãƒ¼ãƒ³ç•ªå·.
+		bool		EdgeFlg;	// ãƒãƒ†ãƒªã‚¢ãƒ«æ¯ã®è¼ªéƒ­ç·šãƒ•ãƒ©ã‚°.
 
 		AdditionalMaterial()
 			: TexPath		{}
@@ -61,11 +61,11 @@ public:
 		{}
 	};
 
-	// ‚Ü‚Æ‚ß‚½‚à‚Ì.
+	// ã¾ã¨ã‚ãŸã‚‚ã®.
 	struct Material {
-		unsigned int IndicesNum;		// ƒCƒ“ƒfƒbƒNƒX”.
-		MaterialForHlsl Materialhlsl;	// ƒVƒF[ƒ_‘¤‚É“Š‚°‚ç‚ê‚éƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^.
-		AdditionalMaterial Additional;	// ‚»‚êˆÈŠO‚Ìƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^.
+		unsigned int IndicesNum;		// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°.
+		MaterialForHlsl Materialhlsl;	// ã‚·ã‚§ãƒ¼ãƒ€å´ã«æŠ•ã’ã‚‰ã‚Œã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿.
+		AdditionalMaterial Additional;	// ãã‚Œä»¥å¤–ã®ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿.
 		
 		Material()
 			: IndicesNum	(0)
@@ -74,143 +74,143 @@ public:
 		{}
 	};
 
-	// TODO : ‰¼ƒV[ƒ“ƒf[ƒ^.
+	// TODO : ä»®ã‚·ãƒ¼ãƒ³ãƒ‡ãƒ¼ã‚¿.
 	struct SceneData {
-		DirectX::XMMATRIX view;//ƒrƒ…[s—ñ
-		DirectX::XMMATRIX proj;//ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ
-		DirectX::XMFLOAT3 eye;//‹“_À•W
+		DirectX::XMMATRIX view;//ãƒ“ãƒ¥ãƒ¼è¡Œåˆ—
+		DirectX::XMMATRIX proj;//ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³è¡Œåˆ—
+		DirectX::XMFLOAT3 eye;//è¦–ç‚¹åº§æ¨™
 	};
 
 public:
 	CDirectX12();
 	~CDirectX12();
 
-	//DirectX12\’z.
+	//DirectX12æ§‹ç¯‰.
 	bool Create(HWND hWnd);
 	void UpDate();
 
 	void BeginDraw();
 	void EndDraw();
 
-	// ƒXƒƒbƒvƒ`ƒF[ƒ“æ“¾.
+	// ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³å–å¾—.
 	const MyComPtr<IDXGISwapChain4> GetSwapChain();
 
-	// DirextX12ƒfƒoƒCƒXæ“¾.
+	// DirextX12ãƒ‡ãƒã‚¤ã‚¹å–å¾—.
 	const MyComPtr<ID3D12Device> GetDevice();
 
-	// ƒRƒ}ƒ“ƒhƒŠƒXƒgæ“¾.
+	// ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆå–å¾—.
 	const MyComPtr<ID3D12GraphicsCommandList> GetCommandList();
 
-	// ƒeƒNƒXƒ`ƒƒ‚ğæ“¾.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å–å¾—.
 	MyComPtr<ID3D12Resource> GetTextureByPath(const char* texpath);
 
 	void SetScene();
 
-	// GPU‚ÌŠ®—¹‘Ò‚¿.
+	// GPUã®å®Œäº†å¾…ã¡.
 	void WaitForGPU();
 
-private:// ì‚Á‚Ä‚¢‚­‚ñ‚¾‚æ‚Ë‚¥.
+private:// ä½œã£ã¦ã„ãã‚“ã ã‚ˆã­ã‡.
 
-	// DXGI‚Ì¶¬.
+	// DXGIã®ç”Ÿæˆ.
 	void CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory);
 
-	// ƒRƒ}ƒ“ƒh—Ş‚Ì¶¬.
+	// ã‚³ãƒãƒ³ãƒ‰é¡ã®ç”Ÿæˆ.
 	void CreateCommandObject(
 		MyComPtr<ID3D12CommandAllocator>&	CmdAllocator,
 		MyComPtr<ID3D12GraphicsCommandList>&CmdList,
 		MyComPtr<ID3D12CommandQueue>&		CmdQueue);
 
-	// ƒXƒƒbƒvƒ`ƒF[ƒ“‚Ìì¬.
+	// ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³ã®ä½œæˆ.
 	void CreateSwapChain(MyComPtr<IDXGISwapChain4>& SwapChain);
 
-	// ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg‚Ìì¬.
+	// ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã®ä½œæˆ.
 	void CreateRenderTarget(
 		MyComPtr<ID3D12DescriptorHeap>&			RenderTargetViewHeap,
 		std::vector<MyComPtr<ID3D12Resource>>&	BackBuffer);
 
-	// [“xƒoƒbƒtƒ@‚Ìì¬.
+	// æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã®ä½œæˆ.
 	void CreateDepthDesc(
 		MyComPtr<ID3D12Resource>&		DepthBuffer,
 		MyComPtr<ID3D12DescriptorHeap>&	DepthHeap);
 
-	// ƒV[ƒ“ƒrƒ…[‚Ìì¬.
+	// ã‚·ãƒ¼ãƒ³ãƒ“ãƒ¥ãƒ¼ã®ä½œæˆ.
 	void CreateSceneDesc(
 		SceneData*						MappedSceneData,
 		MyComPtr<ID3D12Resource>&		SceneConstBuff,
 		MyComPtr<ID3D12DescriptorHeap>&	SceneDescHeap);
 
-	// ƒtƒFƒ“ƒX‚Ìì¬.
+	// ãƒ•ã‚§ãƒ³ã‚¹ã®ä½œæˆ.
 	void CreateFance(MyComPtr<ID3D12Fence>& Fence);
 
 
 
 private:
 	/*******************************************
-	* @brief	ƒAƒ_ƒvƒ^[‚ğŒ©‚Â‚¯‚é.
-	* @param	ŒŸõ‚·‚é•¶š—ñ.
-	* @return   Œ©‚Â‚¯‚½ƒAƒ_ƒvƒ^[‚ğ•Ô‚·.
+	* @brief	ã‚¢ãƒ€ãƒ—ã‚¿ãƒ¼ã‚’è¦‹ã¤ã‘ã‚‹.
+	* @param	æ¤œç´¢ã™ã‚‹æ–‡å­—åˆ—.
+	* @return   è¦‹ã¤ã‘ãŸã‚¢ãƒ€ãƒ—ã‚¿ãƒ¼ã‚’è¿”ã™.
 	*******************************************/
 	IDXGIAdapter* FindAdapter(std::wstring FindWord);
 
 	/*******************************************
-	* @brief	ƒfƒoƒbƒOƒŒƒCƒ„[‚ğ‹N“®.
+	* @brief	ãƒ‡ãƒãƒƒã‚°ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’èµ·å‹•.
 	*******************************************/
 	void EnableDebuglayer();
 
 	/*******************************************
-	* @brief	ƒeƒNƒXƒ`ƒƒ–¼‚©‚çƒeƒNƒXƒ`ƒƒƒoƒbƒtƒ@ì¬A’†g‚ğƒRƒs[‚·‚é.
-	* @param	ƒtƒ@ƒCƒ‹ƒpƒX.
-	* @param	ƒŠƒ\[ƒX‚Ìƒ|ƒCƒ“ƒ^‚ğ•Ô‚·.
+	* @brief	ãƒ†ã‚¯ã‚¹ãƒãƒ£åã‹ã‚‰ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒãƒƒãƒ•ã‚¡ä½œæˆã€ä¸­èº«ã‚’ã‚³ãƒ”ãƒ¼ã™ã‚‹.
+	* @param	ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹.
+	* @param	ãƒªã‚½ãƒ¼ã‚¹ã®ãƒã‚¤ãƒ³ã‚¿ã‚’è¿”ã™.
 	*******************************************/
 	ID3D12Resource* CreateTextureFromFile(const char* Texpath);
 
 	/*******************************************
-	* @brief	 ƒeƒNƒXƒ`ƒƒƒ[ƒhƒe[ƒuƒ‹‚Ìì¬.
+	* @brief	 ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ­ãƒ¼ãƒ‰ãƒ†ãƒ¼ãƒ–ãƒ«ã®ä½œæˆ.
 	*******************************************/
 	void CreateTextureLoadTable();
 
 
 private:
-	HWND m_hWnd;	// ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹.
+	HWND m_hWnd;	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«.
 
 	// DXGI.
-	MyComPtr<IDXGIFactory6>					m_pDxgiFactory;			// ƒfƒBƒXƒvƒŒƒC‚Éo—Í‚·‚é‚½‚ß‚ÌAPI.
-	MyComPtr<IDXGISwapChain4>				m_pSwapChain;			// ƒXƒƒbƒvƒ`ƒF[ƒ“.
+	MyComPtr<IDXGIFactory6>					m_pDxgiFactory;			// ãƒ‡ã‚£ã‚¹ãƒ—ãƒ¬ã‚¤ã«å‡ºåŠ›ã™ã‚‹ãŸã‚ã®API.
+	MyComPtr<IDXGISwapChain4>				m_pSwapChain;			// ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³.
 
 	// DirectX12.
-	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12‚ÌƒfƒoƒCƒXƒRƒ“ƒeƒLƒXƒg.
-	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocator;		// ƒRƒ}ƒ“ƒhƒAƒƒP[ƒ^(–½—ß‚ğ‚½‚ß‚Ä‚¨‚­ƒƒ‚ƒŠ—Ìˆæ).	
-	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// ƒRƒ}ƒ“ƒhƒŠƒXƒg.
-	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// ƒRƒ}ƒ“ƒhƒLƒ…[.
+	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12ã®ãƒ‡ãƒã‚¤ã‚¹ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆ.
+	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocator;		// ã‚³ãƒãƒ³ãƒ‰ã‚¢ãƒ­ã‚±ãƒ¼ã‚¿(å‘½ä»¤ã‚’ãŸã‚ã¦ãŠããƒ¡ãƒ¢ãƒªé ˜åŸŸ).	
+	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆ.
+	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// ã‚³ãƒãƒ³ãƒ‰ã‚­ãƒ¥ãƒ¼.
 
-	// ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg.
-	MyComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// ƒŒƒ“ƒ_[ƒ^[ƒQƒbƒgƒrƒ…[.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pBackBuffer;			// ƒoƒbƒNƒoƒbƒtƒ@.
+	// ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ.
+	MyComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆãƒ“ãƒ¥ãƒ¼.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pBackBuffer;			// ãƒãƒƒã‚¯ãƒãƒƒãƒ•ã‚¡.
 
-	// [“xƒoƒbƒtƒ@.
-	MyComPtr<ID3D12Resource>				m_pDepthBuffer;			// [“xƒoƒbƒtƒ@.
-	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// [“xƒXƒeƒ“ƒVƒ‹ƒrƒ…[‚ÌƒfƒXƒNƒŠƒvƒ^ƒq[ƒv. 
-	D3D12_CLEAR_VALUE						m_DepthClearValue;		// [“x‚ÌƒNƒŠƒA’l.
+	// æ·±åº¦ãƒãƒƒãƒ•ã‚¡.
+	MyComPtr<ID3D12Resource>				m_pDepthBuffer;			// æ·±åº¦ãƒãƒƒãƒ•ã‚¡.
+	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒ“ãƒ¥ãƒ¼ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ’ãƒ¼ãƒ—. 
+	D3D12_CLEAR_VALUE						m_DepthClearValue;		// æ·±åº¦ã®ã‚¯ãƒªã‚¢å€¤.
 
-	//ƒV[ƒ“‚ğ\¬‚·‚éƒoƒbƒtƒ@‚Ü‚í‚è
-	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// ƒV[ƒ“.
-	SceneData*								m_pMappedSceneData;		// ƒV[ƒ“‚Ìî•ñ.
-	MyComPtr<ID3D12DescriptorHeap>			m_pSceneDescHeap;		// ƒV[ƒ“‚Ìî•ñƒq[ƒv.
+	//ã‚·ãƒ¼ãƒ³ã‚’æ§‹æˆã™ã‚‹ãƒãƒƒãƒ•ã‚¡ã¾ã‚ã‚Š
+	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// ã‚·ãƒ¼ãƒ³.
+	SceneData*								m_pMappedSceneData;		// ã‚·ãƒ¼ãƒ³ã®æƒ…å ±.
+	MyComPtr<ID3D12DescriptorHeap>			m_pSceneDescHeap;		// ã‚·ãƒ¼ãƒ³ã®æƒ…å ±ãƒ’ãƒ¼ãƒ—.
 
-	// ƒtƒFƒ“ƒX—Ş.
-	MyComPtr<ID3D12Fence>					m_pFence;				// ˆ—‘Ò‚¿ò.
-	UINT64									m_FenceValue;			// ˆ—ƒJƒEƒ“ƒ^[.
+	// ãƒ•ã‚§ãƒ³ã‚¹é¡.
+	MyComPtr<ID3D12Fence>					m_pFence;				// å‡¦ç†å¾…ã¡æŸµ.
+	UINT64									m_FenceValue;			// å‡¦ç†ã‚«ã‚¦ãƒ³ã‚¿ãƒ¼.
 
-	// •`‰æü‚è‚Ìİ’è.
-	MyComPtr<ID3D12PipelineState>			m_pPipelineState;		// ƒpƒCƒvƒ‰ƒCƒ“.
-	MyComPtr<ID3D12RootSignature>			m_pRootSignature;		// ƒ‹[ƒgƒVƒOƒlƒ`ƒƒ.
-	std::unique_ptr<D3D12_VIEWPORT>			m_pViewport;			// ƒrƒ…[ƒ|[ƒg.
-	std::unique_ptr<D3D12_RECT>				m_pScissorRect;			// ƒVƒU[‹éŒ`.
+	// æç”»å‘¨ã‚Šã®è¨­å®š.
+	MyComPtr<ID3D12PipelineState>			m_pPipelineState;		// ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³.
+	MyComPtr<ID3D12RootSignature>			m_pRootSignature;		// ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒãƒãƒ£.
+	std::unique_ptr<D3D12_VIEWPORT>			m_pViewport;			// ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆ.
+	std::unique_ptr<D3D12_RECT>				m_pScissorRect;			// ã‚·ã‚¶ãƒ¼çŸ©å½¢.
 
 	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
 	std::map<std::string, LoadLambda_t>		m_LoadLambdaTable;
 
-	// ƒtƒ@ƒCƒ‹–¼ƒpƒX‚ÆƒŠƒ\[ƒX‚Ìƒ}ƒbƒvƒe[ƒuƒ‹.
+	// ãƒ•ã‚¡ã‚¤ãƒ«åãƒ‘ã‚¹ã¨ãƒªã‚½ãƒ¼ã‚¹ã®ãƒãƒƒãƒ—ãƒ†ãƒ¼ãƒ–ãƒ«.
 	std::map<std::string, MyComPtr<ID3D12Resource>>	m_ResourceTable;
 
 };
