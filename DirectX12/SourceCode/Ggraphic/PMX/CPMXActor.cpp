@@ -338,7 +338,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	ReadPMXIndices(fp, &m_Faces, &IndicesNum);
 
 	// インデックスバッファ用にサイズを変更.
-	ResDesc.Width = IndicesNum * sizeof(uint32_t);
+	ResDesc.Width = sizeof(uint32_t) * IndicesNum;
 
 	MyAssert::IsFailed(
 		_T("インデックスバッファの作成"),
@@ -365,8 +365,6 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 	auto BuffSize = sizeof(DirectX::XMMATRIX);
 	BuffSize = (BuffSize + 0xff) & ~0xff;
-
-	ResDesc.Width = BuffSize;
 
 	MyAssert::IsFailed(
 		_T("座標バッファの作成"),
@@ -404,6 +402,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	CBVDesc.SizeInBytes = static_cast<UINT>(BuffSize);
 
 	auto Handle = m_pTransformHeap->GetCPUDescriptorHandleForHeapStart();
+	//auto incSize = m_pDx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_pDx12.GetDevice()->CreateConstantBufferView(&CBVDesc, Handle);
 
@@ -484,7 +483,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 	int MaterialBufferSize = PMX::GPU_MATERIAL_SIZE;
 	MaterialBufferSize = (MaterialBufferSize + 0xff) & ~0xff;
 
-	ResDesc.Width = static_cast<UINT>(MaterialBufferSize * MaterialNum);
+	ResDesc.Width = static_cast<UINT64>(MaterialBufferSize * MaterialNum);
 
 	MyAssert::IsFailed(
 		_T("マテリアルバッファの作成"),
@@ -604,17 +603,15 @@ void CPMXActor::LoadPMXFile(const char* path)
 		MaterialDescHeapH.ptr += IncSize;
 	}
 
-
-	/*
 	// トゥーンリソースとテクスチャを設定.
-	for (int i = 0; i < Materials.size(); ++i) {
+	for (int i = 0; i < m_Materials.size(); ++i) {
 
 		// トゥーンテクスチャのファイルパスを構築.
 		char toonFilePath[32];
 
 		// 共通のテクスチャをロード.
-		if (Materials[i].ToonFlag) {
-			sprintf_s(toonFilePath, c_PMXCommonToonPath, Materials[i].ToonTextureIndex + 1);
+		if (m_Materials[i].ToonFlag) {
+			sprintf_s(toonFilePath, c_PMXCommonToonPath, m_Materials[i].ToonTextureIndex + 1);
 			m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 		}
 		// モデル特有のテクスチャをロード.
@@ -622,13 +619,13 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 			// リソース数よりテクスチャインデックスが大きかったらcontinue.
 			// MEMO : トゥーンを使用してないと255が入ってる.
-			if (Materials[i].ToonTextureIndex + 1 >= TextureInfo.size()) { continue; }
+			if (m_Materials[i].ToonTextureIndex + 1 >= TextureInfo.size()) { continue; }
 
-			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo[Materials[i].ToonTextureIndex + 1].Path.c_str());
+			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo[m_Materials[i].ToonTextureIndex + 1].Path.c_str());
 		}
 
 		// テクスチャパスの分解とリソースのロード.
-		std::string TexFileName = TextureInfo[Materials[i].ToonTextureIndex + 1].Path;
+		std::string TexFileName = TextureInfo[m_Materials[i].ToonTextureIndex + 1].Path;
 		std::string SphFileName = "";
 		std::string SpaFileName = "";
 
@@ -657,10 +654,10 @@ void CPMXActor::LoadPMXFile(const char* path)
 				SphFileName = TexFileName;
 				TexFileName = "";
 			}
-			else if (MyFilePath::GetExtension(TexFileName) == "spa") {
+			/*else if (MyFilePath::GetExtension(TexFileName) == "spa") {
 				SpaFileName = TexFileName;
 				TexFileName = "";
-			}
+			}*/
 			else {
 				TexFileName = TexFileName;
 			}
@@ -674,190 +671,190 @@ void CPMXActor::LoadPMXFile(const char* path)
 			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
 			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
 		}
-		if (!SpaFileName.empty()) {
+		/*if (!SpaFileName.empty()) {
 			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
 			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
-		}
-	}*/
+		}*/
+	}
 
 	// ボーンの読み込み.
-	uint32_t BoneNum;
-	fread(&BoneNum, sizeof(BoneNum), 1, fp);
-	std::vector<PMX::Bone> Bones(BoneNum);
+	//uint32_t BoneNum;
+	//fread(&BoneNum, sizeof(BoneNum), 1, fp);
+	//std::vector<PMX::Bone> Bones(BoneNum);
 
-	for (uint32_t i = 0; i < BoneNum; ++i)
-	{
-		Bones.emplace_back();
+	//for (uint32_t i = 0; i < BoneNum; ++i)
+	//{
+	//	Bones.emplace_back();
 
-		// 名前読み込み.
-		ReadString(fp, Bones.back().Name);
-		ReadString(fp, Bones.back().EnglishName);
+	//	// 名前読み込み.
+	//	ReadString(fp, Bones.back().Name);
+	//	ReadString(fp, Bones.back().EnglishName);
 
-		// ボーンの位置情報を読み込む (スフィアモード)
-		fread(&Bones.back().Position		, sizeof(DirectX::XMFLOAT3), 1, fp);
-		fread(&Bones.back().ParentBoneIndex	, Header.BoneIndexSize, 1, fp);
-		fread(&Bones.back().DeformDepth		, sizeof(uint32_t), 1, fp);
-		fread(&Bones.back().BoneFlag		, sizeof(uint16_t), 1, fp);
+	//	// ボーンの位置情報を読み込む (スフィアモード)
+	//	fread(&Bones.back().Position		, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//	fread(&Bones.back().ParentBoneIndex	, Header.BoneIndexSize, 1, fp);
+	//	fread(&Bones.back().DeformDepth		, sizeof(uint32_t), 1, fp);
+	//	fread(&Bones.back().BoneFlag		, sizeof(uint16_t), 1, fp);
 
-		// TargetShowModeが無効の場合、位置オフセットを読み込む.
-		if ((Bones.back().BoneFlag & PMX::BoneFlags::TargetShowMode) == 0) {
-			// 位置オフセット.
-			fread(&Bones.back().PositionOffset, sizeof(DirectX::XMFLOAT3), 1, fp);
-		}
-		else {
-			// リンクボーンインデックス.
-			fread(&Bones.back().LinkBoneIndex, Header.BoneIndexSize, 1, fp);
-		}
+	//	// TargetShowModeが無効の場合、位置オフセットを読み込む.
+	//	if ((Bones.back().BoneFlag & PMX::BoneFlags::TargetShowMode) == 0) {
+	//		// 位置オフセット.
+	//		fread(&Bones.back().PositionOffset, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//	}
+	//	else {
+	//		// リンクボーンインデックス.
+	//		fread(&Bones.back().LinkBoneIndex, Header.BoneIndexSize, 1, fp);
+	//	}
 
-		// ボーンが回転または移動を補間する場合.
-		if ((Bones.back().BoneFlag & PMX::BoneFlags::AppendRotate) ||
-			(Bones.back().BoneFlag & PMX::BoneFlags::AppendTranslate)) {
-			fread(&Bones.back().AppendBoneIndex	, Header.BoneIndexSize, 1, fp);
-			fread(&Bones.back().AppendWeight	, sizeof(float), 1, fp);
-		}
+	//	// ボーンが回転または移動を補間する場合.
+	//	if ((Bones.back().BoneFlag & PMX::BoneFlags::AppendRotate) ||
+	//		(Bones.back().BoneFlag & PMX::BoneFlags::AppendTranslate)) {
+	//		fread(&Bones.back().AppendBoneIndex	, Header.BoneIndexSize, 1, fp);
+	//		fread(&Bones.back().AppendWeight	, sizeof(float), 1, fp);
+	//	}
 
-		// 固定軸が有効な場合.
-		if (Bones.back().BoneFlag & PMX::BoneFlags::FixedAxis) {
-			fread(&Bones.back().FixedAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
-		}
+	//	// 固定軸が有効な場合.
+	//	if (Bones.back().BoneFlag & PMX::BoneFlags::FixedAxis) {
+	//		fread(&Bones.back().FixedAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//	}
 
-		// ローカル軸が有効な場合.
-		if (Bones.back().BoneFlag & PMX::BoneFlags::LocalAxis) {
-			fread(&Bones.back().LocalXAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
-			fread(&Bones.back().LocalZAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
-		}
+	//	// ローカル軸が有効な場合.
+	//	if (Bones.back().BoneFlag & PMX::BoneFlags::LocalAxis) {
+	//		fread(&Bones.back().LocalXAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//		fread(&Bones.back().LocalZAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//	}
 
-		// 親ボーンの変形が外部によって制限される場合.
-		if (Bones.back().BoneFlag & PMX::BoneFlags::DeformOuterParent) {
-			fread(&Bones.back().KeyValue, sizeof(uint32_t), 1, fp);
-		}
+	//	// 親ボーンの変形が外部によって制限される場合.
+	//	if (Bones.back().BoneFlag & PMX::BoneFlags::DeformOuterParent) {
+	//		fread(&Bones.back().KeyValue, sizeof(uint32_t), 1, fp);
+	//	}
 
-		// IKが有効な場合.
-		if (Bones.back().BoneFlag & PMX::BoneFlags::IK) {
-			fread(&Bones.back().IKTargetBoneIndex, Header.BoneIndexSize, 1, fp);
-			fread(&Bones.back().IKIterationCount , sizeof(uint32_t), 1, fp);
-			fread(&Bones.back().IKLimit			 , sizeof(float), 1, fp);
+	//	// IKが有効な場合.
+	//	if (Bones.back().BoneFlag & PMX::BoneFlags::IK) {
+	//		fread(&Bones.back().IKTargetBoneIndex, Header.BoneIndexSize, 1, fp);
+	//		fread(&Bones.back().IKIterationCount , sizeof(uint32_t), 1, fp);
+	//		fread(&Bones.back().IKLimit			 , sizeof(float), 1, fp);
 
-			// IKリンクの数を読み込み.
-			uint32_t LinkCount = 0;
-			fread(&LinkCount, sizeof(uint32_t), 1, fp);
+	//		// IKリンクの数を読み込み.
+	//		uint32_t LinkCount = 0;
+	//		fread(&LinkCount, sizeof(uint32_t), 1, fp);
 
-			// IKリンクを読み込む.
-			Bones.back().IKLinks.resize(LinkCount);
-			for (auto& IkLink : Bones.back().IKLinks) {
-				fread(&IkLink.IKBoneIndex, Header.BoneIndexSize, 1, fp);
-				fread(&IkLink.EnableLimit, sizeof(uint8_t), 1, fp);
+	//		// IKリンクを読み込む.
+	//		Bones.back().IKLinks.resize(LinkCount);
+	//		for (auto& IkLink : Bones.back().IKLinks) {
+	//			fread(&IkLink.IKBoneIndex, Header.BoneIndexSize, 1, fp);
+	//			fread(&IkLink.EnableLimit, sizeof(uint8_t), 1, fp);
 
-				// 制限が有効な場合、制限範囲を読み込む.
-				if (IkLink.EnableLimit != 0) {
-					fread(&IkLink.LimitMin, sizeof(DirectX::XMFLOAT3), 1, fp);
-					fread(&IkLink.LimitMax, sizeof(DirectX::XMFLOAT3), 1, fp);
-				}
-			}
-		}
-	}
+	//			// 制限が有効な場合、制限範囲を読み込む.
+	//			if (IkLink.EnableLimit != 0) {
+	//				fread(&IkLink.LimitMin, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//				fread(&IkLink.LimitMax, sizeof(DirectX::XMFLOAT3), 1, fp);
+	//			}
+	//		}
+	//	}
+	//}
 
-	// もーふの読み込み.
-	uint32_t MorphNum;
-	fread(&MorphNum, sizeof(MorphNum), 1, fp);
-	std::vector<PMX::Morph> Morphs(MorphNum);
+	//// もーふの読み込み.
+	//uint32_t MorphNum;
+	//fread(&MorphNum, sizeof(MorphNum), 1, fp);
+	//std::vector<PMX::Morph> Morphs(MorphNum);
 
-	for (uint32_t i = 0; i < MorphNum; ++i)
-	{
-		Morphs.emplace_back();
+	//for (uint32_t i = 0; i < MorphNum; ++i)
+	//{
+	//	Morphs.emplace_back();
 
-		// 名前読み込み.
-		ReadString(fp, Morphs.back().Name);
-		ReadString(fp, Morphs.back().EnglishName);
+	//	// 名前読み込み.
+	//	ReadString(fp, Morphs.back().Name);
+	//	ReadString(fp, Morphs.back().EnglishName);
 
-		fread(&Morphs.back().ControlPanel, sizeof(Morphs.back().ControlPanel), 1, fp);
-		fread(&Morphs.back().MorphType, sizeof(Morphs.back().MorphType), 1, fp);
+	//	fread(&Morphs.back().ControlPanel, sizeof(Morphs.back().ControlPanel), 1, fp);
+	//	fread(&Morphs.back().MorphType, sizeof(Morphs.back().MorphType), 1, fp);
 
-		unsigned int DataCount;
-		fread(&DataCount, sizeof(DataCount), 1, fp);
+	//	unsigned int DataCount;
+	//	fread(&DataCount, sizeof(DataCount), 1, fp);
 
-		// モーフタイプによって読み込む情報を変更.
-		switch (Morphs.back().MorphType)
-		{
-		case PMX::MorphType::Position:	// 座標モーフの場合.
-			Morphs.back().PositionMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().PositionMorphs)
-			{
-				fread(&MorphData.VertexIndex, Header.VertexIndexSize, 1, fp);
-				fread(&MorphData.Position, sizeof(MorphData.Position), 1, fp);
-			}
-			break;
-		case PMX::MorphType::UV:		// UVモーフの場合.
-		case PMX::MorphType::AddUV1:	
-		case PMX::MorphType::AddUV2:
-		case PMX::MorphType::AddUV3:
-		case PMX::MorphType::AddUV4:	
-			Morphs.back().UVMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().UVMorphs)
-			{
-				fread(&MorphData.VertexIndex, Header.VertexIndexSize, 1, fp);
-				fread(&MorphData.UV			, sizeof(MorphData.UV), 1, fp);
-			}
-			break;
-		case PMX::MorphType::Bone: // ボーンモーフの場合.
-			Morphs.back().BoneMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().BoneMorphs)
-			{
-				fread(&MorphData.BoneIndex	, Header.BoneIndexSize, 1, fp);
-				fread(&MorphData.Position	, sizeof(MorphData.Position), 1, fp);
-				fread(&MorphData.Quaternion	, sizeof(MorphData.Quaternion), 1, fp);
-			}
-			break;
-		case PMX::MorphType::Material: // マテリアルモーフの場合.
-			Morphs.back().MaterialMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().MaterialMorphs)
-			{
-				fread(&MorphData.MaterialIndex		, Header.MaterialIndexSize, 1, fp);
-				fread(&MorphData.OpType				, sizeof(MorphData.OpType), 1, fp);
-				fread(&MorphData.Diffuse			, sizeof(MorphData.Diffuse), 1, fp);
-				fread(&MorphData.Specular			, sizeof(MorphData.Specular), 1, fp);
-				fread(&MorphData.SpecularPower		, sizeof(MorphData.SpecularPower), 1, fp);
-				fread(&MorphData.Ambient			, sizeof(MorphData.Ambient), 1, fp);
-				fread(&MorphData.EdgeColor			, sizeof(MorphData.EdgeColor), 1, fp);
-				fread(&MorphData.EdgeSize			, sizeof(MorphData.EdgeSize), 1, fp);
-				fread(&MorphData.TextureFactor		, sizeof(MorphData.TextureFactor), 1, fp);
-				fread(&MorphData.SphereTextureFactor, sizeof(MorphData.SphereTextureFactor), 1, fp);
-				fread(&MorphData.ToonTextureFactor	, sizeof(MorphData.ToonTextureFactor), 1, fp);
-			}
-			break;
-		case PMX::MorphType::Group: // グループモーフの場合.			
-			Morphs.back().GroupMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().GroupMorphs)
-			{
-				fread(&MorphData.MorphIndex	, Header.MorphIndexSize, 1, fp);
-				fread(&MorphData.Weight		, sizeof(MorphData.Weight), 1, fp);
-			}
-			break;
+	//	// モーフタイプによって読み込む情報を変更.
+	//	switch (Morphs.back().MorphType)
+	//	{
+	//	case PMX::MorphType::Position:	// 座標モーフの場合.
+	//		Morphs.back().PositionMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().PositionMorphs)
+	//		{
+	//			fread(&MorphData.VertexIndex, Header.VertexIndexSize, 1, fp);
+	//			fread(&MorphData.Position, sizeof(MorphData.Position), 1, fp);
+	//		}
+	//		break;
+	//	case PMX::MorphType::UV:		// UVモーフの場合.
+	//	case PMX::MorphType::AddUV1:	
+	//	case PMX::MorphType::AddUV2:
+	//	case PMX::MorphType::AddUV3:
+	//	case PMX::MorphType::AddUV4:	
+	//		Morphs.back().UVMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().UVMorphs)
+	//		{
+	//			fread(&MorphData.VertexIndex, Header.VertexIndexSize, 1, fp);
+	//			fread(&MorphData.UV			, sizeof(MorphData.UV), 1, fp);
+	//		}
+	//		break;
+	//	case PMX::MorphType::Bone: // ボーンモーフの場合.
+	//		Morphs.back().BoneMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().BoneMorphs)
+	//		{
+	//			fread(&MorphData.BoneIndex	, Header.BoneIndexSize, 1, fp);
+	//			fread(&MorphData.Position	, sizeof(MorphData.Position), 1, fp);
+	//			fread(&MorphData.Quaternion	, sizeof(MorphData.Quaternion), 1, fp);
+	//		}
+	//		break;
+	//	case PMX::MorphType::Material: // マテリアルモーフの場合.
+	//		Morphs.back().MaterialMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().MaterialMorphs)
+	//		{
+	//			fread(&MorphData.MaterialIndex		, Header.MaterialIndexSize, 1, fp);
+	//			fread(&MorphData.OpType				, sizeof(MorphData.OpType), 1, fp);
+	//			fread(&MorphData.Diffuse			, sizeof(MorphData.Diffuse), 1, fp);
+	//			fread(&MorphData.Specular			, sizeof(MorphData.Specular), 1, fp);
+	//			fread(&MorphData.SpecularPower		, sizeof(MorphData.SpecularPower), 1, fp);
+	//			fread(&MorphData.Ambient			, sizeof(MorphData.Ambient), 1, fp);
+	//			fread(&MorphData.EdgeColor			, sizeof(MorphData.EdgeColor), 1, fp);
+	//			fread(&MorphData.EdgeSize			, sizeof(MorphData.EdgeSize), 1, fp);
+	//			fread(&MorphData.TextureFactor		, sizeof(MorphData.TextureFactor), 1, fp);
+	//			fread(&MorphData.SphereTextureFactor, sizeof(MorphData.SphereTextureFactor), 1, fp);
+	//			fread(&MorphData.ToonTextureFactor	, sizeof(MorphData.ToonTextureFactor), 1, fp);
+	//		}
+	//		break;
+	//	case PMX::MorphType::Group: // グループモーフの場合.			
+	//		Morphs.back().GroupMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().GroupMorphs)
+	//		{
+	//			fread(&MorphData.MorphIndex	, Header.MorphIndexSize, 1, fp);
+	//			fread(&MorphData.Weight		, sizeof(MorphData.Weight), 1, fp);
+	//		}
+	//		break;
 
-		case PMX::MorphType::Flip: // フリップモーフの場合.			
-			Morphs.back().FlipMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().FlipMorphs)
-			{
-				fread(&MorphData.MorphIndex	, Header.MorphIndexSize, 1, fp);
-				fread(&MorphData.Weight		, sizeof(MorphData.Weight), 1, fp);
-			}
-			break;
+	//	case PMX::MorphType::Flip: // フリップモーフの場合.			
+	//		Morphs.back().FlipMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().FlipMorphs)
+	//		{
+	//			fread(&MorphData.MorphIndex	, Header.MorphIndexSize, 1, fp);
+	//			fread(&MorphData.Weight		, sizeof(MorphData.Weight), 1, fp);
+	//		}
+	//		break;
 
-		case PMX::MorphType::Impluse: // インパルスモーフの場合.			
-			Morphs.back().ImpulseMorphs.resize(DataCount);
-			for (auto& MorphData : Morphs.back().ImpulseMorphs)
-			{
-				fread(&MorphData.RigidBodyIndex		, Header.RigidBodyIndexSize, 1, fp);
-				fread(&MorphData.LocalFlag			, sizeof(MorphData.LocalFlag), 1, fp);
-				fread(&MorphData.TranslateVelocity	, sizeof(MorphData.TranslateVelocity), 1, fp);
-				fread(&MorphData.RotateTorque		, sizeof(MorphData.RotateTorque), 1, fp);
-			}
-			break;
-		default:
-			throw std::runtime_error("Ido't know this MorphType.");
-			break;
-		}
-	}
+	//	case PMX::MorphType::Impluse: // インパルスモーフの場合.			
+	//		Morphs.back().ImpulseMorphs.resize(DataCount);
+	//		for (auto& MorphData : Morphs.back().ImpulseMorphs)
+	//		{
+	//			fread(&MorphData.RigidBodyIndex		, Header.RigidBodyIndexSize, 1, fp);
+	//			fread(&MorphData.LocalFlag			, sizeof(MorphData.LocalFlag), 1, fp);
+	//			fread(&MorphData.TranslateVelocity	, sizeof(MorphData.TranslateVelocity), 1, fp);
+	//			fread(&MorphData.RotateTorque		, sizeof(MorphData.RotateTorque), 1, fp);
+	//		}
+	//		break;
+	//	default:
+	//		throw std::runtime_error("Ido't know this MorphType.");
+	//		break;
+	//	}
+	//}
 
 	// ファイルを閉じる.
 	fclose(fp);

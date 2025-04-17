@@ -1,16 +1,16 @@
-#pragma once
+ï»¿#pragma once
 
 #include<d3d12.h>
 #include<vector>
 #include<memory>
 
-// ‘O•ûéŒ¾.
+// å‰æ–¹å®£è¨€.
 class CDirectX12;
 class CPMXActor;
 
 /**************************************************
-*	PMX—p•`‰æƒpƒCƒvƒ‰ƒCƒ“ƒNƒ‰ƒX.
-*	’S“–F•£˜e –¢—ˆ
+*	PMXç”¨æç”»ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã‚¯ãƒ©ã‚¹.
+*	æ‹…å½“ï¼šæ·µè„‡ æœªæ¥
 **/
 
 class CPMXRenderer
@@ -20,42 +20,45 @@ public:
 	CPMXRenderer(CDirectX12& dx12);
 	~CPMXRenderer();
 	void Update();
+	void BeforDraw();
 	void Draw();
 
-	// PMD—p‚ÌƒpƒCƒvƒ‰ƒCƒ“ƒXƒe[ƒg‚ğæ“¾.
+	void AddActor(std::shared_ptr<CPMXActor> pActor);
+
+	// PMDç”¨ã®ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã‚¹ãƒ†ãƒ¼ãƒˆã‚’å–å¾—.
 	ID3D12PipelineState* GetPipelineState();
 
-	// PMD—p‚Ìƒ‹[ƒg–¼‚ğæ“¾.
+	// PMDç”¨ã®ãƒ«ãƒ¼ãƒˆç½²åã‚’å–å¾—.
 	ID3D12RootSignature* GetRootSignature();
 	
-	// ƒfƒtƒHƒ‹ƒg‚Ì”’ƒeƒNƒXƒ`ƒƒ‚ğæ“¾.
+	// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ç™½ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å–å¾—.
 	MyComPtr<ID3D12Resource>& GetWhiteTex();
-	// ƒfƒtƒHƒ‹ƒg‚Ì•ƒeƒNƒXƒ`ƒƒ‚ğæ“¾.
+	// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®é»’ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å–å¾—.
 	MyComPtr<ID3D12Resource>& GetBlackTex();
-	// ƒfƒtƒHƒ‹ƒg‚Ì”’<->•ƒeƒNƒXƒ`ƒƒ‚ğæ“¾.
+	// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ç™½<->é»’ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å–å¾—.
 	MyComPtr<ID3D12Resource>& GetGradTex();
 
 private:
-	// ƒeƒNƒXƒ`ƒƒ‚Ì”Ä—p‘fŞ‚ğì¬.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®æ±ç”¨ç´ æã‚’ä½œæˆ.
 	ID3D12Resource* CreateDefaultTexture(size_t Width, size_t Height);
-	// ”’ƒeƒNƒXƒ`ƒƒ‚Ì¶¬.
+	// ç™½ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç”Ÿæˆ.
 	ID3D12Resource* CreateWhiteTexture();
-	// •ƒeƒNƒXƒ`ƒƒ‚Ì¶¬.
+	// é»’ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç”Ÿæˆ.
 	ID3D12Resource* CreateBlackTexture();
-	// ƒOƒŒ[ƒeƒNƒXƒ`ƒƒ‚Ì¶¬.
+	// ã‚°ãƒ¬ãƒ¼ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç”Ÿæˆ.
 	ID3D12Resource* CreateGrayGradationTexture();
 
-	// ƒpƒCƒvƒ‰ƒCƒ“‰Šú‰».
+	// ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³åˆæœŸåŒ–.
 	void CreateGraphicsPipelineForPMX();
-	// ƒ‹[ƒgƒVƒOƒlƒ`ƒƒ‰Šú‰».
+	// ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒãƒãƒ£åˆæœŸåŒ–.
 	void CreateRootSignature();
 
 	/*******************************************
-	* @brief	ƒVƒF[ƒ_[‚ÌƒRƒ“ƒpƒCƒ‹.
-	* @param	ƒtƒ@ƒCƒ‹ƒpƒX.
-	* @param	ƒGƒ“ƒgƒŠ[ƒ|ƒCƒ“ƒg.
-	* @param	o—ÍŒ`®.
-	* @param	ƒVƒF[ƒ_[ƒuƒƒu(‹‘åƒoƒCƒiƒŠ).
+	* @brief	ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«.
+	* @param	ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹.
+	* @param	ã‚¨ãƒ³ãƒˆãƒªãƒ¼ãƒã‚¤ãƒ³ãƒˆ.
+	* @param	å‡ºåŠ›å½¢å¼.
+	* @param	ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ãƒ–ãƒ­ãƒ–(å·¨å¤§ãƒã‚¤ãƒŠãƒª).
 	*******************************************/
 	HRESULT CompileShaderFromFile(
 		const std::wstring& FilePath,
@@ -66,13 +69,14 @@ private:
 private:
 	CDirectX12& m_pDx12;
 
-	MyComPtr<ID3D12PipelineState>	m_pPipelineState;		// ƒpƒCƒvƒ‰ƒCƒ“.
-	MyComPtr<ID3D12RootSignature>	m_pRootSignature;		// ƒ‹[ƒgƒVƒOƒlƒ`ƒƒ.
+	MyComPtr<ID3D12PipelineState>	m_pPipelineState;		// ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³.
+	MyComPtr<ID3D12RootSignature>	m_pRootSignature;		// ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒãƒãƒ£.
 
-	//PMX—p‹¤’ÊƒeƒNƒXƒ`ƒƒ.
-	MyComPtr<ID3D12Resource>		m_pWhiteTex;			// ”’F‚ÌƒeƒNƒXƒ`ƒƒ.
-	MyComPtr<ID3D12Resource>		m_pBlackTex;			// •F‚ÌƒeƒNƒXƒ`ƒƒ.
-	MyComPtr<ID3D12Resource>		m_pGradTex;				// ”’<->•ƒOƒ‰ƒf[ƒVƒ‡ƒ“‚ÌƒeƒNƒXƒ`ƒƒ.
+	//PMXç”¨å…±é€šãƒ†ã‚¯ã‚¹ãƒãƒ£.
+	MyComPtr<ID3D12Resource>		m_pWhiteTex;			// ç™½è‰²ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£.
+	MyComPtr<ID3D12Resource>		m_pBlackTex;			// é»’è‰²ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£.
+	MyComPtr<ID3D12Resource>		m_pGradTex;				// ç™½<->é»’ã‚°ãƒ©ãƒ‡ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£.
 
+	std::vector<std::shared_ptr<CPMXActor>> m_pActors;		// ã‚­ãƒ£ãƒ©.
 };
 

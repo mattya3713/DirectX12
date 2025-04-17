@@ -1,29 +1,29 @@
-#pragma once
+ï»¿#pragma once
 
 /**************************************************
-*	PMX—p\‘¢‘Ì.
-*	’S“–F•£˜e –¢—ˆ
+*	PMXç”¨æ§‹é€ ä½“.
+*	æ‹…å½“ï¼šæ·µè„‡ æœªæ¥
 **/
 
 namespace PMX {
 
-	// PMXƒtƒ@ƒCƒ‹‚©‚Ç‚¤‚©‚Ì¯•Êq.
+	// PMXãƒ•ã‚¡ã‚¤ãƒ«ã‹ã©ã†ã‹ã®è­˜åˆ¥å­.
 	static constexpr std::array<unsigned char, 4> SIGNATURE{ 0x50, 0x4d, 0x58, 0x20 };
 
-	// ƒwƒbƒ_[\‘¢‘Ì.
+	// ãƒ˜ãƒƒãƒ€ãƒ¼æ§‹é€ ä½“.
 	struct Header
 	{
-		std::array<uint8_t, 4>	Signature;		// ƒVƒOƒlƒ`ƒƒ.
-		float				Version;			// ƒo[ƒWƒ‡ƒ“.
-		uint8_t				NextDataSize;		// Œã‘±ƒf[ƒ^—ñ‚ÌƒTƒCƒY(PMX 2.0‚Ìê‡‚Í8).
-		uint8_t				Encoding;			// ƒeƒLƒXƒgƒGƒ“ƒR[ƒfƒBƒ“ƒO(0: UTF16, 1: UTF8).
-		uint8_t				AdditionalUV;		// ’Ç‰ÁUV”.
-		uint8_t				VertexIndexSize;	// ’¸“_ƒCƒ“ƒfƒbƒNƒXƒTƒCƒY.
-		uint8_t				TextureIndexSize;	// ƒeƒNƒXƒ`ƒƒƒCƒ“ƒfƒbƒNƒXƒTƒCƒY.
-		uint8_t				MaterialIndexSize;	// ƒ}ƒeƒŠƒAƒ‹ƒCƒ“ƒfƒbƒNƒXƒTƒCƒY.
-		uint8_t				BoneIndexSize;		// ƒ{[ƒ“ƒCƒ“ƒfƒbƒNƒXƒTƒCƒY.
-		uint8_t				MorphIndexSize;		// ƒ‚[ƒtƒCƒ“ƒfƒbƒNƒXƒTƒCƒY.
-		uint8_t				RigidBodyIndexSize;	// „‘ÌƒCƒ“ƒfƒbƒNƒXƒTƒCƒY.
+		std::array<uint8_t, 4>	Signature;		// ã‚·ã‚°ãƒãƒãƒ£.
+		float				Version;			// ãƒãƒ¼ã‚¸ãƒ§ãƒ³.
+		uint8_t				NextDataSize;		// å¾Œç¶šãƒ‡ãƒ¼ã‚¿åˆ—ã®ã‚µã‚¤ã‚º(PMX 2.0ã®å ´åˆã¯8).
+		uint8_t				Encoding;			// ãƒ†ã‚­ã‚¹ãƒˆã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°(0: UTF16, 1: UTF8).
+		uint8_t				AdditionalUV;		// è¿½åŠ UVæ•°.
+		uint8_t				VertexIndexSize;	// é ‚ç‚¹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚µã‚¤ã‚º.
+		uint8_t				TextureIndexSize;	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚µã‚¤ã‚º.
+		uint8_t				MaterialIndexSize;	// ãƒãƒ†ãƒªã‚¢ãƒ«ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚µã‚¤ã‚º.
+		uint8_t				BoneIndexSize;		// ãƒœãƒ¼ãƒ³ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚µã‚¤ã‚º.
+		uint8_t				MorphIndexSize;		// ãƒ¢ãƒ¼ãƒ•ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚µã‚¤ã‚º.
+		uint8_t				RigidBodyIndexSize;	// å‰›ä½“ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚µã‚¤ã‚º.
 
 		Header()
 			: Signature			{ }
@@ -40,37 +40,37 @@ namespace PMX {
 		{}
 	};
 
-	// ƒwƒbƒ_[ƒTƒCƒY.
+	// ãƒ˜ãƒƒãƒ€ãƒ¼ã‚µã‚¤ã‚º.
 	static constexpr size_t HEADER_SIZE = 17;
 
-	// ƒ‚ƒfƒ‹î•ñ.
+	// ãƒ¢ãƒ‡ãƒ«æƒ…å ±.
 	struct PMXModelInfo {
-		std::string ModelName;			// ƒ‚ƒfƒ‹–¼.
-		std::string ModelNameEnglish;	// ƒ‚ƒfƒ‹–¼(‰pŒê).
-		std::string ModelComment;		// ƒRƒƒ“ƒg.
-		std::string ModelCommentEnglish;// ƒRƒƒ“ƒg(‰pŒê).
+		std::string ModelName;			// ãƒ¢ãƒ‡ãƒ«å.
+		std::string ModelNameEnglish;	// ãƒ¢ãƒ‡ãƒ«å(è‹±èª).
+		std::string ModelComment;		// ã‚³ãƒ¡ãƒ³ãƒˆ.
+		std::string ModelCommentEnglish;// ã‚³ãƒ¡ãƒ³ãƒˆ(è‹±èª).
 	};
 
-	// ’¸“_î•ñ.
+	// é ‚ç‚¹æƒ…å ±.
 	struct Vertex
 	{
-		DirectX::XMFLOAT3					Position;		// À•W.
-		DirectX::XMFLOAT3					Normal;			// –@ü.
+		DirectX::XMFLOAT3					Position;		// åº§æ¨™.
+		DirectX::XMFLOAT3					Normal;			// æ³•ç·š.
 		DirectX::XMFLOAT2					UV;				// UV.	
-		std::array<DirectX::XMFLOAT4, 4>	AdditionalUV;	// ’Ç‰Á‚ÌUV.
-		std::array<uint32_t, 4>				BoneIndices;	// ƒ{[ƒ“ƒCƒ“ƒfƒbƒNƒX.
-		std::array<float, 4>				BoneWeights;	// ƒ{[ƒ“ƒEƒFƒCƒg.
-		DirectX::XMFLOAT3					SDEF_C;			// SDEF_C’l.
-		DirectX::XMFLOAT3					SDEF_R0;		// SDEF_R0’l.
-		DirectX::XMFLOAT3					SDEF_R1;		// SDEF_R1’l.
-		float								Edge;			// ƒGƒbƒWƒTƒCƒY.
+		std::array<DirectX::XMFLOAT4, 4>	AdditionalUV;	// è¿½åŠ ã®UV.
+		std::array<uint32_t, 4>				BoneIndices;	// ãƒœãƒ¼ãƒ³ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		std::array<float, 4>				BoneWeights;	// ãƒœãƒ¼ãƒ³ã‚¦ã‚§ã‚¤ãƒˆ.
+		DirectX::XMFLOAT3					SDEF_C;			// SDEF_Cå€¤.
+		DirectX::XMFLOAT3					SDEF_R0;		// SDEF_R0å€¤.
+		DirectX::XMFLOAT3					SDEF_R1;		// SDEF_R1å€¤.
+		float								Edge;			// ã‚¨ãƒƒã‚¸ã‚µã‚¤ã‚º.
 	};
 
-	// GPU—p’¸“_î•ñ.
+	// GPUç”¨é ‚ç‚¹æƒ…å ±.
 	struct VertexForHLSL {
-		DirectX::XMFLOAT3 Position;		// ˆÊ’u.
-		DirectX::XMFLOAT3 Normal;		// –@ü.
-		DirectX::XMFLOAT2 UV;			// UVÀ•W.
+		DirectX::XMFLOAT3 Position;		// ä½ç½®.
+		DirectX::XMFLOAT3 Normal;		// æ³•ç·š.
+		DirectX::XMFLOAT2 UV;			// UVåº§æ¨™.
 
 		VertexForHLSL()
 			: Position	( 0.0f, 0.0f, 0.0f )
@@ -79,47 +79,47 @@ namespace PMX {
 		{}
 	};
 
-	// GPU—p’¸“_ƒoƒbƒtƒ@‚ÌƒTƒCƒY.
+	// GPUç”¨é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã®ã‚µã‚¤ã‚º.
 	static constexpr size_t GPU_VERTEX_SIZE = sizeof(VertexForHLSL);
 
-	// –Êî•ñ.
+	// é¢æƒ…å ±.
 	struct Face {
-		std::array<uint32_t, 3> Index; // 3’¸“_ƒCƒ“ƒfƒbƒNƒX.
+		std::array<uint32_t, 3> Index; // 3é ‚ç‚¹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
 
 		Face()
 			: Index{}
 		{}
 	};
 
-	// GPU—p’¸“_ƒoƒbƒtƒ@‚ÌƒTƒCƒY.
-	static constexpr size_t GPU_INDEX_SIZE = sizeof(Face);
+	// GPUç”¨é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã®ã‚µã‚¤ã‚º(ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹é…åˆ—ã¯ã¾ã¨ã¾ã‚Šã§ã¯ãªã„ãŸã‚).
+	static constexpr size_t GPU_INDEX_SIZE = sizeof(uint32_t);
 
-	// PMXƒeƒNƒXƒ`ƒƒî•ñ.
+	// PMXãƒ†ã‚¯ã‚¹ãƒãƒ£æƒ…å ±.
 	struct TexturePath {
-		std::string			Path;	// ŠeƒeƒNƒXƒ`ƒƒ‚ÌƒpƒX.
+		std::string			Path;	// å„ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ‘ã‚¹.
 
 		explicit TexturePath(const std::string& path = "")
 			: Path(path) {}
 	};
 
-	// PMXƒ}ƒeƒŠƒAƒ‹î•ñ.
+	// PMXãƒãƒ†ãƒªã‚¢ãƒ«æƒ…å ±.
 	struct Material {
-		std::string			Name;					// ƒ}ƒeƒŠƒAƒ‹–¼.
-		std::string			EnglishName;			// ƒ}ƒeƒŠƒAƒ‹–¼(‰pŒê).
-		DirectX::XMFLOAT4	Diffuse;				// ƒfƒBƒtƒ…[ƒYF (RGBA).
-		DirectX::XMFLOAT3	Specular;				// ƒXƒyƒLƒ…ƒ‰F.
-		float				Specularity;			// ƒXƒyƒLƒ…ƒ‰ŒW”.
-		DirectX::XMFLOAT3	Ambient;				// ƒAƒ“ƒrƒGƒ“ƒgF.
-		uint8_t				DrawMode;				// •`‰æƒ‚[ƒh.
-		DirectX::XMFLOAT4	EdgeColor;				// ƒGƒbƒWƒJƒ‰[.
-		float				EdgeSize;				// ƒGƒbƒWƒTƒCƒY.
-		uint8_t				SphereMode;				// ƒXƒtƒBƒAƒ‚[ƒh.
-		uint8_t				SphereTextureIndex;		// ƒXƒtƒBƒAƒeƒNƒXƒ`ƒƒƒCƒ“ƒfƒbƒNƒX.
-		uint8_t				ToonFlag;				// ƒgƒD[ƒ“ƒtƒ‰ƒO (0: “Æ©, 1: ‹¤’Ê).
-		uint8_t				ToonTextureIndex;		// ƒgƒD[ƒ“ƒeƒNƒXƒ`ƒƒƒCƒ“ƒfƒbƒNƒX.
-		uint32_t			TextureIndex;			// ƒeƒNƒXƒ`ƒƒƒCƒ“ƒfƒbƒNƒX.
-		uint32_t			NumFaceCount;			// ƒ}ƒeƒŠƒAƒ‹‚ÉŠ„‚è“–‚Ä‚ç‚ê‚é–Ê”.
-		std::string			Memo;					// ƒƒ‚î•ñ.
+		std::string			Name;					// ãƒãƒ†ãƒªã‚¢ãƒ«å.
+		std::string			EnglishName;			// ãƒãƒ†ãƒªã‚¢ãƒ«å(è‹±èª).
+		DirectX::XMFLOAT4	Diffuse;				// ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰² (RGBA).
+		DirectX::XMFLOAT3	Specular;				// ã‚¹ãƒšã‚­ãƒ¥ãƒ©è‰².
+		float				Specularity;			// ã‚¹ãƒšã‚­ãƒ¥ãƒ©ä¿‚æ•°.
+		DirectX::XMFLOAT3	Ambient;				// ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰².
+		uint8_t				DrawMode;				// æç”»ãƒ¢ãƒ¼ãƒ‰.
+		DirectX::XMFLOAT4	EdgeColor;				// ã‚¨ãƒƒã‚¸ã‚«ãƒ©ãƒ¼.
+		float				EdgeSize;				// ã‚¨ãƒƒã‚¸ã‚µã‚¤ã‚º.
+		uint8_t				SphereMode;				// ã‚¹ãƒ•ã‚£ã‚¢ãƒ¢ãƒ¼ãƒ‰.
+		uint8_t				SphereTextureIndex;		// ã‚¹ãƒ•ã‚£ã‚¢ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		uint8_t				ToonFlag;				// ãƒˆã‚¥ãƒ¼ãƒ³ãƒ•ãƒ©ã‚° (0: ç‹¬è‡ª, 1: å…±é€š).
+		uint8_t				ToonTextureIndex;		// ãƒˆã‚¥ãƒ¼ãƒ³ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		uint32_t			TextureIndex;			// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		uint32_t			NumFaceCount;			// ãƒãƒ†ãƒªã‚¢ãƒ«ã«å‰²ã‚Šå½“ã¦ã‚‰ã‚Œã‚‹é¢æ•°.
+		std::string			Memo;					// ãƒ¡ãƒ¢æƒ…å ±.
 
 		Material()
 			: Name				("")                        
@@ -143,16 +143,16 @@ namespace PMX {
 
 	struct MaterialForHLSL
 	{
-		DirectX::XMFLOAT4	Diffuse;		// ƒfƒBƒtƒ…[ƒYF (RGBA).
-		DirectX::XMFLOAT3	Specular;		// ƒXƒyƒLƒ…ƒ‰F.
-		float				SpecularPower;	// ƒXƒyƒLƒ…ƒ‰ŒW”.
-		DirectX::XMFLOAT3	Ambient;		// ƒAƒ“ƒrƒGƒ“ƒgF.
+		DirectX::XMFLOAT4	Diffuse;		// ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰² (RGBA).
+		DirectX::XMFLOAT3	Specular;		// ã‚¹ãƒšã‚­ãƒ¥ãƒ©è‰².
+		float				SpecularPower;	// ã‚¹ãƒšã‚­ãƒ¥ãƒ©ä¿‚æ•°.
+		DirectX::XMFLOAT3	Ambient;		// ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰².
 	};	
 
-	// GPU—pƒ}ƒeƒŠƒAƒ‹ƒoƒbƒtƒ@‚ÌƒTƒCƒY.
+	// GPUç”¨ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ•ã‚¡ã®ã‚µã‚¤ã‚º.
 	static constexpr size_t GPU_MATERIAL_SIZE = sizeof(MaterialForHLSL);
 
-	// PMXƒ{[ƒ“ƒtƒ‰ƒO.
+	// PMXãƒœãƒ¼ãƒ³ãƒ•ãƒ©ã‚°.
 	enum BoneFlags : uint16_t
 	{
 		TargetShowMode = 0x0001,
@@ -170,7 +170,7 @@ namespace PMX {
 		DeformOuterParent = 0x2000,
 	};
 
-	// IK‚Ìî•ñ.
+	// IKã®æƒ…å ±.
 	struct IKLink
 	{
 		uint32_t	IKBoneIndex;
@@ -180,29 +180,29 @@ namespace PMX {
 		DirectX::XMFLOAT3 LimitMax;
 	};
 
-	// ƒ{[ƒ“\‘¢‘Ì.
+	// ãƒœãƒ¼ãƒ³æ§‹é€ ä½“.
 	struct Bone
 	{
-		std::string Name;                // ƒ{[ƒ“‚Ì–¼‘O.
-		std::string EnglishName;         // ƒ{[ƒ“‚Ì–¼‘O(‰pŒê).
-		DirectX::XMFLOAT3 Position;      // ƒ{[ƒ“‚ÌˆÊ’u.
-		uint32_t ParentBoneIndex;        // eƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX.
-		uint32_t DeformDepth;            // ƒ{[ƒ“‚Ì•ÏŒ`[“x.
-		BoneFlags BoneFlag;              // ƒ{[ƒ“‚Ìƒtƒ‰ƒO.
-		DirectX::XMFLOAT3 PositionOffset;// ƒ{[ƒ“‚ÌˆÊ’uƒIƒtƒZƒbƒg.
-		uint32_t LinkBoneIndex;          // ƒŠƒ“ƒN‚³‚ê‚éƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX.
-		uint32_t AppendBoneIndex;        // “Y•tƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX.
-		float AppendWeight;              // “Y•tƒ{[ƒ“‚ÌƒEƒFƒCƒg.
-		DirectX::XMFLOAT3 FixedAxis;     // ŒÅ’è².
-		DirectX::XMFLOAT3 LocalXAxis;    // ƒ[ƒJƒ‹X².
-		DirectX::XMFLOAT3 LocalZAxis;    // ƒ[ƒJƒ‹Z².
-		uint32_t KeyValue;               // ƒ{[ƒ“‚ÌƒL[’l.
-		uint32_t IKTargetBoneIndex;      // IKƒ^[ƒQƒbƒgƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX.
-		uint32_t IKIterationCount;       // IK”½•œ‰ñ”.
-		float IKLimit;                   // IK§ŒÀŠp“x.
-		std::vector<IKLink> IKLinks;     // IKƒŠƒ“ƒN‚ÌƒŠƒXƒg.
+		std::string Name;                // ãƒœãƒ¼ãƒ³ã®åå‰.
+		std::string EnglishName;         // ãƒœãƒ¼ãƒ³ã®åå‰(è‹±èª).
+		DirectX::XMFLOAT3 Position;      // ãƒœãƒ¼ãƒ³ã®ä½ç½®.
+		uint32_t ParentBoneIndex;        // è¦ªãƒœãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		uint32_t DeformDepth;            // ãƒœãƒ¼ãƒ³ã®å¤‰å½¢æ·±åº¦.
+		BoneFlags BoneFlag;              // ãƒœãƒ¼ãƒ³ã®ãƒ•ãƒ©ã‚°.
+		DirectX::XMFLOAT3 PositionOffset;// ãƒœãƒ¼ãƒ³ã®ä½ç½®ã‚ªãƒ•ã‚»ãƒƒãƒˆ.
+		uint32_t LinkBoneIndex;          // ãƒªãƒ³ã‚¯ã•ã‚Œã‚‹ãƒœãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		uint32_t AppendBoneIndex;        // æ·»ä»˜ãƒœãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		float AppendWeight;              // æ·»ä»˜ãƒœãƒ¼ãƒ³ã®ã‚¦ã‚§ã‚¤ãƒˆ.
+		DirectX::XMFLOAT3 FixedAxis;     // å›ºå®šè»¸.
+		DirectX::XMFLOAT3 LocalXAxis;    // ãƒ­ãƒ¼ã‚«ãƒ«Xè»¸.
+		DirectX::XMFLOAT3 LocalZAxis;    // ãƒ­ãƒ¼ã‚«ãƒ«Zè»¸.
+		uint32_t KeyValue;               // ãƒœãƒ¼ãƒ³ã®ã‚­ãƒ¼å€¤.
+		uint32_t IKTargetBoneIndex;      // IKã‚¿ãƒ¼ã‚²ãƒƒãƒˆãƒœãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		uint32_t IKIterationCount;       // IKåå¾©å›æ•°.
+		float IKLimit;                   // IKåˆ¶é™è§’åº¦.
+		std::vector<IKLink> IKLinks;     // IKãƒªãƒ³ã‚¯ã®ãƒªã‚¹ãƒˆ.
 
-		// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+		// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 		Bone()
 			: Name					("")
 			, EnglishName			("")
@@ -242,87 +242,87 @@ namespace PMX {
 
 	struct Morph
 	{
-		std::string Name;					// ƒ‚[ƒt‚Ì–¼‘O.
-		std::string EnglishName;			// ƒ‚[ƒt‚Ì‰pŒê–¼.
+		std::string Name;					// ãƒ¢ãƒ¼ãƒ•ã®åå‰.
+		std::string EnglishName;			// ãƒ¢ãƒ¼ãƒ•ã®è‹±èªå.
 
-		uint8_t ControlPanel;				// §Œäƒpƒlƒ‹‚Ìî•ñ.
-		MorphType MorphType;				// ƒ‚[ƒtí•Ê.
+		uint8_t ControlPanel;				// åˆ¶å¾¡ãƒ‘ãƒãƒ«ã®æƒ…å ±.
+		MorphType MorphType;				// ãƒ¢ãƒ¼ãƒ•ç¨®åˆ¥.
 
-		// ’¸“_‚ÌˆÊ’u‚ğ•Ï‰»‚³‚¹‚éƒ‚[ƒt.
+		// é ‚ç‚¹ã®ä½ç½®ã‚’å¤‰åŒ–ã•ã›ã‚‹ãƒ¢ãƒ¼ãƒ•.
 		struct PositionMorph
 		{
-			uint32_t VertexIndex;			// •Ï‰»‚·‚é’¸“_‚ÌƒCƒ“ƒfƒbƒNƒX.
-			DirectX::XMFLOAT3 Position;		// ’¸“_‚ÌV‚µ‚¢ˆÊ’u.
+			uint32_t VertexIndex;			// å¤‰åŒ–ã™ã‚‹é ‚ç‚¹ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			DirectX::XMFLOAT3 Position;		// é ‚ç‚¹ã®æ–°ã—ã„ä½ç½®.
 		};
 
-		// UVÀ•W‚ğ•Ï‰»‚³‚¹‚éƒ‚[ƒt.
+		// UVåº§æ¨™ã‚’å¤‰åŒ–ã•ã›ã‚‹ãƒ¢ãƒ¼ãƒ•.
 		struct UVMorph
 		{
-			uint32_t VertexIndex;			// •Ï‰»‚·‚é’¸“_‚ÌƒCƒ“ƒfƒbƒNƒX.
-			DirectX::XMFLOAT4 UV;			// V‚µ‚¢UVÀ•W.
+			uint32_t VertexIndex;			// å¤‰åŒ–ã™ã‚‹é ‚ç‚¹ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			DirectX::XMFLOAT4 UV;			// æ–°ã—ã„UVåº§æ¨™.
 		};
 
-		// ƒ{[ƒ“‚ÌˆÊ’u‚â‰ñ“]‚ğ•Ï‰»‚³‚¹‚éƒ‚[ƒt.
+		// ãƒœãƒ¼ãƒ³ã®ä½ç½®ã‚„å›è»¢ã‚’å¤‰åŒ–ã•ã›ã‚‹ãƒ¢ãƒ¼ãƒ•.
 		struct BoneMorph
 		{
-			uint32_t BoneIndex;				// •Ï‰»‚·‚éƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX.
-			DirectX::XMFLOAT3 Position;		// ƒ{[ƒ“‚ÌV‚µ‚¢ˆÊ’u.
-			DirectX::XMFLOAT4 Quaternion;	// ƒ{[ƒ“‚ÌV‚µ‚¢‰ñ“](ƒNƒH[ƒ^ƒjƒIƒ“).
+			uint32_t BoneIndex;				// å¤‰åŒ–ã™ã‚‹ãƒœãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			DirectX::XMFLOAT3 Position;		// ãƒœãƒ¼ãƒ³ã®æ–°ã—ã„ä½ç½®.
+			DirectX::XMFLOAT4 Quaternion;	// ãƒœãƒ¼ãƒ³ã®æ–°ã—ã„å›è»¢(ã‚¯ã‚©ãƒ¼ã‚¿ãƒ‹ã‚ªãƒ³).
 		};
 
-		// ƒ}ƒeƒŠƒAƒ‹(FAÆ–¾)‚ğ•Ï‰»‚³‚¹‚éƒ‚[ƒt.
+		// ãƒãƒ†ãƒªã‚¢ãƒ«(è‰²ã€ç…§æ˜)ã‚’å¤‰åŒ–ã•ã›ã‚‹ãƒ¢ãƒ¼ãƒ•.
 		struct MaterialMorph
 		{
-			// ‰‰Zƒ^ƒCƒv.
+			// æ¼”ç®—ã‚¿ã‚¤ãƒ—.
 			enum OpType : uint8_t   
 			{
-				Mul,	// æZ.
-				Add,	// ‰ÁZ.
+				Mul,	// ä¹—ç®—.
+				Add,	// åŠ ç®—.
 			};
 
-			uint32_t MaterialIndex;					// •Ï‰»‚·‚éƒ}ƒeƒŠƒAƒ‹‚ÌƒCƒ“ƒfƒbƒNƒX.
-			OpType OpType;							// ‰‰Zƒ^ƒCƒv.
-			DirectX::XMFLOAT4 Diffuse;				// ŠgUF.
-			DirectX::XMFLOAT3 Specular;				// ‹¾–Ê”½ËF.
-			float SpecularPower;					// ‹¾–Ê”½Ë‹­“x.
-			DirectX::XMFLOAT3 Ambient;				// ŠÂ‹«ŒõF.
-			DirectX::XMFLOAT4 EdgeColor;			// ƒGƒbƒWF.
-			float EdgeSize;							// ƒGƒbƒWƒTƒCƒY.
-			DirectX::XMFLOAT4 TextureFactor;        // ƒeƒNƒXƒ`ƒƒƒtƒ@ƒNƒ^[.
-			DirectX::XMFLOAT4 SphereTextureFactor;  // ‹…óƒeƒNƒXƒ`ƒƒƒtƒ@ƒNƒ^[.
-			DirectX::XMFLOAT4 ToonTextureFactor;    // ƒgƒD[ƒ“ƒeƒNƒXƒ`ƒƒƒtƒ@ƒNƒ^[.
+			uint32_t MaterialIndex;					// å¤‰åŒ–ã™ã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			OpType OpType;							// æ¼”ç®—ã‚¿ã‚¤ãƒ—.
+			DirectX::XMFLOAT4 Diffuse;				// æ‹¡æ•£è‰².
+			DirectX::XMFLOAT3 Specular;				// é¡é¢åå°„è‰².
+			float SpecularPower;					// é¡é¢åå°„å¼·åº¦.
+			DirectX::XMFLOAT3 Ambient;				// ç’°å¢ƒå…‰è‰².
+			DirectX::XMFLOAT4 EdgeColor;			// ã‚¨ãƒƒã‚¸è‰².
+			float EdgeSize;							// ã‚¨ãƒƒã‚¸ã‚µã‚¤ã‚º.
+			DirectX::XMFLOAT4 TextureFactor;        // ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ•ã‚¡ã‚¯ã‚¿ãƒ¼.
+			DirectX::XMFLOAT4 SphereTextureFactor;  // çƒçŠ¶ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ•ã‚¡ã‚¯ã‚¿ãƒ¼.
+			DirectX::XMFLOAT4 ToonTextureFactor;    // ãƒˆã‚¥ãƒ¼ãƒ³ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ•ã‚¡ã‚¯ã‚¿ãƒ¼.
 		};
 
-		// ƒOƒ‹[ƒvƒ‚[ƒt(•¡”ƒ‚[ƒt‚ğƒOƒ‹[ƒv‚Æ‚µ‚Äˆµ‚¤).
+		// ã‚°ãƒ«ãƒ¼ãƒ—ãƒ¢ãƒ¼ãƒ•(è¤‡æ•°ãƒ¢ãƒ¼ãƒ•ã‚’ã‚°ãƒ«ãƒ¼ãƒ—ã¨ã—ã¦æ‰±ã†).
 		struct GroupMorph
 		{
-			uint32_t MorphIndex;					// ƒOƒ‹[ƒv‰»‚³‚ê‚Ä‚¢‚éƒ‚[ƒt‚ÌƒCƒ“ƒfƒbƒNƒX.
-			float Weight;							// ƒ‚[ƒt‚Ìd‚İ(‰e‹¿“x).
+			uint32_t MorphIndex;					// ã‚°ãƒ«ãƒ¼ãƒ—åŒ–ã•ã‚Œã¦ã„ã‚‹ãƒ¢ãƒ¼ãƒ•ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			float Weight;							// ãƒ¢ãƒ¼ãƒ•ã®é‡ã¿(å½±éŸ¿åº¦).
 		};
 
-		// ƒtƒŠƒbƒvƒ‚[ƒt(ƒ‚[ƒt‚ğ”½“]‚³‚¹‚é).
+		// ãƒ•ãƒªãƒƒãƒ—ãƒ¢ãƒ¼ãƒ•(ãƒ¢ãƒ¼ãƒ•ã‚’åè»¢ã•ã›ã‚‹).
 		struct FlipMorph
 		{
-			uint32_t MorphIndex;					// ”½“]‚·‚éƒ‚[ƒt‚ÌƒCƒ“ƒfƒbƒNƒX.
-			float Weight;							// ƒ‚[ƒt‚Ìd‚İ(”½“]‚Ì‰e‹¿“x)
+			uint32_t MorphIndex;					// åè»¢ã™ã‚‹ãƒ¢ãƒ¼ãƒ•ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			float Weight;							// ãƒ¢ãƒ¼ãƒ•ã®é‡ã¿(åè»¢ã®å½±éŸ¿åº¦)
 		};
 
-		// ƒCƒ“ƒpƒ‹ƒXƒ‚[ƒt(„‘Ì‚Ö‚ÌƒCƒ“ƒpƒ‹ƒX‰ÁZ).
+		// ã‚¤ãƒ³ãƒ‘ãƒ«ã‚¹ãƒ¢ãƒ¼ãƒ•(å‰›ä½“ã¸ã®ã‚¤ãƒ³ãƒ‘ãƒ«ã‚¹åŠ ç®—).
 		struct ImpulseMorph
 		{
-			uint32_t RigidBodyIndex;				// ƒCƒ“ƒpƒ‹ƒX‚ğ‰Á‚¦‚é„‘Ì‚ÌƒCƒ“ƒfƒbƒNƒX.
-			uint8_t LocalFlag;						// ƒ[ƒJƒ‹ƒtƒ‰ƒO(0:OFF, 1:ON).
-			DirectX::XMFLOAT3 TranslateVelocity;	// ˆÊ’u‘¬“x(‰Á‘¬“x‚Ì‚æ‚¤‚È‚à‚Ì).
-			DirectX::XMFLOAT3 RotateTorque;			// ‰ñ“]ƒgƒ‹ƒN.
+			uint32_t RigidBodyIndex;				// ã‚¤ãƒ³ãƒ‘ãƒ«ã‚¹ã‚’åŠ ãˆã‚‹å‰›ä½“ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+			uint8_t LocalFlag;						// ãƒ­ãƒ¼ã‚«ãƒ«ãƒ•ãƒ©ã‚°(0:OFF, 1:ON).
+			DirectX::XMFLOAT3 TranslateVelocity;	// ä½ç½®é€Ÿåº¦(åŠ é€Ÿåº¦ã®ã‚ˆã†ãªã‚‚ã®).
+			DirectX::XMFLOAT3 RotateTorque;			// å›è»¢ãƒˆãƒ«ã‚¯.
 		};
 
-		std::vector<PositionMorph>	PositionMorphs;	// ’¸“_ˆÊ’uƒ‚[ƒt‚ÌƒŠƒXƒg.
-		std::vector<UVMorph>		UVMorphs;       // UVƒ‚[ƒt‚ÌƒŠƒXƒg.
-		std::vector<BoneMorph>		BoneMorphs;     // ƒ{[ƒ“ƒ‚[ƒt‚ÌƒŠƒXƒg.
-		std::vector<MaterialMorph>	MaterialMorphs; // ƒ}ƒeƒŠƒAƒ‹ƒ‚[ƒt‚ÌƒŠƒXƒg.
-		std::vector<GroupMorph>		GroupMorphs;    // ƒOƒ‹[ƒvƒ‚[ƒt‚ÌƒŠƒXƒg.
-		std::vector<FlipMorph>		FlipMorphs;     // ƒtƒŠƒbƒvƒ‚[ƒt‚ÌƒŠƒXƒg.
-		std::vector<ImpulseMorph>	ImpulseMorphs;  // ƒCƒ“ƒpƒ‹ƒXƒ‚[ƒt‚ÌƒŠƒXƒg.
+		std::vector<PositionMorph>	PositionMorphs;	// é ‚ç‚¹ä½ç½®ãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
+		std::vector<UVMorph>		UVMorphs;       // UVãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
+		std::vector<BoneMorph>		BoneMorphs;     // ãƒœãƒ¼ãƒ³ãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
+		std::vector<MaterialMorph>	MaterialMorphs; // ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
+		std::vector<GroupMorph>		GroupMorphs;    // ã‚°ãƒ«ãƒ¼ãƒ—ãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
+		std::vector<FlipMorph>		FlipMorphs;     // ãƒ•ãƒªãƒƒãƒ—ãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
+		std::vector<ImpulseMorph>	ImpulseMorphs;  // ã‚¤ãƒ³ãƒ‘ãƒ«ã‚¹ãƒ¢ãƒ¼ãƒ•ã®ãƒªã‚¹ãƒˆ.
 	};
 
 

@@ -109,7 +109,7 @@ public:
 	// GPUの完了待ち.
 	void WaitForGPU();
 
-private:// 作っていくんだよねぇ.
+private:// 作っていくんだよねぇ~.
 
 	// DXGIの生成.
 	void CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory);
@@ -131,7 +131,8 @@ private:// 作っていくんだよねぇ.
 	// 深度バッファの作成.
 	void CreateDepthDesc(
 		MyComPtr<ID3D12Resource>&		DepthBuffer,
-		MyComPtr<ID3D12DescriptorHeap>&	DepthHeap);
+		MyComPtr<ID3D12DescriptorHeap>&	DepthHeap,
+		MyComPtr<ID3D12DescriptorHeap>&	DepthSRVHeap);
 
 	// シーンビューの作成.
 	void CreateSceneDesc(
@@ -189,7 +190,8 @@ private:
 
 	// 深度バッファ.
 	MyComPtr<ID3D12Resource>				m_pDepthBuffer;			// 深度バッファ.
-	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビューのデスクリプタヒープ. 
+	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビュー. 
+	MyComPtr<ID3D12DescriptorHeap>			m_pDepthSRVHeap;		// 深度ステンシルビューのデスクリプタヒープ. 
 	D3D12_CLEAR_VALUE						m_DepthClearValue;		// 深度のクリア値.
 
 	//シーンを構成するバッファまわり

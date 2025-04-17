@@ -6,6 +6,7 @@ float4 PS(Output input) : SV_TARGET
     float brightness = dot(-light, input.normal.xyz);
 	
 	
-	//float4 color = tex.Sample(smp, input.uv);
-    return float4(brightness, brightness, brightness, 1);
+	float4 color = tex.Sample(smp, input.uv);
+    float4 Out = color * brightness;
+    return Out;
 }

@@ -1,10 +1,11 @@
-#include "CPMXRenderer.h"
+ï»¿#include "CPMXRenderer.h"
+#include <cassert>
+#include <d3dcompiler.h>
+#include <string>
+#include <algorithm>
 #include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
-#include<cassert>
-#include<d3dcompiler.h>
-#include"..\\DirectX\\CDirectX12.h"
-#include<string>
-#include<algorithm>
+#include "..\\DirectX\\CDirectX12.h"
+#include "..\\PMX\\CPMXActor.h"
 
 constexpr size_t PMDTexWide = 4;
 
@@ -14,7 +15,7 @@ CPMXRenderer::CPMXRenderer(CDirectX12& dx12)
 	CreateRootSignature();
 	CreateGraphicsPipelineForPMX();
 
-	// PMD—p”Ä—pƒeƒNƒXƒ`ƒƒ‚Ì¶¬.
+	// PMXç”¨æ±ç”¨ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç”Ÿæˆ.
 	m_pWhiteTex = MyComPtr<ID3D12Resource>(CreateWhiteTexture());
 	m_pBlackTex = MyComPtr<ID3D12Resource>(CreateBlackTexture());
 	m_pGradTex  = MyComPtr<ID3D12Resource>(CreateGrayGradationTexture());
@@ -30,33 +31,50 @@ void CPMXRenderer::Update() {
 
 }
 
-void CPMXRenderer::Draw() {
-
+void CPMXRenderer::BeforDraw()
+{
+	auto cmdList = m_pDx12.GetCommandList();
+	cmdList->SetPipelineState(m_pPipelineState.Get());
+	cmdList->SetGraphicsRootSignature(m_pRootSignature.Get());
+	
+	m_pDx12.SetScene();
 }
 
-// ƒeƒNƒXƒ`ƒƒ‚Ì”Ä—p‘fŞ‚ğì¬.
+void CPMXRenderer::Draw() 
+{
+	for (auto& actor : m_pActors)
+	{
+		actor->Draw();
+	}
+}
+
+void CPMXRenderer::AddActor(std::shared_ptr<CPMXActor> pActor)
+{
+}
+
+// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®æ±ç”¨ç´ æã‚’ä½œæˆ.
 ID3D12Resource* CPMXRenderer::CreateDefaultTexture(size_t Width, size_t Height) {
 
-	// ƒŠƒ\[ƒX‚Ìİ’è.
+	// ãƒªã‚½ãƒ¼ã‚¹ã®è¨­å®š.
 	auto ResourceDesc = 
 		CD3DX12_RESOURCE_DESC::Tex2D(
-			DXGI_FORMAT_R8G8B8A8_UNORM,		// RGB8bitƒtƒH[ƒ}ƒbƒg.
-			static_cast<UINT>(Width),		// •.
-			static_cast<UINT>(Height));		// ‚‚³.
+			DXGI_FORMAT_R8G8B8A8_UNORM,		// RGB8bitãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆ.
+			static_cast<UINT>(Width),		// å¹….
+			static_cast<UINT>(Height));		// é«˜ã•.
 
-	// ƒq[ƒv‚Ìİ’è.
+	// ãƒ’ãƒ¼ãƒ—ã®è¨­å®š.
 	auto TexHeapProp = 
 		CD3DX12_HEAP_PROPERTIES(
-		D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, // CPU‚©‚ç“Ç‚İ‘‚«‰Â”\‚Èƒƒ‚ƒŠ—Ìˆæ‚É”z’u.
-			D3D12_MEMORY_POOL_L0);          // ƒpƒtƒH[ƒ}ƒ“ƒX—Dæ‚Ìƒƒ‚ƒŠƒv[ƒ‹.
+		D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, // CPUã‹ã‚‰èª­ã¿æ›¸ãå¯èƒ½ãªãƒ¡ãƒ¢ãƒªé ˜åŸŸã«é…ç½®.
+			D3D12_MEMORY_POOL_L0);          // ãƒ‘ãƒ•ã‚©ãƒ¼ãƒãƒ³ã‚¹å„ªå…ˆã®ãƒ¡ãƒ¢ãƒªãƒ—ãƒ¼ãƒ«.
 
 	ID3D12Resource* Buffer= nullptr;
 
 	MyAssert::IsFailed(
-		_T("Šî–{ƒeƒNƒXƒ`ƒƒ‚Ìì¬"),
+		_T("åŸºæœ¬ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ä½œæˆ"),
 		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
 		&TexHeapProp,
-		D3D12_HEAP_FLAG_NONE,//“Á‚Éw’è‚È‚µ
+		D3D12_HEAP_FLAG_NONE,
 		&ResourceDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		nullptr,
@@ -66,39 +84,43 @@ ID3D12Resource* CPMXRenderer::CreateDefaultTexture(size_t Width, size_t Height) 
 	return Buffer;
 }
 
-// ”’ƒeƒNƒXƒ`ƒƒì¬.
+// ç™½ãƒ†ã‚¯ã‚¹ãƒãƒ£ä½œæˆ.
 ID3D12Resource* CPMXRenderer::CreateWhiteTexture()
 {
-	// ƒeƒNƒXƒ`ƒƒƒŠƒ\[ƒX‚Ìì¬.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚½ãƒ¼ã‚¹ã®ä½œæˆ.
 	ID3D12Resource* WhiteBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
 	
-	// ƒeƒNƒXƒ`ƒƒ‚Ì”ÍˆÍ‚Ì”’ƒf[ƒ^ì¬.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç¯„å›²ã®ç™½ãƒ‡ãƒ¼ã‚¿ä½œæˆ.
 	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
 	std::fill(data.begin(), data.end(), 0xff);
 
 	MyAssert::IsFailed(
-		_T("ƒeƒNƒXƒ`ƒƒƒŠƒ\[ƒX‚ğ”’‚Å“h‚è‚Â‚Ô‚µ"),
+		_T("ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚½ãƒ¼ã‚¹ã‚’ç™½ã§å¡—ã‚Šã¤ã¶ã—"),
 		&ID3D12Resource::WriteToSubresource, WhiteBuff,
 		0, nullptr,
-		data.data(), 4 * 4, data.size());
+		static_cast<void*>(data.data()),
+		4 * 4,
+		static_cast<UINT>(data.size()));
 
 	return WhiteBuff;
 }
 
 ID3D12Resource* CPMXRenderer::CreateBlackTexture()
 {
-	// ƒeƒNƒXƒ`ƒƒƒŠƒ\[ƒX‚Ìì¬.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚½ãƒ¼ã‚¹ã®ä½œæˆ.
 	ID3D12Resource* BlackBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
 
-	// ƒeƒNƒXƒ`ƒƒ‚Ì”ÍˆÍ‚Ì•ƒf[ƒ^‚ğì¬.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç¯„å›²ã®é»’ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ.
 	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
 	std::fill(data.begin(), data.end(), 0x00);
 
 	MyAssert::IsFailed(
-		_T("ƒeƒNƒXƒ`ƒƒƒŠƒ\[ƒX‚ğ•‚Å“h‚è‚Â‚Ô‚µ"),
+		_T("ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚½ãƒ¼ã‚¹ã‚’é»’ã§å¡—ã‚Šã¤ã¶ã—"),
 		&ID3D12Resource::WriteToSubresource, BlackBuff,
 		0, nullptr,
-		data.data(), 4 * 4, data.size());
+		static_cast<void*>(data.data()), 
+		4 * 4, 
+		static_cast<UINT>(data.size()));
 
 	return BlackBuff;
 }
@@ -107,34 +129,36 @@ ID3D12Resource* CPMXRenderer::CreateGrayGradationTexture()
 {
 	ID3D12Resource* GradBuff = CreateDefaultTexture(4, 256);
 
-	// ƒeƒNƒXƒ`ƒƒ‚Ì”ÍˆÍ‚Ì”’<->•ƒOƒ‰ƒf[ƒVƒ‡ƒ“ƒf[ƒ^‚Ìì¬.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ç¯„å›²ã®ç™½<->é»’ã‚°ãƒ©ãƒ‡ãƒ¼ã‚·ãƒ§ãƒ³ãƒ‡ãƒ¼ã‚¿ã®ä½œæˆ.
 	std::vector<unsigned int> data(4 * 256);
 	auto it = data.begin();
 	unsigned int c = 0xff;
 	for (; it != data.end(); it += 4) {
-		auto col = (0xff << 24) | RGB(c, c, c);//RGBA‚ª‹t•À‚Ñ‚µ‚Ä‚¢‚é‚½‚ßRGBƒ}ƒNƒ‚Æ0xff<<24‚ğ—p‚¢‚Ä•\‚·B
+		auto col = (0xff << 24) | RGB(c, c, c);//RGBAãŒé€†ä¸¦ã³ã—ã¦ã„ã‚‹ãŸã‚RGBãƒã‚¯ãƒ­ã¨0xff<<24ã‚’ç”¨ã„ã¦è¡¨ã™ã€‚
 		std::fill(it, it + 4, col);
 		--c;
 	}
 
 	MyAssert::IsFailed(
-		_T("ƒeƒNƒXƒ`ƒƒƒŠƒ\[ƒX‚É”’<->•ƒOƒ‰ƒf[ƒVƒ‡ƒ“‚ğ‘‚«‚Ş"),
+		_T("ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚½ãƒ¼ã‚¹ã«ç™½<->é»’ã‚°ãƒ©ãƒ‡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’æ›¸ãè¾¼ã‚€"),
 		&ID3D12Resource::WriteToSubresource, GradBuff,
 		0, nullptr,
-		data.data(), 4 * 4, data.size());
+		static_cast<void*>(data.data()),
+		4 * 4,
+		static_cast<UINT>(data.size()));
 
 	return GradBuff;
 }
 
-//ƒpƒCƒvƒ‰ƒCƒ“‰Šú‰»
+//ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³åˆæœŸåŒ–
 void CPMXRenderer::CreateGraphicsPipelineForPMX() {
 
-	MyComPtr<ID3DBlob> VSBlob(nullptr);		// ’¸“_ƒVƒF[ƒ_[‚Ìƒuƒƒu.
-	MyComPtr<ID3DBlob> PSBlob(nullptr);		// ƒsƒNƒZƒ‹ƒVƒF[ƒ_[‚Ìƒuƒƒu.
-	MyComPtr<ID3DBlob> ErrerBlob(nullptr);	// ƒGƒ‰[‚Ìƒuƒƒu.
+	MyComPtr<ID3DBlob> VSBlob(nullptr);		// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ãƒ–ãƒ­ãƒ–.
+	MyComPtr<ID3DBlob> PSBlob(nullptr);		// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ãƒ–ãƒ­ãƒ–.
+	MyComPtr<ID3DBlob> ErrerBlob(nullptr);	// ã‚¨ãƒ©ãƒ¼ã®ãƒ–ãƒ­ãƒ–.
 	HRESULT   result = S_OK;
 
-	// ’¸“_ƒVƒF[ƒ_[‚Ì“Ç‚İ‚İ.
+	// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®èª­ã¿è¾¼ã¿.
 	CompileShaderFromFile(
 		L"Data\\Shader\\PMX\\PMXBasicVertexShader.hlsl",
 		"VS", "vs_5_0",
@@ -145,96 +169,112 @@ void CPMXRenderer::CreateGraphicsPipelineForPMX() {
 		"PS", "ps_5_0",
 		PSBlob.ReleaseAndGetAddressOf());
 
-	// TODO : ’Z‚­‚Å‚«‚»‚¤.
+	// TODO : çŸ­ãã§ããã†.
 	D3D12_INPUT_ELEMENT_DESC PMXInputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
-	gpipeline.pRootSignature = m_pRootSignature.Get();
-	gpipeline.VS = CD3DX12_SHADER_BYTECODE(VSBlob.Get());
-	gpipeline.PS = CD3DX12_SHADER_BYTECODE(PSBlob.Get());
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicPipeLine = {};
+	GraphicPipeLine.pRootSignature = m_pRootSignature.Get();
+	GraphicPipeLine.VS = CD3DX12_SHADER_BYTECODE(VSBlob.Get());
+	GraphicPipeLine.PS = CD3DX12_SHADER_BYTECODE(PSBlob.Get());
 
-	gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;//’†g‚Í0xffffffff
+	GraphicPipeLine.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;//ä¸­èº«ã¯0xffffffff
 
-	gpipeline.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	GraphicPipeLine.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
-	gpipeline.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	gpipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;//ƒJƒŠƒ“ƒO‚µ‚È‚¢
+	GraphicPipeLine.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	GraphicPipeLine.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;//ã‚«ãƒªãƒ³ã‚°ã—ãªã„
 
-	gpipeline.DepthStencilState.DepthEnable = true;//[“xƒoƒbƒtƒ@‚ğg‚¤‚¼
-	gpipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;//‘S‚Ä‘‚«‚İ
-	gpipeline.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;//¬‚³‚¢•û‚ğÌ—p
-	gpipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	gpipeline.DepthStencilState.StencilEnable = false;
+	GraphicPipeLine.DepthStencilState.DepthEnable = true;//æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã‚’ä½¿ã†ã
+	GraphicPipeLine.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;//å…¨ã¦æ›¸ãè¾¼ã¿
+	GraphicPipeLine.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;//å°ã•ã„æ–¹ã‚’æ¡ç”¨
+	GraphicPipeLine.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	GraphicPipeLine.DepthStencilState.StencilEnable = false;
 
-	gpipeline.InputLayout.pInputElementDescs = PMXInputLayout;//ƒŒƒCƒAƒEƒgæ“ªƒAƒhƒŒƒX
-	gpipeline.InputLayout.NumElements = _countof(PMXInputLayout);//ƒŒƒCƒAƒEƒg”z—ñ”
+	GraphicPipeLine.InputLayout.pInputElementDescs = PMXInputLayout;//ãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆå…ˆé ­ã‚¢ãƒ‰ãƒ¬ã‚¹
+	GraphicPipeLine.InputLayout.NumElements = _countof(PMXInputLayout);//ãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆé…åˆ—æ•°
 
-	gpipeline.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;//ƒXƒgƒŠƒbƒv‚ÌƒJƒbƒg‚È‚µ
-	gpipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;//OŠpŒ`‚Å\¬
+	GraphicPipeLine.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;//ã‚¹ãƒˆãƒªãƒƒãƒ—æ™‚ã®ã‚«ãƒƒãƒˆãªã—
+	GraphicPipeLine.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;//ä¸‰è§’å½¢ã§æ§‹æˆ
 
-	gpipeline.NumRenderTargets = 1;//¡‚Í‚P‚Â‚Ì‚İ
-	gpipeline.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;//0`1‚É³‹K‰»‚³‚ê‚½RGBA
+	GraphicPipeLine.NumRenderTargets = 1;//ä»Šã¯ï¼‘ã¤ã®ã¿
+	GraphicPipeLine.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;//0ï½1ã«æ­£è¦åŒ–ã•ã‚ŒãŸRGBA
 
-	gpipeline.SampleDesc.Count = 1;//ƒTƒ“ƒvƒŠƒ“ƒO‚Í1ƒsƒNƒZƒ‹‚É‚Â‚«‚P
-	gpipeline.SampleDesc.Quality = 0;//ƒNƒIƒŠƒeƒB‚ÍÅ’á
+	GraphicPipeLine.SampleDesc.Count = 1;//ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã¯1ãƒ”ã‚¯ã‚»ãƒ«ã«ã¤ãï¼‘
+	GraphicPipeLine.SampleDesc.Quality = 0;//ã‚¯ã‚ªãƒªãƒ†ã‚£ã¯æœ€ä½
 
 	MyAssert::IsFailed(
-		_T("ƒOƒ‰ƒtƒBƒbƒNƒpƒCƒvƒ‰ƒCƒ“‚Ìì¬"),
+		_T("ã‚°ãƒ©ãƒ•ã‚£ãƒƒã‚¯ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã®ä½œæˆ"),
 		&ID3D12Device::CreateGraphicsPipelineState, m_pDx12.GetDevice(),
-		&gpipeline,
+		&GraphicPipeLine,
 		IID_PPV_ARGS(m_pPipelineState.ReleaseAndGetAddressOf())
 	);
 }
 
-//ƒ‹[ƒgƒVƒOƒlƒ`ƒƒ‰Šú‰»
+//ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒãƒãƒ£åˆæœŸåŒ–
 void CPMXRenderer::CreateRootSignature() 
 {
-	// ƒfƒBƒXƒNƒŠƒvƒ^ƒŒƒ“ƒW‚Ìì¬.
+	// ãƒ‡ã‚£ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ¬ãƒ³ã‚¸ã®ä½œæˆ.
 	D3D12_DESCRIPTOR_RANGE DescRanges[4] = {};
 
-	//’è”[b0](ƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“—p).
+	// å®šæ•°[b0](ãƒ“ãƒ¥ãƒ¼ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³ç”¨).
 	DescRanges[0].NumDescriptors = 1;
 	DescRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	DescRanges[0].BaseShaderRegister = 0;
 	DescRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	//’è”[b1](ƒ[ƒ‹ƒhAƒ{[ƒ“—p).
+	// å®šæ•°[b1](ãƒ¯ãƒ¼ãƒ«ãƒ‰ã€ãƒœãƒ¼ãƒ³ç”¨).
 	DescRanges[1].NumDescriptors = 1;
 	DescRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	DescRanges[1].BaseShaderRegister = 1;
 	DescRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	//’è”[b2](ƒ}ƒeƒŠƒAƒ‹—p).
+	// å®šæ•°[b2](ãƒãƒ†ãƒªã‚¢ãƒ«ç”¨).
 	DescRanges[2].NumDescriptors = 1;
 	DescRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	DescRanges[2].BaseShaderRegister = 2;
 	DescRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	//ƒeƒNƒXƒ`ƒƒ3‚Â(Šî–{‚Æsph‚ÆƒgƒD[ƒ“).
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£3ã¤(åŸºæœ¬ã¨sphã¨ãƒˆã‚¥ãƒ¼ãƒ³).
 	DescRanges[3].NumDescriptors = 3;
 	DescRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	DescRanges[3].BaseShaderRegister = 0;
 	DescRanges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; 
 	
-	// ƒ‹[ƒgƒpƒ‰ƒ[ƒ^‚Ìì¬.
-	CD3DX12_ROOT_PARAMETER RootParameters[3] = {};
-	RootParameters[0].InitAsDescriptorTable(1, &DescRanges[0]);	// ƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“•ÏŠ·.
-	RootParameters[1].InitAsDescriptorTable(1, &DescRanges[1]);	// ƒ[ƒ‹ƒhEƒ{[ƒ“•ÏŠ·.
-	RootParameters[2].InitAsDescriptorTable(2, &DescRanges[2]);	// ƒ}ƒeƒŠƒAƒ‹ü‚è.
+	// ãƒ«ãƒ¼ãƒˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®ä½œæˆ.
+	D3D12_ROOT_PARAMETER Rootparams[3] = {};
+
+	// ãƒ“ãƒ¥ãƒ¼ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³å¤‰æ›.
+	Rootparams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	Rootparams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	Rootparams[0].DescriptorTable.pDescriptorRanges = &DescRanges[0];
+	Rootparams[0].DescriptorTable.NumDescriptorRanges = 1;
 	
-	// ƒ‹[ƒgƒVƒOƒlƒNƒ`ƒƒ‚Ìì¬.
+	// ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ»ãƒœãƒ¼ãƒ³å¤‰æ›.
+	Rootparams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	Rootparams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	Rootparams[1].DescriptorTable.pDescriptorRanges = &DescRanges[1];
+	Rootparams[1].DescriptorTable.NumDescriptorRanges = 1;
+
+	// ãƒãƒ†ãƒªã‚¢ãƒ«å‘¨ã‚Š.	
+	std::array<D3D12_DESCRIPTOR_RANGE, 2> MaterialRanges = { DescRanges[2], DescRanges[3] };
+	Rootparams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	Rootparams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	Rootparams[2].DescriptorTable.pDescriptorRanges = MaterialRanges.data();
+	Rootparams[2].DescriptorTable.NumDescriptorRanges = static_cast<UINT>(MaterialRanges.size());
+	
+	// ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒã‚¯ãƒãƒ£ã®ä½œæˆ.
 	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = {};
 
 	RootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	RootSignatureDesc.pParameters = RootParameters;
+	RootSignatureDesc.pParameters = Rootparams;
 	RootSignatureDesc.NumParameters = 3; 
 	
-	// ƒTƒ“ƒvƒ‰[‚Ìì¬.
-	CD3DX12_STATIC_SAMPLER_DESC SamplerDesc[2] = {};
+	// ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ã®ä½œæˆ.
+	CD3DX12_STATIC_SAMPLER_DESC SamplerDesc[3] = {};
 	SamplerDesc[0].Init(0);
 	SamplerDesc[1].Init(1, D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
 
@@ -245,7 +285,7 @@ void CPMXRenderer::CreateRootSignature()
 	MyComPtr<ID3DBlob> ErrorBlob(nullptr);
 
 	MyAssert::IsFailed(
-		_T("ƒ‹[ƒgƒVƒOƒlƒNƒ`ƒƒ‚ğƒVƒŠƒAƒ‰ƒCƒY‚·‚é"),
+		_T("ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒã‚¯ãƒãƒ£ã‚’ã‚·ãƒªã‚¢ãƒ©ã‚¤ã‚ºã™ã‚‹"),
 		&D3D12SerializeRootSignature,
 		&RootSignatureDesc,
 		D3D_ROOT_SIGNATURE_VERSION_1,
@@ -254,7 +294,7 @@ void CPMXRenderer::CreateRootSignature()
 	);
 	
 	MyAssert::IsFailed(
-		_T("ƒ‹[ƒgƒVƒOƒlƒNƒ`ƒƒ‚ğƒVƒŠƒAƒ‰ƒCƒY‚·‚é"),
+		_T("ãƒ«ãƒ¼ãƒˆã‚·ã‚°ãƒã‚¯ãƒãƒ£ã‚’ã‚·ãƒªã‚¢ãƒ©ã‚¤ã‚ºã™ã‚‹"),
 		&ID3D12Device::CreateRootSignature, m_pDx12.GetDevice(),
 		0,
 		RootSigBlob->GetBufferPointer(),
@@ -264,7 +304,7 @@ void CPMXRenderer::CreateRootSignature()
 
 }
 
-// ƒVƒF[ƒ_[‚ÌƒRƒ“ƒpƒCƒ‹.
+// ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«.
 HRESULT CPMXRenderer::CompileShaderFromFile(
 	const std::wstring& FilePath,
 	LPCSTR EntryPoint,
@@ -276,23 +316,23 @@ HRESULT CPMXRenderer::CompileShaderFromFile(
 		FilePath.c_str(),
 		nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		EntryPoint, Target,
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, // ƒfƒoƒbƒOƒIƒvƒVƒ‡ƒ“.
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, // ãƒ‡ãƒãƒƒã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³.
 		0, ShaderBlob, &ErrorBlob
 	);
 
-	// ƒRƒ“ƒpƒCƒ‹ƒGƒ‰[‚ÉƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒO‚ğs‚¤.
+	// ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã‚¨ãƒ©ãƒ¼æ™‚ã«ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°ã‚’è¡Œã†.
 	MyAssert::ErrorBlob(Result, ErrorBlob);
 
 	return Result;
 }
 
-// PMD—p‚ÌƒpƒCƒvƒ‰ƒCƒ“ƒXƒe[ƒg‚ğæ“¾.
+// PMDç”¨ã®ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã‚¹ãƒ†ãƒ¼ãƒˆã‚’å–å¾—.
 ID3D12PipelineState* CPMXRenderer::GetPipelineState()
 {
 	return m_pPipelineState.Get();
 }
 
-// PMD—p‚Ìƒ‹[ƒg–¼‚ğæ“¾.
+// PMDç”¨ã®ãƒ«ãƒ¼ãƒˆç½²åã‚’å–å¾—.
 ID3D12RootSignature* CPMXRenderer::GetRootSignature()
 {
 	return m_pRootSignature.Get();
