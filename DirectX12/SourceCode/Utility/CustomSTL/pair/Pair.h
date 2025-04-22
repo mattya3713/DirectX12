@@ -14,9 +14,7 @@ namespace MyPair {
 
     public:
         constexpr pair() = default;
-
         constexpr pair(T1 a, T2 b) : m_pr(a, b) {}
-
         constexpr explicit pair(std::pair<T1, T2> pr_) : m_pr(std::move(pr_)) {}
 
         // [0] ‚ðˆÓ–¡‚·‚é“ÁŽêŒ^.
