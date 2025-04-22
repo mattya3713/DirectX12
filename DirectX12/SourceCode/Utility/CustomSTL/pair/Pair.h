@@ -3,7 +3,7 @@
 #include <utility>
 #include <cassert>
 #include <tuple>
-#include <cstddef> // nullptr_t
+#include <cstddef> // nullptr_t.
 
 namespace MyPair {
 
@@ -19,7 +19,7 @@ namespace MyPair {
 
         constexpr explicit pair(std::pair<T1, T2> pr_) : m_pr(std::move(pr_)) {}
 
-        // [0] ‚ðˆÓ–¡‚·‚é“ÁŽêŒ^
+        // [0] ‚ðˆÓ–¡‚·‚é“ÁŽêŒ^.
         constexpr T1& operator[](std::nullptr_t) {
             return m_pr.first;
         }
@@ -28,7 +28,7 @@ namespace MyPair {
             return m_pr.first;
         }
 
-        // [1] ‚ðˆÓ–¡‚·‚é“ÁŽêƒ^ƒOŒ^
+        // [1] ‚ðˆÓ–¡‚·‚é“ÁŽêƒ^ƒOŒ^.
         struct second_tag {
             constexpr explicit second_tag(int x) {
                 assert(x == 1);
@@ -43,7 +43,7 @@ namespace MyPair {
             return m_pr.second;
         }
 
-        // ”äŠr‰‰ŽZŽq
+        // ”äŠr‰‰ŽZŽq.
         friend constexpr bool operator==(const pair& a, const pair& b) {
             return a.m_pr == b.m_pr;
         }
@@ -52,12 +52,12 @@ namespace MyPair {
             return !(a == b);
         }
 
-        // –¾Ž¦“I‚È•ÏŠ·
+        // –¾Ž¦“I‚È•ÏŠ·.
         constexpr explicit operator std::pair<T1, T2>() const {
             return m_pr;
         }
 
-        // std::get ŒÝŠ·
+        // std::get ŒÝŠ·.
         template<std::size_t I>
         constexpr decltype(auto) get() {
             if constexpr (I == 0) return (m_pr.first);
@@ -73,7 +73,7 @@ namespace MyPair {
         }
     };
 
-} // namespace MyPair
+} // namespace MyPair.
 
 namespace std {
     template<std::size_t I, typename T1, typename T2>
