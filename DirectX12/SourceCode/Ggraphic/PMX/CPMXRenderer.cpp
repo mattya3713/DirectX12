@@ -169,7 +169,6 @@ void CPMXRenderer::CreateGraphicsPipelineForPMX() {
 		"PS", "ps_5_0",
 		PSBlob.ReleaseAndGetAddressOf());
 
-	// TODO : 短くできそう.
 	D3D12_INPUT_ELEMENT_DESC PMXInputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -205,6 +204,19 @@ void CPMXRenderer::CreateGraphicsPipelineForPMX() {
 
 	GraphicPipeLine.SampleDesc.Count = 1;//サンプリングは1ピクセルにつき１
 	GraphicPipeLine.SampleDesc.Quality = 0;//クオリティは最低
+
+	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
+	transparencyBlendDesc.BlendEnable = true;
+	transparencyBlendDesc.LogicOpEnable = false;
+	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	GraphicPipeLine.BlendState.RenderTarget[0] = transparencyBlendDesc;
 
 	MyAssert::IsFailed(
 		_T("グラフィックパイプラインの作成"),

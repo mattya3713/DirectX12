@@ -5,9 +5,6 @@
 #include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 #include <chrono>
 
-// PMXモデルデフォルトの共通トゥーン素材のパス.
-static constexpr char c_PMXCommonToonPath[] = "Data\\Model\\PMX\\toon\\toon%02d.bmp";
-
 CPMXActor::CPMXActor(const char* filepath, CPMXRenderer& renderer) 
 	: m_pRenderer(renderer)
 	, m_pDx12(renderer.m_pDx12)
@@ -479,6 +476,82 @@ void CPMXActor::LoadPMXFile(const char* path)
 		m_Materials.back().NumFaceCount;
 	}
 
+
+
+	// トゥーンリソースとテクスチャを設定.
+	for (int i = 0; i < static_cast<int>(MaterialNum); ++i) {
+
+		// トゥーンテクスチャのファイルパスを構築.
+		char toonFilePath[32];
+
+		// 共通のテクスチャをロード.
+		if (m_Materials[i].ToonFlag) {
+			sprintf_s(toonFilePath, PMX::COMMON_TOON_PATH, m_Materials[i].ToonTextureIndex + 1);
+			m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
+		}
+		// モデル特有のテクスチャをロード.
+		else {
+
+			// リソース数よりテクスチャインデックスが大きかったらcontinue.
+			// MEMO : トゥーンを使用してないと255が入ってる.
+			if (m_Materials[i].ToonTextureIndex + 1 >= TextureInfo.size()) { continue; }
+
+			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo[m_Materials[i].ToonTextureIndex + 1].Path.c_str());
+		}
+
+		// テクスチャパスの分解とリソースのロード.
+		std::string TexFileName = TextureInfo[m_Materials[i].ToonTextureIndex].Path;
+		std::string SphFileName = "";
+		std::string SpaFileName = "";
+
+		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {
+			auto namepair = MyFilePath::SplitFileName(TexFileName);
+			if (MyFilePath::GetExtension(namepair.first) == "sph") {
+				TexFileName = namepair.second;
+				SphFileName = namepair.first;
+			}
+			else if (MyFilePath::GetExtension(namepair.first) == "spa") {
+				TexFileName = namepair.second;
+				SpaFileName = namepair.first;
+			}
+			else {
+				TexFileName = namepair.first;
+				if (MyFilePath::GetExtension(namepair.second) == "sph") {
+					SphFileName = namepair.second;
+				}
+				else if (MyFilePath::GetExtension(namepair.second) == "spa") {
+					SpaFileName = namepair.second;
+				}
+			}
+		}
+		else {
+			if (MyFilePath::GetExtension(TexFileName) == "sph") {
+				SphFileName = TexFileName;
+				TexFileName = "";
+			}
+			/*else if (MyFilePath::GetExtension(TexFileName) == "spa") {
+				SpaFileName = TexFileName;
+				TexFileName = "";
+			}*/
+			else {
+				TexFileName = TexFileName;
+			}
+		}
+
+		// リソースをロード.
+		if (!TexFileName.empty()) {
+			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFileName.c_str());
+		}
+		if (!SphFileName.empty()) {
+			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
+			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
+		}
+		/*if (!SpaFileName.empty()) {
+			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
+			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
+		}*/
+	}
+
 	// サイズを256アライアンス.
 	int MaterialBufferSize = PMX::GPU_MATERIAL_SIZE;
 	MaterialBufferSize = (MaterialBufferSize + 0xff) & ~0xff;
@@ -603,79 +676,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 		MaterialDescHeapH.ptr += IncSize;
 	}
 
-	// トゥーンリソースとテクスチャを設定.
-	for (int i = 0; i < m_Materials.size(); ++i) {
 
-		// トゥーンテクスチャのファイルパスを構築.
-		char toonFilePath[32];
-
-		// 共通のテクスチャをロード.
-		if (m_Materials[i].ToonFlag) {
-			sprintf_s(toonFilePath, c_PMXCommonToonPath, m_Materials[i].ToonTextureIndex + 1);
-			m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
-		}
-		// モデル特有のテクスチャをロード.
-		else {
-
-			// リソース数よりテクスチャインデックスが大きかったらcontinue.
-			// MEMO : トゥーンを使用してないと255が入ってる.
-			if (m_Materials[i].ToonTextureIndex + 1 >= TextureInfo.size()) { continue; }
-
-			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo[m_Materials[i].ToonTextureIndex + 1].Path.c_str());
-		}
-
-		// テクスチャパスの分解とリソースのロード.
-		std::string TexFileName = TextureInfo[m_Materials[i].ToonTextureIndex + 1].Path;
-		std::string SphFileName = "";
-		std::string SpaFileName = "";
-
-		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {
-			auto namepair = MyFilePath::SplitFileName(TexFileName);
-			if (MyFilePath::GetExtension(namepair.first) == "sph") {
-				TexFileName = namepair.second;
-				SphFileName = namepair.first;
-			}
-			else if (MyFilePath::GetExtension(namepair.first) == "spa") {
-				TexFileName = namepair.second;
-				SpaFileName = namepair.first;
-			}
-			else {
-				TexFileName = namepair.first;
-				if (MyFilePath::GetExtension(namepair.second) == "sph") {
-					SphFileName = namepair.second;
-				}
-				else if (MyFilePath::GetExtension(namepair.second) == "spa") {
-					SpaFileName = namepair.second;
-				}
-			}
-		}
-		else {
-			if (MyFilePath::GetExtension(TexFileName) == "sph") {
-				SphFileName = TexFileName;
-				TexFileName = "";
-			}
-			/*else if (MyFilePath::GetExtension(TexFileName) == "spa") {
-				SpaFileName = TexFileName;
-				TexFileName = "";
-			}*/
-			else {
-				TexFileName = TexFileName;
-			}
-		}
-
-		// リソースをロード.
-		if (!TexFileName.empty()) {
-			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFileName.c_str());
-		}
-		if (!SphFileName.empty()) {
-			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
-			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
-		}
-		/*if (!SpaFileName.empty()) {
-			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
-			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
-		}*/
-	}
 
 	// ボーンの読み込み.
 	//uint32_t BoneNum;

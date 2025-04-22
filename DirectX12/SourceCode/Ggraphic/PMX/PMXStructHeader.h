@@ -102,6 +102,9 @@ namespace PMX {
 			: Path(path) {}
 	};
 
+	// PMXモデルデフォルトの共通トゥーン素材のパス.
+	static constexpr char COMMON_TOON_PATH[] = "Data\\Model\\PMX\\toon\\toon%02d.bmp";
+
 	// PMXマテリアル情報.
 	struct Material {
 		std::string			Name;					// マテリアル名.
