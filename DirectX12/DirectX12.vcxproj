@@ -173,14 +173,12 @@
     <ClInclude Include="SourceCode\Main\CMain.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
     <ClInclude Include="SourceCode\Utility\ComPtr\CComPtr.h" />
+    <ClInclude Include="SourceCode\Utility\CustomSTL\pair\Pair.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
     <ClInclude Include="SourceCode\Utility\Hash\CHash.h" />
     <ClInclude Include="SourceCode\Utility\Hash\Crc32Table\HashTable.h" />
     <ClInclude Include="SourceCode\Utility\Math\Math.h" />
     <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h" />
-    <ClInclude Include="SourceCode\Utility\Property\Getter.h" />
-    <ClInclude Include="SourceCode\Utility\Property\Property.h" />
-    <ClInclude Include="SourceCode\Utility\Property\Setter.h" />
     <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
     <ClInclude Include="SourceCode\Utility\String\magic_enum.h" />
     <ClInclude Include="SourceCode\Utility\String\String.h" />
