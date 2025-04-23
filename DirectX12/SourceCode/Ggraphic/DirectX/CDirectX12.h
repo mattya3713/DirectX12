@@ -5,7 +5,6 @@
 
 //ヘッダ読込.
 #include <D3D12.h>
-#include <d3d12.h>
 #include "..\\Data\\Library\\DirectXTex\\DirectXTex\\d3dx12.h"
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
@@ -87,7 +86,8 @@ public:
 
 	//DirectX12構築.
 	bool Create(HWND hWnd);
-	void UpDate();
+	void Update();
+	void UpdateSceneBuffer();
 
 	void BeginDraw();
 	void EndDraw();
@@ -136,7 +136,7 @@ private:// 作っていくんだよねぇ~.
 
 	// シーンビューの作成.
 	void CreateSceneDesc(
-		SceneData*						MappedSceneData,
+		std::shared_ptr<SceneData>&		MappedSceneData,
 		MyComPtr<ID3D12Resource>&		SceneConstBuff,
 		MyComPtr<ID3D12DescriptorHeap>&	SceneDescHeap);
 
@@ -196,7 +196,7 @@ private:
 
 	//シーンを構成するバッファまわり
 	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン.
-	SceneData*								m_pMappedSceneData;		// シーンの情報.
+	std::shared_ptr<SceneData>				m_pMappedSceneData;		// シーンの情報.
 	MyComPtr<ID3D12DescriptorHeap>			m_pSceneDescHeap;		// シーンの情報ヒープ.
 
 	// フェンス類.

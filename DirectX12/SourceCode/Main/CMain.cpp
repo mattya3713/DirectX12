@@ -54,7 +54,7 @@ HRESULT CMain::Create()
     
 #else 
     m_pPMXRenderer = std::make_shared<CPMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
+    m_pPMXActor = std::make_shared<CPMXActor>("Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx", *m_pPMXRenderer);
     // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
     // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
     // Data\\Model\\PMX\\Cube\\Cube.pmx"
@@ -81,6 +81,10 @@ void CMain::Update()
     if (m_pPMXActor) {
         m_pPMXActor->Update();
     }
+
+    if (m_pDx12) {
+        m_pDx12->Update();
+    }
 }
 
 // 描画処理.
@@ -100,7 +104,7 @@ void CMain::Draw()
 #else 
     //PMD用の描画パイプラインに合わせる
     m_pDx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
-    //ルートシグネチャもPMD用に合わせる
+    //ルートシグネチャもPMX用に合わせる
     m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
 #endif
     m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -228,8 +228,8 @@ void CPMXActor::LoadPMXFile(const char* path)
 	};
 
 	// 頂点情報の読み込み.
-	for (uint32_t i = 0; i < VerticesNum; ++i) {
-
+	for (uint32_t i = 0; i < VerticesNum; ++i) 
+	{
 		// 空の頂点を直接ベクター内で構築.
 		Vertices.emplace_back();
 		m_VerticesForHLSL.emplace_back();
@@ -476,81 +476,77 @@ void CPMXActor::LoadPMXFile(const char* path)
 		m_Materials.back().NumFaceCount;
 	}
 
-
-
 	// トゥーンリソースとテクスチャを設定.
 	for (int i = 0; i < static_cast<int>(MaterialNum); ++i) {
 
 		// トゥーンテクスチャのファイルパスを構築.
-		char toonFilePath[32];
+		char toonFilePath[32] = {};
 
 		// 共通のテクスチャをロード.
 		if (m_Materials[i].ToonFlag) {
 			sprintf_s(toonFilePath, PMX::COMMON_TOON_PATH, m_Materials[i].ToonTextureIndex + 1);
 			m_pToonResource[i] = m_pDx12.GetTextureByPath(toonFilePath);
 		}
-		// モデル特有のテクスチャをロード.
+		// モデル特有のトゥーンテクスチャをロード.
 		else {
+			int toonIndex = m_Materials[i].ToonTextureIndex;
 
-			// リソース数よりテクスチャインデックスが大きかったらcontinue.
+			// 範囲外continue.
 			// MEMO : トゥーンを使用してないと255が入ってる.
-			if (m_Materials[i].ToonTextureIndex + 1 >= TextureInfo.size()) { continue; }
+			if (toonIndex == 255 || toonIndex < 0 || toonIndex > static_cast<int>(TextureInfo.size())) {
+				continue;
+			}
 
-			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo[m_Materials[i].ToonTextureIndex + 1].Path.c_str());
+			m_pToonResource[i] = m_pDx12.GetTextureByPath(TextureInfo[toonIndex].Path.c_str());
 		}
 
-		// テクスチャパスの分解とリソースのロード.
-		std::string TexFileName = TextureInfo[m_Materials[i].ToonTextureIndex].Path;
+		int baseIndex = m_Materials[i].TextureIndex;
+		if (baseIndex < 0 || baseIndex >= static_cast<int>(TextureInfo.size())) {
+			continue;  // 不正インデックスならスキップ.
+		}
+
+		std::string TexFileName = TextureInfo[baseIndex].Path;
 		std::string SphFileName = "";
 		std::string SpaFileName = "";
 
-		if (count(TexFileName.begin(), TexFileName.end(), '*') > 0) {
+		if (m_Materials[i].SphereMode > 0) {
 			auto namepair = MyFilePath::SplitFileName(TexFileName);
-			if (MyFilePath::GetExtension(namepair.first) == "sph") {
-				TexFileName = namepair.second;
+			std::string ext1 = MyFilePath::GetExtension(namepair.first);
+			std::string ext2 = MyFilePath::GetExtension(namepair.second);
+
+			if (ext1 == "sph") {
 				SphFileName = namepair.first;
-			}
-			else if (MyFilePath::GetExtension(namepair.first) == "spa") {
 				TexFileName = namepair.second;
+			}
+			else if (ext1 == "spa") {
 				SpaFileName = namepair.first;
+				TexFileName = namepair.second;
 			}
 			else {
 				TexFileName = namepair.first;
-				if (MyFilePath::GetExtension(namepair.second) == "sph") {
-					SphFileName = namepair.second;
-				}
-				else if (MyFilePath::GetExtension(namepair.second) == "spa") {
-					SpaFileName = namepair.second;
-				}
+				if (ext2 == "sph") SphFileName = namepair.second;
+				else if (ext2 == "spa") SpaFileName = namepair.second;
 			}
 		}
 		else {
-			if (MyFilePath::GetExtension(TexFileName) == "sph") {
+			std::string ext = MyFilePath::GetExtension(TexFileName);
+			if (ext == "sph") {
 				SphFileName = TexFileName;
 				TexFileName = "";
 			}
-			/*else if (MyFilePath::GetExtension(TexFileName) == "spa") {
-				SpaFileName = TexFileName;
-				TexFileName = "";
-			}*/
-			else {
-				TexFileName = TexFileName;
-			}
 		}
 
-		// リソースをロード.
+		// 各種リソースをロード
 		if (!TexFileName.empty()) {
 			m_pTextureResource[i] = m_pDx12.GetTextureByPath(TexFileName.c_str());
 		}
+
 		if (!SphFileName.empty()) {
 			auto sphFilePath = MyFilePath::GetTexPath(path, SphFileName.c_str());
 			m_pSphResource[i] = m_pDx12.GetTextureByPath(sphFilePath.c_str());
 		}
-		/*if (!SpaFileName.empty()) {
-			auto spaFilePath = MyFilePath::GetTexPath(path, SpaFileName.c_str());
-			m_pSpaResource[i] = m_pDx12.GetTextureByPath(spaFilePath.c_str());
-		}*/
 	}
+	
 
 	// サイズを256アライアンス.
 	int MaterialBufferSize = PMX::GPU_MATERIAL_SIZE;
@@ -575,33 +571,30 @@ void CPMXActor::LoadPMXFile(const char* path)
 	char* MappedMaterialPtr = m_pMappedMaterial;
 	
 	int MaterialIndex = 0;
-	for (const auto& Material : m_Materials)
+
+	for (int MaterialIndex = 0; MaterialIndex < MaterialNum; ++MaterialIndex)
 	{
-		//m_MaterialForHLSL[MaterialIndex].visible		= true;
-//		m_MaterialsForHLSL[MaterialIndex].Name			= Material.Name;
-		m_MaterialsForHLSL[MaterialIndex].Diffuse		= Material.Diffuse;
-		m_MaterialsForHLSL[MaterialIndex].Specular		= Material.Specular;
-		m_MaterialsForHLSL[MaterialIndex].SpecularPower	= Material.Specularity;
-		m_MaterialsForHLSL[MaterialIndex].Ambient		= Material.Ambient;
-		//m_MaterialForHLSL[MaterialIndex].isTransparent	= false;
-		++MaterialIndex;
+		const auto& Material = m_Materials[MaterialIndex];
 
-		PMX::MaterialForHLSL* UpLoadMat = reinterpret_cast<PMX::MaterialForHLSL*>(m_pMappedMaterial);
-		UpLoadMat->Diffuse = Material.Diffuse;
-		UpLoadMat->Specular = Material.Specular;
-		UpLoadMat->SpecularPower = Material.Specularity;
-		UpLoadMat->Ambient = Material.Ambient;
+		// m_MaterialsForHLSL に値を設定.
+		m_MaterialsForHLSL[MaterialIndex].Diffuse = Material.Diffuse;
+		m_MaterialsForHLSL[MaterialIndex].Specular = Material.Specular;
+		m_MaterialsForHLSL[MaterialIndex].SpecularPower = Material.Specularity;
+		m_MaterialsForHLSL[MaterialIndex].Ambient = Material.Ambient;
+		m_MaterialsForHLSL[MaterialIndex].UseSphereMap = (Material.SphereMode == 0) ? 1.f : 0.f;
 
-		MappedMaterialPtr += MaterialBufferSize;
+
+		// m_pMappedMaterial に一括で設定.
+		PMX::MaterialForHLSL* UpLoadMat = reinterpret_cast<PMX::MaterialForHLSL*>(m_pMappedMaterial + (MaterialIndex * MaterialBufferSize));
+		*UpLoadMat = m_MaterialsForHLSL[MaterialIndex];
 	}
 
-	//std::copy(std::begin(m_MaterialsForHLSL), std::end(m_MaterialsForHLSL), m_pMappedMaterial);
 	m_pMaterialBuff->Unmap(0, nullptr);
 
 	D3D12_DESCRIPTOR_HEAP_DESC MaterialDescHeapDesc = {};
 	MaterialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	MaterialDescHeapDesc.NodeMask = 0;
-	MaterialDescHeapDesc.NumDescriptors = MaterialNum * 4;
+	MaterialDescHeapDesc.NumDescriptors = MaterialNum * 4;		// CBV + TextureSRV + ToonSRV + SphSRV.
 	MaterialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
 	MyAssert::IsFailed(

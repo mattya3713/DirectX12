@@ -91,10 +91,50 @@ bool CDirectX12::Create(HWND hWnd)
 	
 	return true;
 }
+#include <DirectXMath.h>
 
-void CDirectX12::UpDate()
-{
+DirectX::XMVECTOR m_Position = DirectX::XMVectorZero();  // ワールドの原点からの移動量（＝カメラ逆方向）
+float m_MoveSpeed = 1.0f;
+
+// カメラは固定
+DirectX::XMVECTOR m_Eye = DirectX::XMVectorSet(0.0f, 15.0f, -50.0f, 0.0f);
+DirectX::XMVECTOR m_Target = DirectX::XMVectorSet(0.0f, 15.0f, 0.0f, 0.0f);
+DirectX::XMVECTOR m_Up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+// 更新
+void CDirectX12::Update() {
+	if (GetAsyncKeyState('W') & 0x8000) {
+		m_Position = DirectX::XMVectorSubtract(m_Position, DirectX::XMVectorSet(0.0f, 0.0f, m_MoveSpeed, 0.0f));  // ワールドを手前に引く（カメラ前進に見える）
+	}
+	if (GetAsyncKeyState('S') & 0x8000) {
+		m_Position = DirectX::XMVectorAdd(m_Position, DirectX::XMVectorSet(0.0f, 0.0f, m_MoveSpeed, 0.0f));  // 後退に見せる
+	}
+	if (GetAsyncKeyState('A') & 0x8000) {
+		m_Position = DirectX::XMVectorAdd(m_Position, DirectX::XMVectorSet(m_MoveSpeed, 0.0f, 0.0f, 0.0f));  // 左に動くように見せる
+	}
+	if (GetAsyncKeyState('D') & 0x8000) {
+		m_Position = DirectX::XMVectorSubtract(m_Position, DirectX::XMVectorSet(m_MoveSpeed, 0.0f, 0.0f, 0.0f));
+	}
+	if (GetAsyncKeyState('Q') & 0x8000) {
+		m_Position = DirectX::XMVectorAdd(m_Position, DirectX::XMVectorSet(0.0f, m_MoveSpeed, 0.0f, 0.0f));  // 下に見せる
+	}
+	if (GetAsyncKeyState('E') & 0x8000) {
+		m_Position = DirectX::XMVectorSubtract(m_Position, DirectX::XMVectorSet(0.0f, m_MoveSpeed, 0.0f, 0.0f));  // 上に見せる
+	}
+
+	UpdateSceneBuffer();  // 更新
 }
+
+void CDirectX12::UpdateSceneBuffer() {
+	if (m_pSceneConstBuff.Get() && m_pMappedSceneData) {
+		// view = カメラ位置（固定） → ワールド側を逆に動かすために逆平行移動をかける
+		DirectX::XMMATRIX invWorldTrans = DirectX::XMMatrixTranslationFromVector(m_Position);
+		DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(m_Eye, m_Target, m_Up) * invWorldTrans;
+
+		m_pMappedSceneData->view = view;
+	}
+}
+
 
 void CDirectX12::BeginDraw()
 {
@@ -115,7 +155,7 @@ void CDirectX12::BeginDraw()
 	m_pCmdList->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// 画面クリア.
-	float ClearColor[] = { 0.0f,0.0f,0.0f,1.0f };
+	float ClearColor[] = { 0.f,0.f,0.f,1.0f };
 	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
 	//ビューポート、シザー矩形のセット.
@@ -480,7 +520,7 @@ void CDirectX12::CreateDepthDesc(
 
 // シーンビューの作成.
 void CDirectX12::CreateSceneDesc(
-	SceneData* MappedSceneData, 
+	std::shared_ptr<SceneData>& MappedSceneData,
 	MyComPtr<ID3D12Resource>& SceneConstBuff,
 	MyComPtr<ID3D12DescriptorHeap>& SceneDescHeap)
 {
@@ -499,7 +539,7 @@ void CDirectX12::CreateSceneDesc(
 		nullptr,
 		IID_PPV_ARGS(SceneConstBuff.ReleaseAndGetAddressOf()));
 
-	MappedSceneData = nullptr;
+	//MappedSceneData = nullptr;
 
 	MyAssert::IsFailed(
 		_T("シーン情報のマップ"),

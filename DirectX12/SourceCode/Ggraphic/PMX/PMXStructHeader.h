@@ -150,7 +150,8 @@ namespace PMX {
 		DirectX::XMFLOAT3	Specular;		// スペキュラ色.
 		float				SpecularPower;	// スペキュラ係数.
 		DirectX::XMFLOAT3	Ambient;		// アンビエント色.
-	};	
+		float				UseSphereMap;	// スフィアマップを使うかどうか.
+	};
 
 	// GPU用マテリアルバッファのサイズ.
 	static constexpr size_t GPU_MATERIAL_SIZE = sizeof(MaterialForHLSL);
