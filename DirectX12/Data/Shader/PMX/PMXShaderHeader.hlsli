@@ -25,8 +25,7 @@ cbuffer Transform : register(b1)
 
 cbuffer Material : register(b2)
 {
-    float4 diffuse;			// ディフューズ色(RGBA).
-    float4 specular;		// スペキュラ色 (RGBA, alpha = specularPower).
-    float3 ambient;			// アンビエント色.
-    float useSphereMap;		// スフィアマップを使うかどうか.
+	float4 diffuse;
+	float4 specular;
+	float3 ambient;
 };

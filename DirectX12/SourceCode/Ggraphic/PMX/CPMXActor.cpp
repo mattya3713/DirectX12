@@ -628,7 +628,7 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 		if (m_pTextureResource[i].Get() == nullptr)
 		{
-			MyComPtr<ID3D12Resource>& WhiteTexture = m_pRenderer.GetWhiteTex();
+			MyComPtr<ID3D12Resource>& WhiteTexture = m_pRenderer.GetAlphaTex();
 			SRVDesc.Format = WhiteTexture->GetDesc().Format;
 			m_pDx12.GetDevice()->CreateShaderResourceView(WhiteTexture.Get(), &SRVDesc, MaterialDescHeapH);
 		}

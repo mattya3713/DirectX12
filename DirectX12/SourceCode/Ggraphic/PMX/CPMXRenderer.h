@@ -31,6 +31,8 @@ public:
 	// PMD用のルート署名を取得.
 	ID3D12RootSignature* GetRootSignature();
 	
+	// デフォルトの透明テクスチャを取得.
+	MyComPtr<ID3D12Resource>& GetAlphaTex();
 	// デフォルトの白テクスチャを取得.
 	MyComPtr<ID3D12Resource>& GetWhiteTex();
 	// デフォルトの黒テクスチャを取得.
@@ -41,6 +43,8 @@ public:
 private:
 	// テクスチャの汎用素材を作成.
 	ID3D12Resource* CreateDefaultTexture(size_t Width, size_t Height);
+	// 透明テクスチャの生成.
+	ID3D12Resource* CreateAlphaTexture();
 	// 白テクスチャの生成.
 	ID3D12Resource* CreateWhiteTexture();
 	// 黒テクスチャの生成.
@@ -73,6 +77,7 @@ private:
 	MyComPtr<ID3D12RootSignature>	m_pRootSignature;		// ルートシグネチャ.
 
 	//PMX用共通テクスチャ.
+	MyComPtr<ID3D12Resource>		m_pAlphaTex;			// 透明のテクスチャ.
 	MyComPtr<ID3D12Resource>		m_pWhiteTex;			// 白色のテクスチャ.
 	MyComPtr<ID3D12Resource>		m_pBlackTex;			// 黒色のテクスチャ.
 	MyComPtr<ID3D12Resource>		m_pGradTex;				// 白<->黒グラデーションのテクスチャ.

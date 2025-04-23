@@ -16,6 +16,7 @@ CPMXRenderer::CPMXRenderer(CDirectX12& dx12)
 	CreateGraphicsPipelineForPMX();
 
 	// PMX用汎用テクスチャの生成.
+	m_pAlphaTex = MyComPtr<ID3D12Resource>(CreateAlphaTexture());
 	m_pWhiteTex = MyComPtr<ID3D12Resource>(CreateWhiteTexture());
 	m_pBlackTex = MyComPtr<ID3D12Resource>(CreateBlackTexture());
 	m_pGradTex  = MyComPtr<ID3D12Resource>(CreateGrayGradationTexture());
@@ -82,6 +83,32 @@ ID3D12Resource* CPMXRenderer::CreateDefaultTexture(size_t Width, size_t Height) 
 	);
 
 	return Buffer;
+}
+
+ID3D12Resource* CPMXRenderer::CreateAlphaTexture()
+{
+	// テクスチャリソースの作成.
+	ID3D12Resource* TransparentBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
+
+	// RGBA (R,G,B,A) = (255, 255, 255, 0) → 白だけど透明
+	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
+	for (size_t i = 0; i < data.size(); i += 4)
+	{
+		data[i + 0] = 0xFF; // R
+		data[i + 1] = 0xFF; // G
+		data[i + 2] = 0xFF; // B
+		data[i + 3] = 0x00; // A ←ここが透明
+	}
+
+	MyAssert::IsFailed(
+		_T("テクスチャリソースを透明白で塗りつぶし"),
+		&ID3D12Resource::WriteToSubresource, TransparentBuff,
+		0, nullptr,
+		static_cast<void*>(data.data()),
+		PMDTexWide * 4,
+		static_cast<UINT>(data.size()));
+
+	return TransparentBuff;
 }
 
 // 白テクスチャ作成.
@@ -348,6 +375,11 @@ ID3D12PipelineState* CPMXRenderer::GetPipelineState()
 ID3D12RootSignature* CPMXRenderer::GetRootSignature()
 {
 	return m_pRootSignature.Get();
+}
+
+MyComPtr<ID3D12Resource>& CPMXRenderer::GetAlphaTex()
+{
+	return m_pAlphaTex;
 }
 
 MyComPtr<ID3D12Resource>& CPMXRenderer::GetWhiteTex()
