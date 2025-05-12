@@ -9,7 +9,7 @@ float4 PS(Output input) : SV_TARGET
 
     float4 color = tex.Sample(smp, input.uv);
 
-    color.rgb = color.rgb * diffuse;
+    color.rgb = color.rgb * diffuse.xyz;
 
     return color;
 }

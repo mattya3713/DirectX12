@@ -672,81 +672,81 @@ void CPMXActor::LoadPMXFile(const char* path)
 
 
 	// ボーンの読み込み.
-	//uint32_t BoneNum;
-	//fread(&BoneNum, sizeof(BoneNum), 1, fp);
-	//std::vector<PMX::Bone> Bones(BoneNum);
+	uint32_t BoneNum;
+	fread(&BoneNum, sizeof(BoneNum), 1, fp);
+	std::vector<PMX::Bone> Bones(BoneNum);
 
-	//for (uint32_t i = 0; i < BoneNum; ++i)
-	//{
-	//	Bones.emplace_back();
+	for (uint32_t i = 0; i < BoneNum; ++i)
+	{
+		Bones.emplace_back();
 
-	//	// 名前読み込み.
-	//	ReadString(fp, Bones.back().Name);
-	//	ReadString(fp, Bones.back().EnglishName);
+		// 名前読み込み.
+		ReadString(fp, Bones.back().Name);
+		ReadString(fp, Bones.back().EnglishName);
 
-	//	// ボーンの位置情報を読み込む (スフィアモード)
-	//	fread(&Bones.back().Position		, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//	fread(&Bones.back().ParentBoneIndex	, Header.BoneIndexSize, 1, fp);
-	//	fread(&Bones.back().DeformDepth		, sizeof(uint32_t), 1, fp);
-	//	fread(&Bones.back().BoneFlag		, sizeof(uint16_t), 1, fp);
+		// ボーンの位置情報を読み込む (スフィアモード)
+		fread(&Bones.back().Position		, sizeof(DirectX::XMFLOAT3), 1, fp);
+		fread(&Bones.back().ParentBoneIndex	, Header.BoneIndexSize, 1, fp);
+		fread(&Bones.back().DeformDepth		, sizeof(uint32_t), 1, fp);
+		fread(&Bones.back().BoneFlag		, sizeof(uint16_t), 1, fp);
 
-	//	// TargetShowModeが無効の場合、位置オフセットを読み込む.
-	//	if ((Bones.back().BoneFlag & PMX::BoneFlags::TargetShowMode) == 0) {
-	//		// 位置オフセット.
-	//		fread(&Bones.back().PositionOffset, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//	}
-	//	else {
-	//		// リンクボーンインデックス.
-	//		fread(&Bones.back().LinkBoneIndex, Header.BoneIndexSize, 1, fp);
-	//	}
+		// TargetShowModeが無効の場合、位置オフセットを読み込む.
+		if ((Bones.back().BoneFlag & PMX::BoneFlags::TargetShowMode) == 0) {
+			// 位置オフセット.
+			fread(&Bones.back().PositionOffset, sizeof(DirectX::XMFLOAT3), 1, fp);
+		}
+		else {
+			// リンクボーンインデックス.
+			fread(&Bones.back().LinkBoneIndex, Header.BoneIndexSize, 1, fp);
+		}
 
-	//	// ボーンが回転または移動を補間する場合.
-	//	if ((Bones.back().BoneFlag & PMX::BoneFlags::AppendRotate) ||
-	//		(Bones.back().BoneFlag & PMX::BoneFlags::AppendTranslate)) {
-	//		fread(&Bones.back().AppendBoneIndex	, Header.BoneIndexSize, 1, fp);
-	//		fread(&Bones.back().AppendWeight	, sizeof(float), 1, fp);
-	//	}
+		// ボーンが回転または移動を補間する場合.
+		if ((Bones.back().BoneFlag & PMX::BoneFlags::AppendRotate) ||
+			(Bones.back().BoneFlag & PMX::BoneFlags::AppendTranslate)) {
+			fread(&Bones.back().AppendBoneIndex	, Header.BoneIndexSize, 1, fp);
+			fread(&Bones.back().AppendWeight	, sizeof(float), 1, fp);
+		}
 
-	//	// 固定軸が有効な場合.
-	//	if (Bones.back().BoneFlag & PMX::BoneFlags::FixedAxis) {
-	//		fread(&Bones.back().FixedAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//	}
+		// 固定軸が有効な場合.
+		if (Bones.back().BoneFlag & PMX::BoneFlags::FixedAxis) {
+			fread(&Bones.back().FixedAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
+		}
 
-	//	// ローカル軸が有効な場合.
-	//	if (Bones.back().BoneFlag & PMX::BoneFlags::LocalAxis) {
-	//		fread(&Bones.back().LocalXAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//		fread(&Bones.back().LocalZAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//	}
+		// ローカル軸が有効な場合.
+		if (Bones.back().BoneFlag & PMX::BoneFlags::LocalAxis) {
+			fread(&Bones.back().LocalXAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
+			fread(&Bones.back().LocalZAxis, sizeof(DirectX::XMFLOAT3), 1, fp);
+		}
 
-	//	// 親ボーンの変形が外部によって制限される場合.
-	//	if (Bones.back().BoneFlag & PMX::BoneFlags::DeformOuterParent) {
-	//		fread(&Bones.back().KeyValue, sizeof(uint32_t), 1, fp);
-	//	}
+		// 親ボーンの変形が外部によって制限される場合.
+		if (Bones.back().BoneFlag & PMX::BoneFlags::DeformOuterParent) {
+			fread(&Bones.back().KeyValue, sizeof(uint32_t), 1, fp);
+		}
 
-	//	// IKが有効な場合.
-	//	if (Bones.back().BoneFlag & PMX::BoneFlags::IK) {
-	//		fread(&Bones.back().IKTargetBoneIndex, Header.BoneIndexSize, 1, fp);
-	//		fread(&Bones.back().IKIterationCount , sizeof(uint32_t), 1, fp);
-	//		fread(&Bones.back().IKLimit			 , sizeof(float), 1, fp);
+		// IKが有効な場合.
+		if (Bones.back().BoneFlag & PMX::BoneFlags::IK) {
+			fread(&Bones.back().IKTargetBoneIndex, Header.BoneIndexSize, 1, fp);
+			fread(&Bones.back().IKIterationCount , sizeof(uint32_t), 1, fp);
+			fread(&Bones.back().IKLimit			 , sizeof(float), 1, fp);
 
-	//		// IKリンクの数を読み込み.
-	//		uint32_t LinkCount = 0;
-	//		fread(&LinkCount, sizeof(uint32_t), 1, fp);
+			// IKリンクの数を読み込み.
+			uint32_t LinkCount = 0;
+			fread(&LinkCount, sizeof(uint32_t), 1, fp);
 
-	//		// IKリンクを読み込む.
-	//		Bones.back().IKLinks.resize(LinkCount);
-	//		for (auto& IkLink : Bones.back().IKLinks) {
-	//			fread(&IkLink.IKBoneIndex, Header.BoneIndexSize, 1, fp);
-	//			fread(&IkLink.EnableLimit, sizeof(uint8_t), 1, fp);
+			// IKリンクを読み込む.
+			Bones.back().IKLinks.resize(LinkCount);
+			for (auto& IkLink : Bones.back().IKLinks) {
+				fread(&IkLink.IKBoneIndex, Header.BoneIndexSize, 1, fp);
+				fread(&IkLink.EnableLimit, sizeof(uint8_t), 1, fp);
 
-	//			// 制限が有効な場合、制限範囲を読み込む.
-	//			if (IkLink.EnableLimit != 0) {
-	//				fread(&IkLink.LimitMin, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//				fread(&IkLink.LimitMax, sizeof(DirectX::XMFLOAT3), 1, fp);
-	//			}
-	//		}
-	//	}
-	//}
+				// 制限が有効な場合、制限範囲を読み込む.
+				if (IkLink.EnableLimit != 0) {
+					fread(&IkLink.LimitMin, sizeof(DirectX::XMFLOAT3), 1, fp);
+					fread(&IkLink.LimitMax, sizeof(DirectX::XMFLOAT3), 1, fp);
+				}
+			}
+		}
+	}
 
 	//// もーふの読み込み.
 	//uint32_t MorphNum;
