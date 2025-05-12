@@ -131,7 +131,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\Game\;SourceCode\Ggraphic\;SourceCode\Resource\;SourceCode\System\;SourceCode\System\Utility\;SourceCode\System\Singleton\;Data\Library\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\Game\;SourceCode\Ggraphic\;SourceCode\Resource\;SourceCode\System\;SourceCode\System\Utility\;SourceCode\System\Singleton\;Data\Library\;SourceCode\Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -139,6 +139,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug;Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+      <AdditionalIncludeDirectories>SourceCode\Ggraphic\Shader\PMX\;SourceCode\Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -214,6 +218,8 @@
   <ItemGroup>
     <None Include="Data\Shader\BasicShaderHeader.hlsli" />
     <None Include="Data\Shader\PMX\PMXShaderHeader.hlsli" />
+    <None Include="SourceCode\Ggraphic\Shader\BasicShaderHeader.hlsli" />
+    <None Include="SourceCode\Ggraphic\Shader\PMX\PMXShaderHeader.hlsli" />
     <None Include="SourceCode\System\Utility\Assert\Assert.inl" />
     <None Include="SourceCode\System\Utility\Math\Easing\Easing.inl" />
     <None Include="SourceCode\System\Utility\Math\Math.inl" />
@@ -270,6 +276,18 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VS</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="SourceCode\Ggraphic\Shader\Basic\BasicPixelShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">BasicPS</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="SourceCode\Ggraphic\Shader\Basic\BasicVertexShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">BasicVS</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="SourceCode\Ggraphic\Shader\PMX\PMXBasicPixelShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PS</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="SourceCode\Ggraphic\Shader\PMX\PMXBasicVertexShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VS</EntryPointName>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -298,7 +298,6 @@ void DirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 			break;
 		}
 	}
-
 }
 
 // コマンド類の生成.
