@@ -131,7 +131,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\Game\;SourceCode\Ggraphic\;SourceCode\Resource\;SourceCode\System\;SourceCode\System\Utility\;SourceCode\System\Singleton\;Data\Library\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -163,49 +163,60 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="SourceCode\Ggraphic\DirectX\CDirectX12.h" />
-    <ClInclude Include="SourceCode\Ggraphic\PMD\CPMDActor.h" />
-    <ClInclude Include="SourceCode\Ggraphic\PMD\CPMDRenderer.h" />
-    <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXActor.h" />
-    <ClInclude Include="SourceCode\Ggraphic\PMX\CPMXRenderer.h" />
+    <ClInclude Include="SourceCode\System\Singleton\ResourceManager\MeshManager\MeshManager.h" />
+    <ClInclude Include="SourceCode\Ggraphic\DirectX\DirectX12.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMD\PMDActor.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMD\PMDRenderer.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMX\PMXActor.h" />
+    <ClInclude Include="SourceCode\Ggraphic\PMX\PMXRenderer.h" />
     <ClInclude Include="SourceCode\Ggraphic\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Global.h" />
-    <ClInclude Include="SourceCode\Main\CMain.h" />
+    <ClInclude Include="SourceCode\System\GameLoop\Main.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
-    <ClInclude Include="SourceCode\Utility\ComPtr\CComPtr.h" />
-    <ClInclude Include="SourceCode\Utility\CustomSTL\pair\Pair.h" />
+    <ClInclude Include="SourceCode\System\Singleton\SingletonTemplate.h" />
+    <ClInclude Include="SourceCode\System\Utility\Buffer\Any.h" />
+    <ClInclude Include="SourceCode\System\Utility\Buffer\Buffer.h" />
+    <ClInclude Include="SourceCode\System\Utility\ComPtr\ComPtr.h" />
+    <ClInclude Include="SourceCode\System\Utility\CustomSTL\pair\Pair.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
-    <ClInclude Include="SourceCode\Utility\Hash\CHash.h" />
-    <ClInclude Include="SourceCode\Utility\Hash\Crc32Table\HashTable.h" />
-    <ClInclude Include="SourceCode\Utility\Math\Math.h" />
-    <ClInclude Include="SourceCode\Utility\OneTrigger\OneTrigger.h" />
-    <ClInclude Include="SourceCode\Utility\String\FilePath\FilePath.h" />
-    <ClInclude Include="SourceCode\Utility\String\magic_enum.h" />
-    <ClInclude Include="SourceCode\Utility\String\String.h" />
+    <ClInclude Include="SourceCode\System\Utility\Hash\CHash.h" />
+    <ClInclude Include="SourceCode\System\Utility\Hash\Crc32Table\HashTable.h" />
+    <ClInclude Include="SourceCode\System\Utility\Math\Easing\Easing.h" />
+    <ClInclude Include="SourceCode\System\Utility\Math\Math.h" />
+    <ClInclude Include="SourceCode\System\Utility\Math\Random\Random.h" />
+    <ClInclude Include="SourceCode\System\Utility\SingleTrigger\SingleTrigger.h" />
+    <ClInclude Include="SourceCode\System\Utility\String\FilePath\FilePath.h" />
+    <ClInclude Include="SourceCode\System\Utility\String\String.h" />
+    <ClInclude Include="SourceCode\System\GameLoop\Time\Time.h" />
+    <ClInclude Include="SourceCode\System\Utility\Transform\Transform.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SourceCode\Ggraphic\DirectX\CDirectX12.cpp" />
-    <ClCompile Include="SourceCode\Ggraphic\PMD\CPMDActor.cpp" />
-    <ClCompile Include="SourceCode\Ggraphic\PMD\CPMDRenderer.cpp" />
-    <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXActor.cpp" />
-    <ClCompile Include="SourceCode\Ggraphic\PMX\CPMXRenderer.cpp" />
-    <ClCompile Include="SourceCode\Main\CMain.cpp" />
-    <ClCompile Include="SourceCode\Main\WinMain.cpp" />
+    <ClCompile Include="SourceCode\System\Singleton\ResourceManager\MeshManager\MeshManager.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\DirectX\DirectX12.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMD\PMDActor.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMD\PMDRenderer.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMX\PMXActor.cpp" />
+    <ClCompile Include="SourceCode\Ggraphic\PMX\PMXRenderer.cpp" />
+    <ClCompile Include="SourceCode\System\GameLoop\Main.cpp" />
+    <ClCompile Include="SourceCode\System\GameLoop\WinMain.cpp" />
     <ClCompile Include="SourceCode\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="SourceCode\Utility\Hash\Crc32Table\HashTable.cpp" />
-    <ClCompile Include="SourceCode\Utility\String\FilePath\FilePath.inl" />
-    <ClCompile Include="SourceCode\Utility\String\String.cpp" />
+    <ClCompile Include="SourceCode\System\Utility\Buffer\Buffer.cpp" />
+    <ClCompile Include="SourceCode\System\Utility\Hash\Crc32Table\HashTable.cpp" />
+    <ClCompile Include="SourceCode\System\Utility\String\FilePath\FilePath.inl" />
+    <ClCompile Include="SourceCode\System\Utility\String\String.cpp" />
+    <ClCompile Include="SourceCode\System\GameLoop\Time\Time.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\Shader\BasicShaderHeader.hlsli" />
     <None Include="Data\Shader\PMX\PMXShaderHeader.hlsli" />
-    <None Include="SourceCode\Utility\Assert\Assert.inl" />
-    <None Include="SourceCode\Utility\Math\Math.inl" />
+    <None Include="SourceCode\System\Utility\Assert\Assert.inl" />
+    <None Include="SourceCode\System\Utility\Math\Easing\Easing.inl" />
+    <None Include="SourceCode\System\Utility\Math\Math.inl" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Data\Shader\Basic\BasicPixelShader.hlsl">

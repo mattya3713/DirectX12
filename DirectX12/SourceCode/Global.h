@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
-//Œx‚É‚Â‚¢‚Ä‚Ìº°ÄŞ•ªÍ‚ğ–³Œø‚É‚·‚é.4005:Ä’è‹`.
+//è­¦å‘Šã«ã¤ã„ã¦ã®ï½ºï½°ï¾„ï¾åˆ†æã‚’ç„¡åŠ¹ã«ã™ã‚‹.4005:å†å®šç¾©.
 #pragma warning(disable:4005)
 
 
-// MEMO : Windowƒ‰ƒCƒuƒ‰ƒŠ‚É“ü‚Á‚Ä‚¢min,max‚ª×–‚‚È‚Ì‚Å–³Œø‚É‚·‚é.
-//		: Windows.h‚æ‚èæ‚É’è‹`‚·‚é‚·‚é‚±‚Æ‚ª„§‚³‚ê‚Ä‚¢‚é‚½‚ß‚±‚ÌˆÊ’u.
+// MEMO : Windowãƒ©ã‚¤ãƒ–ãƒ©ãƒªã«å…¥ã£ã¦ã„min,maxãŒé‚ªé­”ãªã®ã§ç„¡åŠ¹ã«ã™ã‚‹.
+//		: Windows.hã‚ˆã‚Šå…ˆã«å®šç¾©ã™ã‚‹ã™ã‚‹ã“ã¨ãŒæ¨å¥¨ã•ã‚Œã¦ã„ã‚‹ãŸã‚ã“ã®ä½ç½®.
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -15,21 +15,20 @@
 #include <crtdbg.h>
 
 #include <iostream>
-#include <vector>       // ‰Â•Ï’·”z—ñ.	
-#include <array>        // ’è”’·”z—ñ.
-#include <algorithm>    // ƒAƒ‹ƒSƒŠƒYƒ€.
-#include <map>          // ƒ}ƒbƒv.
-#include <unordered_map>// ƒ}ƒbƒv.
-#include <cmath>        // ”ŠwŠÖ”.
-#include <memory>       // ƒƒ‚ƒŠŠÇ—.
-#include <string>       // •¶š—ñ.
-#include <fstream>		// ƒtƒ@ƒCƒ‹“üo—Í.	
+#include <vector>       // å¯å¤‰é•·é…åˆ—.	
+#include <array>        // å®šæ•°é•·é…åˆ—.
+#include <algorithm>    // ã‚¢ãƒ«ã‚´ãƒªã‚ºãƒ .
+#include <map>          // ãƒãƒƒãƒ—.
+#include <unordered_map>// ãƒãƒƒãƒ—.
+#include <cmath>        // æ•°å­¦é–¢æ•°.
+#include <memory>       // ãƒ¡ãƒ¢ãƒªç®¡ç†.
+#include <string>       // æ–‡å­—åˆ—.
+#include <fstream>		// ãƒ•ã‚¡ã‚¤ãƒ«å…¥å‡ºåŠ›.	
 
-#include "Utility\\Assert\\Assert.inl"	// HRESULT‚Ìtrycatch‚ğ‚·‚é.
-#include "Utility\\Macro\\Macro.h"		// ƒ}ƒNƒ.
-#include "Utility\\Math\\Math.h"			// Z”Œn.	
+#include "Utility/Assert/Assert.inl"	// HRESULTã®trycatchã‚’ã™ã‚‹.
+#include "Utility/Math/Math.h"			// ç®—æ•°ç³».	
 
-#include "Utility\\ComPtr\\CComPtr.h"		// Microsoft::WRL::ComPtr‚Ì‚æ‚¤‚È‚à‚Ì.	
+#include "Utility/ComPtr/ComPtr.h"		// Microsoft::WRL::ComPtrã®ã‚ˆã†ãªã‚‚ã®.	
 
 // DirectX12.
 #include <D3D12.h>
@@ -40,23 +39,23 @@
 #include <dsound.h>
 
 
-//ƒ‰ƒCƒuƒ‰ƒŠ“Ç‚İ‚İ.
+//ãƒ©ã‚¤ãƒ–ãƒ©ãƒªèª­ã¿è¾¼ã¿.
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 //DirectSound.
 #pragma comment( lib, "dsound.lib" )
 
-// ƒ‰ƒCƒuƒ‰ƒŠ‚ğİ’è‚µ‚È‚­‚Ä‚Í‚È‚ç‚È‚¢.
-// $(DXTEX_DIR)\Bin\Desktop_2022_Win10\x64\Debug‚ğƒŠƒ“ƒJ[>‘S”Ê>’Ç‰Á‚Ìƒ‰ƒCƒuƒ‰ƒŠƒfƒBƒeƒNƒgƒŠ‚É’Ç‰Á.
+// ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’è¨­å®šã—ãªãã¦ã¯ãªã‚‰ãªã„.
+// $(DXTEX_DIR)\Bin\Desktop_2022_Win10\x64\Debugã‚’ãƒªãƒ³ã‚«ãƒ¼>å…¨èˆ¬>è¿½åŠ ã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ‡ã‚£ãƒ†ã‚¯ãƒˆãƒªã«è¿½åŠ .
 #pragma comment( lib,"DirectXTex.lib" )
 
 
 //=================================================
-//	’è”.
+//	å®šæ•°.
 //=================================================
-static constexpr int	WND_W	= 1280;		// ƒEƒBƒ“ƒhƒE‚Ì•.
-static constexpr float	WND_WF	= 1280.f;	// ƒEƒBƒ“ƒhƒE‚Ì•.
-static constexpr int	WND_H	= 720;		// ƒEƒBƒ“ƒhƒE‚Ì‚‚³.
-static constexpr float	WND_HF	= 720.f;	// ƒEƒBƒ“ƒhƒE‚Ì‚‚³.
-static constexpr int	FPS		= 60;			// ƒtƒŒ[ƒ€ƒŒ[ƒg.
+static constexpr int	WND_W	= 1280;		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å¹….
+static constexpr float	WND_WF	= 1280.f;	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å¹….
+static constexpr int	WND_H	= 720;		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®é«˜ã•.
+static constexpr float	WND_HF	= 720.f;	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®é«˜ã•.
+static constexpr int	FPS		= 60;			// ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¬ãƒ¼ãƒˆ.
