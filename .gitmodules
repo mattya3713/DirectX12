@@ -1,0 +1,3 @@
+[submodule "DirectX12/Data/Library/DirectXTex"]
+    path = DirectX12/Data/Library/DirectXTex
+    url = https://github.com/microsoft/DirectXTex.git
