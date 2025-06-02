@@ -12,7 +12,7 @@
 // ウィンドウを画面中央で起動を有効にする.
 #define ENABLE_WINDOWS_CENTERING
 
-#define ISOMX 0
+#define ISOMX 1
 
 //=================================================
 // 定数.
@@ -49,8 +49,8 @@ HRESULT Main::Create()
     //m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
     //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
 #if ISOMX
-    m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
+    m_pPMDRenderer = std::make_shared<PMDRenderer>(*m_pDx12);
+    m_pPmdActor = std::make_shared<PMDActor>("Data\\Model\\PMD\\Defelt\\初音ミクVer2.pmd", *m_pPMDRenderer);
     
 #else 
     m_pPMXRenderer = std::make_shared<PMXRenderer>(*m_pDx12);

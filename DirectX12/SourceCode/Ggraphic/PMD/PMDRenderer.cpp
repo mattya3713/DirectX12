@@ -67,59 +67,61 @@ ID3D12Resource* PMDRenderer::CreateDefaultTexture(size_t Width, size_t Height) {
 // 白テクスチャ作成.
 ID3D12Resource* PMDRenderer::CreateWhiteTexture()
 {
-	//// テクスチャリソースの作成.
-	//ID3D12Resource* WhiteBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
-	//
-	//// テクスチャの範囲の白データ作成.
-	//std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
-	//std::fill(data.begin(), data.end(), 0xff);
+	// テクスチャリソースの作成.
+	ID3D12Resource* WhiteBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
+	
+	// テクスチャの範囲の白データ作成.
+	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
+	std::fill(data.begin(), data.end(), 0xff);
 
-	//MyAssert::IsFailed(
-	//	_T("テクスチャリソースを白で塗りつぶし"),
-	//	&ID3D12Resource::WriteToSubresource, *WhiteBuff,
-	//	0, nullptr,
-	//	data.data(), 4 * 4, data.size());
+	MyAssert::IsFailed(
+		_T("テクスチャリソースを白で塗りつぶし"),
+		&ID3D12Resource::WriteToSubresource, *WhiteBuff,
+		0, nullptr,
+		data.data(), 4 * 4, data.size());
 
-	return nullptr;
+	return WhiteBuff;
 }
+
 ID3D12Resource*	PMDRenderer::CreateBlackTexture() 
 {
-	//// テクスチャリソースの作成.
-	//ID3D12Resource* BlackBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
+	// テクスチャリソースの作成.
+	ID3D12Resource* BlackBuff = CreateDefaultTexture(PMDTexWide, PMDTexWide);
 
-	//// テクスチャの範囲の黒データを作成.
-	//std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
-	//std::fill(data.begin(), data.end(), 0x00);
+	// テクスチャの範囲の黒データを作成.
+	std::vector<unsigned char> data(PMDTexWide * PMDTexWide * 4);
+	std::fill(data.begin(), data.end(), 0x00);
 
-	//MyAssert::IsFailed(
-	//	_T("テクスチャリソースを黒で塗りつぶし"),
-	//	&ID3D12Resource::WriteToSubresource, BlackBuff,
-	//	0, nullptr,
-	//	data.data(), 4 * 4, data.size());
+	MyAssert::IsFailed(
+		_T("テクスチャリソースを黒で塗りつぶし"),
+		&ID3D12Resource::WriteToSubresource, BlackBuff,
+		0, nullptr,
+		data.data(), 4 * 4, data.size());
 
-	return nullptr;
+	return BlackBuff;
 }
+
 ID3D12Resource*	PMDRenderer::CreateGrayGradationTexture() 
 {
-	//ID3D12Resource* GradBuff = CreateDefaultTexture(4, 256);
+	ID3D12Resource* GradBuff = CreateDefaultTexture(4, 256);
 
-	//// テクスチャの範囲の白<->黒グラデーションデータの作成.
-	//std::vector<unsigned int> data(4 * 256);
-	//auto it = data.begin();
-	//unsigned int c = 0xff;
-	//for (; it != data.end(); it += 4) {
-	//	auto col = (0xff << 24) | RGB(c, c, c);//RGBAが逆並びしているためRGBマクロと0xff<<24を用いて表す。
-	//	std::fill(it, it + 4, col);
-	//	--c;
-	//}
+	// テクスチャの範囲の白<->黒グラデーションデータの作成.
+	std::vector<unsigned int> data(4 * 256);
+	auto it = data.begin();
+	unsigned int c = 0xff;
+	for (; it != data.end(); it += 4) {
+		auto col = (0xff << 24) | RGB(c, c, c);//RGBAが逆並びしているためRGBマクロと0xff<<24を用いて表す。
+		std::fill(it, it + 4, col);
+		--c;
+	}
 
-	//MyAssert::IsFailed(
-	//	_T("テクスチャリソースに白<->黒グラデーションを書き込む"),
-	//	&ID3D12Resource::WriteToSubresource, GradBuff,
-	//	0, nullptr,
-	//	data.data(), 4 * 4, data.size());
+	MyAssert::IsFailed(
+		_T("テクスチャリソースに白<->黒グラデーションを書き込む"),
+		&ID3D12Resource::WriteToSubresource, GradBuff,
+		0, nullptr,
+		data.data(), 4 * 4, data.size());
 
-	return nullptr;
+	return GradBuff;
 }
 
 //パイプライン初期化
