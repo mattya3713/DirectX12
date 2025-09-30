@@ -2,7 +2,6 @@
 #include "PMDRenderer.h"
 #include "DirectX/DirectX12.h"	
 #include "Utility/String/FilePath/FilePath.h"
-#include "DirectXTex/DirectXTex/d3dx12.h"
 
 void* PMDActor::Transform::operator new(size_t size) {
 	return _aligned_malloc(size, 16);

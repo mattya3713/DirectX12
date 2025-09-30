@@ -1,5 +1,4 @@
 ﻿#include "PMDRenderer.h"
-#include "DirectXTex\\DirectXTex\\d3dx12.h"
 #include<cassert>
 #include<d3dcompiler.h>
 #include"DirectX/DirectX12.h"

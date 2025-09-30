@@ -3,7 +3,6 @@
 #include <d3dcompiler.h>
 #include <string>
 #include <algorithm>
-#include "DirectXTex/DirectXTex/d3dx12.h"
 #include "DirectX/DirectX12.h"
 #include "Ggraphic/PMX/PMXActor.h"
 

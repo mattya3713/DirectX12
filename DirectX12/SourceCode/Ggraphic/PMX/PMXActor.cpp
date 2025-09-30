@@ -2,7 +2,6 @@
 #include "PMXRenderer.h"
 #include "DirectX/DirectX12.h"	
 #include "Utility/String/FilePath/FilePath.h"
-#include "DirectXTex/DirectXTex/d3dx12.h"
 #include <chrono>
 
 PMXActor::PMXActor(const char* filepath, PMXRenderer& renderer) 
