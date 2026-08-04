@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Treat all .hlsl files as content and copy them to the output directory so runtime
+       compilation (D3DCompileFromFile) can load them directly. Also remove any FxCompile
+       entries so Visual Studio doesn't try to compile HLSL files at build time. -->
+  <ItemGroup>
+    <!-- Remove any existing FxCompile items that include HLSL files -->
+    <FxCompile Remove="**\*.hlsl" />
+
+    <!-- Include all HLSL files as Content and copy to output directory when newer -->
+    <Content Include="**\*.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

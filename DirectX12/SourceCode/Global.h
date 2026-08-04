@@ -24,11 +24,12 @@
 #include <memory>       // メモリ管理.
 #include <string>       // 文字列.
 #include <fstream>		// ファイル入出力.	
+#include <chrono>		// 時間計測.	
 
-#include "Utility/Assert/Assert.inl"	// HRESULTのtrycatchをする.
-#include "Utility/Math/Math.h"			// 算数系.	
+#include "99_Utility/Assert/Assert.inl"	// HRESULTのtrycatchをする.
+#include "99_Utility/Math/Math.h"			// 算数系.	
 
-#include "Utility/ComPtr/ComPtr.h"		// Microsoft::WRL::ComPtrのようなもの.	
+#include "99_Utility/ComPtr/ComPtr.h"		// Microsoft::WRL::ComPtrのようなもの.	
 
 // DirectX12.
 #include <D3D12.h>

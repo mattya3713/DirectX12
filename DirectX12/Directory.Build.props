@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Global include/lib settings for this repository.
+    Put 3rd-party headers under: Data\Library\<LibraryName>\...
+    Put .lib/.dll under: Data\Library\<LibraryName>\Bin\<Platform>\<Configuration>\
+
+    This file appends the include path and library path for all projects in the repo.
+  -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <!-- Add DirectXTex include directories (adjust if you move headers) -->
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)Data\Library\DirectXTex\Common;$(MSBuildThisFileDirectory)Data\Library\DirectXTex\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+
+    <Link>
+      <!-- Add library directory where DirectXTex.lib should be placed. Replace platform folder if needed. -->
+      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <!-- Link the DirectXTex library by default; keep existing dependencies. -->
+      <AdditionalDependencies>DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>
