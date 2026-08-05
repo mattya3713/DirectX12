@@ -1,13 +1,13 @@
-#pragma once
+ï»¿#pragma once
 #include "99_Utility\\Hash\Crc32Table\HashTable.h"  // Hash
 
-#define ENABLE_HASH_DEBUG (0) // 1: Hash‚ÌƒfƒoƒbƒO‹@”\‚ğ—LŒø.
-                              // 0: –³Œø.
+#define ENABLE_HASH_DEBUG (0) // 1: Hashã®ãƒ‡ãƒãƒƒã‚°æ©Ÿèƒ½ã‚’æœ‰åŠ¹.
+                              // 0: ç„¡åŠ¹.
 
 /****************************
-*	ƒnƒbƒVƒ…’lƒNƒ‰ƒX.
-*	’S“–F•£˜e –¢—ˆ.
-*   QlURL:https://norizn.hatenablog.com/entry/2020/10/18/145628#2
+*	ãƒãƒƒã‚·ãƒ¥å€¤ã‚¯ãƒ©ã‚¹.
+*	æ‹…å½“ï¼šæ·µè„‡ æœªæ¥.
+*   å‚è€ƒURL:https://norizn.hatenablog.com/entry/2020/10/18/145628#2
 ****/
 
 class CHash
@@ -26,33 +26,33 @@ public:
 #endif
     };
 
-    // ƒnƒbƒVƒ…’l‚ğæ“¾.
+    // ãƒãƒƒã‚·ãƒ¥å€¤ã‚’å–å¾—.
     uint32_t GetDigest() const { return m_digest; }
 
-    // •¶š—ñ‚©‚çƒnƒbƒVƒ…’l‚ğì¬‚µ‚Äæ“¾.
+    // æ–‡å­—åˆ—ã‹ã‚‰ãƒãƒƒã‚·ãƒ¥å€¤ã‚’ä½œæˆã—ã¦å–å¾—.
     static constexpr uint32_t GetDigest(const char* str, const size_t length);
 
 private:
-    uint32_t    m_digest;          // ƒnƒbƒVƒ…’l.
+    uint32_t    m_digest;          // ãƒãƒƒã‚·ãƒ¥å€¤.
   
 
 #if ENABLE_HASH_DEBUG
 public:
-    // (ƒfƒoƒbƒO—p) •¶š—ñ‚ğæ“¾.
+    // (ãƒ‡ãƒãƒƒã‚°ç”¨) æ–‡å­—åˆ—ã‚’å–å¾—.
     const char* GetDebugStr() const { return m_debug_str.c_str(); }
 
 private:
-    std::string m_debug_str;   // (ƒfƒoƒbƒO—p) •¶š—ñ
+    std::string m_debug_str;   // (ãƒ‡ãƒãƒƒã‚°ç”¨) æ–‡å­—åˆ—
 #endif
 };
 
-// •¶š—ñ‚ğƒnƒbƒVƒ…’l‚É•ÏŠ·‚·‚éB
-// g—p—á: HASH_DIGEST("STAGE_FOREST")
-// sizeof‚ÍnullI’[‚ğŠÜ‚İ•¶š”+1‚³‚ê‚é‚Ì‚Å-1‚µ‚Ä•¶š”‚Ì‚İ‚É‚µ‚Ä‚¨‚­B 
+// æ–‡å­—åˆ—ã‚’ãƒãƒƒã‚·ãƒ¥å€¤ã«å¤‰æ›ã™ã‚‹ã€‚
+// ä½¿ç”¨ä¾‹: HASH_DIGEST("STAGE_FOREST")
+// sizeofã¯nullçµ‚ç«¯ã‚’å«ã¿æ–‡å­—æ•°+1ã•ã‚Œã‚‹ã®ã§-1ã—ã¦æ–‡å­—æ•°ã®ã¿ã«ã—ã¦ãŠãã€‚ 
 #define HASH_DIGEST(str) CHash::GetDigest(str, (sizeof(str)-1))
 
-// MEMO : ˆ—‘¬“x+Œx‚ªo‚é‚½‚ß.h‚ÅÀ‘•.
-// •¶š—ñ‚ğhash‚É‚·‚é.
+// MEMO : å‡¦ç†é€Ÿåº¦+è­¦å‘ŠãŒå‡ºã‚‹ãŸã‚.hã§å®Ÿè£….
+// æ–‡å­—åˆ—ã‚’hashã«ã™ã‚‹.
 constexpr uint32_t CHash::GetDigest(const char* str, const size_t length)
 {
     uint32_t digest = 0xffffffff;

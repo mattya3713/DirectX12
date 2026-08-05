@@ -1,6 +1,6 @@
-// stdafx.h : �W���̃V�X�e�� �C���N���[�h �t�@�C���̃C���N���[�h �t�@�C���A�܂���
-// �Q�Ɖ񐔂������A�����܂�ύX����Ȃ��A�v���W�F�N�g��p�̃C���N���[�h �t�@�C��
-// ���L�q���܂�.
+﻿// stdafx.h : 標準のシステム インクルード ファイルのインクルード ファイル、または
+// 参照回数が多く、かつあまり変更されない、プロジェクト専用のインクルード ファイル
+// を記述します.
 //
 #pragma once
 
@@ -8,11 +8,11 @@
 #include <stdio.h>
 #include <tchar.h>
 
-// TODO: �v���O�����ɕK�v�Ȓǉ��w�b�_�[�������ŎQ�Ƃ��Ă�������
+// TODO: プログラムに必要な追加ヘッダーをここで参照してください
 
-#include "Global.h"		// �O���[�o��(�萔�Ȃ�).
+#include "Global.h"		// グローバル(定数など).
 
-//// Json���g�p����̂ɕK�v.
+//// Jsonを使用するのに必要.
 //#include <fstream>
 //#include "Json/nlohmann/json.hpp"
 //using json = nlohmann::json;

@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
 #include <memory>
 #include <typeinfo>
 #include <stdexcept>
 #include <vector>
 
-// Œ^Á‹ƒNƒ‰ƒX.
+// å‹æ¶ˆå»ã‚¯ãƒ©ã‚¹.
 
 class Any
 {
@@ -13,11 +13,11 @@ private:
     struct Base
     {
         virtual ~Base() = default;
-        virtual std::unique_ptr<Base> Clone() const = 0; // ƒNƒ[ƒ“‚ğì¬‚·‚éƒˆ‰¼‘zŠÖ”.
-        virtual const std::type_info& Type() const = 0;  // Œ^î•ñ‚ğæ“¾‚·‚éƒˆ‰¼‘zŠÖ”.
+        virtual std::unique_ptr<Base> Clone() const = 0; // ã‚¯ãƒ­ãƒ¼ãƒ³ã‚’ä½œæˆã™ã‚‹ç´”ç²‹ä»®æƒ³é–¢æ•°.
+        virtual const std::type_info& Type() const = 0;  // å‹æƒ…å ±ã‚’å–å¾—ã™ã‚‹ç´”ç²‹ä»®æƒ³é–¢æ•°.
     };
 
-    // ’lŒ^‚ğ•Û‚·‚éƒzƒ‹ƒ_[.
+    // å€¤å‹ã‚’ä¿æŒã™ã‚‹ãƒ›ãƒ«ãƒ€ãƒ¼.
     template<typename T>
     struct Holder : Base
     {
@@ -31,11 +31,11 @@ private:
             return typeid(T);
         }
 
-        // ÀÛ‚Ì’l.
+        // å®Ÿéš›ã®å€¤.
         T value; 
     };
 
-    // ¶ƒ|‚ğ•Û‚·‚éƒzƒ‹ƒ_[.
+    // ç”Ÿãƒã‚’ä¿æŒã™ã‚‹ãƒ›ãƒ«ãƒ€ãƒ¼.
     template<typename T>
     struct PtrHolder : Base
     {
@@ -49,11 +49,11 @@ private:
             return typeid(T*);
         }
 
-        // ¶ƒ|‚Å•Û‚³‚ê‚½’l.
+        // ç”Ÿãƒã§ä¿æŒã•ã‚ŒãŸå€¤.
         T* value;
     };
 
-    // std::unique_ptr<T> ‚ğ•Û‚·‚éƒzƒ‹ƒ_[.
+    // std::unique_ptr<T> ã‚’ä¿æŒã™ã‚‹ãƒ›ãƒ«ãƒ€ãƒ¼.
     template<typename T>
     struct UniquePtrHolder : Base
     {
@@ -67,11 +67,11 @@ private:
             return typeid(std::unique_ptr<T>);
         }
 
-        // std::unique_ptr ‚Å•Û‚³‚ê‚½’l.
+        // std::unique_ptr ã§ä¿æŒã•ã‚ŒãŸå€¤.
         std::unique_ptr<T> value; 
     };
 
-    // std::vector<std::unique_ptr<T>> ‚ğ•Û‚·‚éƒzƒ‹ƒ_[.
+    // std::vector<std::unique_ptr<T>> ã‚’ä¿æŒã™ã‚‹ãƒ›ãƒ«ãƒ€ãƒ¼.
     template<typename T>
     struct VectorUniquePtrHolder : Base
     {
@@ -93,33 +93,33 @@ private:
             return typeid(std::vector<std::unique_ptr<T>>);
         }
 
-        // std::vector<std::unique_ptr<T>> ‚Å•Û‚³‚ê‚½’l.
+        // std::vector<std::unique_ptr<T>> ã§ä¿æŒã•ã‚ŒãŸå€¤.
         std::vector<std::unique_ptr<T>> value;
     };
 
 public:
     Any() = default;
 
-    // ’lŒ^‚ğó‚¯æ‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+    // å€¤å‹ã‚’å—ã‘å–ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
     template<typename T>
     Any(T value) : ptr(std::make_unique<Holder<T>>(std::move(value))) {}
 
-    // ¶ƒ|‚ğó‚¯æ‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+    // ç”Ÿãƒã‚’å—ã‘å–ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
     template<typename T>
     Any(T* value) : ptr(std::make_unique<PtrHolder<T>>(value)) {}
 
-    // std::unique_ptr<T> ‚ğó‚¯æ‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+    // std::unique_ptr<T> ã‚’å—ã‘å–ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
     template<typename T>
     Any(std::unique_ptr<T> value) : ptr(std::make_unique<UniquePtrHolder<T>>(std::move(value))) {}
 
-    // std::vector<std::unique_ptr<T>> ‚ğó‚¯æ‚éƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+    // std::vector<std::unique_ptr<T>> ã‚’å—ã‘å–ã‚‹ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
     template<typename T>
     Any(std::vector<std::unique_ptr<T>> value) : ptr(std::make_unique<VectorUniquePtrHolder<T>>(std::move(value))) {}
 
-    // ƒRƒs[ƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+    // ã‚³ãƒ”ãƒ¼ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
     Any(const Any& other) : ptr(other.ptr ? other.ptr->Clone() : nullptr) {}
 
-    // ƒRƒs[‘ã“ü‰‰Zq.
+    // ã‚³ãƒ”ãƒ¼ä»£å…¥æ¼”ç®—å­.
     Any& operator=(const Any& other)
     {
         if (this != &other)
@@ -129,12 +129,12 @@ public:
         return *this;
     }
 
-    // ƒ€[ƒuƒRƒ“ƒXƒgƒ‰ƒNƒ^.
+    // ãƒ ãƒ¼ãƒ–ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿.
     Any(Any&&) noexcept = default;
-    // ƒ€[ƒu‘ã“ü‰‰Zq.
+    // ãƒ ãƒ¼ãƒ–ä»£å…¥æ¼”ç®—å­.
     Any& operator=(Any&&) noexcept = default;
 
-    // ’lŒ^‚ğæ“¾‚·‚é‚½‚ß‚Ìƒƒ\ƒbƒh.
+    // å€¤å‹ã‚’å–å¾—ã™ã‚‹ãŸã‚ã®ãƒ¡ã‚½ãƒƒãƒ‰.
     template<typename T>
     T& Get() const
     {
@@ -145,7 +145,7 @@ public:
         return static_cast<Holder<T>*>(ptr.get())->value;
     }
 
-    // ¶ƒ|‚ğæ“¾‚·‚é‚½‚ß‚Ìƒƒ\ƒbƒh.
+    // ç”Ÿãƒã‚’å–å¾—ã™ã‚‹ãŸã‚ã®ãƒ¡ã‚½ãƒƒãƒ‰.
     template<typename T>
     T* GetPtr() const
     {
@@ -156,7 +156,7 @@ public:
         return static_cast<PtrHolder<T>*>(ptr.get())->value;
     }
 
-    // std::unique_ptr<T> ‚ğæ“¾‚·‚é‚½‚ß‚Ìƒƒ\ƒbƒh.
+    // std::unique_ptr<T> ã‚’å–å¾—ã™ã‚‹ãŸã‚ã®ãƒ¡ã‚½ãƒƒãƒ‰.
     template<typename T>
     std::unique_ptr<T>& GetUniquePtr() const
     {
@@ -167,7 +167,7 @@ public:
         return static_cast<UniquePtrHolder<T>*>(ptr.get())->value;
     }
 
-    // std::vector<std::unique_ptr<T>> ‚ğæ“¾‚·‚é‚½‚ß‚Ìƒƒ\ƒbƒh.
+    // std::vector<std::unique_ptr<T>> ã‚’å–å¾—ã™ã‚‹ãŸã‚ã®ãƒ¡ã‚½ãƒƒãƒ‰.
     template<typename T>
     std::vector<std::unique_ptr<T>>& GetVector() const
     {
@@ -178,9 +178,9 @@ public:
         return static_cast<VectorUniquePtrHolder<T>*>(ptr.get())->value;
     }
 
-    // ƒkƒ‹ƒ|ƒCƒ“ƒ^‚©‚Ç‚¤‚©‚ğ”»’è‚·‚éƒƒ\ƒbƒh.
+    // ãƒŒãƒ«ãƒã‚¤ãƒ³ã‚¿ã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰.
     bool IsNull() const { return !ptr; } 
 
 private:
-    std::unique_ptr<Base> ptr; // Šî’êƒNƒ‰ƒX‚Ìƒ|ƒCƒ“ƒ^‚ğ•Û.
+    std::unique_ptr<Base> ptr; // åŸºåº•ã‚¯ãƒ©ã‚¹ã®ãƒã‚¤ãƒ³ã‚¿ã‚’ä¿æŒ.
 };

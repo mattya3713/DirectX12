@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<d3d12.h>
 #include<DirectXMath.h>
@@ -10,22 +10,22 @@
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/03.
-* @brief     : ƒ‚ƒfƒ‹ƒtƒH[ƒ}ƒbƒg‚ğ–â‚í‚È‚¢AƒQ[ƒ€‚ªÀÛ‚Ég‚¤ƒ‚ƒfƒ‹ƒf[ƒ^.
+* @brief     : ãƒ¢ãƒ‡ãƒ«ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’å•ã‚ãªã„ã€ã‚²ãƒ¼ãƒ ãŒå®Ÿéš›ã«ä½¿ã†ãƒ¢ãƒ‡ãƒ«ãƒ‡ãƒ¼ã‚¿.
 **********************************************************************************/
 
 namespace Model {
 
-	// GPU‚Ö“]‘—‚·‚é’¸“_ƒf[ƒ^(‘SƒtƒH[ƒ}ƒbƒg‹¤’ÊƒŒƒCƒAƒEƒg).
+	// GPUã¸è»¢é€ã™ã‚‹é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿(å…¨ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆå…±é€šãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆ).
 	struct Vertex
 	{
 		DirectX::XMFLOAT3 Position {};
 		DirectX::XMFLOAT3 Normal {};
 		DirectX::XMFLOAT2 UV {};
 
-		DirectX::XMFLOAT4 AdditionalUV[4] {};// ’Ç‰ÁUV.
+		DirectX::XMFLOAT4 AdditionalUV[4] {};// è¿½åŠ UV.
 
-		uint32_t BoneIndices[4] {};			// ‰e‹¿‚ğó‚¯‚éƒ{[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX (Å‘å4).
-		float BoneWeights[4] { 1.0f };		// Šeƒ{[ƒ“‚ÌƒEƒFƒCƒg (‡Œv‚Å1.0f‚É‚È‚é‚æ‚¤‚É³‹K‰»).
+		uint32_t BoneIndices[4] {};			// å½±éŸ¿ã‚’å—ã‘ã‚‹ãƒœãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ (æœ€å¤§4).
+		float BoneWeights[4] { 1.0f };		// å„ãƒœãƒ¼ãƒ³ã®ã‚¦ã‚§ã‚¤ãƒˆ (åˆè¨ˆã§1.0fã«ãªã‚‹ã‚ˆã†ã«æ­£è¦åŒ–).
 
 		DirectX::XMFLOAT3 SDEF_C {};
 		DirectX::XMFLOAT3 SDEF_R0 {};
@@ -36,17 +36,17 @@ namespace Model {
 	static constexpr size_t GPU_VERTEX_SIZE = sizeof(Vertex);
 	static constexpr size_t GPU_INDEX_SIZE  = sizeof(uint32_t);
 
-	// ƒ}ƒeƒŠƒAƒ‹‚ªQÆ‚·‚éƒeƒNƒXƒ`ƒƒƒpƒX(ƒAƒvƒŠ‚©‚ç‚Ì‘Š‘ÎƒpƒX).
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ãŒå‚ç…§ã™ã‚‹ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹(ã‚¢ãƒ—ãƒªã‹ã‚‰ã®ç›¸å¯¾ãƒ‘ã‚¹).
 	struct MaterialTextures
 	{
 		std::filesystem::path BaseTexture{};
-		std::filesystem::path SphereTexture{};	// æZƒXƒtƒBƒAƒ}ƒbƒv(PMX‚ÌSphereMode=1APMD‚Ì.sph).
-		std::filesystem::path SphereAddTexture{};	// ‰ÁZƒXƒtƒBƒAƒ}ƒbƒv(PMD‚Ì.spa‚Ì‚İBPMX‚Å‚Í–¢g—p).
+		std::filesystem::path SphereTexture{};	// ä¹—ç®—ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—(PMXã®SphereMode=1ã€PMDã®.sph).
+		std::filesystem::path SphereAddTexture{};	// åŠ ç®—ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—(PMDã®.spaã®ã¿ã€‚PMXã§ã¯æœªä½¿ç”¨).
 		std::filesystem::path ToonTexture{};
 		bool UseSphereMap = false;
 	};
 
-	// ƒQ[ƒ€‚ª•`‰æ‚Ég‚¤ƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^.
+	// ã‚²ãƒ¼ãƒ ãŒæç”»ã«ä½¿ã†ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿.
 	struct Material
 	{
 		std::string        Name{};
@@ -54,11 +54,11 @@ namespace Model {
 		DirectX::XMFLOAT3  Specular{};
 		float              SpecularPower{};
 		DirectX::XMFLOAT3  Ambient{};
-		uint32_t           NumFaceCount{};	// ‚±‚Ìƒ}ƒeƒŠƒAƒ‹‚ª•`‰æ‚·‚éƒCƒ“ƒfƒbƒNƒX”.
+		uint32_t           NumFaceCount{};	// ã“ã®ãƒãƒ†ãƒªã‚¢ãƒ«ãŒæç”»ã™ã‚‹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°.
 		MaterialTextures   Textures{};
 	};
 
-	// GPU‚Ì’è”ƒoƒbƒtƒ@‚Ö“]‘—‚·‚éƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^.
+	// GPUã®å®šæ•°ãƒãƒƒãƒ•ã‚¡ã¸è»¢é€ã™ã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿.
 	struct MaterialForHLSL
 	{
 		DirectX::XMFLOAT4 Diffuse{};
@@ -70,18 +70,18 @@ namespace Model {
 
 	static constexpr size_t GPU_MATERIAL_SIZE = (sizeof(MaterialForHLSL) + 255) & ~255;
 
-	// ƒ{[ƒ“ŠK‘wƒf[ƒ^(ƒQ[ƒ€‚ªÀÛ‚Ég‚¤Å¬ŒÀ‚Ìî•ñ).
+	// ãƒœãƒ¼ãƒ³éšå±¤ãƒ‡ãƒ¼ã‚¿(ã‚²ãƒ¼ãƒ ãŒå®Ÿéš›ã«ä½¿ã†æœ€å°é™ã®æƒ…å ±).
 	struct Bone
 	{
-		// ue‚È‚µv‚ğ•\‚·ƒZƒ“ƒ`ƒlƒ‹’l(PMX/PMD‘o•û‚ÌŠµ—á‚É‡‚í‚¹A”ÍˆÍŠOƒCƒ“ƒfƒbƒNƒX‚Æ‚µ‚Äˆµ‚¤).
+		// ã€Œè¦ªãªã—ã€ã‚’è¡¨ã™ã‚»ãƒ³ãƒãƒãƒ«å€¤(PMX/PMDåŒæ–¹ã®æ…£ä¾‹ã«åˆã‚ã›ã€ç¯„å›²å¤–ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã¨ã—ã¦æ‰±ã†).
 		static constexpr uint32_t NoParentIndex = 0xFFFFU;
 
 		std::string        Name{};
-		DirectX::XMFLOAT3  Position{};		// ƒ[ƒ‹ƒh‹óŠÔ‚Å‚Ì‰ŠúˆÊ’u.
+		DirectX::XMFLOAT3  Position{};		// ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã§ã®åˆæœŸä½ç½®.
 		uint32_t           ParentBoneIndex{ NoParentIndex };
 	};
 
-	// ƒtƒH[ƒ}ƒbƒg‚ğ–â‚í‚È‚¢AƒQ[ƒ€‚ªg‚¤ƒ‚ƒfƒ‹ƒf[ƒ^ˆê®.
+	// ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’å•ã‚ãªã„ã€ã‚²ãƒ¼ãƒ ãŒä½¿ã†ãƒ¢ãƒ‡ãƒ«ãƒ‡ãƒ¼ã‚¿ä¸€å¼.
 	struct ModelData
 	{
 		std::vector<Vertex>   Vertices;

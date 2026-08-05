@@ -1,45 +1,45 @@
-/****************************
-*	ƒtƒ@ƒCƒ‹ƒpƒX‚Ì‚ ‚ê‚»‚ê.
-*   ’S“–:•£˜e –¢—ˆ
+ï»¿/****************************
+*	ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã®ã‚ã‚Œãã‚Œ.
+*   æ‹…å½“:æ·µè„‡ æœªæ¥
 ****/
 #pragma once
 #include <string>   // string, wstring
 #include <utility>  // pair
 
 namespace MyFilePath {
-	// ’è”‚Æ‚µ‚ÄƒZƒpƒŒ[ƒ^[‚ğ’è‹`
+	// å®šæ•°ã¨ã—ã¦ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ãƒ¼ã‚’å®šç¾©
 	constexpr char DEFAULT_SPLITTER = '*';
 
 	/*******************************************
-	* ƒeƒNƒXƒ`ƒƒ‚ÌƒpƒX‚ğƒZƒpƒŒ[ƒ^•¶š‚Å•ª—£‚·‚é.
-	*@@param	Path	: ‘ÎÛ‚ÌƒpƒX•¶š—ñ.
-	*@@param	Splitter: ‹æØ‚è•¶š.
-	*@@return			: •ª—£‘OŒã‚Ì•¶š—ñƒyƒA.
+	* ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ‘ã‚¹ã‚’ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿æ–‡å­—ã§åˆ†é›¢ã™ã‚‹.
+	*ã€€@param	Path	: å¯¾è±¡ã®ãƒ‘ã‚¹æ–‡å­—åˆ—.
+	*ã€€@param	Splitter: åŒºåˆ‡ã‚Šæ–‡å­—.
+	*ã€€@return			: åˆ†é›¢å‰å¾Œã®æ–‡å­—åˆ—ãƒšã‚¢.
 	*******************************************/
 	static inline std::pair<std::string, std::string> SplitFileName(const std::string& Path, const char Splitter = DEFAULT_SPLITTER);
 
 	/*******************************************
-	* ƒtƒ@ƒCƒ‹–¼‚©‚çŠg’£q‚ğæ“¾‚·‚é.
-	* @param	Path	: ‘ÎÛ‚ÌƒpƒX•¶š—ñ.
-	* @return			: Šg’£q.
+	* ãƒ•ã‚¡ã‚¤ãƒ«åã‹ã‚‰æ‹¡å¼µå­ã‚’å–å¾—ã™ã‚‹.
+	* @param	Path	: å¯¾è±¡ã®ãƒ‘ã‚¹æ–‡å­—åˆ—.
+	* @return			: æ‹¡å¼µå­.
 	*******************************************/
 	static inline std::string GetExtension(const std::string& Path);
 	static inline std::wstring GetExtension(const std::wstring& Path);
 
 	/*******************************************
-	* @brief			: ƒ‚ƒfƒ‹‚©‚ç‚Ì‘Š‘ÎƒeƒNƒXƒ`ƒƒƒpƒX‚ğƒAƒvƒŠ‚©‚çŒ©‚½ƒpƒX‚ğ‚É•ÏŠ·,æ“¾‚·‚é.
-	* @param ModelPath	: ƒAƒvƒŠ‚©‚çŒ©‚½pmdƒ‚ƒfƒ‹‚ÌƒpƒX.
-	* @param TexPath	: PMDƒ‚ƒfƒ‹‚©‚çŒ©‚½ƒeƒNƒXƒ`ƒƒ‚ÌƒpƒX.
-	* @return			: ƒAƒvƒŠ‚©‚çŒ©‚½ƒeƒNƒXƒ`ƒƒ‚ÌƒpƒX.
+	* @brief			: ãƒ¢ãƒ‡ãƒ«ã‹ã‚‰ã®ç›¸å¯¾ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã‚’ã‚¢ãƒ—ãƒªã‹ã‚‰è¦‹ãŸãƒ‘ã‚¹ã‚’ã«å¤‰æ›,å–å¾—ã™ã‚‹.
+	* @param ModelPath	: ã‚¢ãƒ—ãƒªã‹ã‚‰è¦‹ãŸpmdãƒ¢ãƒ‡ãƒ«ã®ãƒ‘ã‚¹.
+	* @param TexPath	: PMDãƒ¢ãƒ‡ãƒ«ã‹ã‚‰è¦‹ãŸãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ‘ã‚¹.
+	* @return			: ã‚¢ãƒ—ãƒªã‹ã‚‰è¦‹ãŸãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ‘ã‚¹.
 	*******************************************/
 	static inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath);
 	
 	/*******************************************
-	* @brief			: ƒtƒ@ƒCƒ‹ƒpƒX‚È‚Ç‚Ì/‚ğ\\‚É•ÏŠ·.
-	* @param Path		: ƒAƒvƒŠ‚©‚çŒ©‚½pmdƒ‚ƒfƒ‹‚ÌƒpƒX.
+	* @brief			: ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ãªã©ã®/ã‚’\\ã«å¤‰æ›.
+	* @param Path		: ã‚¢ãƒ—ãƒªã‹ã‚‰è¦‹ãŸpmdãƒ¢ãƒ‡ãƒ«ã®ãƒ‘ã‚¹.
 	*******************************************/
 	static inline void ReplaceSlashWithBackslash(std::string* Path);
 
 }
 
-#include "FilePath.inl" // ƒCƒ“ƒ‰ƒCƒ“À‘•‚ğŠÜ‚Şƒtƒ@ƒCƒ‹‚ğƒCƒ“ƒNƒ‹[ƒh.
+#include "FilePath.inl" // ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å®Ÿè£…ã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰.

@@ -1,13 +1,13 @@
-#pragma once
+ï»¿#pragma once
 
 #include<cstdio>
 #include"IModelParser.h"
-#include"../PMX/PMXStructHeader.h"	// PMXƒtƒ@ƒCƒ‹‚Ì¶ƒoƒCƒiƒŠ\‘¢‘Ì.
+#include"../PMX/PMXStructHeader.h"	// PMXãƒ•ã‚¡ã‚¤ãƒ«ã®ç”Ÿãƒã‚¤ãƒŠãƒªæ§‹é€ ä½“.
 
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/03.
-* @brief     : PMXƒtƒ@ƒCƒ‹(.pmx)‚ğModel::ModelData‚Ö•ÏŠ·‚·‚éƒp[ƒT[.
+* @brief     : PMXãƒ•ã‚¡ã‚¤ãƒ«(.pmx)ã‚’Model::ModelDataã¸å¤‰æ›ã™ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼.
 **********************************************************************************/
 
 class PMXParser : public IModelParser
@@ -24,12 +24,12 @@ private:
 	void ReadMaterials(FILE* fp, const PMX::Header& Header, const std::vector<std::string>& TexturePaths, Model::ModelData& OutData);
 	void ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData& OutData);
 
-	// •¶š—ñ‚Ì“Ç‚İ‚İ(ƒGƒ“ƒR[ƒfƒBƒ“ƒO•ÏŠ·ŠÜ‚Ş).
+	// æ–‡å­—åˆ—ã®èª­ã¿è¾¼ã¿(ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°å¤‰æ›å«ã‚€).
 	void ReadString(FILE* fp, std::string& OutString, PMX::TextEncodingType EncodingType);
-	// PMXƒoƒCƒiƒŠ‚©‚çƒCƒ“ƒfƒbƒNƒX‚ğ“Ç‚İ‚İAuint32_t‚É•ÏŠ·‚µ‚Ä•Ô‚·.
+	// PMXãƒã‚¤ãƒŠãƒªã‹ã‚‰ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’èª­ã¿è¾¼ã¿ã€uint32_tã«å¤‰æ›ã—ã¦è¿”ã™.
 	uint32_t ReadAndCastIndices(FILE* fp, uint8_t IndexSize);
 
-	// ƒ}ƒeƒŠƒAƒ‹‚ÌƒeƒNƒXƒ`ƒƒƒCƒ“ƒfƒbƒNƒX‚©‚çAƒx[ƒX/ƒXƒtƒBƒA‚ÌƒeƒNƒXƒ`ƒƒƒpƒX‚ğ‰ğŒˆ‚·‚é.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‹ã‚‰ã€ãƒ™ãƒ¼ã‚¹/ã‚¹ãƒ•ã‚£ã‚¢ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã‚’è§£æ±ºã™ã‚‹.
 	void ResolveMaterialTextures(
 		uint32_t TextureIndex, uint8_t SphereMode,
 		const std::vector<std::string>& TexturePaths,

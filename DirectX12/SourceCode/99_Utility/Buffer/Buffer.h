@@ -1,4 +1,4 @@
-// Buffer.h ƒV[ƒ“‚ğ‚Ü‚½‚¢‚Åinstance‚ğŒÄ‚Ño‚µ‚½‚¢‚Æ‚«‚Ég—p.
+ï»¿// Buffer.h ã‚·ãƒ¼ãƒ³ã‚’ã¾ãŸã„ã§instanceã‚’å‘¼ã³å‡ºã—ãŸã„ã¨ãã«ä½¿ç”¨.
 
 #pragma once
 
@@ -12,13 +12,13 @@ public:
     Buffer() = default;
     ~Buffer() = default;
 
-    // ƒoƒbƒtƒ@‚ğ’Ç‰Á.
+    // ãƒãƒƒãƒ•ã‚¡ã‚’è¿½åŠ .
     void AddBuffer(Any buffer);
 
-    // ƒoƒbƒtƒ@Á‹.
+    // ãƒãƒƒãƒ•ã‚¡æ¶ˆå».
     void ClearBuffer();
 
-    // ƒoƒbƒtƒ@æ“¾.
+    // ãƒãƒƒãƒ•ã‚¡å–å¾—.
     const Any& GetBuffer(size_t index) const;
 
 private:

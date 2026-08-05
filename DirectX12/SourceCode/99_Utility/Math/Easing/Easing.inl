@@ -1,4 +1,4 @@
-#include "Easing.h"
+ï»¿#include "Easing.h"
 #pragma once
 
 namespace MyEasing {
@@ -38,7 +38,7 @@ namespace MyEasing {
             case MyEasing::Type::InBounce:      InBounce    (Time, MaxTime, Start, End, Out); break;
             case MyEasing::Type::OutBounce:     OutBounce   (Time, MaxTime, Start, End, Out); break;
             case MyEasing::Type::InOutBounce:   InOutBounce (Time, MaxTime, Start, End, Out); break;
-            default:                              Out = Start; // —áŠO‚Í“®‚©‚³‚È‚¢.
+            default:                              Out = Start; // ä¾‹å¤–ã¯å‹•ã‹ã•ãªã„.
         }
     }
 

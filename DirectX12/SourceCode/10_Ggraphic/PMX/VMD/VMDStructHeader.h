@@ -1,39 +1,39 @@
-#pragma once
+ï»¿#pragma once
 
 namespace VMD {
-    // ƒwƒbƒ_[\‘¢‘Ì
+    // ãƒ˜ãƒƒãƒ€ãƒ¼æ§‹é€ ä½“
     struct Header
     {
         char VMDHeader[30];     // "Vocaloid Motion Data".
-        char ModelName[20];     // ƒ‚ƒfƒ‹–¼ (’Êí‚Í–³‹‚µ‚Ä‚àOK).
-        uint8_t Version;        // VMD ƒo[ƒWƒ‡ƒ“ (–¢g—p‚Ìê‡‚ª‘½‚¢).
+        char ModelName[20];     // ãƒ¢ãƒ‡ãƒ«å (é€šå¸¸ã¯ç„¡è¦–ã—ã¦ã‚‚OK).
+        uint8_t Version;        // VMD ãƒãƒ¼ã‚¸ãƒ§ãƒ³ (æœªä½¿ç”¨ã®å ´åˆãŒå¤šã„).
     };
     
-    // ƒ{[ƒ“ƒL[ƒtƒŒ[ƒ€ƒf[ƒ^.
+    // ãƒœãƒ¼ãƒ³ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ‡ãƒ¼ã‚¿.
     struct BoneFrame
     {
-        char BoneName[15];          // ƒ{[ƒ“–¼ (UTF-8, I’[nullŠÜ‚Ş).
-        uint32_t FrameNo;           // ƒtƒŒ[ƒ€”Ô†.
-        DirectX::XMFLOAT3 Position; // ˆÚ“® (x, y, z).
-        DirectX::XMFLOAT4 Rotation; // ‰ñ“] (x, y, z, w) Quaternion.
-        uint8_t Interpolation[64];  // •âŠÔ‹Èüƒf[ƒ^ (Še²16ƒoƒCƒg * 4² = 64ƒoƒCƒg).
-        // X, Y, Z, Rotation ‚Ì‡‚Å•âŠÔƒf[ƒ^‚ª“ü‚é.
+        char BoneName[15];          // ãƒœãƒ¼ãƒ³å (UTF-8, çµ‚ç«¯nullå«ã‚€).
+        uint32_t FrameNo;           // ãƒ•ãƒ¬ãƒ¼ãƒ ç•ªå·.
+        DirectX::XMFLOAT3 Position; // ç§»å‹• (x, y, z).
+        DirectX::XMFLOAT4 Rotation; // å›è»¢ (x, y, z, w) Quaternion.
+        uint8_t Interpolation[64];  // è£œé–“æ›²ç·šãƒ‡ãƒ¼ã‚¿ (å„è»¸16ãƒã‚¤ãƒˆ * 4è»¸ = 64ãƒã‚¤ãƒˆ).
+        // X, Y, Z, Rotation ã®é †ã§è£œé–“ãƒ‡ãƒ¼ã‚¿ãŒå…¥ã‚‹.
     };
 
-    // ƒ‚[ƒtƒL[ƒtƒŒ[ƒ€ƒf[ƒ^.
+    // ãƒ¢ãƒ¼ãƒ•ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ‡ãƒ¼ã‚¿.
     struct MorphFrame
     {
-        char MorphName[15];     // ƒ‚[ƒt–¼ (UTF-8, I’[nullŠÜ‚Ş).
-        uint32_t FrameNo;       // ƒtƒŒ[ƒ€”Ô†.
-        float Value;            // ƒ‚[ƒt‚Ì’l.
+        char MorphName[15];     // ãƒ¢ãƒ¼ãƒ•å (UTF-8, çµ‚ç«¯nullå«ã‚€).
+        uint32_t FrameNo;       // ãƒ•ãƒ¬ãƒ¼ãƒ ç•ªå·.
+        float Value;            // ãƒ¢ãƒ¼ãƒ•ã®å€¤.
     };
 
-    // VMD ƒtƒ@ƒCƒ‹‘S‘Ì‚ğ•Û‚·‚éƒf[ƒ^\‘¢.
+    // VMD ãƒ•ã‚¡ã‚¤ãƒ«å…¨ä½“ã‚’ä¿æŒã™ã‚‹ãƒ‡ãƒ¼ã‚¿æ§‹é€ .
     struct MotionData
     {
         Header header;
-        std::map<std::string, std::vector<BoneFrame>> BoneKeyFrames;    // ƒ{[ƒ“–¼ -> ‚»‚Ìƒ{[ƒ“‚Ì‘SƒL[ƒtƒŒ[ƒ€.
-        std::map<std::string, std::vector<MorphFrame>> MorphKeyFrames;  // ƒ‚[ƒt–¼ -> ‚»‚Ìƒ‚[ƒt‚Ì‘SƒL[ƒtƒŒ[ƒ€.
-        // •K—v‚É‰‚¶‚ÄIK, Camera, Light“™‚ÌƒtƒŒ[ƒ€‚à’Ç‰Á.
+        std::map<std::string, std::vector<BoneFrame>> BoneKeyFrames;    // ãƒœãƒ¼ãƒ³å -> ãã®ãƒœãƒ¼ãƒ³ã®å…¨ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ .
+        std::map<std::string, std::vector<MorphFrame>> MorphKeyFrames;  // ãƒ¢ãƒ¼ãƒ•å -> ãã®ãƒ¢ãƒ¼ãƒ•ã®å…¨ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ .
+        // å¿…è¦ã«å¿œã˜ã¦IK, Camera, Lightç­‰ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã‚‚è¿½åŠ .
     };
 }

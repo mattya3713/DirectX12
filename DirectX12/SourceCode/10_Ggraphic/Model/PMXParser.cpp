@@ -1,32 +1,32 @@
-#include "PMXParser.h"
+ï»¿#include "PMXParser.h"
 #include "99_Utility/String/FilePath/FilePath.h"
 
-// PMXƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚İAModel::ModelData‚Ö•ÏŠ·‚·‚é.
+// PMXãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã¿ã€Model::ModelDataã¸å¤‰æ›ã™ã‚‹.
 bool PMXParser::Load(const std::string& FilePath, Model::ModelData& OutData)
 {
 	FILE* fp = nullptr;
 	auto err = fopen_s(&fp, FilePath.c_str(), "rb");
 	if (err != 0 || !fp) {
-		throw std::runtime_error(FilePath + "ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚ª‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½B");
+		throw std::runtime_error(FilePath + "ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ãŒã§ãã¾ã›ã‚“ã§ã—ãŸã€‚");
 	}
 
 	PMX::Header header;
 	ReadHeader(fp, header);
 
-	// ƒ‚ƒfƒ‹î•ñ‚ğ“Ç‚İ‚Ş(“à—e‚ÍƒXƒLƒbƒv).
+	// ãƒ¢ãƒ‡ãƒ«æƒ…å ±ã‚’èª­ã¿è¾¼ã‚€(å†…å®¹ã¯ã‚¹ã‚­ãƒƒãƒ—).
 	ReadModelInfo(fp, header);
 
-	// ’¸“_ƒf[ƒ^“Ç‚İ‚İ.
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadVertices(fp, header, OutData);
 
-	// ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^“Ç‚İ‚İ.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadFaces(fp, header, OutData);
 
-	// ƒeƒNƒXƒ`ƒƒƒpƒX“Ç‚İ‚İ.
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹èª­ã¿è¾¼ã¿.
 	std::vector<std::string> texture_paths;
 	ReadTextures(fp, header, texture_paths);
 
-	// “Ç‚İ‚ñ‚¾ƒeƒNƒXƒ`ƒƒƒpƒX‚ğAƒ‚ƒfƒ‹ƒtƒ@ƒCƒ‹‚©‚ç‚Ì‘Š‘ÎƒpƒX‚É‰ğŒˆ.
+	// èª­ã¿è¾¼ã‚“ã ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã‚’ã€ãƒ¢ãƒ‡ãƒ«ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰ã®ç›¸å¯¾ãƒ‘ã‚¹ã«è§£æ±º.
 	std::string model_dir_path = "";
 	size_t last_slash = FilePath.find_last_of("/\\");
 	if (last_slash != std::string::npos) {
@@ -37,46 +37,46 @@ bool PMXParser::Load(const std::string& FilePath, Model::ModelData& OutData)
 		MyFilePath::ReplaceSlashWithBackslash(&tex_path);
 	}
 
-	// ƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^“Ç‚İ‚İ.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadMaterials(fp, header, texture_paths, OutData);
 
-	// ƒ{[ƒ“ƒf[ƒ^“Ç‚İ‚İ.
+	// ãƒœãƒ¼ãƒ³ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadBones(fp, header, OutData);
 
 	fclose(fp);
 	return true;
 }
 
-// PMXƒwƒbƒ_[“Ç‚İ‚İ.
+// PMXãƒ˜ãƒƒãƒ€ãƒ¼èª­ã¿è¾¼ã¿.
 void PMXParser::ReadHeader(FILE* fp, PMX::Header& OutHeader)
 {
 	fread(&OutHeader, PMX::HEADER_SIZE, 1, fp);
 
-	// PMXƒtƒ@ƒCƒ‹‚©‚Ç‚¤‚©‚Ì”»’è.
+	// PMXãƒ•ã‚¡ã‚¤ãƒ«ã‹ã©ã†ã‹ã®åˆ¤å®š.
 	if (OutHeader.Signature != PMX::SIGNATURE) {
 		throw std::runtime_error("This File is not PMX.");
 	}
 }
 
-// ƒ‚ƒfƒ‹î•ñ‚ğ“Ç‚İ”ò‚Î‚·.
+// ãƒ¢ãƒ‡ãƒ«æƒ…å ±ã‚’èª­ã¿é£›ã°ã™.
 void PMXParser::ReadModelInfo(FILE* fp, const PMX::Header& Header)
 {
-	// ƒ‚ƒfƒ‹–¼(“ú–{Œê).
+	// ãƒ¢ãƒ‡ãƒ«å(æ—¥æœ¬èª).
 	uint32_t name_length = {};
 	fread(&name_length, sizeof(name_length), 1, fp);
 	fseek(fp, name_length, SEEK_CUR);
 
-	// ƒ‚ƒfƒ‹–¼(‰pŒê).
+	// ãƒ¢ãƒ‡ãƒ«å(è‹±èª).
 	uint32_t name_english_length = {};
 	fread(&name_english_length, sizeof(name_english_length), 1, fp);
 	fseek(fp, name_english_length, SEEK_CUR);
 
-	// ƒ‚ƒfƒ‹ƒRƒƒ“ƒg(“ú–{Œê).
+	// ãƒ¢ãƒ‡ãƒ«ã‚³ãƒ¡ãƒ³ãƒˆ(æ—¥æœ¬èª).
 	uint32_t comment_length = {};
 	fread(&comment_length, sizeof(comment_length), 1, fp);
 	fseek(fp, comment_length, SEEK_CUR);
 
-	// ƒ‚ƒfƒ‹ƒRƒƒ“ƒg(‰pŒê).
+	// ãƒ¢ãƒ‡ãƒ«ã‚³ãƒ¡ãƒ³ãƒˆ(è‹±èª).
 	uint32_t comment_english_length = {};
 	fread(&comment_english_length, sizeof(comment_english_length), 1, fp);
 	fseek(fp, comment_english_length, SEEK_CUR);
@@ -100,7 +100,7 @@ void PMXParser::ReadVertices(FILE* fp, const PMX::Header& Header, Model::ModelDa
 		uint8_t weight_type;
 		fread(&weight_type, sizeof(uint8_t), 1, fp);
 
-		for (int j = 0; j < 4; ++j) { // ”O‚Ì‚½‚ß‰Šú‰»‚µ‚Ä‚¨‚­.
+		for (int j = 0; j < 4; ++j) { // å¿µã®ãŸã‚åˆæœŸåŒ–ã—ã¦ãŠã.
 			OutData.Vertices[i].BoneIndices[j] = 0;
 			OutData.Vertices[i].BoneWeights[j] = 0.0f;
 		}
@@ -177,7 +177,7 @@ void PMXParser::ResolveMaterialTextures(
 	}
 
 	if (SphereMode > 0) {
-		// ƒXƒtƒBƒAƒ}ƒbƒv‚Í’ÊíAƒx[ƒXƒeƒNƒXƒ`ƒƒ‚Ìƒtƒ@ƒCƒ‹–¼‚Æ*‹æØ‚è‚Å•¹‹L‚³‚ê‚Ä‚¢‚éê‡‚ª‚ ‚é(—á: base.bmp*base.sph).
+		// ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ã¯é€šå¸¸ã€ãƒ™ãƒ¼ã‚¹ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ•ã‚¡ã‚¤ãƒ«åã¨*åŒºåˆ‡ã‚Šã§ä½µè¨˜ã•ã‚Œã¦ã„ã‚‹å ´åˆãŒã‚ã‚‹(ä¾‹: base.bmp*base.sph).
 		auto name_pair = MyFilePath::SplitFileName(OutBasePath);
 		std::string ext1 = MyFilePath::GetExtension(name_pair.first);
 		std::string ext2 = MyFilePath::GetExtension(name_pair.second);
@@ -192,11 +192,11 @@ void PMXParser::ResolveMaterialTextures(
 		}
 	}
 	else {
-		// ƒXƒtƒBƒAƒ}ƒbƒv‚ª“Æ—§‚µ‚Ä‚¢‚éê‡‚âAƒx[ƒXƒeƒNƒXƒ`ƒƒ‚É.sphŠg’£q‚ª•t‚¢‚Ä‚¢‚éê‡.
+		// ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ãŒç‹¬ç«‹ã—ã¦ã„ã‚‹å ´åˆã‚„ã€ãƒ™ãƒ¼ã‚¹ãƒ†ã‚¯ã‚¹ãƒãƒ£ã«.sphæ‹¡å¼µå­ãŒä»˜ã„ã¦ã„ã‚‹å ´åˆ.
 		std::string ext = MyFilePath::GetExtension(OutBasePath);
 		if (ext == "sph" || ext == "spa") {
 			OutSpherePath = OutBasePath;
-			OutBasePath = ""; // ƒx[ƒXƒeƒNƒXƒ`ƒƒ‚Í‚È‚µ.
+			OutBasePath = ""; // ãƒ™ãƒ¼ã‚¹ãƒ†ã‚¯ã‚¹ãƒãƒ£ã¯ãªã—.
 		}
 	}
 }
@@ -237,10 +237,10 @@ void PMXParser::ReadMaterials(FILE* fp, const PMX::Header& Header, const std::ve
 		fread(&toon_flag, sizeof(uint8_t), 1, fp);
 
 		uint32_t toon_texture_index = 0;
-		if (toon_flag == 0) { // ƒ‚ƒfƒ‹ŒÅ—L‚ÌƒgƒD[ƒ“.
+		if (toon_flag == 0) { // ãƒ¢ãƒ‡ãƒ«å›ºæœ‰ã®ãƒˆã‚¥ãƒ¼ãƒ³.
 			toon_texture_index = ReadAndCastIndices(fp, Header.TextureIndexSize);
 		}
-		else { // ‹¤’ÊƒgƒD[ƒ“(PMXƒtƒ@ƒCƒ‹“à‚Ìindex‚Í1?10).
+		else { // å…±é€šãƒˆã‚¥ãƒ¼ãƒ³(PMXãƒ•ã‚¡ã‚¤ãƒ«å†…ã®indexã¯1?10).
 			uint8_t common_toon_index = 0;
 			fread(&common_toon_index, sizeof(uint8_t), 1, fp);
 			toon_texture_index = common_toon_index;
@@ -250,7 +250,7 @@ void PMXParser::ReadMaterials(FILE* fp, const PMX::Header& Header, const std::ve
 		ReadString(fp, memo, Header.Encoding);
 		fread(&material.NumFaceCount, sizeof(uint32_t), 1, fp);
 
-		// ƒx[ƒXƒeƒNƒXƒ`ƒƒ/ƒXƒtƒBƒAƒeƒNƒXƒ`ƒƒ‚ÌƒpƒX‰ğŒˆ.
+		// ãƒ™ãƒ¼ã‚¹ãƒ†ã‚¯ã‚¹ãƒãƒ£/ã‚¹ãƒ•ã‚£ã‚¢ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ‘ã‚¹è§£æ±º.
 		std::string base_texture_path, sphere_texture_path;
 		ResolveMaterialTextures(texture_index, sphere_mode, TexturePaths,
 			base_texture_path, sphere_texture_path);
@@ -258,17 +258,17 @@ void PMXParser::ReadMaterials(FILE* fp, const PMX::Header& Header, const std::ve
 		material.Textures.SphereTexture = sphere_texture_path;
 		material.Textures.UseSphereMap = (sphere_mode == 0);
 
-		// ƒgƒD[ƒ“ƒeƒNƒXƒ`ƒƒ‚ÌƒpƒX‰ğŒˆ.
-		if (toon_flag) { // ‹¤’ÊƒgƒD[ƒ“.
+		// ãƒˆã‚¥ãƒ¼ãƒ³ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ‘ã‚¹è§£æ±º.
+		if (toon_flag) { // å…±é€šãƒˆã‚¥ãƒ¼ãƒ³.
 			char buffer[32];
 			sprintf_s(buffer, sizeof(buffer), PMX::COMMON_TOON_PATH, static_cast<int>(toon_texture_index) + 1);
 			material.Textures.ToonTexture = buffer;
 		}
-		else if (toon_texture_index < TexturePaths.size()) { // ƒ‚ƒfƒ‹ŒÅ—LƒgƒD[ƒ“.
+		else if (toon_texture_index < TexturePaths.size()) { // ãƒ¢ãƒ‡ãƒ«å›ºæœ‰ãƒˆã‚¥ãƒ¼ãƒ³.
 			material.Textures.ToonTexture = TexturePaths[toon_texture_index];
 		}
-		// ‚»‚êˆÈŠO(ƒ‚ƒfƒ‹ŒÅ—LƒgƒD[ƒ“‚ÌƒCƒ“ƒfƒbƒNƒX‚ª–³Œø)‚ÍToonTexture‚ğ‹ó‚Ì‚Ü‚Ü‚É‚µA
-		// Actor‘¤‚ÅƒŒƒ“ƒ_ƒ‰[‚ÌƒfƒtƒHƒ‹ƒg(•ƒeƒNƒXƒ`ƒƒ)‚ğg‚¤.
+		// ãã‚Œä»¥å¤–(ãƒ¢ãƒ‡ãƒ«å›ºæœ‰ãƒˆã‚¥ãƒ¼ãƒ³ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒç„¡åŠ¹)ã¯ToonTextureã‚’ç©ºã®ã¾ã¾ã«ã—ã€
+		// Actorå´ã§ãƒ¬ãƒ³ãƒ€ãƒ©ãƒ¼ã®ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆ(é»’ãƒ†ã‚¯ã‚¹ãƒãƒ£)ã‚’ä½¿ã†.
 	}
 }
 
@@ -294,7 +294,7 @@ void PMXParser::ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData&
 		uint16_t bone_flag = 0;
 		fread(&bone_flag, sizeof(uint16_t), 1, fp);
 
-		// ˆÈ‰ºAƒQ[ƒ€‚Å‚Í–¢g—p‚Ì‚½‚ßƒtƒ@ƒCƒ‹ƒJ[ƒ\ƒ‹‚ği‚ß‚é‚½‚ß‚¾‚¯‚É“Ç‚İ‚Ş.
+		// ä»¥ä¸‹ã€ã‚²ãƒ¼ãƒ ã§ã¯æœªä½¿ç”¨ã®ãŸã‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚«ãƒ¼ã‚½ãƒ«ã‚’é€²ã‚ã‚‹ãŸã‚ã ã‘ã«èª­ã¿è¾¼ã‚€.
 		if (!(bone_flag & PMX::BoneFlags::TargetShowMode)) {
 			DirectX::XMFLOAT3 position_offset = {};
 			fread(&position_offset, sizeof(DirectX::XMFLOAT3), 1, fp);
@@ -348,7 +348,7 @@ void PMXParser::ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData&
 	}
 }
 
-// PMXƒoƒCƒiƒŠ‚©‚çƒCƒ“ƒfƒbƒNƒX‚ğ“Ç‚İ‚İAuint32_t‚É•ÏŠ·‚µ‚Ä•Ô‚·.
+// PMXãƒã‚¤ãƒŠãƒªã‹ã‚‰ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’èª­ã¿è¾¼ã¿ã€uint32_tã«å¤‰æ›ã—ã¦è¿”ã™.
 uint32_t PMXParser::ReadAndCastIndices(FILE* fp, uint8_t IndexSize)
 {
 	uint32_t value = 0;

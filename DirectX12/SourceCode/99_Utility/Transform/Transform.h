@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include <DirectXMath.h>
 #include <span>
@@ -9,11 +9,11 @@
 struct Transform
 {
     DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
-    DirectX::XMFLOAT3 Rotation{ 0.0f, 0.0f, 0.0f }; // ƒIƒCƒ‰[Šp (Pitch, Yaw, Roll)
+    DirectX::XMFLOAT3 Rotation{ 0.0f, 0.0f, 0.0f }; // ã‚ªã‚¤ãƒ©ãƒ¼è§’ (Pitch, Yaw, Roll)
     DirectX::XMFLOAT3 Scale{ 1.0f, 1.0f, 1.0f };
 
     // -----------------------------------------------------------
-    // ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+    // ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
     // -----------------------------------------------------------
     constexpr Transform() noexcept = default;
 
@@ -27,8 +27,8 @@ struct Transform
     {
     }
 
-    // std::span ‚ğg—p‚µ‚½ƒRƒ“ƒXƒgƒ‰ƒNƒ^
-    // std::array, std::vector, CƒXƒ^ƒCƒ‹”z—ñ (float[3]) ‚È‚Ç‚©‚ç’¼Ú\’z‰Â”\
+    // std::span ã‚’ä½¿ç”¨ã—ãŸã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+    // std::array, std::vector, Cã‚¹ã‚¿ã‚¤ãƒ«é…åˆ— (float[3]) ãªã©ã‹ã‚‰ç›´æ¥æ§‹ç¯‰å¯èƒ½
     constexpr Transform(
         std::span<const float, 3> position,
         std::span<const float, 3> rotation,
@@ -40,9 +40,9 @@ struct Transform
     }
 
     // -----------------------------------------------------------
-    // s—ñ•ÏŠ·iSIMDÅ“K‰»j
+    // è¡Œåˆ—å¤‰æ›ï¼ˆSIMDæœ€é©åŒ–ï¼‰
     // -----------------------------------------------------------
-    // SRT (Scale * Rotation * Translation) s—ñ‚Ì‡¬
+    // SRT (Scale * Rotation * Translation) è¡Œåˆ—ã®åˆæˆ
     [[nodiscard]] DirectX::XMMATRIX GetMatrix() const noexcept
     {
         const DirectX::XMVECTOR p = DirectX::XMLoadFloat3(&Position);
@@ -55,7 +55,7 @@ struct Transform
     }
 
     // -----------------------------------------------------------
-    // ‰‰ZqƒI[ƒo[ƒ[ƒh (“ñ€‰‰Zq)
+    // æ¼”ç®—å­ã‚ªãƒ¼ãƒãƒ¼ãƒ­ãƒ¼ãƒ‰ (äºŒé …æ¼”ç®—å­)
     // -----------------------------------------------------------
     [[nodiscard]] constexpr Transform operator+(const Transform& other) const noexcept
     {
@@ -75,7 +75,7 @@ struct Transform
         };
     }
 
-    // Transform “¯m‚Ì—v‘f‚²‚Æ‚ÌæZ
+    // Transform åŒå£«ã®è¦ç´ ã”ã¨ã®ä¹—ç®—
     [[nodiscard]] constexpr Transform operator*(const Transform& other) const noexcept
     {
         return Transform{
@@ -85,7 +85,7 @@ struct Transform
         };
     }
 
-    // ƒXƒJƒ‰[æZ
+    // ã‚¹ã‚«ãƒ©ãƒ¼ä¹—ç®—
     [[nodiscard]] constexpr Transform operator*(const float scalar) const noexcept
     {
         return Transform{
@@ -95,7 +95,7 @@ struct Transform
         };
     }
 
-    // ƒXƒJƒ‰[œZ
+    // ã‚¹ã‚«ãƒ©ãƒ¼é™¤ç®—
     [[nodiscard]] constexpr Transform operator/(const float scalar) const noexcept
     {
         return Transform{
@@ -106,7 +106,7 @@ struct Transform
     }
 
     // -----------------------------------------------------------
-    // ‰‰ZqƒI[ƒo[ƒ[ƒh (•¡‡‘ã“ü‰‰Zq)
+    // æ¼”ç®—å­ã‚ªãƒ¼ãƒãƒ¼ãƒ­ãƒ¼ãƒ‰ (è¤‡åˆä»£å…¥æ¼”ç®—å­)
     // -----------------------------------------------------------
     constexpr Transform& operator+=(const Transform& other) noexcept
     {
@@ -149,7 +149,7 @@ struct Transform
     }
 
     // -----------------------------------------------------------
-    // ”äŠr‰‰Zq (MathExpansion::NearlyEqual ‚ğg—p)
+    // æ¯”è¼ƒæ¼”ç®—å­ (MathExpansion::NearlyEqual ã‚’ä½¿ç”¨)
     // -----------------------------------------------------------
     [[nodiscard]] constexpr bool operator==(const Transform& other) const noexcept
     {

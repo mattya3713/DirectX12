@@ -1,87 +1,87 @@
-#pragma once
+ï»¿#pragma once
 #include "FilePath.h"
 
 namespace MyFilePath {
 
     inline std::pair<std::string, std::string> SplitFileName(const std::string& Path, const char Splitter) 
     {
-        // ƒZƒpƒŒ[ƒ^[•¶š‚ÌˆÊ’u‚ğ’T¸.
+        // ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ãƒ¼æ–‡å­—ã®ä½ç½®ã‚’æ¢æŸ».
         auto Index = Path.find(Splitter);
         std::pair<std::string, std::string> SpliteFilePath;
 
-        // ƒZƒpƒŒ[ƒ^‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍAŒ³‚ÌƒpƒX‚Æ‹ó‚Ì•¶š—ñ‚ğ•Ô‚·.
+        // ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆã¯ã€å…ƒã®ãƒ‘ã‚¹ã¨ç©ºã®æ–‡å­—åˆ—ã‚’è¿”ã™.
         if (Index == std::string::npos) {
 
-            // ƒZƒpƒŒ[ƒ^ˆÈ‘O‚ÍŒ³‚ÌƒpƒX.
+            // ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ä»¥å‰ã¯å…ƒã®ãƒ‘ã‚¹.
             SpliteFilePath.first = Path; 
-            // ƒZƒpƒŒ[ƒ^ˆÈ~‚Í‹ó.
+            // ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ä»¥é™ã¯ç©º.
             SpliteFilePath.second = "";   
 
             return SpliteFilePath;
         }
 
-        // ƒZƒpƒŒ[ƒ^ˆÈ‘O‚ğæ“¾.
+        // ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ä»¥å‰ã‚’å–å¾—.
         SpliteFilePath.first = Path.substr(0, Index);
 
-        // ƒZƒpƒŒ[ƒ^ˆÈ~‚ğæ“¾.
+        // ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ä»¥é™ã‚’å–å¾—.
         SpliteFilePath.second = Path.substr(Index + 1, Path.length() - Index - 1);
 
-        // •ª—£‚µ‚½•¶š—ñ‚ğ•Ô‚·.
+        // åˆ†é›¢ã—ãŸæ–‡å­—åˆ—ã‚’è¿”ã™.
         return SpliteFilePath;
     }
 
     inline std::string GetExtension(const std::string& path) {
-        // Œã‚ë‚©‚çu.v‚ğ’T‚·
+        // å¾Œã‚ã‹ã‚‰ã€Œ.ã€ã‚’æ¢ã™
         auto Index = path.rfind('.');
 
-        // Šg’£q‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡.
+        // æ‹¡å¼µå­ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆ.
         if (Index == std::string::npos) {
-            // ‹ó•¶š—ñ‚ğ•Ô‚·.
+            // ç©ºæ–‡å­—åˆ—ã‚’è¿”ã™.
             return "";
         }
 
-        // Šg’£q‚ğ•Ô‚·
+        // æ‹¡å¼µå­ã‚’è¿”ã™
         return path.substr(Index + 1);
     }
 
     inline std::wstring GetExtension(const std::wstring& path) {
-        // Œã‚ë‚©‚çu.v‚ğ’T‚·
+        // å¾Œã‚ã‹ã‚‰ã€Œ.ã€ã‚’æ¢ã™
         auto Index = path.rfind(L'.');
 
-        // Šg’£q‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡.
+        // æ‹¡å¼µå­ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆ.
         if (Index == std::string::npos) {
-            // ‹ó•¶š—ñ‚ğ•Ô‚·.
+            // ç©ºæ–‡å­—åˆ—ã‚’è¿”ã™.
             return L"";
         }
 
-        // Šg’£q‚ğ•Ô‚·
+        // æ‹¡å¼µå­ã‚’è¿”ã™
         return path.substr(Index + 1);
     }
 
-    // ƒ‚ƒfƒ‹‚©‚ç‚Ì‘Š‘ÎƒeƒNƒXƒ`ƒƒƒpƒX‚ğƒAƒvƒŠ‚©‚çŒ©‚½ƒpƒX‚ğ‚É•ÏŠ·,æ“¾‚·‚é.
+    // ãƒ¢ãƒ‡ãƒ«ã‹ã‚‰ã®ç›¸å¯¾ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã‚’ã‚¢ãƒ—ãƒªã‹ã‚‰è¦‹ãŸãƒ‘ã‚¹ã‚’ã«å¤‰æ›,å–å¾—ã™ã‚‹.
     inline std::string GetTexPath(const std::string& ModelPath, const char* TexPath) {
        
-        // ƒ‚ƒfƒ‹ƒpƒX‚ÌÅŒã‚ÌƒXƒ‰ƒbƒVƒ…‚Ü‚½‚ÍƒoƒbƒNƒXƒ‰ƒbƒVƒ…‚ğ’T‚·.
+        // ãƒ¢ãƒ‡ãƒ«ãƒ‘ã‚¹ã®æœ€å¾Œã®ã‚¹ãƒ©ãƒƒã‚·ãƒ¥ã¾ãŸã¯ãƒãƒƒã‚¯ã‚¹ãƒ©ãƒƒã‚·ãƒ¥ã‚’æ¢ã™.
         int pathIndex1 = static_cast<int>(ModelPath.rfind('/'));
         int pathIndex2 = static_cast<int>(ModelPath.rfind('\\'));
         int pathIndex = std::max(pathIndex1, pathIndex2);
 
-        // ƒ‚ƒfƒ‹ƒpƒX‚ÌÅŒã‚ªƒXƒ‰ƒbƒVƒ…‚Å‚È‚¢ê‡.
+        // ãƒ¢ãƒ‡ãƒ«ãƒ‘ã‚¹ã®æœ€å¾ŒãŒã‚¹ãƒ©ãƒƒã‚·ãƒ¥ã§ãªã„å ´åˆ.
         if (pathIndex == std::string::npos) {
 
-            // ƒeƒNƒXƒ`ƒƒƒpƒX‚ğ’Ç‰Á.
+            // ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã‚’è¿½åŠ .
             return ModelPath + TexPath;
         }
 
-        // ƒ‚ƒfƒ‹ƒpƒX‚©‚çƒtƒHƒ‹ƒ_ƒpƒX‚ğæ“¾‚µAƒeƒNƒXƒ`ƒƒƒpƒX‚ğ’Ç‰Á.
+        // ãƒ¢ãƒ‡ãƒ«ãƒ‘ã‚¹ã‹ã‚‰ãƒ•ã‚©ãƒ«ãƒ€ãƒ‘ã‚¹ã‚’å–å¾—ã—ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã‚’è¿½åŠ .
         auto folderPath = ModelPath.substr(0, pathIndex + 1);
         return folderPath + TexPath;
     }
 
-    // ƒtƒ@ƒCƒ‹ƒpƒX‚È‚Ç‚Ì/‚ğ\\‚É•ÏŠ·.
+    // ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ãªã©ã®/ã‚’\\ã«å¤‰æ›.
     void ReplaceSlashWithBackslash(std::string* Path)
     {
-        // nullptrƒ`ƒFƒbƒN.
+        // nullptrãƒã‚§ãƒƒã‚¯.
         if (Path == nullptr) { return; }
 
         for (char& c : *Path) {

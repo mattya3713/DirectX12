@@ -1,12 +1,12 @@
-#pragma once
+ï»¿#pragma once
 
 #include<d3d12.h>
 #include<DirectXMath.h>
 #include<vector>
 #include<string>
-#include"Model/ModelData.h"		// ƒtƒH[ƒ}ƒbƒg‚ğ–â‚í‚È‚¢ƒ‚ƒfƒ‹ƒf[ƒ^.
+#include"Model/ModelData.h"		// ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’å•ã‚ãªã„ãƒ¢ãƒ‡ãƒ«ãƒ‡ãƒ¼ã‚¿.
 
-// ‘O•ûéŒ¾.
+// å‰æ–¹å®£è¨€.
 class DirectX12;
 class PMDRenderer;
 
@@ -16,16 +16,16 @@ class PMDActor
 private:
 
 	struct Transform {
-		// “à•”‚É‚Á‚Ä‚éXMMATRIXƒƒ“ƒo‚ª16ƒoƒCƒgƒAƒ‰ƒCƒƒ“ƒg‚Å‚ ‚é‚½‚ß.
-		// Transform‚ğnew‚·‚éÛ‚É‚Í16ƒoƒCƒg‹«ŠE‚ÉŠm•Û‚·‚é.
+		// å†…éƒ¨ã«æŒã£ã¦ã‚‹XMMATRIXãƒ¡ãƒ³ãƒãŒ16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆã§ã‚ã‚‹ãŸã‚.
+		// Transformã‚’newã™ã‚‹éš›ã«ã¯16ãƒã‚¤ãƒˆå¢ƒç•Œã«ç¢ºä¿ã™ã‚‹.
 		void* operator new(size_t size);
 		DirectX::XMMATRIX world;
 	};
 
 	struct BoneNode {
-		int						BoneIndex;	// ƒ{[ƒ“ƒCƒ“ƒfƒbƒNƒX.
-		DirectX::XMFLOAT3		StartPos;	// ƒ{[ƒ“Šî€“_(‰ñ“]’†S).
-		std::vector<BoneNode*>	Children;	// qƒm[ƒh.
+		int						BoneIndex;	// ãƒœãƒ¼ãƒ³ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹.
+		DirectX::XMFLOAT3		StartPos;	// ãƒœãƒ¼ãƒ³åŸºæº–ç‚¹(å›è»¢ä¸­å¿ƒ).
+		std::vector<BoneNode*>	Children;	// å­ãƒãƒ¼ãƒ‰.
 
 		BoneNode()
 			: BoneIndex (0)
@@ -34,13 +34,13 @@ private:
 		{}
 	};
 
-	// ƒ‚[ƒVƒ‡ƒ“ƒf[ƒ^.
+	// ãƒ¢ãƒ¼ã‚·ãƒ§ãƒ³ãƒ‡ãƒ¼ã‚¿.
 	struct VMDKeyFrame {
-		char BoneName[15];				// ƒ{[ƒ“–¼.
-		unsigned int FrameNo;			// ƒtƒŒ[ƒ€”Ô†(“Ç‚ÍŒ»İ‚ÌƒtƒŒ[ƒ€ˆÊ’u‚ğ0‚Æ‚µ‚½‘Š‘ÎˆÊ’u).
-		DirectX::XMFLOAT3 Location;		// ˆÊ’u.
-		DirectX::XMFLOAT4 Quaternion;	// ‰ñ“].
-		unsigned char Bezier[64];		// [4][4][4]  ƒxƒWƒF•âŠ®ƒpƒ‰ƒ[ƒ^.
+		char BoneName[15];				// ãƒœãƒ¼ãƒ³å.
+		unsigned int FrameNo;			// ãƒ•ãƒ¬ãƒ¼ãƒ ç•ªå·(èª­è¾¼æ™‚ã¯ç¾åœ¨ã®ãƒ•ãƒ¬ãƒ¼ãƒ ä½ç½®ã‚’0ã¨ã—ãŸç›¸å¯¾ä½ç½®).
+		DirectX::XMFLOAT3 Location;		// ä½ç½®.
+		DirectX::XMFLOAT4 Quaternion;	// å›è»¢.
+		unsigned char Bezier[64];		// [4][4][4]  ãƒ™ã‚¸ã‚§è£œå®Œãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿.
 
 		VMDKeyFrame()
 			: BoneName	{}
@@ -51,11 +51,11 @@ private:
 		{}
 	};
 
-	// ƒL[ƒtƒŒ[ƒ€\‘¢‘Ì.
+	// ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ æ§‹é€ ä½“.
 	struct KeyFrame {
-		unsigned int FrameNo;			// ƒtƒŒ[ƒ€‡‚(ƒAƒjƒ[ƒVƒ‡ƒ“ŠJn‚©‚ç‚ÌŒo‰ßŠÔ).
-		DirectX::XMVECTOR Quaternion;	// ƒNƒH[ƒ^ƒjƒIƒ“.
-		DirectX::XMFLOAT2 p1, p2;		// ƒxƒWƒF‚Ì’†ŠÔƒRƒ“ƒgƒ[ƒ‹ƒ|ƒCƒ“ƒg.
+		unsigned int FrameNo;			// ãƒ•ãƒ¬ãƒ¼ãƒ â„–(ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³é–‹å§‹ã‹ã‚‰ã®çµŒéæ™‚é–“).
+		DirectX::XMVECTOR Quaternion;	// ã‚¯ã‚©ãƒ¼ã‚¿ãƒ‹ã‚ªãƒ³.
+		DirectX::XMFLOAT2 p1, p2;		// ãƒ™ã‚¸ã‚§ã®ä¸­é–“ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ãƒã‚¤ãƒ³ãƒˆ.
 
 		KeyFrame(
 			unsigned int FrameNo,
@@ -69,11 +69,11 @@ private:
 		{}
 	};
 
-	// ƒ‚[ƒVƒ‡ƒ“\‘¢‘Ì.
+	// ãƒ¢ãƒ¼ã‚·ãƒ§ãƒ³æ§‹é€ ä½“.
 	struct Motion
 	{
-		unsigned int Frame;				// ƒAƒjƒ[ƒVƒ‡ƒ“ŠJn‚©‚ç‚ÌƒtƒŒ[ƒ€.
-		DirectX::XMVECTOR Quaternion;	// ƒNƒI[ƒ^ƒjƒIƒ“.
+		unsigned int Frame;				// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³é–‹å§‹ã‹ã‚‰ã®ãƒ•ãƒ¬ãƒ¼ãƒ .
+		DirectX::XMVECTOR Quaternion;	// ã‚¯ã‚ªãƒ¼ã‚¿ãƒ‹ã‚ªãƒ³.
 
 		Motion()
 			: Frame		(0)
@@ -81,29 +81,29 @@ private:
 		{}
 	};
 
-	// GPU—p‚Ì’¸“_/ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@‚ğì¬.
+	// GPUç”¨ã®é ‚ç‚¹/ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡ã‚’ä½œæˆ.
 	void CreateVertexIndexBuffers();
 
-	// “Ç‚İ‚ñ‚¾ƒ{[ƒ“ƒf[ƒ^‚ğ‚à‚Æ‚Éƒ{[ƒ“ƒm[ƒh‚ÌŠK‘w‚ğ\’z.
+	// èª­ã¿è¾¼ã‚“ã ãƒœãƒ¼ãƒ³ãƒ‡ãƒ¼ã‚¿ã‚’ã‚‚ã¨ã«ãƒœãƒ¼ãƒ³ãƒãƒ¼ãƒ‰ã®éšå±¤ã‚’æ§‹ç¯‰.
 	void InitializeBoneNodeTable();
 
-	//“Ç‚İ‚ñ‚¾ƒ}ƒeƒŠƒAƒ‹‚ğ‚à‚Æ‚Éƒ}ƒeƒŠƒAƒ‹ƒoƒbƒtƒ@‚ğì¬
+	//èª­ã¿è¾¼ã‚“ã ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’ã‚‚ã¨ã«ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ•ã‚¡ã‚’ä½œæˆ
 	void CreateMaterialData();
 
-	//ƒ}ƒeƒŠƒAƒ‹•ƒeƒNƒXƒ`ƒƒ‚Ìƒrƒ…[‚ğì¬
+	//ãƒãƒ†ãƒªã‚¢ãƒ«ï¼†ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ“ãƒ¥ãƒ¼ã‚’ä½œæˆ
 	void CreateMaterialAndTextureView();
 
-	//À•W•ÏŠ·—pƒrƒ…[‚Ì¶¬
+	//åº§æ¨™å¤‰æ›ç”¨ãƒ“ãƒ¥ãƒ¼ã®ç”Ÿæˆ
 	void CreateTransformView();
 
 	/*******************************************
-	* @brief	‰ñ“]î•ñ‚ğ––’[‚Ü‚Å“`”d‚³‚¹‚éÄ‹AŠÖ”.
-	* @param	‰ñ“]‚³‚¹‚½‚¢ƒ{[ƒ“ƒm[ƒh.
-	* @param    ‰ñ“]s—ñ.
+	* @brief	å›è»¢æƒ…å ±ã‚’æœ«ç«¯ã¾ã§ä¼æ’­ã•ã›ã‚‹å†å¸°é–¢æ•°.
+	* @param	å›è»¢ã•ã›ãŸã„ãƒœãƒ¼ãƒ³ãƒãƒ¼ãƒ‰.
+	* @param    å›è»¢è¡Œåˆ—.
 	*******************************************/
 	void RecursiveMatrixMultipy(BoneNode* node, const DirectX::XMMATRIX& mat);
 
-	float _angle;//ƒeƒXƒg—pY²‰ñ“]
+	float _angle;//ãƒ†ã‚¹ãƒˆç”¨Yè»¸å›è»¢
 
 	float GetYFromXOnBezier(
 		float x,
@@ -114,21 +114,21 @@ private:
 public:
 	PMDActor(const char* filepath,PMDRenderer& renderer);
 	~PMDActor();
-	///ƒNƒ[ƒ“‚Í’¸“_‚¨‚æ‚Ñƒ}ƒeƒŠƒAƒ‹‚Í‹¤’Ê‚Ìƒoƒbƒtƒ@‚ğŒ©‚é‚æ‚¤‚É‚·‚é
+	///ã‚¯ãƒ­ãƒ¼ãƒ³ã¯é ‚ç‚¹ãŠã‚ˆã³ãƒãƒ†ãƒªã‚¢ãƒ«ã¯å…±é€šã®ãƒãƒƒãƒ•ã‚¡ã‚’è¦‹ã‚‹ã‚ˆã†ã«ã™ã‚‹
 	PMDActor* Clone();
 	void Update();
 	void Draw();
 
-	// ƒAƒjƒ[ƒVƒ‡ƒ“ŠJn.
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³é–‹å§‹.
 	void PlayAnimation();
 
-	// ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌXV.
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®æ›´æ–°.
 	void MotionUpdate();
 
 	/*******************************************
-	* @brief	VMD‚Ìƒ[ƒh.
-	* @param	ƒtƒ@ƒCƒ‹ƒpƒX.
-	* @param	ƒ€[ƒr[–¼.
+	* @brief	VMDã®ãƒ­ãƒ¼ãƒ‰.
+	* @param	ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹.
+	* @param	ãƒ ãƒ¼ãƒ“ãƒ¼å.
 	*******************************************/
 	void LoadVMDFile(const char* FilePath, const char* Name);
 
@@ -136,38 +136,38 @@ private:
 	PMDRenderer& m_pRenderer;
 	DirectX12& m_pDx12;
 
-	//’¸“_ŠÖ˜A
-	MyComPtr<ID3D12Resource>		m_pVertexBuffer;			// ’¸“_ƒoƒbƒtƒ@.
-	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@.
-	D3D12_VERTEX_BUFFER_VIEW		m_pVertexBufferView;		// ’¸“_ƒoƒbƒtƒ@ƒrƒ…[.
-	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@ƒrƒ…[.
+	//é ‚ç‚¹é–¢é€£
+	MyComPtr<ID3D12Resource>		m_pVertexBuffer;			// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡.
+	MyComPtr<ID3D12Resource>		m_pIndexBuffer;				// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡.
+	D3D12_VERTEX_BUFFER_VIEW		m_pVertexBufferView;		// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼.
+	D3D12_INDEX_BUFFER_VIEW			m_pIndexBufferView;			// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼.
 
-	MyComPtr<ID3D12Resource>		m_pTransformMat;			// À•W•ÏŠ·s—ñ(¡‚Íƒ[ƒ‹ƒh‚Ì‚İ).
-	MyComPtr<ID3D12DescriptorHeap>	m_pTransformHeap;			// À•W•ÏŠ·ƒq[ƒv.
+	MyComPtr<ID3D12Resource>		m_pTransformMat;			// åº§æ¨™å¤‰æ›è¡Œåˆ—(ä»Šã¯ãƒ¯ãƒ¼ãƒ«ãƒ‰ã®ã¿).
+	MyComPtr<ID3D12DescriptorHeap>	m_pTransformHeap;			// åº§æ¨™å¤‰æ›ãƒ’ãƒ¼ãƒ—.
 
-	Transform						m_Transform;				// À•W.
-	DirectX::XMMATRIX*				m_MappedMatrices;			// GPU‚Æ‚İ‚éÀ•W.
-	MyComPtr<ID3D12Resource>		m_pTransformBuff;			// ƒoƒbƒtƒ@.
+	Transform						m_Transform;				// åº§æ¨™.
+	DirectX::XMMATRIX*				m_MappedMatrices;			// GPUã¨ã¿ã‚‹åº§æ¨™.
+	MyComPtr<ID3D12Resource>		m_pTransformBuff;			// ãƒãƒƒãƒ•ã‚¡.
 
-	// ƒ‚ƒfƒ‹ƒf[ƒ^ (CPU‘¤AƒtƒH[ƒ}ƒbƒg‚ğ–â‚í‚È‚¢‹¤’Êƒf[ƒ^).
+	// ãƒ¢ãƒ‡ãƒ«ãƒ‡ãƒ¼ã‚¿ (CPUå´ã€ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’å•ã‚ãªã„å…±é€šãƒ‡ãƒ¼ã‚¿).
 	Model::ModelData m_ModelData;
 
-	//ƒ}ƒeƒŠƒAƒ‹ŠÖ˜A
-	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// ƒ}ƒeƒŠƒAƒ‹ƒoƒbƒtƒ@.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// ‰æ‘œƒŠƒ\[ƒX.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// SphƒŠƒ\[ƒX.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pSpaResource;		// SpaƒŠƒ\[ƒX.
-	std::vector<MyComPtr<ID3D12Resource>>	m_pToonResource;	// ƒgƒD[ƒ“ƒŠƒ\|ƒX.
+	//ãƒãƒ†ãƒªã‚¢ãƒ«é–¢é€£
+	MyComPtr<ID3D12Resource>				m_pMaterialBuff;	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒãƒƒãƒ•ã‚¡.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pTextureResource;	// ç”»åƒãƒªã‚½ãƒ¼ã‚¹.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pSphResource;		// Sphãƒªã‚½ãƒ¼ã‚¹.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pSpaResource;		// Spaãƒªã‚½ãƒ¼ã‚¹.
+	std::vector<MyComPtr<ID3D12Resource>>	m_pToonResource;	// ãƒˆã‚¥ãƒ¼ãƒ³ãƒªã‚½ï¼ã‚¹.
 
-	MyComPtr<ID3D12DescriptorHeap> m_pMaterialHeap;				// ƒ}ƒeƒŠƒAƒ‹ƒq[ƒv(5ŒÂ‚Ô‚ñ)
+	MyComPtr<ID3D12DescriptorHeap> m_pMaterialHeap;				// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ’ãƒ¼ãƒ—(5å€‹ã¶ã‚“)
 
-	// ƒ{[ƒ“ŠÖ˜A.
-	std::vector<DirectX::XMMATRIX>	m_BoneMatrix;				// ƒ{[ƒ“À•W.
-	std::map<std::string, BoneNode> m_BoneNodeTable;			// ƒ{[ƒ“‚ÌŠK‘w.
+	// ãƒœãƒ¼ãƒ³é–¢é€£.
+	std::vector<DirectX::XMMATRIX>	m_BoneMatrix;				// ãƒœãƒ¼ãƒ³åº§æ¨™.
+	std::map<std::string, BoneNode> m_BoneNodeTable;			// ãƒœãƒ¼ãƒ³ã®éšå±¤.
 
-	// ƒAƒjƒ[ƒVƒ‡ƒ“ŠÖ˜A.
-	std::unordered_map<std::string, std::vector<KeyFrame>> m_MotionData;	// ƒ‚[ƒVƒ‡ƒ“ƒf[ƒ^.
-	DWORD							m_StartTime;				// ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌŠJnŠÔ(ƒ~ƒŠ•b).
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³é–¢é€£.
+	std::unordered_map<std::string, std::vector<KeyFrame>> m_MotionData;	// ãƒ¢ãƒ¼ã‚·ãƒ§ãƒ³ãƒ‡ãƒ¼ã‚¿.
+	DWORD							m_StartTime;				// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®é–‹å§‹æ™‚é–“(ãƒŸãƒªç§’).
 
 };
 

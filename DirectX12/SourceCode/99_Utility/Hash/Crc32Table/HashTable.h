@@ -1,23 +1,23 @@
-#pragma once
+ï»¿#pragma once
 
-#define CRC32_TABLE_SIZE (256) // CRC32ƒe[ƒuƒ‹‚Ì—v‘f”
-#define USE_CREATE_CRC32_TABLE_FUNCTION (0) // 1: CRC32ƒe[ƒuƒ‹ì¬ŠÖ”‚ðŽg—p‚·‚éB 0: Žg—p‚µ‚È‚¢B
+#define CRC32_TABLE_SIZE (256) // CRC32ãƒ†ãƒ¼ãƒ–ãƒ«ã®è¦ç´ æ•°
+#define USE_CREATE_CRC32_TABLE_FUNCTION (0) // 1: CRC32ãƒ†ãƒ¼ãƒ–ãƒ«ä½œæˆé–¢æ•°ã‚’ä½¿ç”¨ã™ã‚‹ã€‚ 0: ä½¿ç”¨ã—ãªã„ã€‚
 
 #if USE_CREATE_CRC32_TABLE_FUNCTION
-//! CRC32ƒe[ƒuƒ‹‚ðì¬‚µ‚Ü‚·B
+//! CRC32ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œæˆã—ã¾ã™ã€‚
 void CreateCrc32Table();
 
-//! CRC32ƒe[ƒuƒ‹‚ðƒƒO‚Éo—Í‚µ‚Ü‚·B
+//! CRC32ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ãƒ­ã‚°ã«å‡ºåŠ›ã—ã¾ã™ã€‚
 void PrintCrc32Table();
 #endif
 
 /****************************
-*	ƒnƒbƒVƒ…’lƒe[ƒuƒ‹ƒNƒ‰ƒX.
-*	’S“–F•£˜e –¢—ˆ.
-*   ŽQlURL:https://norizn.hatenablog.com/entry/2020/10/18/145628#2
+*	ãƒãƒƒã‚·ãƒ¥å€¤ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¯ãƒ©ã‚¹.
+*	æ‹…å½“ï¼šæ·µè„‡ æœªæ¥.
+*   å‚è€ƒURL:https://norizn.hatenablog.com/entry/2020/10/18/145628#2
 ****/
 
-// ¶¬Ï‚Ý‚ÌCRC32ƒe[ƒuƒ‹
+// ç”Ÿæˆæ¸ˆã¿ã®CRC32ãƒ†ãƒ¼ãƒ–ãƒ«
 static constexpr uint32_t s_crc32_table[CRC32_TABLE_SIZE] =
 {
     0x00000000, 0x04C11DB7, 0x09823B6E, 0x0D4326D9,

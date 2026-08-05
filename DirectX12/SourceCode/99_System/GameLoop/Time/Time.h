@@ -1,35 +1,35 @@
-#pragma once
+ï»¿#pragma once
 #include <chrono>
 
 /************************
-*   ƒ^ƒCƒ€ƒNƒ‰ƒX.
+*   ã‚¿ã‚¤ãƒ ã‚¯ãƒ©ã‚¹.
 ************************/
 class GameTime
 {
 public:
 	~GameTime();
 
-	// ƒCƒ“ƒXƒ^ƒ“ƒX‚ğæ“¾.
+	// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’å–å¾—.
 	static GameTime* GetInstance();
 
-	// ƒtƒŒ[ƒ€ŠÔ‚ÌŒo‰ßŠÔ‚ğXV.
+	// ãƒ•ãƒ¬ãƒ¼ãƒ é–“ã®çµŒéæ™‚é–“ã‚’æ›´æ–°.
 	static void Update();
 
-	// FPS‚ğˆÛ‚·‚é‚½‚ß‚Ìˆ—.
+	// FPSã‚’ç¶­æŒã™ã‚‹ãŸã‚ã®å‡¦ç†.
 	static void MaintainFPS();
 
-	// ƒfƒ‹ƒ^ƒ^ƒCƒ€‚ğæ“¾.
+	// ãƒ‡ãƒ«ã‚¿ã‚¿ã‚¤ãƒ ã‚’å–å¾—.
 	static const float GetDeltaTime();
 private:
 	GameTime();
 
-	// ¶¬‚âƒRƒs[‚ğíœ.
+	// ç”Ÿæˆã‚„ã‚³ãƒ”ãƒ¼ã‚’å‰Šé™¤.
 	GameTime(const GameTime& rhs)					= delete;
 	GameTime& operator = (const GameTime& rhs)	= delete;
 private:
-	// ‘OƒtƒŒ[ƒ€‚ÌŠÔ.
+	// å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã®æ™‚é–“.
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_PreviousTime;
 
-	float m_TargetFrameTime;// –Ú•WƒtƒŒ[ƒ€ŠÔ(•b).
-	float m_DeltaTime;		// ƒtƒŒ[ƒ€ŠÔ‚ÌŠÔ·.
+	float m_TargetFrameTime;// ç›®æ¨™ãƒ•ãƒ¬ãƒ¼ãƒ æ™‚é–“(ç§’).
+	float m_DeltaTime;		// ãƒ•ãƒ¬ãƒ¼ãƒ é–“ã®æ™‚é–“å·®.
 };

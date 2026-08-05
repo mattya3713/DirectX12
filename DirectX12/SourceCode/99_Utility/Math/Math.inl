@@ -1,24 +1,24 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 
 namespace MyMath {
     //-----------------
-    // ƒNƒ‰ƒ“ƒv : ’l‚ğ”ÍˆÍ‚Éû‚ß‚é.
+    // ã‚¯ãƒ©ãƒ³ãƒ— : å€¤ã‚’ç¯„å›²ã«åã‚ã‚‹.
 
-    // ’ÊíƒNƒ‰ƒ“ƒv.
+    // é€šå¸¸ã‚¯ãƒ©ãƒ³ãƒ—.
     template <typename T>
     static inline T Clamp(const T& Value, const T& Min, const T& Max) {
         return std::max(Min, std::min(Value, Max));
     }
 
-    // â‘Î’lƒNƒ‰ƒ“ƒv.
+    // çµ¶å¯¾å€¤ã‚¯ãƒ©ãƒ³ãƒ—.
     template <typename T>
     static inline T Clamp(const T& Value, const T& MaxAbs) {
         return std::max(MaxAbs * -1.f , std::min(Value, MaxAbs));
     }
 
     //-----------------
-    // ’l‚ğŒ¸­(‘‰Á)‚³‚¹‚é.
+    // å€¤ã‚’æ¸›å°‘(å¢—åŠ )ã•ã›ã‚‹.
     template<typename T>
     static inline void DecreaseToValue(T& Value, T Median, T Amount)
     {

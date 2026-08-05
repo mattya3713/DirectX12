@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<cstdio>
 #include<cstdint>
@@ -8,16 +8,16 @@
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/03.
-* @brief     : PMXƒtƒ@ƒCƒ‹‚Ì¶ƒoƒCƒiƒŠ\‘¢‘Ì.
+* @brief     : PMXãƒ•ã‚¡ã‚¤ãƒ«ã®ç”Ÿãƒã‚¤ãƒŠãƒªæ§‹é€ ä½“.
 **********************************************************************************/
 namespace PMD {
 
-	// PMDƒwƒbƒ_[\‘¢‘Ì.
+	// PMDãƒ˜ãƒƒãƒ€ãƒ¼æ§‹é€ ä½“.
 	struct Header
 	{
-		float Version;            // ƒo[ƒWƒ‡ƒ“.
-		char ModelName[20];       // ƒ‚ƒfƒ‹‚Ì–¼‘O.
-		char ModelComment[256];   // ƒ‚ƒfƒ‹‚ÌƒRƒƒ“ƒg.
+		float Version;            // ãƒãƒ¼ã‚¸ãƒ§ãƒ³.
+		char ModelName[20];       // ãƒ¢ãƒ‡ãƒ«ã®åå‰.
+		char ModelComment[256];   // ãƒ¢ãƒ‡ãƒ«ã®ã‚³ãƒ¡ãƒ³ãƒˆ.
 
 		Header()
 			: Version		(0.0f)
@@ -27,17 +27,17 @@ namespace PMD {
 	};
 
 #pragma pack(push, 1)
-	// PMDƒ}ƒeƒŠƒAƒ‹\‘¢‘Ì(ƒtƒ@ƒCƒ‹‚Ì¶ƒŒƒCƒAƒEƒg‚»‚Ì‚Ü‚ÜAƒpƒfƒBƒ“ƒO‚È‚µ70Byte).
+	// PMDãƒãƒ†ãƒªã‚¢ãƒ«æ§‹é€ ä½“(ãƒ•ã‚¡ã‚¤ãƒ«ã®ç”Ÿãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆãã®ã¾ã¾ã€ãƒ‘ãƒ‡ã‚£ãƒ³ã‚°ãªã—70Byte).
 	struct Material {
-		DirectX::XMFLOAT3 Diffuse;  // ƒfƒBƒtƒ…[ƒYF			: 12Byte.
-		float	 Alpha;				// ƒ¿’l					:  4Byte.
-		float    Specularity;		// ƒXƒyƒLƒ…ƒ‰‚Ì‹­‚³		:  4Byte.
-		DirectX::XMFLOAT3 Specular; // ƒXƒyƒLƒ…ƒ‰F			: 12Byte.
-		DirectX::XMFLOAT3 Ambient;  // ƒAƒ“ƒrƒGƒ“ƒgF			: 12Byte.
-		uint8_t  ToonIdx;			// ƒgƒD[ƒ“”Ô†			:  1Byte.
-		uint8_t  EdgeFlg;			// Material–ˆ‚Ì—ÖŠsüÌ×¸Ş	:  1Byte.
-		uint32_t IndicesNum;		// Š„‚è“–‚½‚éƒCƒ“ƒfƒbƒNƒX”	:  4Byte.
-		char     TexFilePath[20];	// ƒeƒNƒXƒ`ƒƒƒtƒ@ƒCƒ‹–¼	: 20Byte.
+		DirectX::XMFLOAT3 Diffuse;  // ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰²			: 12Byte.
+		float	 Alpha;				// Î±å€¤					:  4Byte.
+		float    Specularity;		// ã‚¹ãƒšã‚­ãƒ¥ãƒ©ã®å¼·ã•		:  4Byte.
+		DirectX::XMFLOAT3 Specular; // ã‚¹ãƒšã‚­ãƒ¥ãƒ©è‰²			: 12Byte.
+		DirectX::XMFLOAT3 Ambient;  // ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰²			: 12Byte.
+		uint8_t  ToonIdx;			// ãƒˆã‚¥ãƒ¼ãƒ³ç•ªå·			:  1Byte.
+		uint8_t  EdgeFlg;			// Materialæ¯ã®è¼ªéƒ­ç·šï¾Œï¾—ï½¸ï¾	:  1Byte.
+		uint32_t IndicesNum;		// å‰²ã‚Šå½“ãŸã‚‹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°	:  4Byte.
+		char     TexFilePath[20];	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ•ã‚¡ã‚¤ãƒ«å	: 20Byte.
 
 		Material()
 			: Diffuse		(0.0f, 0.0f, 0.0f)
@@ -52,15 +52,15 @@ namespace PMD {
 		{}
 	};
 
-	// PMDƒ{[ƒ“\‘¢‘Ì(ƒtƒ@ƒCƒ‹‚Ì¶ƒŒƒCƒAƒEƒg‚»‚Ì‚Ü‚ÜAƒpƒfƒBƒ“ƒO‚È‚µ39Byte).
+	// PMDãƒœãƒ¼ãƒ³æ§‹é€ ä½“(ãƒ•ã‚¡ã‚¤ãƒ«ã®ç”Ÿãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆãã®ã¾ã¾ã€ãƒ‘ãƒ‡ã‚£ãƒ³ã‚°ãªã—39Byte).
 	struct Bone
 	{
-		unsigned char	BoneName[20];	// ƒ{[ƒ“–¼.
-		unsigned short	ParentNo;		// eƒ{[ƒ“–¼.
-		unsigned short	NextNo;			// æ’[‚Ìƒ{[ƒ“”Ô†.
-		unsigned char	TypeNo;			// ƒ{[ƒ“‚Ìí—Ş.
-		unsigned short	IKBoneNo;		// IKƒ{[ƒ“”Ô†.
-		DirectX::XMFLOAT3 Pos;			// ƒ{[ƒ“‚ÌŠî€À•W.
+		unsigned char	BoneName[20];	// ãƒœãƒ¼ãƒ³å.
+		unsigned short	ParentNo;		// è¦ªãƒœãƒ¼ãƒ³å.
+		unsigned short	NextNo;			// å…ˆç«¯ã®ãƒœãƒ¼ãƒ³ç•ªå·.
+		unsigned char	TypeNo;			// ãƒœãƒ¼ãƒ³ã®ç¨®é¡.
+		unsigned short	IKBoneNo;		// IKãƒœãƒ¼ãƒ³ç•ªå·.
+		DirectX::XMFLOAT3 Pos;			// ãƒœãƒ¼ãƒ³ã®åŸºæº–åº§æ¨™.
 
 		Bone()
 			: BoneName		{}
@@ -72,15 +72,15 @@ namespace PMD {
 		{}
 	};
 
-	// PMD’¸“_\‘¢‘Ì(ƒtƒ@ƒCƒ‹‚Ì¶ƒŒƒCƒAƒEƒg‚»‚Ì‚Ü‚ÜAƒpƒfƒBƒ“ƒO‚È‚µ38Byte).
+	// PMDé ‚ç‚¹æ§‹é€ ä½“(ãƒ•ã‚¡ã‚¤ãƒ«ã®ç”Ÿãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆãã®ã¾ã¾ã€ãƒ‘ãƒ‡ã‚£ãƒ³ã‚°ãªã—38Byte).
 	struct Vertex
 	{
-		DirectX::XMFLOAT3 Pos;		// ’¸“_À•W		: 12Byte.
-		DirectX::XMFLOAT3 Normal;	// –@üƒxƒNƒgƒ‹	: 12Byte.
-		DirectX::XMFLOAT2 UV;		// uvÀ•W		:  8Byte.
-		uint16_t BoneNo[2];			// ƒ{[ƒ“”Ô†	:  4Byte.
-		uint8_t  BoneWeight;		// ƒ{[ƒ“‰e‹¿“x	:  1Byte.
-		uint8_t  EdgeFlg;			// —ÖŠsüƒtƒ‰ƒO	:  1Byte.
+		DirectX::XMFLOAT3 Pos;		// é ‚ç‚¹åº§æ¨™		: 12Byte.
+		DirectX::XMFLOAT3 Normal;	// æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«	: 12Byte.
+		DirectX::XMFLOAT2 UV;		// uvåº§æ¨™		:  8Byte.
+		uint16_t BoneNo[2];			// ãƒœãƒ¼ãƒ³ç•ªå·	:  4Byte.
+		uint8_t  BoneWeight;		// ãƒœãƒ¼ãƒ³å½±éŸ¿åº¦	:  1Byte.
+		uint8_t  EdgeFlg;			// è¼ªéƒ­ç·šãƒ•ãƒ©ã‚°	:  1Byte.
 
 		Vertex()
 			: Pos			(0.0f, 0.0f, 0.0f)
@@ -98,7 +98,7 @@ namespace PMD {
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/03.
-* @brief     : PMDƒtƒ@ƒCƒ‹(.pmd)‚ğModel::ModelData‚Ö•ÏŠ·‚·‚éƒp[ƒT[.
+* @brief     : PMDãƒ•ã‚¡ã‚¤ãƒ«(.pmd)ã‚’Model::ModelDataã¸å¤‰æ›ã™ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼.
 **********************************************************************************/
 
 class PMDParser : public IModelParser

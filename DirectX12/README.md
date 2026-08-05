@@ -1,4 +1,4 @@
-# DirectX12 学習プロジェクト
+﻿# DirectX12 学習プロジェクト
 
 C++ / DirectX12 の学習を目的とした個人プロジェクト。過去に作ったゲーム(Senzan)を参考に、PMX/PMDモデルの読み込み・アニメーション・描画パイプラインを一から組んでいる。
 
@@ -10,18 +10,17 @@ C++ / DirectX12 の学習を目的とした個人プロジェクト。過去に�
 
 ### 文字コード(重要・docx未記載)
 
-このプロジェクトのソースファイルは **UTF-8 BOMなし(≒Shift-JIS/CP932として解釈される)** で保存されている。`.vcxproj`に`/utf-8`コンパイラオプションは設定されていない。
+このプロジェクトのソースファイルは **UTF-8 BOMあり** で保存する。`.vcxproj`に`/utf-8`コンパイラオプションは設定されていないが、BOM付きUTF-8はコンパイラがBOMを見て自動的にUTF-8と認識するため、フラグの有無に関わらず正しく解釈される(BOMなしUTF-8はShift-JIS/CP932として誤読され、日本語コメントの文字化けや`error C2001`の原因になる)。
 
-- 新規ファイルをUTF-8(BOMなし)で保存すると、日本語コメントや文字列リテラルがコンパイラにShift-JISとして誤読され、`error C2001: 文字列リテラル内の改行` のような分かりにくいエラーになる。
-- 新規ファイル作成時は、保存後に以下のような変換を行うこと(Write系ツールはデフォルトUTF-8で書き出すため):
+- 新規ファイル作成時は、保存後に以下の変換を行うこと(Write系ツールはデフォルトUTF-8 BOMなしで書き出すため):
 
 ```powershell
-$sjis = [System.Text.Encoding]::GetEncoding(932)
+$utf8Bom = New-Object System.Text.UTF8Encoding $true
 $text = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
-[System.IO.File]::WriteAllText($path, $text, $sjis)
+[System.IO.File]::WriteAllText($path, $text, $utf8Bom)
 ```
 
-- 既存ファイルの編集(Editツールでの部分置換)は元のバイト列を保持するため、通常は問題にならない。全文書き換え(Write)をしたときだけ変換を忘れないこと。
+- **注意**: Editツールによる部分編集も、対象ファイルがBOMなしだと内部で文字コードを誤判定し日本語コメントが文字化けすることがある(実際に発生した既知の問題)。BOMなしの既存ファイルを編集する場合は、編集後に上記スクリプトでBOM付きUTF-8に変換しておくこと。BOM付きファイルであれば通常この変換は不要。
 
 ### 1. コメント規則
 

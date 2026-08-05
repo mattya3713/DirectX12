@@ -1,43 +1,43 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "VMDLoader.h"
 
 VMD::MotionData VMDLoader::Load(const std::string& filepath)
 {
     VMD::MotionData motionData;
-    std::ifstream ifs(filepath, std::ios::binary); // ƒoƒCƒiƒŠƒ‚[ƒh‚Åƒtƒ@ƒCƒ‹‚ğŠJ‚­
+    std::ifstream ifs(filepath, std::ios::binary); // ãƒã‚¤ãƒŠãƒªãƒ¢ãƒ¼ãƒ‰ã§ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã
 
     if (!ifs.is_open()) {
         throw std::runtime_error("Failed to open VMD file: " + filepath);
     }
 
     try {
-        // ƒwƒbƒ_[‚ğ“Ç‚İ‚İ.
+        // ãƒ˜ãƒƒãƒ€ãƒ¼ã‚’èª­ã¿è¾¼ã¿.
         ifs.read(motionData.header.VMDHeader, 30);
-        if (ifs.gcount() != 30) { // gcount() ‚ÅÀÛ‚É“Ç‚İ‚Ü‚ê‚½ƒoƒCƒg”‚ğŠm”F.
+        if (ifs.gcount() != 30) { // gcount() ã§å®Ÿéš›ã«èª­ã¿è¾¼ã¾ã‚ŒãŸãƒã‚¤ãƒˆæ•°ã‚’ç¢ºèª.
             throw std::runtime_error("Failed to read VMD header VMDHeader.");
         }
-        motionData.header.VMDHeader[29] = '\0'; // ‹­§nullI’[.
+        motionData.header.VMDHeader[29] = '\0'; // å¼·åˆ¶nullçµ‚ç«¯.
 
         ifs.read(motionData.header.ModelName, 20);
         if (ifs.gcount() != 20) {
             throw std::runtime_error("Failed to read VMD header ModelName.");
         }
-        motionData.header.ModelName[19] = '\0'; // ‹­§nullI’[.
+        motionData.header.ModelName[19] = '\0'; // å¼·åˆ¶nullçµ‚ç«¯.
 
-        // ƒ{[ƒ“ƒtƒŒ[ƒ€‚Ì”‚ğ“Ç‚İ‚İ.
+        // ãƒœãƒ¼ãƒ³ãƒ•ãƒ¬ãƒ¼ãƒ ã®æ•°ã‚’èª­ã¿è¾¼ã¿.
         uint32_t numBoneFrames;
         ifs.read(reinterpret_cast<char*>(&numBoneFrames), sizeof(uint32_t));
         if (ifs.gcount() != sizeof(uint32_t)) {
             throw std::runtime_error("Failed to read number of bone frames.");
         }
 
-        // Šeƒ{[ƒ“ƒtƒŒ[ƒ€‚ğ“Ç‚İ‚İ.
+        // å„ãƒœãƒ¼ãƒ³ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’èª­ã¿è¾¼ã¿.
         for (uint32_t i = 0; i < numBoneFrames; ++i) {
             VMD::BoneFrame boneFrame;
 
-            ReadString(ifs, boneFrame.BoneName, 15); // ƒ{[ƒ“–¼.
+            ReadString(ifs, boneFrame.BoneName, 15); // ãƒœãƒ¼ãƒ³å.
 
-            // reinterpret_cast<char*> ‚ğg—p‚µ‚ÄƒoƒCƒg—ñ‚Æ‚µ‚Ä“Ç‚İ‚Ş.
+            // reinterpret_cast<char*> ã‚’ä½¿ç”¨ã—ã¦ãƒã‚¤ãƒˆåˆ—ã¨ã—ã¦èª­ã¿è¾¼ã‚€.
             ifs.read(reinterpret_cast<char*>(&boneFrame.FrameNo), sizeof(uint32_t));
             if (ifs.gcount() != sizeof(uint32_t)) {
                 throw std::runtime_error("Failed to read bone frame number.");
@@ -55,18 +55,18 @@ VMD::MotionData VMDLoader::Load(const std::string& filepath)
                 throw std::runtime_error("Failed to read bone interpolation data.");
             }
 
-            // ƒ{[ƒ“–¼‚ğg‚Á‚Äƒ}ƒbƒv‚ÉŠi”[.
+            // ãƒœãƒ¼ãƒ³åã‚’ä½¿ã£ã¦ãƒãƒƒãƒ—ã«æ ¼ç´.
             motionData.BoneKeyFrames[std::string(boneFrame.BoneName)].push_back(boneFrame);
         }
 
-        // ƒ‚[ƒtƒtƒŒ[ƒ€‚Ì”‚ğ“Ç‚İ‚İ.
+        // ãƒ¢ãƒ¼ãƒ•ãƒ•ãƒ¬ãƒ¼ãƒ ã®æ•°ã‚’èª­ã¿è¾¼ã¿.
         uint32_t numMorphFrames;
         ifs.read(reinterpret_cast<char*>(&numMorphFrames), sizeof(uint32_t));
         if (ifs.gcount() != sizeof(uint32_t)) {
             throw std::runtime_error("Failed to read number of morph frames.");
         }
 
-        // Šeƒ‚[ƒtƒtƒŒ[ƒ€‚ğ“Ç‚İ‚İ.
+        // å„ãƒ¢ãƒ¼ãƒ•ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’èª­ã¿è¾¼ã¿.
         for (uint32_t i = 0; i < numMorphFrames; ++i) {
             VMD::MorphFrame morphFrame;
             ReadString(ifs, morphFrame.MorphName, 15);
@@ -82,7 +82,7 @@ VMD::MotionData VMDLoader::Load(const std::string& filepath)
             motionData.MorphKeyFrames[std::string(morphFrame.MorphName)].push_back(morphFrame);
         }
 
-        // MEMO : ˆÈ~AIKƒtƒŒ[ƒ€AƒJƒƒ‰ƒtƒŒ[ƒ€AÆ–¾ƒtƒŒ[ƒ€‚Í•K—v‚È‚¢‚Ì‚Å“Ç‚İ‚Ü‚È‚¢.
+        // MEMO : ä»¥é™ã€IKãƒ•ãƒ¬ãƒ¼ãƒ ã€ã‚«ãƒ¡ãƒ©ãƒ•ãƒ¬ãƒ¼ãƒ ã€ç…§æ˜ãƒ•ãƒ¬ãƒ¼ãƒ ã¯å¿…è¦ãªã„ã®ã§èª­ã¿è¾¼ã¾ãªã„.
 
         ifs.close();
         return motionData;
@@ -95,12 +95,12 @@ VMD::MotionData VMDLoader::Load(const std::string& filepath)
 
 void VMDLoader::ReadString(std::ifstream& ifs, char* buffer, size_t bufferSize)
 {
-    // ifs.read() ‚Í“Ç‚İ‚İ‚ª¬Œ÷‚µ‚½ƒoƒCƒg”‚ğ•Ô‚³‚È‚¢‚½‚ßA.
-    // gcount() ‚ğg‚Á‚ÄÀÛ‚É“Ç‚İ‚Ü‚ê‚½ƒoƒCƒg”‚ğŠm”F‚·‚é.
+    // ifs.read() ã¯èª­ã¿è¾¼ã¿ãŒæˆåŠŸã—ãŸãƒã‚¤ãƒˆæ•°ã‚’è¿”ã•ãªã„ãŸã‚ã€.
+    // gcount() ã‚’ä½¿ã£ã¦å®Ÿéš›ã«èª­ã¿è¾¼ã¾ã‚ŒãŸãƒã‚¤ãƒˆæ•°ã‚’ç¢ºèªã™ã‚‹.
     ifs.read(buffer, bufferSize);
     if (ifs.gcount() != bufferSize) {
         throw std::runtime_error("Failed to read string data from VMD file.");
     }
-    // I’[null‚ª‚È‚¢ê‡‚É”õ‚¦‚ÄA‹­§“I‚ÉnullI’[.
+    // çµ‚ç«¯nullãŒãªã„å ´åˆã«å‚™ãˆã¦ã€å¼·åˆ¶çš„ã«nullçµ‚ç«¯.
     buffer[bufferSize - 1] = '\0';
 }

@@ -1,24 +1,24 @@
-/****************************
-*	áy‚¢Š‚Éè‚ğ“Í‚©‚¹‚éŒn‚ÌŒvZ.h.
-*   ’S“–:•£˜e –¢—ˆ
+ï»¿/****************************
+*	ç—’ã„æ‰€ã«æ‰‹ã‚’å±Šã‹ã›ã‚‹ç³»ã®è¨ˆç®—.h.
+*   æ‹…å½“:æ·µè„‡ æœªæ¥
 ****/
 #pragma once
 #include <cmath>
 
 namespace MyMath {
     //-----------------
-    // ƒNƒ‰ƒ“ƒv : ’l‚ğ”ÍˆÍ‚Éû‚ß‚é.
+    // ã‚¯ãƒ©ãƒ³ãƒ— : å€¤ã‚’ç¯„å›²ã«åã‚ã‚‹.
     template <typename T>
     T Clamp(const T& Value, const T& Min, const T& Max);
 
-    // â‘Î’lƒNƒ‰ƒ“ƒv.
+    // çµ¶å¯¾å€¤ã‚¯ãƒ©ãƒ³ãƒ—.
     template <typename T>
     T Clamp(const T& Value, const T& MaxAbs);
 
     //-----------------
-    // ’l‚ğŒ¸­(‘‰Á)‚³‚¹‚é.
+    // å€¤ã‚’æ¸›å°‘(å¢—åŠ )ã•ã›ã‚‹.
     template<typename T>
     void DecreaseToValue(T& Value, T Median, T Amount);
 }
 
-#include "Math.inl" // ƒCƒ“ƒ‰ƒCƒ“À‘•‚ğŠÜ‚Şƒtƒ@ƒCƒ‹‚ğƒCƒ“ƒNƒ‹[ƒh.
+#include "Math.inl" // ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å®Ÿè£…ã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰.

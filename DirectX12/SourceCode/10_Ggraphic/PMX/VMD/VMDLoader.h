@@ -1,7 +1,7 @@
-#pragma once
+ï»¿#pragma once
 #include "VMDStructHeader.h"
 
-// VMD ƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚ŞƒNƒ‰ƒX (‚Ü‚½‚ÍÃ“IŠÖ”ŒQ)
+// VMD ãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã‚€ã‚¯ãƒ©ã‚¹ (ã¾ãŸã¯é™çš„é–¢æ•°ç¾¤)
 class VMDLoader
 {
 public:

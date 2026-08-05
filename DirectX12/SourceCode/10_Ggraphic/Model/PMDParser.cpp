@@ -1,33 +1,33 @@
-#include "PMDParser.h"
+ï»¿#include "PMDParser.h"
 #include "99_Utility/String/FilePath/FilePath.h"
 
-// PMDƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚İAModel::ModelData‚Ö•ÏŠ·‚·‚é.
+// PMDãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã¿ã€Model::ModelDataã¸å¤‰æ›ã™ã‚‹.
 bool PMDParser::Load(const std::string& FilePath, Model::ModelData& OutData)
 {
-	// ƒwƒbƒ_[“Ç‚İ‚İ—p‚ÌƒVƒOƒlƒ`ƒƒ.
+	// ãƒ˜ãƒƒãƒ€ãƒ¼èª­ã¿è¾¼ã¿ç”¨ã®ã‚·ã‚°ãƒãƒãƒ£.
 	char signature[3];
 	PMD::Header header = {};
 
 	FILE* fp = nullptr;
 	auto err = fopen_s(&fp, FilePath.c_str(), "rb");
 	if (err != 0 || !fp) {
-		throw std::runtime_error(FilePath + "ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚ª‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½B");
+		throw std::runtime_error(FilePath + "ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ãŒã§ãã¾ã›ã‚“ã§ã—ãŸã€‚");
 	}
 
-	// ƒwƒbƒ_[î•ñ‚ğ“Ç‚İ‚Ş.
+	// ãƒ˜ãƒƒãƒ€ãƒ¼æƒ…å ±ã‚’èª­ã¿è¾¼ã‚€.
 	fread(signature, sizeof(signature), 1, fp);
 	fread(&header, sizeof(header), 1, fp);
 
-	// ’¸“_ƒf[ƒ^“Ç‚İ‚İ.
+	// é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadVertices(fp, OutData);
 
-	// ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^“Ç‚İ‚İ.
+	// ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadFaces(fp, OutData);
 
-	// ƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^“Ç‚İ‚İ.
+	// ãƒãƒ†ãƒªã‚¢ãƒ«ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadMaterials(fp, FilePath, OutData);
 
-	// ƒ{[ƒ“ƒf[ƒ^“Ç‚İ‚İ.
+	// ãƒœãƒ¼ãƒ³ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿.
 	ReadBones(fp, OutData);
 
 	fclose(fp);
@@ -51,10 +51,10 @@ void PMDParser::ReadVertices(FILE* fp, Model::ModelData& OutData)
 		dst.Normal = src.Normal;
 		dst.UV = src.UV;
 
-		// PMD‚Í2ƒ{[ƒ“‚Ü‚Å‚ÌƒEƒFƒCƒg‚Ì‚İ(‹¤’ÊƒŒƒCƒAƒEƒg‚Ìc‚è2˜g‚ÍŠù’è’l‚Ì‚Ü‚Ü).
+		// PMDã¯2ãƒœãƒ¼ãƒ³ã¾ã§ã®ã‚¦ã‚§ã‚¤ãƒˆã®ã¿(å…±é€šãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆã®æ®‹ã‚Š2æ ã¯æ—¢å®šå€¤ã®ã¾ã¾).
 		dst.BoneIndices[0] = src.BoneNo[0];
 		dst.BoneIndices[1] = src.BoneNo[1];
-		dst.BoneWeights[0] = src.BoneWeight / 100.0f; // BoneWeight‚Í0`100‚Ì•S•ª—¦.
+		dst.BoneWeights[0] = src.BoneWeight / 100.0f; // BoneWeightã¯0ï½100ã®ç™¾åˆ†ç‡.
 		dst.BoneWeights[1] = 1.0f - dst.BoneWeights[0];
 
 		dst.Edge = src.EdgeFlg ? 1.0f : 0.0f;
@@ -94,7 +94,7 @@ void PMDParser::ReadMaterials(FILE* fp, const std::string& FilePath, Model::Mode
 		material.Ambient = src.Ambient;
 		material.NumFaceCount = src.IndicesNum;
 
-		// Idx‚ª255‚È‚çƒgƒD[ƒ“‚È‚µB‚±‚Ìê‡AŒ³À‘•‚É‡‚í‚¹ƒeƒNƒXƒ`ƒƒ‰ğŒˆ©‘Ì‚ğs‚í‚È‚¢.
+		// IdxãŒ255ãªã‚‰ãƒˆã‚¥ãƒ¼ãƒ³ãªã—ã€‚ã“ã®å ´åˆã€å…ƒå®Ÿè£…ã«åˆã‚ã›ãƒ†ã‚¯ã‚¹ãƒãƒ£è§£æ±ºè‡ªä½“ã‚’è¡Œã‚ãªã„.
 		if (src.ToonIdx == 255) { continue; }
 
 		char toon_file_path[32];
@@ -103,7 +103,7 @@ void PMDParser::ReadMaterials(FILE* fp, const std::string& FilePath, Model::Mode
 
 		if (strlen(src.TexFilePath) == 0) { continue; }
 
-		// ƒx[ƒXƒeƒNƒXƒ`ƒƒƒpƒX‚Ì•ª‰ğ(*‹æØ‚è‚Å sph/spa ‚Æ•¹‹L‚³‚ê‚Ä‚¢‚éê‡‚ª‚ ‚é).
+		// ãƒ™ãƒ¼ã‚¹ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒ‘ã‚¹ã®åˆ†è§£(*åŒºåˆ‡ã‚Šã§ sph/spa ã¨ä½µè¨˜ã•ã‚Œã¦ã„ã‚‹å ´åˆãŒã‚ã‚‹).
 		std::string tex_file_name = src.TexFilePath;
 		std::string sph_file_name = "";
 		std::string spa_file_name = "";

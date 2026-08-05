@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include <utility>
 #include <cassert>
@@ -17,7 +17,7 @@ namespace MyPair {
         constexpr pair(T1 a, T2 b) : m_pr(a, b) {}
         constexpr explicit pair(std::pair<T1, T2> pr_) : m_pr(std::move(pr_)) {}
 
-        // [0] ‚ğˆÓ–¡‚·‚é“ÁêŒ^.
+        // [0] ã‚’æ„å‘³ã™ã‚‹ç‰¹æ®Šå‹.
         constexpr T1& operator[](std::nullptr_t) {
             return m_pr.first;
         }
@@ -26,7 +26,7 @@ namespace MyPair {
             return m_pr.first;
         }
 
-        // [1] ‚ğˆÓ–¡‚·‚é“Áêƒ^ƒOŒ^.
+        // [1] ã‚’æ„å‘³ã™ã‚‹ç‰¹æ®Šã‚¿ã‚°å‹.
         struct second_tag {
             constexpr explicit second_tag(int x) {
                 assert(x == 1);
@@ -41,7 +41,7 @@ namespace MyPair {
             return m_pr.second;
         }
 
-        // ”äŠr‰‰Zq.
+        // æ¯”è¼ƒæ¼”ç®—å­.
         friend constexpr bool operator==(const pair& a, const pair& b) {
             return a.m_pr == b.m_pr;
         }
@@ -50,12 +50,12 @@ namespace MyPair {
             return !(a == b);
         }
 
-        // –¾¦“I‚È•ÏŠ·.
+        // æ˜ç¤ºçš„ãªå¤‰æ›.
         constexpr explicit operator std::pair<T1, T2>() const {
             return m_pr;
         }
 
-        // std::get ŒİŠ·.
+        // std::get äº’æ›.
         template<std::size_t I>
         constexpr decltype(auto) get() {
             if constexpr (I == 0) return (m_pr.first);

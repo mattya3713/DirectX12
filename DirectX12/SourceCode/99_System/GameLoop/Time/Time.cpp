@@ -1,51 +1,51 @@
-#include "Time.h"
+ï»¿#include "Time.h"
 #include <thread>
 
-constexpr float TAEGET_FPS = 60.0f;//–Ú•WƒtƒŒ[ƒ€.
+constexpr float TAEGET_FPS = 60.0f;//ç›®æ¨™ãƒ•ãƒ¬ãƒ¼ãƒ .
 
 GameTime::GameTime()
     : m_PreviousTime    ()
     , m_TargetFrameTime ()
     , m_DeltaTime       ()
 {
-    m_TargetFrameTime   = 1.0f / TAEGET_FPS; // –Ú•WƒtƒŒ[ƒ€‚ğŒvZ.
-    m_PreviousTime      = std::chrono::high_resolution_clock::now();//‰Šú‚ğæ“¾.
+    m_TargetFrameTime   = 1.0f / TAEGET_FPS; // ç›®æ¨™ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’è¨ˆç®—.
+    m_PreviousTime      = std::chrono::high_resolution_clock::now();//åˆæœŸã‚’å–å¾—.
 }
 
 GameTime::~GameTime()
 {
 }
 
-// ƒCƒ“ƒXƒ^ƒ“ƒX‚ğæ“¾.
+// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’å–å¾—.
 GameTime* GameTime::GetInstance()
 {
     static GameTime instance;
     return &instance;
 }
 
-// ƒtƒŒ[ƒ€ŠÔ‚ÌŒo‰ßŠÔ‚ğXV.
+// ãƒ•ãƒ¬ãƒ¼ãƒ é–“ã®çµŒéæ™‚é–“ã‚’æ›´æ–°.
 void GameTime::Update()
 {
-    // ƒCƒ“ƒXƒ^ƒ“ƒX‚ğæ“¾.
+    // ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’å–å¾—.
     GameTime* pI = GetInstance();
 
-    // Œ»İ‚ÌŠÔ‚ğæ“¾.
+    // ç¾åœ¨ã®æ™‚é–“ã‚’å–å¾—.
     auto currentTime = std::chrono::high_resolution_clock::now();
 
-    // ‘O‰ñ‚©‚ç‚ÌŒo‰ßŠÔ‚ğŒvZ.
+    // å‰å›ã‹ã‚‰ã®çµŒéæ™‚é–“ã‚’è¨ˆç®—.
     std::chrono::duration<float> elapsed = currentTime - pI->m_PreviousTime;
 
-    // Œo‰ßŠÔ‚ğ•b’PˆÊ‚Å•Û.
+    // çµŒéæ™‚é–“ã‚’ç§’å˜ä½ã§ä¿æŒ.
     pI->m_DeltaTime = elapsed.count();
 
-    // Ÿ‚ÌƒtƒŒ[ƒ€‚Ì‚½‚ß‚ÉXV.
+    // æ¬¡ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã®ãŸã‚ã«æ›´æ–°.
     pI->m_PreviousTime = currentTime;
 }
 
-// FPS‚ğˆÛ‚·‚é‚½‚ß‚Ìˆ—.
+// FPSã‚’ç¶­æŒã™ã‚‹ãŸã‚ã®å‡¦ç†.
 void GameTime::MaintainFPS()
 {
-    // ƒCƒ“ƒXƒ^ƒ“ƒX‚ğæ“¾.
+    // ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’å–å¾—.
     GameTime* pI = GetInstance();
 
     if (pI->m_DeltaTime < pI->m_TargetFrameTime) {
@@ -55,7 +55,7 @@ void GameTime::MaintainFPS()
     }
 }
 
-// ƒfƒ‹ƒ^ƒ^ƒCƒ€‚ğæ“¾.
+// ãƒ‡ãƒ«ã‚¿ã‚¿ã‚¤ãƒ ã‚’å–å¾—.
 const float GameTime::GetDeltaTime()
 {
     return GetInstance()->m_DeltaTime;

@@ -1,19 +1,19 @@
-
+ï»¿
 #include "Buffer.h"
 
-// ƒoƒbƒtƒ@‚ğ’Ç‰Á.
+// ãƒãƒƒãƒ•ã‚¡ã‚’è¿½åŠ .
 void Buffer::AddBuffer(Any buffer)
 {
     m_pBuffer.push_back(std::move(buffer));
 }
 
-// ƒoƒbƒtƒ@Á‹.
+// ãƒãƒƒãƒ•ã‚¡æ¶ˆå».
 void Buffer::ClearBuffer()
 {
     m_pBuffer.clear();
 }
 
-// ƒoƒbƒtƒ@æ“¾.
+// ãƒãƒƒãƒ•ã‚¡å–å¾—.
 const Any& Buffer::GetBuffer(size_t index) const
 {
     return m_pBuffer.at(index);
