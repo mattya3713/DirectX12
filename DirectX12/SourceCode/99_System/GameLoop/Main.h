@@ -8,6 +8,9 @@ class PMXActor;
 class PMDRenderer;
 class PMXRenderer;
 class CGame;
+class CameraManager;
+class GameTime;
+class MeshManager;
 
 /**************************************************
 *	メインクラス.
@@ -49,4 +52,8 @@ private:
 
 	std::shared_ptr<PMXRenderer>	m_pPMXRenderer;
 	std::shared_ptr<PMXActor>		m_pPMXActor;
+
+	std::unique_ptr<CameraManager>	m_upCameraManager;	// カメラマネージャー.
+	std::unique_ptr<GameTime>		m_upGameTime;		// ゲーム全体の時計.
+	std::unique_ptr<MeshManager>	m_upMeshManager;	// メッシュマネージャー.
 };

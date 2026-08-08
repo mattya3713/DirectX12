@@ -143,6 +143,13 @@
       <ShaderModel>5.0</ShaderModel>
       <AdditionalIncludeDirectories>SourceCode\Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>xcopy /Y /I /E "$(ProjectDir)Data\Shader" "$(OutDir)Data\Shader\"
+xcopy /Y /I /E "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
+xcopy /Y /I /E "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
+exit /b 0</Command>
+      <Message>Data\Shader・Data\Model・Data\Soundを出力先へコピー(実行時に相対パスで読み込むため).</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -165,6 +172,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug;Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /I /E "$(ProjectDir)Data\Shader" "$(OutDir)Data\Shader\"
+xcopy /Y /I /E "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
+xcopy /Y /I /E "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
+exit /b 0</Command>
+      <Message>Data\Shader・Data\Model・Data\Soundを出力先へコピー(実行時に相対パスで読み込むため).</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.h" />
@@ -200,6 +214,15 @@
     <ClInclude Include="SourceCode\99_Utility\String\String.h" />
     <ClInclude Include="SourceCode\99_System\GameLoop\Time\Time.h" />
     <ClInclude Include="SourceCode\99_Utility\Transform\Transform.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\00_Base\CameraBase.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\10_First\FirstPersonCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\20_LookAt\LookAtCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\30_Debug\DebugCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\40_Third\ThirdPersonCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\99_Manager\CameraManager.h" />
+    <ClInclude Include="SourceCode\99_Utility\ServiceLocator\ServiceLocator.h" />
+    <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
+    <ClInclude Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.cpp" />
@@ -224,6 +247,14 @@
     <ClCompile Include="SourceCode\99_Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\99_Utility\String\String.cpp" />
     <ClCompile Include="SourceCode\99_System\GameLoop\Time\Time.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\00_Base\CameraBase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\10_First\FirstPersonCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\20_LookAt\LookAtCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\30_Debug\DebugCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\40_Third\ThirdPersonCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\99_Manager\CameraManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\Shader\BasicShaderHeader.hlsli" />

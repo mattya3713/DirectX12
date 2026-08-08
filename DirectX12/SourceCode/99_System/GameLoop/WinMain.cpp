@@ -1,5 +1,6 @@
 ﻿#include "Main.h"
 #include <crtdbg.h>	//_ASSERT_EXPR()で必要.
+#include "99_Utility/Diagnostics/CrashDumpHandler.h"
 
 
 //================================================
@@ -11,11 +12,14 @@ INT WINAPI WinMain(
 	_In_ PSTR lpCmdLine,
 	_In_ INT nCmdShow)
 {
+	// 未処理例外時にDumps\へクラッシュダンプを書き出すようにする.
+	Diagnostics::InstallCrashDumpHandler();
+
 	// メモリリーク検出
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	std::unique_ptr<Main> pCMain = std::make_unique<Main>();	//初期化＆クラス宣言.
-	
+
 	if (pCMain != nullptr)
 	{
 		//ウィンドウ作成成功したら.

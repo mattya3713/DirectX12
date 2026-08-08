@@ -5,6 +5,11 @@
 #include "10_Ggraphic/PMX/PMXActor.h"
 #include "10_Ggraphic/PMX/PMXRenderer.h"
 #include "Time/Time.h"
+#include "20_Resource/ResourceManager/MeshManager/MeshManager.h"
+#include "00_Game/31_Camera/99_Manager/CameraManager.h"
+#include "00_Game/31_Camera/30_Debug/DebugCamera.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
+#include "99_Utility/Diagnostics/MemoryLeakDetector.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -31,6 +36,9 @@ Main::Main()
     , m_pPMDRenderer    { nullptr }
     , m_pPMXActor       { nullptr }
     , m_pPMXRenderer    { nullptr }
+    , m_upCameraManager { nullptr }
+    , m_upGameTime      { nullptr }
+    , m_upMeshManager   { nullptr }
 {
 }
 
@@ -44,27 +52,53 @@ Main::~Main()
 // 構築処理.
 HRESULT Main::Create()
 {
+    // ここから先で増えたメモリ確保をリーク検知の対象にする.
+    Diagnostics::BeginMemoryLeakCheck();
+
+    // GameTimeは毎フレーム最初に使われるため、他の何よりも先に構築・登録する.
+    m_upGameTime = std::make_unique<GameTime>();
+    ServiceLocator::Provide<GameTime>(m_upGameTime.get());
+
+    m_upMeshManager = std::make_unique<MeshManager>();
+    ServiceLocator::Provide<MeshManager>(m_upMeshManager.get());
+
     m_pDx12 = std::make_shared<DirectX12>();
     m_pDx12->Create(m_hWnd);
 
-    //m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-    //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
+    // カメラマネージャーを構築し、デバッグカメラをデフォルトで有効化.
+    m_upCameraManager = std::make_unique<CameraManager>();
+    m_upCameraManager->Register("Debug", std::make_unique<DebugCamera>());
+    m_upCameraManager->SetActive("Debug");
+
+    // 所有権はMainのまま、他クラスからも参照できるようサービスロケーターへ登録.
+    ServiceLocator::Provide<CameraManager>(m_upCameraManager.get());
+
+    try {
+        //m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
+        //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
 #if ISOMX
-    m_pPMDRenderer = std::make_shared<PMDRenderer>(*m_pDx12);
-    m_pPmdActor = std::make_shared<PMDActor>("Data\\Model\\PMD\\Defelt\\初音ミクVer2.pmd", *m_pPMDRenderer);
-    
-#else 
-    m_pPMXRenderer = std::make_shared<PMXRenderer>(*m_pDx12);
-    m_pPMXActor = std::make_shared<PMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-    
-    //m_pPMXActor->LoadVMDFile("Data\\Model\\PMX\\Hatune\\Anim\\Anim.vmd");
-    m_pPMXActor->PlayAnimation();
-    // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
-    // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
-    // Data\\Model\\PMX\\Cube\\Cube.pmx"
-    // "Data\\Model\\PMX\\Hatune\\Anim\\Anim.vmd"
-    // "Data\\Model\\PMX\\HatuneVer2\\motion\\swing.vmd"
+        m_pPMDRenderer = std::make_shared<PMDRenderer>(*m_pDx12);
+        m_pPmdActor = std::make_shared<PMDActor>("Data\\Model\\PMD\\Defelt\\初音ミクVer2.pmd", *m_pPMDRenderer);
+
+#else
+        m_pPMXRenderer = std::make_shared<PMXRenderer>(*m_pDx12);
+        m_pPMXActor = std::make_shared<PMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
+
+        //m_pPMXActor->LoadVMDFile("Data\\Model\\PMX\\Hatune\\Anim\\Anim.vmd");
+        m_pPMXActor->PlayAnimation();
+        // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
+        // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
+        // Data\\Model\\PMX\\Cube\\Cube.pmx"
+        // "Data\\Model\\PMX\\Hatune\\Anim\\Anim.vmd"
+        // "Data\\Model\\PMX\\HatuneVer2\\motion\\swing.vmd"
 #endif
+    }
+    catch (const std::runtime_error& Msg) {
+        // エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
+        std::wstring WStr = MyString::StringToWString(Msg.what());
+        _ASSERT_EXPR(false, WStr.c_str());
+        return E_FAIL;
+    }
 
     return S_OK;
 }
@@ -79,6 +113,18 @@ HRESULT Main::LoadData()
 // 更新処理.
 void Main::Update()
 {
+    if (m_upCameraManager) {
+        m_upCameraManager->Update();
+
+        // アクティブカメラの行列をDirectX12側へ反映.
+        if (CameraBase* active_camera = m_upCameraManager->GetActive()) {
+            m_pDx12->SetCamera(
+                active_camera->GetViewMatrix(),
+                active_camera->GetProjMatrix(),
+                active_camera->GetPosition());
+        }
+    }
+
     if (m_pDx12) {
         m_pDx12->Update();
     }
@@ -130,6 +176,17 @@ void Main::Draw()
 // 解放処理.
 void Main::Release()
 {
+    if (m_upCameraManager) {
+        // サービスロケーターへの登録を先に解除してから破棄する.
+        ServiceLocator::Provide<CameraManager>(nullptr);
+        m_upCameraManager.reset();
+    }
+
+    if (m_upMeshManager) {
+        ServiceLocator::Provide<MeshManager>(nullptr);
+        m_upMeshManager.reset();
+    }
+
     if (m_pPmdActor) {
         m_pPmdActor.reset();
     }
@@ -156,6 +213,15 @@ void Main::Release()
     if (m_pDx12) {
         m_pDx12.reset();
     }
+
+    // GameTimeは一番最後に破棄する(他の解放処理がデルタタイムを参照する可能性があるため).
+    if (m_upGameTime) {
+        ServiceLocator::Provide<GameTime>(nullptr);
+        m_upGameTime.reset();
+    }
+
+    // BeginMemoryLeakCheck()以降のリークがあればここで報告される.
+    Diagnostics::EndMemoryLeakCheck();
 }
 
 // メッセージループ.

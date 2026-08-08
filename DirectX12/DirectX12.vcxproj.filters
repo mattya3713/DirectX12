@@ -104,6 +104,15 @@
     <ClInclude Include="SourceCode\10_Ggraphic\Model\IModelParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMXParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMDParser.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\00_Base\CameraBase.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\10_First\FirstPersonCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\20_LookAt\LookAtCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\30_Debug\DebugCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\40_Third\ThirdPersonCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\31_Camera\99_Manager\CameraManager.h" />
+    <ClInclude Include="SourceCode\99_Utility\ServiceLocator\ServiceLocator.h" />
+    <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
+    <ClInclude Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">
@@ -129,6 +138,14 @@
     <ClCompile Include="SourceCode\99_System\GameLoop\Time\Time.cpp" />
     <ClCompile Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\00_Base\CameraBase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\10_First\FirstPersonCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\20_LookAt\LookAtCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\30_Debug\DebugCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\40_Third\ThirdPersonCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\31_Camera\99_Manager\CameraManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SourceCode\99_Utility\Math\Math.inl">
