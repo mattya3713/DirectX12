@@ -1,12 +1,13 @@
 ﻿#include "Time.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include <thread>
 
 constexpr float TAEGET_FPS = 60.0f;//目標フレーム.
 
 GameTime::GameTime()
-    : m_PreviousTime    ()
-    , m_TargetFrameTime ()
-    , m_DeltaTime       ()
+    : m_PreviousTime    {}
+    , m_TargetFrameTime {}
+    , m_DeltaTime       {}
 {
     m_TargetFrameTime   = 1.0f / TAEGET_FPS; // 目標フレームを計算.
     m_PreviousTime      = std::chrono::high_resolution_clock::now();//初期を取得.
@@ -16,18 +17,11 @@ GameTime::~GameTime()
 {
 }
 
-// インスタンスを取得.
-GameTime* GameTime::GetInstance()
-{
-    static GameTime instance;
-    return &instance;
-}
-
 // フレーム間の経過時間を更新.
 void GameTime::Update()
 {
     // インスタンスを取得.
-    GameTime* pI = GetInstance();
+    GameTime* pI = ServiceLocator::Get<GameTime>();
 
     // 現在の時間を取得.
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -46,7 +40,7 @@ void GameTime::Update()
 void GameTime::MaintainFPS()
 {
     // インスタンスを取得.
-    GameTime* pI = GetInstance();
+    GameTime* pI = ServiceLocator::Get<GameTime>();
 
     if (pI->m_DeltaTime < pI->m_TargetFrameTime) {
         pI->m_DeltaTime = pI->m_TargetFrameTime;
@@ -58,5 +52,5 @@ void GameTime::MaintainFPS()
 // デルタタイムを取得.
 const float GameTime::GetDeltaTime()
 {
-    return GetInstance()->m_DeltaTime;
+    return ServiceLocator::Get<GameTime>()->m_DeltaTime;
 }

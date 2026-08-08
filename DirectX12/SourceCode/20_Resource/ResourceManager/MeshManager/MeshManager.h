@@ -3,6 +3,7 @@
 
 /*****************************
 * メッシュマネージャークラス.
+* ServiceLocatorへ登録して使う想定(Mainが所有・登録する).
 *****************************/
 class MeshManager final
 {
@@ -10,11 +11,8 @@ public:
 	MeshManager();
 	~MeshManager();
 
-	// インスタンスを取得.
-	static MeshManager* GetInstance() {
-		static MeshManager Instance;
-		return &Instance;
-	}
+	MeshManager(const MeshManager&)            = delete;
+	MeshManager& operator=(const MeshManager&) = delete;
 
 	// メッシュの読み込み.
 	static bool LoadPMDMesh(DirectX12& pDx12, PMDRenderer& Renderer);
@@ -24,11 +22,6 @@ public:
 
 	// スタティックメッシュのリストを取得.
 	static std::vector<std::string> GetPMDMeshList();
-private:
-
-	// 生成やコピーを削除.
-	MeshManager(const MeshManager& rhs)				= delete;
-	MeshManager& operator = (const MeshManager& rhs)	= delete;
 private:
 	std::unordered_map<std::string, std::unique_ptr<PMDActor>>	m_PMDMesh;	// PMDメッシュ.
 

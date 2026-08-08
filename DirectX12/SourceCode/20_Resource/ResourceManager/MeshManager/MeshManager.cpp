@@ -1,6 +1,7 @@
 ﻿#include "MeshManager.h"
 #include "10_Ggraphic\\PMD\\PMDRenderer.h"
 #include "99_Utility\\String\\String.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include <filesystem>
 
 static constexpr char DEFORECONVERSIONFILEPATH[]	= "In";
@@ -18,13 +19,13 @@ MeshManager::~MeshManager()
 // PMDメッシュの取得.
 std::vector<std::string> MeshManager::GetPMDMeshList()
 {
-	return GetInstance()->m_PMDMeshList;
+	return ServiceLocator::Get<MeshManager>()->m_PMDMeshList;
 }
 
 // PMDメッシュの読み込み.
 bool MeshManager::LoadPMDMesh(DirectX12& pDx12, PMDRenderer& Renderer)
 {
-	MeshManager* pI = GetInstance();
+	MeshManager* pI = ServiceLocator::Get<MeshManager>();
 
 	auto LoadMesh = [&](const std::filesystem::directory_entry& Entry)
 		{
@@ -60,7 +61,7 @@ bool MeshManager::LoadPMDMesh(DirectX12& pDx12, PMDRenderer& Renderer)
 PMDActor* MeshManager::GetPMDMesh(const std::string& Name)
 {
 	// 指定したモデルを返す..
-	for (auto& Model : GetInstance()->m_PMDMesh)
+	for (auto& Model : ServiceLocator::Get<MeshManager>()->m_PMDMesh)
 	{
 		if (Model.first == Name) { return Model.second.get(); }
 	}
