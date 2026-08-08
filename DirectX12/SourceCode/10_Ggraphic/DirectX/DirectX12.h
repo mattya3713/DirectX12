@@ -92,6 +92,9 @@ public:
 	void Update();
 	void UpdateSceneBuffer();
 
+	// カメラ行列を設定する(呼び出し側でCameraBase派生クラスから取得して渡す).
+	void SetCamera(const DirectX::XMMATRIX& View, const DirectX::XMMATRIX& Proj, const DirectX::XMFLOAT3& Eye);
+
 	void BeginDraw();
 	void EndDraw();
 
@@ -199,6 +202,11 @@ private:
 	//シーンを構成するバッファまわり
 	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン定数バッファのリソース
 	SceneData*								m_pMappedSceneData;		// シーン定数バッファのCPU側マップ済みポインタ.
+
+	// SetCamera()で設定される現在のカメラ行列.
+	DirectX::XMMATRIX						m_ViewMatrix;
+	DirectX::XMMATRIX						m_ProjMatrix;
+	DirectX::XMFLOAT3						m_EyePosition;
 
 	// フェンス類.
 	MyComPtr<ID3D12Fence>					m_pFence;				// 処理待ち柵.

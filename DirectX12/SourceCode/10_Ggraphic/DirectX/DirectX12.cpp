@@ -24,7 +24,10 @@ DirectX12::DirectX12()
 	, m_pRootSignature	{ nullptr }
 	, m_LoadLambdaTable	{ }
 	, m_ResourceTable	{ }
-{							 
+	, m_ViewMatrix		{ DirectX::XMMatrixIdentity() }
+	, m_ProjMatrix		{ DirectX::XMMatrixIdentity() }
+	, m_EyePosition		{ 0.0f, 0.0f, 0.0f }
+{
 }
 
 DirectX12::~DirectX12()
@@ -95,81 +98,17 @@ bool DirectX12::Create(HWND hWnd)
 }
 #include <DirectXMath.h>
 
-DirectX::XMVECTOR m_Position = DirectX::XMVectorSet(0.0f, 20.0f, -40.0f, 1.0f);
-// メンバー変数に追加 (カメラのターゲット位置)
-DirectX::XMVECTOR m_TargetPosition = DirectX::XMVectorSet(0.0f, 15.0f, 0.0f, 1.0f); // モデルの中心あたりを見るように調整
+// カメラ行列を設定する(実際の入力処理はCameraBase派生クラス側が担当する).
+void DirectX12::SetCamera(const DirectX::XMMATRIX& View, const DirectX::XMMATRIX& Proj, const DirectX::XMFLOAT3& Eye)
+{
+	m_ViewMatrix = View;
+	m_ProjMatrix = Proj;
+	m_EyePosition = Eye;
+}
 
 // 更新
 void DirectX12::Update()
 {
-	// 既存のカメラ位置とターゲット位置を取得
-	DirectX::XMVECTOR currentEye = m_Position;
-	float m_MoveSpeed = 1.0f;
-	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
-		m_MoveSpeed = 0.1f; // Shiftキーで移動速度を遅くする
-	}
-	DirectX::XMVECTOR currentTarget = m_TargetPosition;
-
-	// 現在のカメラの向きを表すビュー行列を計算 (後で逆行列を使って軸を抽出するため)
-	// ここで計算するビュー行列は、UpdateSceneBufferで計算するview行列と同じロジックであるべき
-	DirectX::XMMATRIX viewMatrix = DirectX::XMMatrixLookAtLH(currentEye, currentTarget, DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-
-	// カメラのローカル軸（前方、右、上）をビュー行列の逆行列から抽出
-	// ビュー行列の逆行列は、ワールド空間におけるカメラの変換行列になる
-	DirectX::XMMATRIX invViewMatrix = DirectX::XMMatrixInverse(nullptr, viewMatrix);
-
-	// カメラのローカル前方ベクトル (Z軸の逆方向)
-	// 行列の3列目が前方ベクトル。LookAtLHでは-Zが前方なので、反転させる
-	// HLSLではmul(vector, matrix)で使う場合、列ベクトルが行列の各列に格納される。
-	// DirectX::XMMATRIXは行優先なので、行ベクトルは行列の各行に格納される。
-	// ビュー行列はワールド空間からカメラ空間への変換なので、その逆行列はカメラ空間からワールド空間への変換。
-	// 逆ビュー行列のZ軸成分 (3行目) がワールド空間でのカメラの「Z軸」の方向。
-	// LookAtLHの場合、カメラは-Z方向を見ているので、カメラの「前方」はワールドの-Z方向に近くなります。
-	// そのため、invViewMatrixの3行目（Z軸）を取り出すと、それはカメラのローカルZ軸がワールド空間のどちらを向いているかを示すベクトルになります。
-	// カメラの「前方」は、このZ軸を反転させた方向になります。
-	DirectX::XMVECTOR cameraForward = DirectX::XMVector3Normalize(invViewMatrix.r[2]); // Z軸
-	DirectX::XMVECTOR cameraRight = DirectX::XMVector3Normalize(invViewMatrix.r[0]); // X軸
-	DirectX::XMVECTOR cameraUp = DirectX::XMVector3Normalize(invViewMatrix.r[1]); // Y軸
-
-	// Q/EキーはワールドのY軸に沿って移動する方が直感的かもしれません
-	DirectX::XMVECTOR worldUp = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	if (GetAsyncKeyState('W') & 0x8000) {
-		// 前方移動 (LookAtLHのデフォルトのカメラ方向は-Zなので、逆行列のZ軸の向きがワールド空間のZ軸方向を向く。
-		// カメラの進行方向は、そのベクトルの逆方向 (モデルに向かう方向) になることが多い)
-		// もしカメラがZ軸正方向を向いているとしたら XMVECTOR cameraForward = invViewMatrix.r[2];
-		// XMMatrixLookAtLHの場合、カメラは-Z方向を見ているので、invViewMatrix.r[2] はカメラのローカルZ軸（後方）
-		// 前進はこれの逆方向
-		currentEye = DirectX::XMVectorAdd(currentEye, DirectX::XMVectorScale(cameraForward, m_MoveSpeed));
-		currentTarget = DirectX::XMVectorAdd(currentTarget, DirectX::XMVectorScale(cameraForward, m_MoveSpeed));
-	}
-	if (GetAsyncKeyState('S') & 0x8000) {
-		// 後方移動
-		currentEye = DirectX::XMVectorSubtract(currentEye, DirectX::XMVectorScale(cameraForward, m_MoveSpeed));
-		currentTarget = DirectX::XMVectorSubtract(currentTarget, DirectX::XMVectorScale(cameraForward, m_MoveSpeed));
-	}
-	if (GetAsyncKeyState('A') & 0x8000) {
-		// 左移動
-		currentEye = DirectX::XMVectorSubtract(currentEye, DirectX::XMVectorScale(cameraRight, m_MoveSpeed));
-		currentTarget = DirectX::XMVectorSubtract(currentTarget, DirectX::XMVectorScale(cameraRight, m_MoveSpeed));
-	}
-	if (GetAsyncKeyState('D') & 0x8000) {
-		// 右移動
-		currentEye = DirectX::XMVectorAdd(currentEye, DirectX::XMVectorScale(cameraRight, m_MoveSpeed));
-		currentTarget = DirectX::XMVectorAdd(currentTarget, DirectX::XMVectorScale(cameraRight, m_MoveSpeed));
-	}
-	if (GetAsyncKeyState('Q') & 0x8000) { // Qキーで上に移動 (ワールドY軸方向)
-		currentEye = DirectX::XMVectorAdd(currentEye, DirectX::XMVectorScale(worldUp, m_MoveSpeed));
-		currentTarget = DirectX::XMVectorAdd(currentTarget, DirectX::XMVectorScale(worldUp, m_MoveSpeed));
-	}
-	if (GetAsyncKeyState('E') & 0x8000) { // Eキーで下に移動 (ワールドY軸方向)
-		currentEye = DirectX::XMVectorSubtract(currentEye, DirectX::XMVectorScale(worldUp, m_MoveSpeed));
-		currentTarget = DirectX::XMVectorSubtract(currentTarget, DirectX::XMVectorScale(worldUp, m_MoveSpeed));
-	}
-
-	m_Position = currentEye; // 更新されたカメラ位置
-	m_TargetPosition = currentTarget; // 更新されたターゲット位置
-
 	UpdateSceneBuffer(); // 更新
 }
 
@@ -177,31 +116,10 @@ void DirectX12::UpdateSceneBuffer()
 {
 	if (m_pMappedSceneData)
 	{
-		DirectX::XMFLOAT3 currentEye = {};
-		DirectX::XMStoreFloat3(&currentEye, m_Position); // 更新されたm_Positionを使用
-
-		DirectX::XMFLOAT3 target = {};
-		DirectX::XMStoreFloat3(&target, m_TargetPosition); // 更新されたm_TargetPositionを使用
-
-		DirectX::XMFLOAT3 up(0, 1, 0); // ワールドの上方向は固定
-
-		m_pMappedSceneData->view =
-			DirectX::XMMatrixLookAtLH(
-			DirectX::XMLoadFloat3(&currentEye),
-			DirectX::XMLoadFloat3(&target),
-			DirectX::XMLoadFloat3(&up));
-
-		DXGI_SWAP_CHAIN_DESC1 desc = {};
-		auto result = m_pSwapChain->GetDesc1(&desc);
-		m_pMappedSceneData->proj =
-			DirectX::XMMatrixPerspectiveFovLH
-			(DirectX::XM_PIDIV4, // 画角は45°
-			static_cast<float>(desc.Width) / static_cast<float>(desc.Height), // アス比
-			0.1f, // 近い方
-			1000.0f // 遠い方
-			);
-
-		m_pMappedSceneData->eye = currentEye; // 定数バッファのeyeも更新
+		// カメラ行列はSetCamera()で設定済みのものをそのまま使う.
+		m_pMappedSceneData->view = m_ViewMatrix;
+		m_pMappedSceneData->proj = m_ProjMatrix;
+		m_pMappedSceneData->eye  = m_EyePosition;
 	}
 	else
 	{
