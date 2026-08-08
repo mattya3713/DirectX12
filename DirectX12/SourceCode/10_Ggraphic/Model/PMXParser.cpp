@@ -107,28 +107,28 @@ void PMXParser::ReadVertices(FILE* fp, const PMX::Header& Header, Model::ModelDa
 
 		switch (weight_type) {
 			case 0: // BDEF1
-				OutData.Vertices[i].BoneIndices[0] = ReadAndCastIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[0] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
 				OutData.Vertices[i].BoneWeights[0] = 1.0f;
 				break;
 			case 1: // BDEF2
-				OutData.Vertices[i].BoneIndices[0] = ReadAndCastIndices(fp, Header.BoneIndexSize);
-				OutData.Vertices[i].BoneIndices[1] = ReadAndCastIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[0] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[1] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
 				fread(&OutData.Vertices[i].BoneWeights[0], sizeof(float), 1, fp);
 				OutData.Vertices[i].BoneWeights[1] = 1.0f - OutData.Vertices[i].BoneWeights[0];
 				break;
 			case 2: // BDEF4
-				OutData.Vertices[i].BoneIndices[0] = ReadAndCastIndices(fp, Header.BoneIndexSize);
-				OutData.Vertices[i].BoneIndices[1] = ReadAndCastIndices(fp, Header.BoneIndexSize);
-				OutData.Vertices[i].BoneIndices[2] = ReadAndCastIndices(fp, Header.BoneIndexSize);
-				OutData.Vertices[i].BoneIndices[3] = ReadAndCastIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[0] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[1] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[2] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[3] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
 				fread(&OutData.Vertices[i].BoneWeights[0], sizeof(float), 1, fp);
 				fread(&OutData.Vertices[i].BoneWeights[1], sizeof(float), 1, fp);
 				fread(&OutData.Vertices[i].BoneWeights[2], sizeof(float), 1, fp);
 				fread(&OutData.Vertices[i].BoneWeights[3], sizeof(float), 1, fp);
 				break;
 			case 3: // SDEF
-				OutData.Vertices[i].BoneIndices[0] = ReadAndCastIndices(fp, Header.BoneIndexSize);
-				OutData.Vertices[i].BoneIndices[1] = ReadAndCastIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[0] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
+				OutData.Vertices[i].BoneIndices[1] = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
 				fread(&OutData.Vertices[i].BoneWeights[0], sizeof(float), 1, fp);
 				fread(&OutData.Vertices[i].SDEF_C, sizeof(DirectX::XMFLOAT3), 1, fp);
 				fread(&OutData.Vertices[i].SDEF_R0, sizeof(DirectX::XMFLOAT3), 1, fp);
@@ -228,8 +228,8 @@ void PMXParser::ReadMaterials(FILE* fp, const PMX::Header& Header, const std::ve
 		fread(&edge_color, sizeof(DirectX::XMFLOAT4), 1, fp);
 		fread(&edge_size, sizeof(float), 1, fp);
 
-		uint32_t texture_index = ReadAndCastIndices(fp, Header.TextureIndexSize);
-		uint32_t sphere_texture_index = ReadAndCastIndices(fp, Header.TextureIndexSize);
+		uint32_t texture_index = ReadAndCastSignedIndices(fp, Header.TextureIndexSize);
+		uint32_t sphere_texture_index = ReadAndCastSignedIndices(fp, Header.TextureIndexSize);
 
 		uint8_t sphere_mode = 0;
 		uint8_t toon_flag = 0;
@@ -238,7 +238,7 @@ void PMXParser::ReadMaterials(FILE* fp, const PMX::Header& Header, const std::ve
 
 		uint32_t toon_texture_index = 0;
 		if (toon_flag == 0) { // モデル固有のトゥーン.
-			toon_texture_index = ReadAndCastIndices(fp, Header.TextureIndexSize);
+			toon_texture_index = ReadAndCastSignedIndices(fp, Header.TextureIndexSize);
 		}
 		else { // 共通トゥーン(PMXファイル内のindexは1?10).
 			uint8_t common_toon_index = 0;
@@ -286,7 +286,7 @@ void PMXParser::ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData&
 		ReadString(fp, english_name, Header.Encoding);
 
 		fread(&bone.Position, sizeof(DirectX::XMFLOAT3), 1, fp);
-		bone.ParentBoneIndex = ReadAndCastIndices(fp, Header.BoneIndexSize);
+		bone.ParentBoneIndex = ReadAndCastSignedIndices(fp, Header.BoneIndexSize);
 
 		uint32_t deform_depth = 0;
 		fread(&deform_depth, sizeof(uint32_t), 1, fp);
@@ -300,11 +300,11 @@ void PMXParser::ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData&
 			fread(&position_offset, sizeof(DirectX::XMFLOAT3), 1, fp);
 		}
 		else {
-			ReadAndCastIndices(fp, Header.BoneIndexSize); // LinkBoneIndex.
+			ReadAndCastSignedIndices(fp, Header.BoneIndexSize); // LinkBoneIndex.
 		}
 
 		if ((bone_flag & PMX::BoneFlags::AppendRotate) || (bone_flag & PMX::BoneFlags::AppendTranslate)) {
-			ReadAndCastIndices(fp, Header.BoneIndexSize); // AppendBoneIndex.
+			ReadAndCastSignedIndices(fp, Header.BoneIndexSize); // AppendBoneIndex.
 			float append_weight = 0.0f;
 			fread(&append_weight, sizeof(float), 1, fp);
 		}
@@ -326,7 +326,7 @@ void PMXParser::ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData&
 		}
 
 		if (bone_flag & PMX::BoneFlags::IK) {
-			ReadAndCastIndices(fp, Header.BoneIndexSize); // IKTargetBoneIndex.
+			ReadAndCastSignedIndices(fp, Header.BoneIndexSize); // IKTargetBoneIndex.
 			uint32_t ik_iteration_count = 0;
 			float ik_limit = 0.0f;
 			fread(&ik_iteration_count, sizeof(uint32_t), 1, fp);
@@ -335,7 +335,7 @@ void PMXParser::ReadBones(FILE* fp, const PMX::Header& Header, Model::ModelData&
 			uint32_t link_count = 0;
 			fread(&link_count, sizeof(uint32_t), 1, fp);
 			for (uint32_t link = 0; link < link_count; ++link) {
-				ReadAndCastIndices(fp, Header.BoneIndexSize); // IKBoneIndex.
+				ReadAndCastSignedIndices(fp, Header.BoneIndexSize); // IKBoneIndex.
 				uint8_t enable_limit = 0;
 				fread(&enable_limit, sizeof(uint8_t), 1, fp);
 				if (enable_limit != 0) {
@@ -365,6 +365,24 @@ uint32_t PMXParser::ReadAndCastIndices(FILE* fp, uint8_t IndexSize)
 		throw std::runtime_error("Unknown index size.");
 	}
 	return value;
+}
+
+uint32_t PMXParser::ReadAndCastSignedIndices(FILE* fp, uint8_t IndexSize)
+{
+	int32_t value = 0;
+	if (IndexSize == 1) {
+		int8_t val; fread(&val, sizeof(int8_t), 1, fp); value = val;
+	}
+	else if (IndexSize == 2) {
+		int16_t val; fread(&val, sizeof(int16_t), 1, fp); value = val;
+	}
+	else if (IndexSize == 4) {
+		fread(&value, sizeof(int32_t), 1, fp);
+	}
+	else {
+		throw std::runtime_error("Unknown index size.");
+	}
+	return static_cast<uint32_t>(value);
 }
 
 void PMXParser::ReadString(FILE* fp, std::string& OutString, PMX::TextEncodingType EncodingType)

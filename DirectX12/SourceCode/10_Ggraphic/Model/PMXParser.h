@@ -26,8 +26,12 @@ private:
 
 	// 文字列の読み込み(エンコーディング変換含む).
 	void ReadString(FILE* fp, std::string& OutString, PMX::TextEncodingType EncodingType);
-	// PMXバイナリからインデックスを読み込み、uint32_tに変換して返す.
+	// PMXバイナリから頂点インデックスを読み込み、uint32_tに変換して返す(符号なし).
 	uint32_t ReadAndCastIndices(FILE* fp, uint8_t IndexSize);
+	// PMXバイナリからボーン/マテリアル/テクスチャ等のインデックスを読み込む(符号あり、-1は「指定なし」).
+	// PMX仕様ではこれらのIndexは符号ありで、-1が「未指定」を表す。符号拡張したuint32_tを返すため、
+	// 未指定は元のバイト幅に関わらず常に0xFFFFFFFFになる.
+	uint32_t ReadAndCastSignedIndices(FILE* fp, uint8_t IndexSize);
 
 	// マテリアルのテクスチャインデックスから、ベース/スフィアのテクスチャパスを解決する.
 	void ResolveMaterialTextures(

@@ -73,8 +73,8 @@ namespace Model {
 	// ボーン階層データ(ゲームが実際に使う最小限の情報).
 	struct Bone
 	{
-		// 「親なし」を表すセンチネル値(PMX/PMD双方の慣例に合わせ、範囲外インデックスとして扱う).
-		static constexpr uint32_t NoParentIndex = 0xFFFFU;
+		// 「親なし」を表すセンチネル値。PMXの符号ありIndex(-1=指定なし)を符号拡張した値と一致させる.
+		static constexpr uint32_t NoParentIndex = 0xFFFFFFFFU;
 
 		std::string        Name{};
 		DirectX::XMFLOAT3  Position{};		// ワールド空間での初期位置.
