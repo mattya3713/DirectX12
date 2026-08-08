@@ -79,6 +79,12 @@ constexpr DirectX::XMFLOAT3& operator-=(DirectX::XMFLOAT3& lhs, const DirectX::X
     return lhs;
 }
 
+constexpr DirectX::XMFLOAT3& operator*=(DirectX::XMFLOAT3& lhs, const DirectX::XMFLOAT3& rhs) noexcept
+{
+    lhs.x *= rhs.x; lhs.y *= rhs.y; lhs.z *= rhs.z;
+    return lhs;
+}
+
 constexpr DirectX::XMFLOAT3& operator*=(DirectX::XMFLOAT3& lhs, const float scalar) noexcept
 {
     lhs.x *= scalar; lhs.y *= scalar; lhs.z *= scalar;
