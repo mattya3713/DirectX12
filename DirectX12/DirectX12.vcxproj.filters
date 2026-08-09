@@ -174,7 +174,6 @@
       <Filter>SourceCode\Utility\Assert</Filter>
     </None>
     <None Include="Data\Shader\BasicShaderHeader.hlsli" />
-    <None Include="Data\Shader\PMX\PMXShaderHeader.hlsli" />
     <None Include="SourceCode\99_Utility\Math\Easing\Easing.inl" />
     <None Include="SourceCode\10_Ggraphic\Shader\BasicShaderHeader.hlsli" />
     <None Include="Directory.Build.targets" />
