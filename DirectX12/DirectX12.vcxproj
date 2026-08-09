@@ -223,6 +223,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\ServiceLocator\ServiceLocator.h" />
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.h" />
+    <ClInclude Include="SourceCode\99_Utility\HashedString\HashedString.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.cpp" />
