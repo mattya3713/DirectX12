@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include <wrl\\client.h>
-#include <utility> // std::swap を使用するためにインクルード
+#include <utility>      // std::swap を使用するためにインクルード.
+#include <type_traits>  // std::is_convertible を使用するためにインクルード.
 
 template <typename T>
 class MyComPtr {
@@ -43,6 +43,24 @@ public:
         return *this;
     }
 
+    // 変換コピーコンストラクタ(U*がT*へ暗黙変換できる場合のみ. 例: MyComPtr<Derived> -> MyComPtr<Base>).
+    template<typename U>
+    MyComPtr(const MyComPtr<U>& Other) : m_ptr(Other.Get()) {
+        static_assert(std::is_convertible<U*, T*>::value, "U* は T* へ変換できません.");
+        if (m_ptr) { AddRef(); }
+    }
+
+    // 変換コピー代入演算子.
+    template<typename U>
+    MyComPtr& operator=(const MyComPtr<U>& Other) {
+        static_assert(std::is_convertible<U*, T*>::value, "U* は T* へ変換できません.");
+        T* new_ptr = Other.Get();
+        if (new_ptr) { new_ptr->AddRef(); }
+        if (m_ptr) { m_ptr->Release(); }
+        m_ptr = new_ptr;
+        return *this;
+    }
+
     // デストラクタ.
     ~MyComPtr() {
         if (m_ptr) { m_ptr->Release(); }
@@ -63,6 +81,14 @@ public:
     // nullptr でなければ true を返す.
     operator bool() const { return m_ptr != nullptr; }
 
+    // 等価比較.
+    bool operator==(const MyComPtr& Other) const noexcept { return m_ptr == Other.m_ptr; }
+    bool operator!=(const MyComPtr& Other) const noexcept { return m_ptr != Other.m_ptr; }
+
+    // nullptr との比較.
+    bool operator==(std::nullptr_t) const noexcept { return m_ptr == nullptr; }
+    bool operator!=(std::nullptr_t) const noexcept { return m_ptr != nullptr; }
+
     // 新しいポインタを設定する.
     void Reset(T* ptr = nullptr) {
         T* old_ptr = m_ptr;
@@ -77,6 +103,20 @@ public:
     // ポインタを交換する.
     void Swap(MyComPtr& other) noexcept {
         std::swap(m_ptr, other.m_ptr);
+    }
+
+    // 既に参照カウント済みの生ポインタの所有権だけを引き取る(AddRefは行わない).
+    // 関数が既にAddRef済みのポインタを生で返してくる場合など、二重カウントを避けたいときに使う.
+    void Attach(T* Ptr) noexcept {
+        if (m_ptr) { m_ptr->Release(); }
+        m_ptr = Ptr;
+    }
+
+    // 別インターフェースへのQueryInterface. 成功時はOutへ格納しS_OKを返す.
+    template<typename U>
+    HRESULT As(MyComPtr<U>& Out) const {
+        if (!m_ptr) { return E_POINTER; }
+        return m_ptr->QueryInterface(IID_PPV_ARGS(Out.ReleaseAndGetAddressOf()));
     }
 
     // 内部ポインタのアドレスを取得する.
