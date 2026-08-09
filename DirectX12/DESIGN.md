@@ -44,10 +44,10 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - [x] 仮想入力コントローラー — Senzan方式(`KeyInput`/`Mouse`/`XInput`/`Input`/`VirtualPad`)を移植・統合済み。
 - [x] ImGui — `ImGuiManager`(サービスロケーター経由)を実装・統合済み。`Text`/`Slider`/`Input`/`CheckBox`/`Combo`/`Tweak`を提供、日本語ラベルはANSI→UTF-8自動変換で文字化けなし。
 - [ ] デバッグテキスト — `ImGuiManager::Text()`等で代替可能になったため、専用の実装は現状不要と判断(常時表示のオーバーレイ等が別途必要になったら再検討)。
-- [x] インターフェイス整理 — `IUpdatable`/`IDrawable`を`SourceCode/00_Game/05_Object/00_Base/`に実装済み。
+- [x] インターフェイス整理 → 検討の結果`IUpdatable`/`IDrawable`への分離はしない方針に決定(下記参照)。
 
 ### Stage 2(ゲームオブジェクトの骨格)
-- [x] オブジェクト基底(`GameObject`) — `IUpdatable`/`IDrawable`を多重継承した具象クラスとして実装済み(Transform保持、Update/Drawは既定で何もしないフック)。コピー・ムーブはCameraBase同様に禁止(スライシング防止)。まだ`Main`等どこからも生成・使用されていない(骨格のみ)。
+- [x] オブジェクト基底(`GameObject`) — `SourceCode/00_Game/05_Object/00_Base/`に実装済み。Update/Drawは別インターフェースに分けず`GameObject`自身の仮想関数として直接持たせている。理由: 分離の利点(GameObjectの外側でUpdateだけ実装したいクラスが出てきたときに効く/選択的な適合)は現時点で活かせる箇所が無く、`GameObject`自体は結局Update/Draw両方を無条件に持つため今は分ける実利が無いと判断。GameObject以外でUpdate単体が欲しいクラスが出てきたら改めて検討する。Transform保持、コピー・ムーブはCameraBase同様に禁止(スライシング防止)。まだ`Main`等どこからも生成・使用されていない(骨格のみ)。
 - [ ] キャラ(`Character`) — `GameObject`を継承し、`IHealthSystem`等の小インターフェースを必要に応じて追加継承
 - [ ] FSM — Senzan側で作ったPasskeyパターン(特定クラスにのみ公開する`friend`の代替)を移植・参考にする
 
