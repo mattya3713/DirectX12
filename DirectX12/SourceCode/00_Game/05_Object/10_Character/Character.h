@@ -1,17 +1,18 @@
 ﻿#pragma once
 
 #include "00_Game/05_Object/00_Base/GameObject.h"
-#include "00_Game/05_Object/00_Base/IHealthSystem.h"
+#include "00_Game/05_Object/00_Base/HealthSystem.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/10.
-* @brief     : ゲーム内キャラクターの基底クラス. GameObjectを継承し、IHealthSystemを
-*            : 実装する具象クラス(HPの実体はここに置く. Senzanの`Character`を参考).
+* @brief     : ゲーム内キャラクターの基底クラス. GameObjectを継承する具象クラス.
+*            : HPはHealthSystemをメンバとして持つ(コンポジション. GameObjectがTransformを
+*            : メンバに持つのと同じ形. IHealthSystemを直接継承しない理由はHealthSystem.h参照).
 *            : 静的な小道具やトリガー等、生命・行動を持たないGameObjectと区別するための層.
 **********************************************************************************/
 
-class Character : public GameObject, public IHealthSystem
+class Character : public GameObject
 {
 public:
 	Character();
@@ -22,26 +23,18 @@ public:
 	Character(Character&&)                 = delete;
 	Character& operator=(Character&&)      = delete;
 
-public: // IHealthSystem実装.
+public: // HealthSystemへのアクセス.
 
-	// 最大HPの取得.
-	float GetMaxHP() const noexcept override { return m_MaxHP; }
-	// 現在HPの取得.
-	float GetHP() const noexcept override { return m_HP; }
-	// 生存しているか.
-	bool IsAlive() const noexcept override { return m_HP > 0.0f; }
-	// ダメージを与える(生存→死亡に変化した瞬間のみOnDeathを呼ぶ).
-	void ApplyDamage(float DamageAmount) override;
+	// HealthSystem本体の取得(コールバック登録等、詳細な操作はこちら経由).
+	HealthSystem& GetHealth() noexcept { return m_Health; }
+	const HealthSystem& GetHealth() const noexcept { return m_Health; }
 
-	// ダメージを受けた時のコールバックを設定する.
-	void SetOnDamage(DamageCallback Callback) override { m_OnDamage = std::move(Callback); }
-	// 死亡した瞬間のコールバックを設定する.
-	void SetOnDeath(DeathCallback Callback) override { m_OnDeath = std::move(Callback); }
+	// よく使うものは薄いフォワーダーとして直接公開する.
+	float GetMaxHP() const noexcept { return m_Health.GetMaxHP(); }
+	float GetHP() const noexcept { return m_Health.GetHP(); }
+	bool IsAlive() const noexcept { return m_Health.IsAlive(); }
+	void ApplyDamage(float DamageAmount) { m_Health.ApplyDamage(DamageAmount); }
 
 protected:
-	float m_MaxHP;	// 最大HP.
-	float m_HP;		// 現在HP.
-
-	DamageCallback	m_OnDamage;	// ダメージを受けた時に呼ばれる.
-	DeathCallback	m_OnDeath;	// 死亡した瞬間に呼ばれる.
+	HealthSystem m_Health; // HP・ダメージ処理・コールバック.
 };

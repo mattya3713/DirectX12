@@ -48,7 +48,9 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 
 ### Stage 2(ゲームオブジェクトの骨格)
 - [x] オブジェクト基底(`GameObject`) — `SourceCode/00_Game/05_Object/00_Base/`に実装済み。Update/Drawは別インターフェースに分けず`GameObject`自身の仮想関数として直接持たせている。理由: 分離の利点(GameObjectの外側でUpdateだけ実装したいクラスが出てきたときに効く/選択的な適合)は現時点で活かせる箇所が無く、`GameObject`自体は結局Update/Draw両方を無条件に持つため今は分ける実利が無いと判断。GameObject以外でUpdate単体が欲しいクラスが出てきたら改めて検討する。Transform保持、コピー・ムーブはCameraBase同様に禁止(スライシング防止)。まだ`Main`等どこからも生成・使用されていない(骨格のみ)。
-- [x] キャラ(`Character`) — `GameObject`と`IHealthSystem`を多重継承した具象クラスとして実装済み。`IHealthSystem`はHP取得・`ApplyDamage()`に加え、`SetOnDamage`/`SetOnDeath`で`std::function`ベースのコールバックを外部から設定できる(死亡は生存→死亡に変化した瞬間のみ1回発火)。
+- [x] キャラ(`Character`) — `GameObject`を継承する具象クラスとして実装済み。HPは`IHealthSystem`の多重継承ではなく、それを実装した具象クラス`HealthSystem`を`Character`がメンバとして持つ形(コンポジション、`GameObject`が`Transform`をメンバに持つのと同じ形)に変更した。
+  - 経緯: 当初`Character : public GameObject, public IHealthSystem`としたが、インターフェース(`IHealthSystem`)はメンバ変数禁止のためHPの実体は結局`Character`側に置く必要があり、HP関連の処理が2ファイルに分裂していた。インターフェースが意味を持つのは型を問わずポリモーフィックに扱いたい場合のみで、今回はその用途が無かったため、HPデータ・`ApplyDamage`・コールバックを全て`HealthSystem`(`IHealthSystem`の唯一の具象実装)に閉じ込め、`Character`はそれをメンバとして持つだけにした。`IHealthSystem`自体は将来ポリモーフィックに扱いたくなった時のために残してある。
+  - `HealthSystem`はHP取得・`ApplyDamage()`に加え、`SetOnDamage`/`SetOnDeath`で`std::function`ベースのコールバックを外部から設定できる(死亡は生存→死亡に変化した瞬間のみ1回発火)。`Character`側にも`GetHP()`/`IsAlive()`等の薄いフォワーダーを用意.
   - Senzan実物調査の結果: SenzanのCharacterはHPをインターフェースに分けず直接メンバに持つ(`IHealthSystem`相当の分離はしていない)。本プロジェクトではStage0の決定(小さいインターフェースの多重継承)を優先し、`IHealthSystem`として分離する方針を維持。
   - Senzanの継承は`Player`/`Boss`が`Character`の直接の兄弟(`Enemy`クラスは存在しない)。本プロジェクトは将来Player/Enemy/Bossの3種に分かれる想定のため、`Enemy`を新設して`GameObject → Character → {Player, Enemy → Boss}`という形にした(BossはEnemyの索敵・敵対AI等を共有できるようにする狙い)。
   - `SourceCode/00_Game/05_Object/{10_Character, 20_Player, 30_Enemy, 40_Boss}/`に骨格のみ実装済み(入力・移動・AI・FSM・当たり判定は全て未実装で、これから)。

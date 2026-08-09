@@ -234,6 +234,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\GameObject.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\IHealthSystem.h" />
+    <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\HealthSystem.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\10_Character\Character.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\20_Player\Player.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\30_Enemy\Enemy.h" />
@@ -286,6 +287,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
     <ClCompile Include="SourceCode\00_Game\05_Object\00_Base\GameObject.cpp" />
+    <ClCompile Include="SourceCode\00_Game\05_Object\00_Base\HealthSystem.cpp" />
     <ClCompile Include="SourceCode\00_Game\05_Object\10_Character\Character.cpp" />
     <ClCompile Include="SourceCode\00_Game\05_Object\20_Player\Player.cpp" />
     <ClCompile Include="SourceCode\00_Game\05_Object\30_Enemy\Enemy.cpp" />
