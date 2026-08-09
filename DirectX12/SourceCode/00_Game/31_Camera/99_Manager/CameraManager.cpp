@@ -11,16 +11,16 @@ CameraManager::~CameraManager()
 {
 }
 
-void CameraManager::Register(const std::string& Name, std::unique_ptr<CameraBase> Camera)
+void CameraManager::Register(std::string_view Name, std::unique_ptr<CameraBase> Camera)
 {
-	m_Cameras[Name] = std::move(Camera);
+	m_Cameras[std::string(Name)] = std::move(Camera);
 }
 
-void CameraManager::SetActive(const std::string& Name)
+void CameraManager::SetActive(std::string_view Name)
 {
-	auto it = m_Cameras.find(Name);
+	auto it = m_Cameras.find(std::string(Name));
 	if (it == m_Cameras.end()) {
-		throw std::runtime_error(Name + "という名前のカメラは登録されていません。");
+		throw std::runtime_error(std::string(Name) + "という名前のカメラは登録されていません。");
 	}
 	m_pActiveCamera = it->second.get();
 }

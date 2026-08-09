@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "00_Game/31_Camera/00_Base/CameraBase.h"
@@ -23,11 +24,11 @@ public:
 	CameraManager(const CameraManager&)            = delete;
 	CameraManager& operator=(const CameraManager&) = delete;
 
-	// カメラを登録する(所有権はCameraManagerへ移る).
-	void Register(const std::string& Name, std::unique_ptr<CameraBase> Camera);
+	// カメラを登録する(所有権はCameraManagerへ移る。Nameは保持せずキー構築にのみ使う).
+	void Register(std::string_view Name, std::unique_ptr<CameraBase> Camera);
 
-	// アクティブカメラを切り替える.
-	void SetActive(const std::string& Name);
+	// アクティブカメラを切り替える(Nameは保持せず検索にのみ使う).
+	void SetActive(std::string_view Name);
 
 	// アクティブカメラを取得(未設定ならnullptr).
 	CameraBase* GetActive() const noexcept;
