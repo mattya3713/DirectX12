@@ -11,9 +11,9 @@ CameraManager::~CameraManager()
 {
 }
 
-void CameraManager::Register(std::string_view Name, std::unique_ptr<CameraBase> Camera)
+void CameraManager::Register(std::string_view Name, std::unique_ptr<CameraBase> upCamera)
 {
-	m_Cameras[std::string(Name)] = std::move(Camera);
+	m_Cameras[std::string(Name)] = std::move(upCamera);
 }
 
 void CameraManager::SetActive(std::string_view Name)

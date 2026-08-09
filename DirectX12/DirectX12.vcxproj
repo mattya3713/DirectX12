@@ -204,8 +204,6 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\CustomSTL\pair\Pair.h" />
     <ClInclude Include="SourceCode\99_Utility\DirectXMath\DirectXMathExpansion.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
-    <ClInclude Include="SourceCode\99_Utility\Hash\CHash.h" />
-    <ClInclude Include="SourceCode\99_Utility\Hash\Crc32Table\HashTable.h" />
     <ClInclude Include="SourceCode\99_Utility\Math\Easing\Easing.h" />
     <ClInclude Include="SourceCode\99_Utility\Math\Math.h" />
     <ClInclude Include="SourceCode\99_Utility\Math\Random\Random.h" />
@@ -244,7 +242,6 @@ exit /b 0</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Buffer\Buffer.cpp" />
-    <ClCompile Include="SourceCode\99_Utility\Hash\Crc32Table\HashTable.cpp" />
     <ClCompile Include="SourceCode\99_Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\99_Utility\String\String.cpp" />
     <ClCompile Include="SourceCode\99_System\GameLoop\Time\Time.cpp" />
