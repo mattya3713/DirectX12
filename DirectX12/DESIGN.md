@@ -38,12 +38,12 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - [x] オブジェクト基底: 継承ベースで確定
 - [x] 横断的関心事(HP等)の乗せ方: 小さいインターフェースの多重継承で確定
 - [x] マネージャーの所有方針: サービスロケーター採用、`ServiceLocator`実装済み、`CameraManager`を登録済み
-- [ ] シングルトンの破棄タイミング方針を決める(`Singleton<T>`継承の`GameTime`/`MeshManager`はサービスロケーター管理下ではないため別途検討)
+- [x] シングルトンの破棄タイミング方針を決める → `GameTime`/`MeshManager`とも`Singleton<T>`継承を廃止しサービスロケーターへ移行済み。破棄順序は`Main::Release()`で明示的に制御する方針で解決。
 
 ### Stage 1(基礎・以降の開発を加速させる)
-- [ ] 仮想入力コントローラー — 今`FirstPersonCamera`等4クラスが`GetAsyncKeyState`を直書きしている。ゲームパッド対応・キーコンフィグの前に入力抽象化が必要。
-- [ ] ImGui — Senzan側で既に導入実績あり(`System/Singleton/ImGui/CImGuiManager.h`等)。デバッグテキストと役割が重なる部分が多いので、まとめて導入するのが効率的。
-- [ ] デバッグテキスト — FPS・カメラ座標・デルタタイム等を画面表示できると、以降の全機能の動作確認が速くなる。ImGui導入後はImGui側の機能で代替できる可能性が高い。
+- [x] 仮想入力コントローラー — Senzan方式(`KeyInput`/`Mouse`/`XInput`/`Input`/`VirtualPad`)を移植・統合済み。
+- [x] ImGui — `ImGuiManager`(サービスロケーター経由)を実装・統合済み。`Text`/`Slider`/`Input`/`CheckBox`/`Combo`/`Tweak`を提供、日本語ラベルはANSI→UTF-8自動変換で文字化けなし。
+- [ ] デバッグテキスト — `ImGuiManager::Text()`等で代替可能になったため、専用の実装は現状不要と判断(常時表示のオーバーレイ等が別途必要になったら再検討)。
 - [ ] インターフェイス整理 — `IUpdatable`/`IDrawable`等、オブジェクト基底の土台になる共通インターフェースを整理。
 
 ### Stage 2(ゲームオブジェクトの骨格)
@@ -70,3 +70,7 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - PMXパーサーの符号あり/なしIndex読み込みバグ修正(ボーン/マテリアル/テクスチャIndexの「-1=指定なし」を誤読していた)
 - 間欠クラッシュの原因調査・修正(`Data\Shader\PMX\Header.hlsli`がビルド出力先に未コピーでシェーダーコンパイルが失敗し、`Main::Create()`が未捕捉例外で`abort()`していた)。`DirectX12.vcxproj`にポストビルドイベントを追加して`Data\Shader`/`Data\Model`/`Data\Sound`を出力先へ確実にコピーし、`Main::Create()`を`try/catch`で保護
 - `SourceCode/99_Utility/Diagnostics/`にメモリリーク検知(`MemoryLeakDetector`、CRTヒープのCreate〜Release間の差分検知)とクラッシュダンプ機構(`CrashDumpHandler`、SEH例外・`std::terminate`両方に対応し`Dumps\`へ`.dmp`を書き出す)を追加
+- Senzan方式の仮想入力コントローラー(`KeyInput`/`Mouse`/`XInput`/`Input`/`VirtualPad`)を移植・`Main`へ統合
+- Dear ImGui(コア+Win32+DX12バックエンド、v1.90.6)を導入し`ImGuiManager`でラップ。`Text`/`Slider`/`Input`/`CheckBox`/`Combo`/`Tweak`(値をC++リテラルとしてクリップボードへコピー)を提供。日本語ラベルは実行時文字コード(ANSI)→UTF-8の自動変換で文字化けを解消
+- `MyComPtr`に`Attach`/`As<U>`/変換コピーコンストラクタ/等価比較演算子を追加し本物の`ComPtr`に近づけた
+- 未使用の古いPMXシェーダーファイル(`SourceCode/10_Ggraphic/Shader/PMX/`)とvcxprojの空参照を削除

@@ -15,6 +15,7 @@
 #include "00_Game/02_Input/Input.h"
 #include "00_Game/02_Input/VirtualPad.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Imgui/DebugHud.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -181,15 +182,8 @@ void Main::Draw()
     // 全体の描画準備.
     m_pDx12->BeginDraw();
 
-    // TODO: 動作確認用のデモウィンドウ. 実際のデバッグUIができ次第置き換える.
-    ImGui::ShowDemoWindow();
-
-    // TODO: Tweak()の動作確認用. 実際のデバッグUIができ次第削除する.
-    static float s_TweakTestValue = 1.0f;
-    ImGui::Begin("Tweak Test", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGuiManager::Text("日本語表示テスト");
-    ImGuiManager::Tweak("TestValue", s_TweakTestValue, 0.0f, 10.0f);
-    ImGui::End();
+    // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
+    DebugHud::Draw();
 
 #if ISOMX
 	//PMD用の描画パイプラインに合わせる
