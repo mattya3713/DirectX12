@@ -17,10 +17,12 @@
 mono_crash.*
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
+# NOTE: 元テンプレートは無指定([Dd]ebug/等)だったが、SourceCode/99_Utility/Debug/という
+#       ソースフォルダを巻き込んでしまっていた(ずっとgit管理外になっていた)ためルート直下に限定した.
+/[Dd]ebug/
+/[Dd]ebugPublic/
+/[Rr]elease/
+/[Rr]eleases/
 x64/
 x86/
 [Ww][Ii][Nn]32/
