@@ -147,8 +147,9 @@
       <Command>xcopy /Y /I /E "$(ProjectDir)Data\Shader" "$(OutDir)Data\Shader\"
 xcopy /Y /I /E "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
 xcopy /Y /I /E "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
+xcopy /Y /I /E "$(ProjectDir)Data\Font" "$(OutDir)Data\Font\"
 exit /b 0</Command>
-      <Message>Data\Shader・Data\Model・Data\Soundを出力先へコピー(実行時に相対パスで読み込むため).</Message>
+      <Message>Data\Shader・Data\Model・Data\Sound・Data\Fontを出力先へコピー(実行時に相対パスで読み込むため).</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -176,11 +177,13 @@ exit /b 0</Command>
       <Command>xcopy /Y /I /E "$(ProjectDir)Data\Shader" "$(OutDir)Data\Shader\"
 xcopy /Y /I /E "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
 xcopy /Y /I /E "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
+xcopy /Y /I /E "$(ProjectDir)Data\Font" "$(OutDir)Data\Font\"
 exit /b 0</Command>
-      <Message>Data\Shader・Data\Model・Data\Soundを出力先へコピー(実行時に相対パスで読み込むため).</Message>
+      <Message>Data\Shader・Data\Model・Data\Sound・Data\Fontを出力先へコピー(実行時に相対パスで読み込むため).</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="SourceCode\99_Utility\Debug\DebugKey\KeyDebbuger.h" />
     <ClInclude Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\DirectX\DirectX12.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDActor.h" />
@@ -222,8 +225,23 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.h" />
     <ClInclude Include="SourceCode\99_Utility\HashedString\HashedString.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\XInput\XInput.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\KeyInput\KeyInput.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\Mouse\Mouse.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\Input.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\VirtualPad.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
+    <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="Data\Library\ImGui\imstb_textedit.h" />
+    <ClInclude Include="Data\Library\ImGui\imstb_truetype.h" />
+    <ClInclude Include="Data\Library\ImGui\imconfig.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui_impl_dx12.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="SourceCode\99_Utility\Debug\DebugKey\KeyDebbuger.cpp" />
     <ClCompile Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\DirectX\DirectX12.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMD\PMDActor.cpp" />
@@ -253,6 +271,19 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\31_Camera\99_Manager\CameraManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\XInput\XInput.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\KeyInput\KeyInput.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\Mouse\Mouse.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\Input.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\VirtualPad.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_impl_dx12.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\Shader\BasicShaderHeader.hlsli" />

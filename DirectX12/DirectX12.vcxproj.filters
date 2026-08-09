@@ -108,6 +108,20 @@
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.h" />
     <ClInclude Include="SourceCode\99_Utility\HashedString\HashedString.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\XInput\XInput.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\KeyInput\KeyInput.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\Mouse\Mouse.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\Input.h" />
+    <ClInclude Include="SourceCode\00_Game\02_Input\VirtualPad.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
+    <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="Data\Library\ImGui\imstb_textedit.h" />
+    <ClInclude Include="Data\Library\ImGui\imstb_truetype.h" />
+    <ClInclude Include="Data\Library\ImGui\imconfig.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="Data\Library\ImGui\imgui_impl_dx12.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SourceCode\stdafx.cpp">
@@ -138,6 +152,19 @@
     <ClCompile Include="SourceCode\00_Game\31_Camera\99_Manager\CameraManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\XInput\XInput.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\KeyInput\KeyInput.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\Mouse\Mouse.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\Input.cpp" />
+    <ClCompile Include="SourceCode\00_Game\02_Input\VirtualPad.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Data\Library\ImGui\imgui_impl_dx12.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SourceCode\99_Utility\Math\Math.inl">

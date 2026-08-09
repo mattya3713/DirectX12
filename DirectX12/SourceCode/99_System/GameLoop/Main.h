@@ -11,6 +11,11 @@ class CGame;
 class CameraManager;
 class GameTime;
 class MeshManager;
+class KeyInput;
+class Mouse;
+class Input;
+class VirtualPad;
+class ImGuiManager;
 
 /**************************************************
 *	メインクラス.
@@ -56,4 +61,10 @@ private:
 	std::unique_ptr<CameraManager>	m_upCameraManager;	// カメラマネージャー.
 	std::unique_ptr<GameTime>		m_upGameTime;		// ゲーム全体の時計.
 	std::unique_ptr<MeshManager>	m_upMeshManager;	// メッシュマネージャー.
+
+	std::unique_ptr<KeyInput>		m_upKeyInput;		// キー入力.
+	std::unique_ptr<Mouse>			m_upMouse;			// マウス入力.
+	std::unique_ptr<Input>			m_upInput;			// 入力機のラッパー(キーボード/マウス/コントローラー).
+	std::unique_ptr<VirtualPad>	m_upVirtualPad;		// 仮想パッド(アクションマッピング).
+	std::unique_ptr<ImGuiManager>	m_upImGuiManager;	// ImGui統合ラッパー.
 };

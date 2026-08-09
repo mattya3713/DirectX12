@@ -10,6 +10,11 @@
 #include "00_Game/31_Camera/30_Debug/DebugCamera.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/Diagnostics/MemoryLeakDetector.h"
+#include "00_Game/02_Input/KeyInput/KeyInput.h"
+#include "00_Game/02_Input/Mouse/Mouse.h"
+#include "00_Game/02_Input/Input.h"
+#include "00_Game/02_Input/VirtualPad.h"
+#include "99_Utility/Debug/Imgui/ImGuiManager.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -39,6 +44,11 @@ Main::Main()
     , m_upCameraManager { nullptr }
     , m_upGameTime      { nullptr }
     , m_upMeshManager   { nullptr }
+    , m_upKeyInput      { nullptr }
+    , m_upMouse         { nullptr }
+    , m_upInput         { nullptr }
+    , m_upVirtualPad    { nullptr }
+    , m_upImGuiManager  { nullptr }
 {
 }
 
@@ -62,8 +72,31 @@ HRESULT Main::Create()
     m_upMeshManager = std::make_unique<MeshManager>();
     ServiceLocator::Provide<MeshManager>(m_upMeshManager.get());
 
+    // 入力系(キーボード/マウス/コントローラー/仮想パッド)の構築・登録.
+    m_upKeyInput = std::make_unique<KeyInput>();
+    ServiceLocator::Provide<KeyInput>(m_upKeyInput.get());
+
+    m_upMouse = std::make_unique<Mouse>();
+    ServiceLocator::Provide<Mouse>(m_upMouse.get());
+
+    m_upInput = std::make_unique<Input>();
+    ServiceLocator::Provide<Input>(m_upInput.get());
+    Input::SethWnd(m_hWnd);
+
+    m_upVirtualPad = std::make_unique<VirtualPad>();
+    ServiceLocator::Provide<VirtualPad>(m_upVirtualPad.get());
+    m_upVirtualPad->SetupDefaultBindings();
+
     m_pDx12 = std::make_shared<DirectX12>();
     m_pDx12->Create(m_hWnd);
+
+    // ImGuiの構築・登録(DirectX12構築後でないとデバイスが取得できない).
+    m_upImGuiManager = std::make_unique<ImGuiManager>();
+    ServiceLocator::Provide<ImGuiManager>(m_upImGuiManager.get());
+    if (FAILED(m_upImGuiManager->Init(m_hWnd, *m_pDx12))) {
+        _ASSERT_EXPR(false, _T("ImGuiの初期化に失敗しました"));
+        return E_FAIL;
+    }
 
     // カメラマネージャーを構築し、デバッグカメラをデフォルトで有効化.
     m_upCameraManager = std::make_unique<CameraManager>();
@@ -148,6 +181,16 @@ void Main::Draw()
     // 全体の描画準備.
     m_pDx12->BeginDraw();
 
+    // TODO: 動作確認用のデモウィンドウ. 実際のデバッグUIができ次第置き換える.
+    ImGui::ShowDemoWindow();
+
+    // TODO: Tweak()の動作確認用. 実際のデバッグUIができ次第削除する.
+    static float s_TweakTestValue = 1.0f;
+    ImGui::Begin("Tweak Test", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGuiManager::Text("日本語表示テスト");
+    ImGuiManager::Tweak("TestValue", s_TweakTestValue, 0.0f, 10.0f);
+    ImGui::End();
+
 #if ISOMX
 	//PMD用の描画パイプラインに合わせる
     m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
@@ -168,6 +211,9 @@ void Main::Draw()
     if (m_pPMXActor) {
         m_pPMXActor->Draw();
     }
+
+    // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
+    ImGuiManager::Render();
 
     // 終了処理.
     m_pDx12->EndDraw();
@@ -202,6 +248,13 @@ void Main::Release()
         m_pPMXRenderer.reset();
     }
 
+    if (m_upImGuiManager) {
+        // ReportLiveDeviceObjects()より前に解放し、ImGuiが確保したD3D12リソースをリーク扱いさせない.
+        ServiceLocator::Provide<ImGuiManager>(nullptr);
+        m_upImGuiManager->Shutdown();
+        m_upImGuiManager.reset();
+    }
+
 #if _DEBUG
     // オブジェクトの解放ミスを検出.
     MyComPtr<ID3D12DebugDevice> debugDevice;
@@ -212,6 +265,26 @@ void Main::Release()
 
     if (m_pDx12) {
         m_pDx12.reset();
+    }
+
+    if (m_upVirtualPad) {
+        ServiceLocator::Provide<VirtualPad>(nullptr);
+        m_upVirtualPad.reset();
+    }
+
+    if (m_upInput) {
+        ServiceLocator::Provide<Input>(nullptr);
+        m_upInput.reset();
+    }
+
+    if (m_upMouse) {
+        ServiceLocator::Provide<Mouse>(nullptr);
+        m_upMouse.reset();
+    }
+
+    if (m_upKeyInput) {
+        ServiceLocator::Provide<KeyInput>(nullptr);
+        m_upKeyInput.reset();
     }
 
     // GameTimeは一番最後に破棄する(他の解放処理がデルタタイムを参照する可能性があるため).
@@ -237,6 +310,8 @@ void Main::Loop()
         else {
             GameTime::Update();
             GameTime::MaintainFPS();
+            Input::Update();
+            ImGuiManager::NewFrame();
 
             Update();
             Draw();
@@ -301,6 +376,9 @@ LRESULT CALLBACK Main::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
         // デフォルトのウィンドウプロシージャを呼び出して処理を進める.
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
     }
+
+    // ImGuiへメッセージを転送(未初期化なら内部で何もしない).
+    ImGuiManager::WndProcHandler(hWnd, uMsg, wParam, lParam);
 
     if (pMain) {
         switch (uMsg) {
