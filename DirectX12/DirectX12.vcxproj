@@ -232,6 +232,9 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\02_Input\VirtualPad.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
+    <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\IUpdatable.h" />
+    <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\IDrawable.h" />
+    <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\GameObject.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
     <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
     <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
@@ -279,6 +282,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\02_Input\VirtualPad.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
+    <ClCompile Include="SourceCode\00_Game\05_Object\00_Base\GameObject.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />

@@ -44,10 +44,10 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - [x] 仮想入力コントローラー — Senzan方式(`KeyInput`/`Mouse`/`XInput`/`Input`/`VirtualPad`)を移植・統合済み。
 - [x] ImGui — `ImGuiManager`(サービスロケーター経由)を実装・統合済み。`Text`/`Slider`/`Input`/`CheckBox`/`Combo`/`Tweak`を提供、日本語ラベルはANSI→UTF-8自動変換で文字化けなし。
 - [ ] デバッグテキスト — `ImGuiManager::Text()`等で代替可能になったため、専用の実装は現状不要と判断(常時表示のオーバーレイ等が別途必要になったら再検討)。
-- [ ] インターフェイス整理 — `IUpdatable`/`IDrawable`等、オブジェクト基底の土台になる共通インターフェースを整理。
+- [x] インターフェイス整理 — `IUpdatable`/`IDrawable`を`SourceCode/00_Game/05_Object/00_Base/`に実装済み。
 
 ### Stage 2(ゲームオブジェクトの骨格)
-- [ ] オブジェクト基底(`GameObject`) — Stage0の決定(継承ベース・具象クラス)に従って実装
+- [x] オブジェクト基底(`GameObject`) — `IUpdatable`/`IDrawable`を多重継承した具象クラスとして実装済み(Transform保持、Update/Drawは既定で何もしないフック)。コピー・ムーブはCameraBase同様に禁止(スライシング防止)。まだ`Main`等どこからも生成・使用されていない(骨格のみ)。
 - [ ] キャラ(`Character`) — `GameObject`を継承し、`IHealthSystem`等の小インターフェースを必要に応じて追加継承
 - [ ] FSM — Senzan側で作ったPasskeyパターン(特定クラスにのみ公開する`friend`の代替)を移植・参考にする
 
