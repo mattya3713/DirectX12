@@ -128,6 +128,13 @@
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateBase.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateMachine.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\CollisionInfo.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\ColliderBase.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\CollisionMath.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\00_Box\BoxCollider.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\00_Capsule\CapsuleCollider.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\10_Sphere\SphereCollider.h" />
+    <ClInclude Include="SourceCode\00_Game\40_Collision\CollisionDetector.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_Character\Character.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_Character\CharacterAccessKeys.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\Player.h" />
@@ -192,6 +199,12 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\05_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />
+    <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\ColliderBase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\CollisionMath.cpp" />
+    <ClCompile Include="SourceCode\00_Game\40_Collision\00_Box\BoxCollider.cpp" />
+    <ClCompile Include="SourceCode\00_Game\40_Collision\00_Capsule\CapsuleCollider.cpp" />
+    <ClCompile Include="SourceCode\00_Game\40_Collision\10_Sphere\SphereCollider.cpp" />
+    <ClCompile Include="SourceCode\00_Game\40_Collision\CollisionDetector.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_Character\Character.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\Player.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\State\PlayerStateBase.cpp" />

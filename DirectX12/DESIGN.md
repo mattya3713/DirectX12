@@ -76,7 +76,21 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 ### Stage 3(ワールド)
 - [ ] ファイル — スコープ要確認(汎用I/Oユーティリティなのか、シーン/マップのファイル形式なのか)
 - [ ] マップ
-- [ ] 当たり判定 — マップの表現が決まらないと設計できないため、マップの後
+- [x] 当たり判定 — 当初「マップの後」としていたが、実装はGameObject同士の形状ベース判定(Capsule/Sphere)でマップ表現に依存しないと判明したため前倒しで実装した。`SourceCode/00_Game/40_Collision/`にSenzanの`Game/03_Collision/`を参考に移植。
+  - `ColliderBase`(`00_Core/`) — 形状の基底クラス。持ち主の`Transform`は`const Transform*`の非所有ポインタで持つ(SenzanはGameObjectが`shared_ptr<Transform>`で持ち、Colliderは`weak_ptr`で参照していたが、本プロジェクトの`GameObject`は`Transform`を値メンバとして持つ設計のため、生ポインタ参照に変更。Colliderは所有者と同じ寿命のメンバとして持たせる想定なので安全).
+  - `CapsuleCollider`(`00_Capsule/`)・`SphereCollider`(`10_Sphere/`)・`BoxCollider`(`00_Box/`) — 3形状とも実装。SenzanはBox絡みの`DispatchCollision`が全組み合わせ`return {};`(未実装)だったが、本プロジェクトでは全パターン(Box-Box/Box-Sphere/Box-Capsule)を実装し直した。
+  - **Senzan調査で見つかった問題点とその対策**:
+    1. **二重ディスパッチが非対称で登録順依存のバグ** — `ColliderBase::CheckCollision`は`other.DispatchCollision(*this)`という二重ディスパッチ(Visitorパターン)で形状ごとの判定へ振り分ける設計だが、Senzanは各形状ペアの片方向にしか実際の判定ロジックが実装されていなかった(例: `CapsuleCollider::DispatchCollision(const SphereCollider&)`は実装済みだが、逆の`SphereCollider::DispatchCollision(const CapsuleCollider&)`は`return {};`のスタブ)。`CollisionDetector`のループは`colliderA->CheckCollision(*colliderB)`を1回しか呼ばないため、どちらが先に登録されたか(=`m_Colliders`内のインデックスの大小)によって同じペアでも判定が抜け落ちる。対策として、狭域判定の実体を`CollisionMath.h`(`00_Core/`)の共通関数(`TestCapsuleVsCapsule`/`TestCapsuleVsSphere`/`TestSphereVsSphere`/`TestBoxVsBox`/`TestBoxVsSphere`/`TestBoxVsCapsule`)に一本化し、形状の優先順(Box→Capsule→Sphere)を決めて必ず同じ関数・同じ引数順で計算するようにした。単体テスト(後述)で全ペア×両方の登録順で正しく検出されることを確認済み。
+    2. Senzanは`BoxCollider`絡みの`DispatchCollision`が全て`return {};`(未実装)、`SphereCollider`同士の判定も未実装、`CapsuleCollider`-`BoxCollider`もコメントで「未実装」と明記——今回は全て実装した(下記).
+    3. `CollisionDetector::ExecuteCollisionDetection()`内に、`Press`/`BossPress`マスクを判定した後`int i = 0; i++;`しかしない(外側ループの`i`をシャドーイングまでしている)完全に無意味なデバッグコードが残っていた。移植せず削除.
+  - **Box判定の実装方針**: このプロジェクトのコライダーは持ち主のYaw(Y軸周り)のみで回転する制約(Pitch/Roll非対応)なので、一般的なOBB用の最大15軸SATではなく、Y軸+お互いのローカルX/Z軸の5軸のみで十分と判断した(残りの軸は水平回転のみという制約下では冗長になるため).
+    - `TestBoxVsBox`: 上記5軸SAT。最小重なり量の軸を近似的な押し出し方向として`Normal`/`PenetrationDepth`に採用(接触点は簡易的に両中心の中点).
+    - `TestBoxVsSphere`: 球の中心をBoxのローカル軸へ射影しhalfExtentでクランプして最近接点を求める一般的な手法.
+    - `TestBoxVsCapsule`: `CapsuleCollider`の中心線分が構造上常にワールドY軸と平行である(`GetSegmentStart/End`がYawでしか回転せず鉛直オフセットが不変)ことを利用し、一般的な線分-OBBのSATを実装する代わりに「高さ(Y)は区間オーバーラップ」「水平面(XZ)は半径付き円とBoxの最近接点距離」に分解して判定. この用途では正確かつ実装がシンプル.
+  - `CollisionDetector`(`00_Game/40_Collision/`) — SenzanはSingletonだったが、本プロジェクトの方針(マネージャーはサービスロケーター経由)に合わせServiceLocator経由で利用する形にした。総当たり判定(O(n²))は維持、上記の死んだデバッグコードと未使用の`m_PendingResponses`(外部から参照する手段が無い状態変数)は移植していない。`CompositeCollider`(複数コライダーを1つとして扱うラッパー)も現状使う予定が無いため見送り。総当たりの計算量については、現状のオブジェクト数では最適化不要と判断(将来Boss等で増えたらSweep and Prune等を検討).
+  - `eCollisionGroup`はSenzanの`Player_Attack`/`Enemy_Damage`等ゲーム固有の区分をそのまま持ち込まず、`None`/`Default`のみの最小構成にした(Combat関連のステートがまだ無いため、具体的な区分は必要になったタイミングで追加する).
+  - 動作確認: スタンドアロンの`cl.exe`単体テストで、Capsule-Sphere/Box-Sphere/Box-Capsuleを両方向の登録順で(登録順依存バグが直っていることを含め)、Box-Box/Capsule-Capsule、範囲外での非衝突、マスクフィルタによる判定除外まで計11ケース全て想定通りの結果になることを確認済み(全プロジェクトビルドも`EXITCODE:0`)。まだ実際のGameObject(Player等)へのアタッチは行っていない(Combat関連のステート実装時に、当たり判定→ダメージへの接続(HitEvent)と合わせて行う想定)。
+  - 動作確認: スタンドアロンの`cl.exe`単体テストで、Capsule-vs-Sphereを両方の登録順で検証(登録順依存バグが直っていることを確認)、Capsule-vs-Capsule、範囲外での非衝突、マスクフィルタによる判定除外の5ケース全て想定通りの結果になることを確認済み。まだ実際のGameObject(Player等)へのアタッチは行っていない(Combat関連のステート実装時に、当たり判定→ダメージへの接続(HitEvent)と合わせて行う想定)。
 
 ### Stage 4(UI・演出、最も後)
 - [ ] 色 — Color構造体/変換ユーティリティ
