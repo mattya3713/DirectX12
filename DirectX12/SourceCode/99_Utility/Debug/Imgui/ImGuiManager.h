@@ -21,7 +21,7 @@ class DirectX12;
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/10.
-* @brief     : ImGui統合ラッパークラス(SenzanのCImGuiManagerを参考にDX12向けに再構築)。
+* @brief     : ImGui統合ラッパークラス.
 *            : ServiceLocator経由で利用する。
 **********************************************************************************/
 
@@ -46,7 +46,7 @@ public:
 	// Win32メッセージの転送(MsgProcの先頭で呼ぶ). 未初期化なら何もせず0を返す.
 	static LRESULT WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-public: // 値調整用ラッパー(Senzan CImGuiManager方式: "##"でラベル表示とウィジェットIDを分離する).
+public: // 値調整用ラッパー("##"でラベル表示とウィジェットIDを分離する).
 	// いずれもLabel引数の日本語リテラルをそのまま渡してよい(内部でUTF-8へ自動変換する).
 
 	// テキスト表示.
