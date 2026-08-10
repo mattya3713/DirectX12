@@ -22,6 +22,8 @@ PMXActor::PMXActor(const char* filepath, PMXRenderer& renderer)
 	, m_CurrentAnimationTime(0.0f)
 	, m_AnimationSpeed(30.0f)
 	, m_MaxFrame(0)
+	, m_StartFrame(0.0f)
+	, m_EndFrame(0.0f)
 	, m_AnimationStartTime(std::chrono::high_resolution_clock::now())
 	, m_pMappedVertex(nullptr)
 	, m_MappedIndex(nullptr)
@@ -87,12 +89,27 @@ void PMXActor::Update() {
 		std::chrono::duration<float> deltaTimeChrono = currentTime - m_AnimationStartTime;
 		float deltaTime = deltaTimeChrono.count(); // 秒単位の経過時間
 
+		// 再生範囲(m_StartFrame ～ m_EndFrame)内でループする. 範囲未設定(EndFrame <= StartFrame)なら全体をループ.
+		float range = m_EndFrame - m_StartFrame;
+		if (range <= 0.0f) { range = static_cast<float>(m_MaxFrame + 1); }
+
 		// アニメーションフレーム数に変換 (MMDは30FPSが標準)
-		m_CurrentAnimationTime = fmod(deltaTime * m_AnimationSpeed, static_cast<float>(m_MaxFrame + 1)); // ループ再生
+		m_CurrentAnimationTime = m_StartFrame + fmod(deltaTime * m_AnimationSpeed, range); // ループ再生
 
 		// アニメーションを更新
 		UpdateAnimation();
 	}
+}
+
+void PMXActor::StepFrame() {
+	// 再生範囲内で1フレームだけ進める(壁時計に依存しない. Editorでの単一ステップ用).
+	float range = m_EndFrame - m_StartFrame;
+	if (range <= 0.0f) { range = static_cast<float>(m_MaxFrame + 1); }
+
+	float localTime = m_CurrentAnimationTime - m_StartFrame + 1.0f;
+	m_CurrentAnimationTime = m_StartFrame + fmod(localTime, range);
+
+	UpdateAnimation();
 }
 
 void PMXActor::Draw() {
@@ -276,6 +293,10 @@ void PMXActor::MapVmdBonesToPmxBones()
 			}
 		}
 	}
+
+	// 再生範囲をロードしたVMDの全体(0～MaxFrame)にリセットする.
+	m_StartFrame = 0.0f;
+	m_EndFrame = static_cast<float>(m_MaxFrame);
 
 	// VMDボーンキーフレームをFrameNoでソート.
 	for (auto& pair : m_MotionData.BoneKeyFrames) {

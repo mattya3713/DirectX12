@@ -62,6 +62,20 @@ public:
 	void PlayAnimation();
 	void StopAnimation();
 
+	// 1フレームだけ進める(壁時計に依存せず、Editor等での単一ステップ用).
+	void StepFrame();
+
+	// 再生範囲を設定する(StartFrame <= EndFrameの範囲でループする).
+	void SetPlaybackRange(float StartFrame, float EndFrame) noexcept { m_StartFrame = StartFrame; m_EndFrame = EndFrame; }
+	// 再生速度を設定する(例: 30.0fで等倍、15.0fで半速).
+	void SetAnimationSpeed(float Speed) noexcept { m_AnimationSpeed = Speed; }
+
+	float GetStartFrame() const noexcept { return m_StartFrame; }
+	float GetEndFrame() const noexcept { return m_EndFrame; }
+	float GetAnimationSpeed() const noexcept { return m_AnimationSpeed; }
+	float GetCurrentAnimationTime() const noexcept { return m_CurrentAnimationTime; }
+	uint32_t GetMaxFrame() const noexcept { return m_MaxFrame; }
+
 private:
 	// ルートパラメータのインデックス (シェーダーと合わせる)
 	enum RootParamIndex
@@ -148,5 +162,7 @@ private:
 	float m_CurrentAnimationTime; // 現在のアニメーション時刻 (フレーム数または秒数)
 	float m_AnimationSpeed;       // アニメーション再生速度 (例: 30.0f で30FPS)
 	uint32_t m_MaxFrame;          // VMDアニメーションの最大フレーム数
+	float m_StartFrame;           // 再生範囲の開始フレーム(VMDロード時は0で初期化).
+	float m_EndFrame;             // 再生範囲の終了フレーム(VMDロード時はm_MaxFrameで初期化).
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_AnimationStartTime; // アニメーション開始時刻
 };
