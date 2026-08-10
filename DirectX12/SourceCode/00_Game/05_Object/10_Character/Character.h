@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "00_Game/05_Object/00_Base/GameObject.h"
-#include "00_Game/05_Object/00_Base/HealthSystem.h"
+#include "99_Utility/HealthSystem/HealthSystem.h"
 
 /**********************************************************************************
 * @author    : mattya3713.

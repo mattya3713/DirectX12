@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "00_Game/05_Object/00_Base/IHealthSystem.h"
+#include "99_Utility/HealthSystem/IHealthSystem.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
