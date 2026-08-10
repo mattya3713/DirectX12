@@ -16,6 +16,8 @@ void Player::Update()
 {
 	m_StateMachine.Update();
 	m_StateMachine.LateUpdate();
+
+	MeshObject::Update(); // Transform確定後にメッシュ(見た目)へ反映する.
 }
 
 void Player::ChangeState(PlayerState::eID Id)

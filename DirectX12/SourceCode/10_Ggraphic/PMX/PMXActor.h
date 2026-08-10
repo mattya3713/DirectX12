@@ -65,6 +65,9 @@ public:
 	// 1フレームだけ進める(壁時計に依存せず、Editor等での単一ステップ用).
 	void StepFrame();
 
+	// ワールド行列を設定する(移動・回転・拡縮の反映用).
+	void SetWorldMatrix(const DirectX::XMMATRIX& World) noexcept { if (m_pMappedTransformCB) { m_pMappedTransformCB->World = World; } }
+
 	// 再生範囲を設定する(StartFrame <= EndFrameの範囲でループする).
 	void SetPlaybackRange(float StartFrame, float EndFrame) noexcept { m_StartFrame = StartFrame; m_EndFrame = EndFrame; }
 	// 再生速度を設定する(例: 30.0fで等倍、15.0fで半速).

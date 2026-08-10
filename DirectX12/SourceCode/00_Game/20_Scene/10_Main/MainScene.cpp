@@ -5,6 +5,7 @@
 #include "10_Ggraphic/DirectX/DirectX12.h"
 #include "10_Ggraphic/PMX/PMXActor.h"
 #include "10_Ggraphic/PMX/PMXRenderer.h"
+#include "10_Ggraphic/PMX/PMXMesh.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
@@ -48,12 +49,18 @@ void MainScene::Create()
 		p_camera_manager->SetActive("Debug");
 	}
 
-	m_upPlayer = std::make_unique<Player>();
-
 	try {
 		m_pPMXRenderer = std::make_shared<PMXRenderer>(*p_dx12);
 		m_pPMXActor = std::make_shared<PMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
 		m_pPMXActor->PlayAnimation();
+
+		// Playerの見た目(PMXMesh). 同じレンダラー(パイプライン)を共有する.
+		// 動作確認しやすいよう原点から少しずらして配置(重ならないように).
+		m_upPlayer = std::make_unique<Player>();
+		m_upPlayer->SetPosition({ 30.0f, 0.0f, 0.0f });
+		auto p_player_mesh = std::make_shared<PMXMesh>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
+		p_player_mesh->Play();
+		m_upPlayer->AttachMesh(p_player_mesh);
 	}
 	catch (const std::runtime_error& Msg) {
 		// エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
@@ -118,6 +125,8 @@ void MainScene::Draw()
 	}
 
 	if (m_upPlayer) {
+		m_upPlayer->Draw();
+
 		ImGui::Begin("Player", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		const DirectX::XMFLOAT3& position = m_upPlayer->GetPosition();
 		ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);

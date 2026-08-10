@@ -1,5 +1,9 @@
 ﻿#pragma once
 
+#include <string>
+
+#include "10_Ggraphic/PMX/AnimationClipTable.h"
+
 class PMXActor;
 
 /**********************************************************************************
@@ -9,12 +13,14 @@ class PMXActor;
 *            : 止め、Stepボタンを押した時だけ1フレーム分進める(ゲーム内で起動できる
 *            : ImGui製のツール. CutSceneEditorのタイムライン機能はまだ持たない).
 *            : 再生範囲(開始/終了フレーム)・再生速度もここから調整できる.
+*            : 名前付きクリップとしてAnimationClipTableへ保存・読込もできる
+*            : (Character側の再生時にこのテーブルの値を参照する).
 **********************************************************************************/
 
 class AnimationEditor final
 {
 public:
-	AnimationEditor() = default;
+	AnimationEditor();
 	~AnimationEditor() = default;
 
 	// 起動中かどうかを切り替える.
@@ -26,5 +32,7 @@ public:
 	bool Draw(PMXActor& Actor);
 
 private:
-	bool m_IsActive = false; // 起動中かどうか(trueの間、Mainはゲームの更新を止める).
+	bool               m_IsActive = false;		// 起動中かどうか(trueの間、Mainはゲームの更新を止める).
+	AnimationClipTable m_ClipTable;			// 名前付きクリップの保存先(ファイルへ永続化する).
+	std::string        m_ClipName = "Idle";	// 現在編集中のクリップ名.
 };

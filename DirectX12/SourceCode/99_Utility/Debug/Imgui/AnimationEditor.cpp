@@ -3,6 +3,13 @@
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "10_Ggraphic/PMX/PMXActor.h"
 
+AnimationEditor::AnimationEditor()
+{
+	// 初回起動時は存在しなくてよい(失敗を無視). imgui.rulと同様、ビルド成果物の一部として
+	// 直接読み書きする実行時生成データのため、ProjectDir側のData\とは別物としてOutDir側にのみ存在する.
+	m_ClipTable.Load(AnimationClipTable::DEFAULT_FILE_PATH);
+}
+
 bool AnimationEditor::Draw(PMXActor& Actor)
 {
 	if (!m_IsActive) { return false; }
@@ -27,6 +34,28 @@ bool AnimationEditor::Draw(PMXActor& Actor)
 
 	Actor.SetPlaybackRange(start_frame, end_frame);
 	Actor.SetAnimationSpeed(speed);
+
+	ImGui::Separator();
+
+	// 名前付きクリップとしての保存・読込.
+	ImGuiManager::Input("Clip Name", m_ClipName);
+
+	if (ImGui::Button("Save Clip"))
+	{
+		m_ClipTable.Set(m_ClipName, AnimationClipData{ start_frame, end_frame, speed });
+		m_ClipTable.Save(AnimationClipTable::DEFAULT_FILE_PATH);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Load Clip"))
+	{
+		if (const AnimationClipData* p_clip = m_ClipTable.Find(m_ClipName))
+		{
+			Actor.SetPlaybackRange(p_clip->StartFrame, p_clip->EndFrame);
+			Actor.SetAnimationSpeed(p_clip->Speed);
+		}
+	}
 
 	ImGui::Separator();
 

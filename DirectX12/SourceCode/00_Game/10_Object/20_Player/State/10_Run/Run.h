@@ -19,6 +19,7 @@ namespace PlayerState {
 
 		PlayerState::eID GetStateID() const override { return PlayerState::eID::Run; }
 
+		void Enter() override;
 		void Update() override;
 		void LateUpdate() override;
 

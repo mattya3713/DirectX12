@@ -28,4 +28,8 @@ public:
 protected:
 	// オーナー(プレイヤー)の取得.
 	Player* GetPlayer() const noexcept { return m_pOwner; }
+
+	// AnimationClipTable(AnimationEditorで保存したもの)から名前でクリップを引き、
+	// 見つかればPlayerのメッシュへ適用する(未登録なら何もしない).
+	void ApplyNamedClip(const char* ClipName) const;
 };

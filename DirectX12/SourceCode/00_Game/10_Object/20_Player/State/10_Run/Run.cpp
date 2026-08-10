@@ -18,6 +18,11 @@ Run::Run(Player* pOwner) noexcept
 {
 }
 
+void Run::Enter()
+{
+	ApplyNamedClip("Run");
+}
+
 void Run::Update()
 {
 	CalculateMoveVec();

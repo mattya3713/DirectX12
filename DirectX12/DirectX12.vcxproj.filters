@@ -78,6 +78,8 @@
     <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXMesh.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\PMX\AnimationClipTable.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
@@ -121,6 +123,7 @@
     <ClInclude Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.h" />
     <ClInclude Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\00_Base\GameObject.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\05_MeshObject\MeshObject.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\IHealthSystem.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateBase.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateMachine.h" />
@@ -156,6 +159,8 @@
     <ClCompile Include="SourceCode\10_Ggraphic\PMD\PMDActor.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMD\PMDRenderer.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXActor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\PMX\AnimationClipTable.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMDParser.cpp" />
@@ -185,6 +190,7 @@
     <ClCompile Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\05_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_Character\Character.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\Player.cpp" />

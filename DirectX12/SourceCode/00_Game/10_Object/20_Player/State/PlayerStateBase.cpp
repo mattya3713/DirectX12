@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "00_Game/10_Object/20_Player/Player.h"
+#include "10_Ggraphic/PMX/AnimationClipTable.h"
 
 namespace {
 	constexpr float FACING_ROTATE_SPEED = 720.0f; // 度/秒.
@@ -29,4 +30,15 @@ void PlayerStateBase::LateUpdate()
 	const float target_angle_deg = target_angle_rad * (180.0f / DirectX::XM_PI);
 
 	m_pOwner->RotateToTarget(target_angle_deg, FACING_ROTATE_SPEED);
+}
+
+void PlayerStateBase::ApplyNamedClip(const char* ClipName) const
+{
+	AnimationClipTable clip_table;
+	clip_table.Load(AnimationClipTable::DEFAULT_FILE_PATH);
+
+	if (const AnimationClipData* p_clip = clip_table.Find(ClipName))
+	{
+		m_pOwner->ApplyAnimationClip(p_clip->StartFrame, p_clip->EndFrame, p_clip->Speed);
+	}
 }

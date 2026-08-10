@@ -19,6 +19,8 @@ void Idle::Enter()
 {
 	// 待機状態では移動ベクトルをクリアする(攻撃後などに向きが残らないように).
 	GetPlayer()->SetMoveVec({}, PlayerAccess::MovementKey{});
+
+	ApplyNamedClip("Idle");
 }
 
 void Idle::Update()
