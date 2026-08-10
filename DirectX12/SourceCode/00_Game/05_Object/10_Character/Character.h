@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "00_Game/05_Object/00_Base/GameObject.h"
+#include "00_Game/05_Object/10_Character/CharacterAccessKeys.h"
 #include "99_Utility/HealthSystem/HealthSystem.h"
 
 /**********************************************************************************
@@ -25,15 +26,20 @@ public:
 
 public: // HealthSystemへのアクセス.
 
-	// HealthSystem本体の取得(コールバック登録等、詳細な操作はこちら経由).
-	HealthSystem& GetHealth() noexcept { return m_Health; }
+	// HealthSystem本体の読み取り専用アクセス(書き換えはCharacter経由の関数のみ許可する).
 	const HealthSystem& GetHealth() const noexcept { return m_Health; }
 
 	// よく使うものは薄いフォワーダーとして直接公開する.
 	float GetMaxHP() const noexcept { return m_Health.GetMaxHP(); }
 	float GetHP() const noexcept { return m_Health.GetHP(); }
 	bool IsAlive() const noexcept { return m_Health.IsAlive(); }
-	void ApplyDamage(float DamageAmount) { m_Health.ApplyDamage(DamageAmount); }
+
+	// ダメージを与える(CharacterAccess::DamageKeyに登録された攻撃者クラスのみ呼べる).
+	void ApplyDamage(float DamageAmount, CharacterAccess::DamageKey) { m_Health.ApplyDamage(DamageAmount); }
+
+	// ダメージ/死亡コールバックの登録(誰でも購読してよいので鍵は要求しない).
+	void SetOnDamage(HealthSystem::DamageCallback Callback) { m_Health.SetOnDamage(std::move(Callback)); }
+	void SetOnDeath(HealthSystem::DeathCallback Callback) { m_Health.SetOnDeath(std::move(Callback)); }
 
 protected:
 	HealthSystem m_Health; // HP・ダメージ処理・コールバック.
