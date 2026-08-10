@@ -1,6 +1,10 @@
 ﻿#include "stdafx.h"
 #include "CameraBase.h"
 
+#include <algorithm>
+#include <cstdlib>
+
+#include "99_System/GameLoop/Time/Time.h"
 #include "99_Utility/Transform/Transform.h"
 
 namespace {
@@ -125,7 +129,14 @@ void CameraBase::SetAspect(float Aspect) noexcept
 
 void CameraBase::ViewUpdate()
 {
-	DirectX::XMVECTOR v_position = DirectX::XMLoadFloat3(&m_upTransform->Position);
+	const DirectX::XMFLOAT3 shake_offset = UpdateShake();
+
+	DirectX::XMFLOAT3 shaken_position = m_upTransform->Position;
+	shaken_position.x += shake_offset.x;
+	shaken_position.y += shake_offset.y;
+	shaken_position.z += shake_offset.z;
+
+	DirectX::XMVECTOR v_position = DirectX::XMLoadFloat3(&shaken_position);
 	DirectX::XMVECTOR v_look     = DirectX::XMLoadFloat3(&m_LookPos);
 	DirectX::XMVECTOR v_up       = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -135,4 +146,32 @@ void CameraBase::ViewUpdate()
 void CameraBase::ProjectionUpdate()
 {
 	m_Proj = DirectX::XMMatrixPerspectiveFovLH(m_FovY, m_Aspect, m_NearClip, m_FarClip);
+}
+
+void CameraBase::Shake(float Intensity, float Duration) noexcept
+{
+	m_ShakeIntensity = Intensity;
+	m_ShakeDuration  = Duration;
+	m_ShakeElapsed   = 0.0f;
+}
+
+DirectX::XMFLOAT3 CameraBase::UpdateShake() noexcept
+{
+	if (m_ShakeDuration <= 0.0f || m_ShakeElapsed >= m_ShakeDuration)
+	{
+		return { 0.0f, 0.0f, 0.0f };
+	}
+
+	m_ShakeElapsed += GameTime::GetDeltaTime();
+
+	// 時間経過で揺れ幅を1.0→0.0へ線形に減衰させる.
+	const float ratio = 1.0f - std::min(m_ShakeElapsed / m_ShakeDuration, 1.0f);
+	const float current_intensity = m_ShakeIntensity * ratio;
+
+	const auto random_offset = [current_intensity]() noexcept {
+		const float t = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX); // [0,1].
+		return (t * 2.0f - 1.0f) * current_intensity; // [-current_intensity, current_intensity].
+	};
+
+	return { random_offset(), random_offset(), random_offset() };
 }

@@ -10,7 +10,7 @@
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/50_Input/Input.h"
-#include "00_Game/10_Object/20_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"

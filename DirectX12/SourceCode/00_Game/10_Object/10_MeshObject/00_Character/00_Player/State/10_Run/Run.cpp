@@ -1,6 +1,6 @@
 ﻿#include "Run.h"
 
-#include "00_Game/10_Object/20_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/50_Input/VirtualPad.h"

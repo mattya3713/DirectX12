@@ -13,6 +13,8 @@ class Input;
 class VirtualPad;
 class ImGuiManager;
 class SceneManager;
+class SoundManager;
+class CollisionDetector;
 
 /**************************************************
 *	メインクラス.
@@ -60,4 +62,6 @@ private:
 	std::unique_ptr<VirtualPad>	m_upVirtualPad;		// 仮想パッド(アクションマッピング).
 	std::unique_ptr<ImGuiManager>	m_upImGuiManager;	// ImGui統合ラッパー.
 	std::unique_ptr<SceneManager>	m_upSceneManager;	// シーンマネージャー.
+	std::unique_ptr<SoundManager>	m_upSoundManager;	// SE再生マネージャー.
+	std::unique_ptr<CollisionDetector> m_upCollisionDetector; // 当たり判定検出器.
 };

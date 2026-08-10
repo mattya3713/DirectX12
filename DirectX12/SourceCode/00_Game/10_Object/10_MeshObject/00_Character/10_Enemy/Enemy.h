@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "00_Game/10_Object/10_Character/Character.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/Character.h"
 
 /**********************************************************************************
 * @author    : mattya3713.

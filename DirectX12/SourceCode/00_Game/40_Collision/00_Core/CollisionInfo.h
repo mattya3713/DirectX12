@@ -7,15 +7,15 @@ class ColliderBase;
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/11.
-* @brief     : 衝突判定の結果. ColliderA/ColliderBのどちらが「自分」かは呼び出し側で
-*            : 判別すること(CollisionDetectorが両者それぞれの視点の値を配る).
+* @brief     : 衝突判定の結果. SelfCollider/OtherColliderは「誰から見た結果か」で
+*            : 意味が変わる(CollisionDetectorが両者それぞれの視点の値を配る).
 **********************************************************************************/
 
 struct CollisionInfo
 {
 	bool IsHit = false; // 衝突が発生したか.
 
-	DirectX::XMFLOAT3 Normal = {};			// 衝突法線(ColliderA→ColliderB方向).
+	DirectX::XMFLOAT3 Normal = {};			// 衝突法線(SelfCollider→OtherCollider方向).
 	float PenetrationDepth = 0.0f;			// めり込みの深さ.
 	DirectX::XMFLOAT3 ContactPoint = {};	// 接触点(ワールド座標).
 

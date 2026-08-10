@@ -11,6 +11,8 @@
 #include "00_Game/50_Input/VirtualPad.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/DebugHud.h"
+#include "99_Utility/Sound/SoundManager.h"
+#include "00_Game/40_Collision/CollisionDetector.h"
 #include "99_System/Scene/SceneManager.h"
 
 #ifdef _DEBUG
@@ -41,6 +43,8 @@ Main::Main()
     , m_upVirtualPad    { nullptr }
     , m_upImGuiManager  { nullptr }
     , m_upSceneManager  { nullptr }
+    , m_upSoundManager  { nullptr }
+    , m_upCollisionDetector { nullptr }
 {
 }
 
@@ -96,6 +100,15 @@ HRESULT Main::Create()
     m_upCameraManager = std::make_unique<CameraManager>();
     ServiceLocator::Provide<CameraManager>(m_upCameraManager.get());
 
+    // SE再生マネージャーを構築(Data\Sound以下のWAVを読み込む).
+    m_upSoundManager = std::make_unique<SoundManager>();
+    ServiceLocator::Provide<SoundManager>(m_upSoundManager.get());
+    m_upSoundManager->LoadSounds();
+
+    // 当たり判定検出器を構築(各シーン・GameObjectがコライダーを登録する).
+    m_upCollisionDetector = std::make_unique<CollisionDetector>();
+    ServiceLocator::Provide<CollisionDetector>(m_upCollisionDetector.get());
+
     // シーンマネージャーを構築し、最初のシーン(MainScene)を読み込む.
     m_upSceneManager = std::make_unique<SceneManager>();
     ServiceLocator::Provide<SceneManager>(m_upSceneManager.get());
@@ -116,6 +129,15 @@ void Main::Update()
 {
     if (m_upSceneManager) {
         m_upSceneManager->Update();
+    }
+
+    // シーン更新後(位置が確定した後)に、この1フレーム分の当たり判定を実行する.
+    if (m_upCollisionDetector) {
+        m_upCollisionDetector->ExecuteCollisionDetection();
+    }
+
+    if (m_upSoundManager) {
+        m_upSoundManager->Update();
     }
 }
 
@@ -148,6 +170,16 @@ void Main::Release()
     if (m_upSceneManager) {
         ServiceLocator::Provide<SceneManager>(nullptr);
         m_upSceneManager.reset();
+    }
+
+    if (m_upCollisionDetector) {
+        ServiceLocator::Provide<CollisionDetector>(nullptr);
+        m_upCollisionDetector.reset();
+    }
+
+    if (m_upSoundManager) {
+        ServiceLocator::Provide<SoundManager>(nullptr);
+        m_upSoundManager.reset();
     }
 
     if (m_upCameraManager) {

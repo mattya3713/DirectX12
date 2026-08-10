@@ -2,8 +2,8 @@
 
 #include <cmath>
 
-#include "00_Game/10_Object/20_Player/State/00_Idle/Idle.h"
-#include "00_Game/10_Object/20_Player/State/10_Run/Run.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/00_Idle/Idle.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/10_Run/Run.h"
 #include "99_System/GameLoop/Time/Time.h"
 
 Player::Player()

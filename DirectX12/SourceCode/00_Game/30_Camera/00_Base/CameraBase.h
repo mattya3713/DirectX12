@@ -65,12 +65,20 @@ public: // Getter・Setter.
 	// アスペクト比の設定.
 	void SetAspect(float Aspect) noexcept;
 
+	// カメラを揺らす(Intensity: 揺れ幅, Duration: 持続時間(秒)). 呼び出す度に上書きされる
+	// (時間経過で揺れ幅が0に減衰する. ViewUpdate()で毎フレーム自動的に適用される).
+	void Shake(float Intensity, float Duration) noexcept;
+
 protected:
 
 	// ビュー(カメラ)変換の更新.
 	void ViewUpdate();
 	// プロジェクション(射影)変換の更新.
 	void ProjectionUpdate();
+
+private:
+	// シェイクの経過を進め、現在フレームのオフセット量を計算する.
+	DirectX::XMFLOAT3 UpdateShake() noexcept;
 
 protected:
 	std::unique_ptr<Transform> m_upTransform;	// カメラの位置・回転(RotationはX:Pitch, Y:Yawとして使用).
@@ -83,4 +91,9 @@ protected:
 	float m_Aspect;		// アスペクト比.
 	float m_NearClip;	// ニアクリップ.
 	float m_FarClip;	// ファークリップ.
+
+private:
+	float m_ShakeIntensity = 0.0f;	// 揺れ幅(開始時の最大値).
+	float m_ShakeDuration  = 0.0f;	// 持続時間(秒).
+	float m_ShakeElapsed   = 0.0f;	// 経過時間(秒).
 };

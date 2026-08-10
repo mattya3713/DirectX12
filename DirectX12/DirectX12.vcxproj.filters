@@ -74,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\String\FilePath\FilePath.h" />
     <ClInclude Include="SourceCode\99_Utility\ComPtr\ComPtr.h" />
+    <ClInclude Include="SourceCode\99_Utility\FileManager\FileManager.h" />
+    <ClInclude Include="SourceCode\99_Utility\Sound\SoundManager.h" />
+    <ClInclude Include="Data\Library\json\json.hpp" />
     <ClInclude Include="SourceCode\10_Ggraphic\DirectX\DirectX12.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDRenderer.h" />
@@ -123,7 +126,7 @@
     <ClInclude Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.h" />
     <ClInclude Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\00_Base\GameObject.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\05_MeshObject\MeshObject.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\IHealthSystem.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateBase.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateMachine.h" />
@@ -135,16 +138,16 @@
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Capsule\CapsuleCollider.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\10_Sphere\SphereCollider.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\CollisionDetector.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\10_Character\Character.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\10_Character\CharacterAccessKeys.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\Player.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\PlayerAccessKeys.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\State\PlayerStateID.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\State\PlayerStateBase.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\State\00_Idle\Idle.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\20_Player\State\10_Run\Run.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\30_Enemy\Enemy.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\40_Boss\Boss.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\Character.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\CharacterAccessKeys.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\Player.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\PlayerAccessKeys.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\PlayerStateID.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\PlayerStateBase.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\00_Idle\Idle.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\10_Run\Run.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\Boss.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
     <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
     <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
@@ -161,6 +164,8 @@
     <ClCompile Include="SourceCode\99_Utility\String\String.cpp">
       <Filter>SourceCode\Utility\String</Filter>
     </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\FileManager\FileManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Sound\SoundManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\10_Ggraphic\DirectX\DirectX12.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMD\PMDActor.cpp" />
@@ -197,7 +202,7 @@
     <ClCompile Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\05_MeshObject\MeshObject.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\ColliderBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\CollisionMath.cpp" />
@@ -205,13 +210,13 @@
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Capsule\CapsuleCollider.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\10_Sphere\SphereCollider.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\CollisionDetector.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\10_Character\Character.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\Player.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\State\PlayerStateBase.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\State\00_Idle\Idle.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\20_Player\State\10_Run\Run.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\30_Enemy\Enemy.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\40_Boss\Boss.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\Character.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\Player.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\PlayerStateBase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\00_Idle\Idle.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\10_Run\Run.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\Boss.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />

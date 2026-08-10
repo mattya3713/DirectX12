@@ -4,6 +4,10 @@
 namespace PlayerState {
 	class Idle;
 	class Run;
+	class AttackCombo_0;
+	class AttackCombo_1;
+	class AttackCombo_2;
+	class Parry;
 }
 
 /**********************************************************************************
@@ -23,6 +27,16 @@ namespace PlayerAccess {
 		friend class PlayerState::Idle;
 		friend class PlayerState::Run;
 		MovementKey() {}
+	};
+
+	// コンボ数・必殺ゲージを変更してよいクラス(攻撃系Stateのみ).
+	class ComboEconomyKey
+	{
+		friend class PlayerState::AttackCombo_0;
+		friend class PlayerState::AttackCombo_1;
+		friend class PlayerState::AttackCombo_2;
+		friend class PlayerState::Parry;
+		ComboEconomyKey() {}
 	};
 
 } // namespace PlayerAccess

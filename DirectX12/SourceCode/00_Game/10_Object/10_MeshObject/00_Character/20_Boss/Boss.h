@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "00_Game/10_Object/30_Enemy/Enemy.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
