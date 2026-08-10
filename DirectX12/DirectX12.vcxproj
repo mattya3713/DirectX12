@@ -234,6 +234,8 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\00_Base\GameObject.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\IHealthSystem.h" />
+    <ClInclude Include="SourceCode\99_Utility\StateMachine\StateBase.h" />
+    <ClInclude Include="SourceCode\99_Utility\StateMachine\StateMachine.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\10_Character\Character.h" />
     <ClInclude Include="SourceCode\00_Game\05_Object\20_Player\Player.h" />

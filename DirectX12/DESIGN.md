@@ -54,7 +54,8 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - Senzan実物調査の結果: SenzanのCharacterはHPをインターフェースに分けず直接メンバに持つ(`IHealthSystem`相当の分離はしていない)。本プロジェクトではStage0の決定(小さいインターフェースの多重継承)を優先し、`IHealthSystem`として分離する方針を維持。
   - Senzanの継承は`Player`/`Boss`が`Character`の直接の兄弟(`Enemy`クラスは存在しない)。本プロジェクトは将来Player/Enemy/Bossの3種に分かれる想定のため、`Enemy`を新設して`GameObject → Character → {Player, Enemy → Boss}`という形にした(BossはEnemyの索敵・敵対AI等を共有できるようにする狙い)。
   - `SourceCode/00_Game/05_Object/{10_Character, 20_Player, 30_Enemy, 40_Boss}/`に骨格のみ実装済み(入力・移動・AI・FSM・当たり判定は全て未実装で、これから)。
-- [ ] FSM — Senzan側で作ったPasskeyパターン(特定クラスにのみ公開する`friend`の代替)を移植・参考にする
+- [x] FSM — `StateBase<FSM_Owner>`/`StateMachine<FSM_Owner>`(テンプレート、`SourceCode/99_Utility/StateMachine/`)をSenzanから移植。移植時に以下を修正: `<memory>`の未インクルード(潜在バグ)、`StateBase`に`virtual`デストラクタとコピー・ムーブ禁止を追加(規約4番準拠)、`m_pCurrentState`→`m_spCurrentState`(shared_ptrなのに`m_p`だった命名ミスを修正)、コンストラクタ引数のタイポ(`ownwr`)修正、`#pragma once`の重複除去。単体コンパイル+実行で動作確認済み(状態遷移・Enter/Exit・CanChangeStateによる遷移拒否)。
+  - Passkeyパターン(`PlayerAccessKeys.h`、特定State クラスにのみmutatorを公開する仕組み)はまだ移植していない。Player/Boss側のState実装に着手するタイミングで検討する。
 
 ### Stage 3(ワールド)
 - [ ] ファイル — スコープ要確認(汎用I/Oユーティリティなのか、シーン/マップのファイル形式なのか)
