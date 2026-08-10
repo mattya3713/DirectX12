@@ -131,9 +131,13 @@ enum class eState {
 | 種類 | 規則 |
 |---|---|
 | 出力引数 | `Out` + PascalCase |
-| その他 | PascalCase |
+| 対応するメンバ変数がある引数(コンストラクタ・Setter等) | メンバ変数の`m_`のみ除いたPascalCase(`m_p`/`m_up`/`m_sp`/`m_wp`等の接頭辞は残す) |
+| 対応するメンバ変数が無い引数(渡すだけで保持しない) | 接頭辞なしPascalCase |
 
 例: `bool RayCast(const Ray& Ray, HitResult& OutHit);`
+
+例(メンバ対応あり): `m_pOwner`に代入するなら引数は`pOwner`、`m_spCurrentState`に代入するなら`spNewState`、`m_upCamera`に代入するなら`upCamera`。
+例(メンバ対応なし): `Slider(const char* Label, ...)`の`Label`はどこにも保持されないので接頭辞なしの`Label`のまま。
 
 **bool規則(強制)**
 - メンバ変数: `m_Is` + PascalCase
