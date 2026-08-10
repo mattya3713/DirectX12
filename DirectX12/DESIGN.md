@@ -12,7 +12,7 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 
 ## カメラシステム
 
-`SourceCode/00_Game/31_Camera/`配下。`CameraBase`(抽象基底)を継承する形で用途別に分割している。
+`SourceCode/00_Game/30_Camera/`配下。`CameraBase`(抽象基底)を継承する形で用途別に分割している。
 
 - `00_Base/CameraBase` — View/Proj行列、位置/注視点、Yaw・Pitch(`Transform::Rotation`を流用)、FOV/アスペクト比などの共通機能。コピー・ムーブは禁止(継承前提のためスライシング防止)。
 - `10_First/FirstPersonCamera` — 一人称、WASD移動+矢印キーでの視点回転。
@@ -47,15 +47,15 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - [x] インターフェイス整理 → 検討の結果`IUpdatable`/`IDrawable`への分離はしない方針に決定(下記参照)。
 
 ### Stage 2(ゲームオブジェクトの骨格)
-- [x] オブジェクト基底(`GameObject`) — `SourceCode/00_Game/05_Object/00_Base/`に実装済み。Update/Drawは別インターフェースに分けず`GameObject`自身の仮想関数として直接持たせている。理由: 分離の利点(GameObjectの外側でUpdateだけ実装したいクラスが出てきたときに効く/選択的な適合)は現時点で活かせる箇所が無く、`GameObject`自体は結局Update/Draw両方を無条件に持つため今は分ける実利が無いと判断。GameObject以外でUpdate単体が欲しいクラスが出てきたら改めて検討する。Transform保持、コピー・ムーブはCameraBase同様に禁止(スライシング防止)。まだ`Main`等どこからも生成・使用されていない(骨格のみ)。
+- [x] オブジェクト基底(`GameObject`) — `SourceCode/00_Game/10_Object/00_Base/`に実装済み。Update/Drawは別インターフェースに分けず`GameObject`自身の仮想関数として直接持たせている。理由: 分離の利点(GameObjectの外側でUpdateだけ実装したいクラスが出てきたときに効く/選択的な適合)は現時点で活かせる箇所が無く、`GameObject`自体は結局Update/Draw両方を無条件に持つため今は分ける実利が無いと判断。GameObject以外でUpdate単体が欲しいクラスが出てきたら改めて検討する。Transform保持、コピー・ムーブはCameraBase同様に禁止(スライシング防止)。まだ`Main`等どこからも生成・使用されていない(骨格のみ)。
 - [x] キャラ(`Character`) — `GameObject`を継承する具象クラスとして実装済み。HPは`IHealthSystem`の多重継承ではなく、それを実装した具象クラス`HealthSystem`を`Character`がメンバとして持つ形(コンポジション、`GameObject`が`Transform`をメンバに持つのと同じ形)に変更した。
   - 経緯: 当初`Character : public GameObject, public IHealthSystem`としたが、インターフェース(`IHealthSystem`)はメンバ変数禁止のためHPの実体は結局`Character`側に置く必要があり、HP関連の処理が2ファイルに分裂していた。インターフェースが意味を持つのは型を問わずポリモーフィックに扱いたい場合のみで、今回はその用途が無かったため、HPデータ・`ApplyDamage`・コールバックを全て`HealthSystem`(`IHealthSystem`の唯一の具象実装)に閉じ込め、`Character`はそれをメンバとして持つだけにした。`IHealthSystem`自体は将来ポリモーフィックに扱いたくなった時のために残してある。
   - `HealthSystem`はHP取得・`ApplyDamage()`に加え、`SetOnDamage`/`SetOnDeath`で`std::function`ベースのコールバックを外部から設定できる(死亡は生存→死亡に変化した瞬間のみ1回発火)。`Character`側にも`GetHP()`/`IsAlive()`等の薄いフォワーダーを用意.
   - Senzan実物調査の結果: SenzanのCharacterはHPをインターフェースに分けず直接メンバに持つ(`IHealthSystem`相当の分離はしていない)。本プロジェクトではStage0の決定(小さいインターフェースの多重継承)を優先し、`IHealthSystem`として分離する方針を維持。
   - Senzanの継承は`Player`/`Boss`が`Character`の直接の兄弟(`Enemy`クラスは存在しない)。本プロジェクトは将来Player/Enemy/Bossの3種に分かれる想定のため、`Enemy`を新設して`GameObject → Character → {Player, Enemy → Boss}`という形にした(BossはEnemyの索敵・敵対AI等を共有できるようにする狙い)。
-  - `SourceCode/00_Game/05_Object/{10_Character, 20_Player, 30_Enemy, 40_Boss}/`に骨格のみ実装済み(入力・移動・AI・FSM・当たり判定は全て未実装で、これから)。
+  - `SourceCode/00_Game/10_Object/{10_Character, 20_Player, 30_Enemy, 40_Boss}/`に骨格のみ実装済み(入力・移動・AI・FSM・当たり判定は全て未実装で、これから)。
 - [x] FSM — `StateBase<FSM_Owner>`/`StateMachine<FSM_Owner>`(テンプレート、`SourceCode/99_Utility/StateMachine/`)をSenzanから移植。移植時に以下を修正: `<memory>`の未インクルード(潜在バグ)、`StateBase`に`virtual`デストラクタとコピー・ムーブ禁止を追加(規約4番準拠)、`m_pCurrentState`→`m_spCurrentState`(shared_ptrなのに`m_p`だった命名ミスを修正)、コンストラクタ引数のタイポ(`ownwr`)修正、`#pragma once`の重複除去。単体コンパイル+実行で動作確認済み(状態遷移・Enter/Exit・CanChangeStateによる遷移拒否)。
-- [x] Passkey(Attorney-Client)パターン — Senzanの`PlayerAccessKeys.h`は特定のState具体クラスへ丸ごとfriendする代わりに、操作の意味ごとの鍵クラス(コンストラクタprivate、必要なクラスだけfriend)を経由させる仕組み。State実装がまだ無いため、Player固有の鍵(MovementKey等)はそのまま移植できなかった。代わりに現時点で実在する`Character::ApplyDamage()`を実例に`SourceCode/00_Game/05_Object/10_Character/CharacterAccessKeys.h`(`CharacterAccess::DamageKey`、Player/Enemy/Bossのみfriend)として一般化して移植し、パターン自体を確立した。単体コンパイルでfriend側は呼べる/非friend側はC2248でコンパイルエラーになることを確認済み。今後Player/BossのState実装に入るタイミングで、同じ形の鍵クラスを追加していく想定。
+- [x] Passkey(Attorney-Client)パターン — Senzanの`PlayerAccessKeys.h`は特定のState具体クラスへ丸ごとfriendする代わりに、操作の意味ごとの鍵クラス(コンストラクタprivate、必要なクラスだけfriend)を経由させる仕組み。State実装がまだ無いため、Player固有の鍵(MovementKey等)はそのまま移植できなかった。代わりに現時点で実在する`Character::ApplyDamage()`を実例に`SourceCode/00_Game/10_Object/10_Character/CharacterAccessKeys.h`(`CharacterAccess::DamageKey`、Player/Enemy/Bossのみfriend)として一般化して移植し、パターン自体を確立した。単体コンパイルでfriend側は呼べる/非friend側はC2248でコンパイルエラーになることを確認済み。今後Player/BossのState実装に入るタイミングで、同じ形の鍵クラスを追加していく想定。
 
 ### Stage 3(ワールド)
 - [ ] ファイル — スコープ要確認(汎用I/Oユーティリティなのか、シーン/マップのファイル形式なのか)
@@ -66,6 +66,15 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - [ ] 色 — Color構造体/変換ユーティリティ
 - [ ] UIの設計方針決定 → UI実装
 - [ ] カットシーンエディター — ツール的性質が強く、前提が揃ってから
+
+### Scene基盤(前倒しで実装済み)
+- [x] `SceneBase`/`SceneManager` — Senzanの`SceneBase`/`SceneManager`(シングルトン)を移植。このプロジェクトの方針(マネージャーはサービスロケーター経由)に合わせ、`SceneManager`はSingletonではなく`Main`が所有し`ServiceLocator`へ登録する形にした。`SceneBase`は`Initialize()`/`Create()`/`Update()`/`LateUpdate()`/`Draw()`が純粋仮想(継承前提のためコピー・ムーブ禁止)。
+  - シーン切り替え(`LoadScene()`)は即時ではなく予約制。シーン自身の`Update()`の中から`LoadScene()`を呼んでも、実際の切り替え(`m_upScene.reset()`)は次の`SceneManager::Update()`の先頭で行われるため、シーンが自分自身のUpdate実行中に自分自身を破棄する事故を防いでいる(Senzanはフェード完了待ちで同じ問題を回避していたが、このプロジェクトにまだFadeManagerが無いため単純な1フレーム遅延にした)。
+  - `SourceCode/99_System/Scene/`に配置(GameObject/Character等と違いゲーム内容に依存しないため`00_Game`ではなく`99_System`)。
+- [x] `MainScene` — 元々Main.cppが直接持っていたPMXモデル表示部分(カメラ登録・PMXActor生成・Update・Draw)をシーンとして抽出.
+- [x] `AnimationTuningScene`(デバッグ専用) — Senzanの同名シーンを参考に新設。専用のPMXActor+カメラを持ち、`AnimationEditor`を常時表示する。`F1`でMainScene⇔AnimationTuningを切り替え可能。デバッグ時は`SceneManager`のImGuiウィンドウ(現在のシーン名表示+切り替えボタン)からも切り替えられる。
+- [x] `AnimationEditor`(`SourceCode/99_Utility/Debug/Imgui/`) — アニメーションの再生範囲(開始/終了フレーム)・再生速度を調整し、1フレームずつステップ実行できるImGuiツール。`PMXActor`に`SetPlaybackRange()`/`SetAnimationSpeed()`/`StepFrame()`(壁時計に依存しない単一フレーム前進)を追加して対応。
+  - 落とし穴: `AnimationTuningScene`は既定で一時停止状態(Stepボタンでのみ進む)のため、`Create()`で最初の`StepFrame()`を1回呼ばないとボーン変換が一度も計算されずモデルが非表示になる(実際に発生し修正済み).
 
 ### 完了済み(参考)
 - モデルデータ層・PMX/PMDパーサー分離・`IModelParser`

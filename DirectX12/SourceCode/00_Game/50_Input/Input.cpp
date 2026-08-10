@@ -1,6 +1,6 @@
 ﻿#include "Input.h"
-#include "00_Game/02_Input/KeyInput/KeyInput.h"
-#include "00_Game/02_Input/Mouse/Mouse.h"
+#include "00_Game/50_Input/KeyInput/KeyInput.h"
+#include "00_Game/50_Input/Mouse/Mouse.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include <cassert>
 

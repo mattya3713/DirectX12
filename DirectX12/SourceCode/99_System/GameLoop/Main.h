@@ -3,10 +3,6 @@
 
 //クラスの前方宣言.
 class DirectX12;
-class PMDActor;
-class PMXActor;
-class PMDRenderer;
-class PMXRenderer;
 class CGame;
 class CameraManager;
 class GameTime;
@@ -16,6 +12,7 @@ class Mouse;
 class Input;
 class VirtualPad;
 class ImGuiManager;
+class SceneManager;
 
 /**************************************************
 *	メインクラス.
@@ -47,18 +44,13 @@ private:
 		WPARAM wParam, LPARAM lParam );
 
 private:
-	
+
 
 	HWND			m_hWnd;	 // ウィンドウハンドル.
 
 	std::shared_ptr<DirectX12>		m_pDx12;			// DirectX12セットアップクラス.
-	std::shared_ptr<PMDRenderer>	m_pPMDRenderer;
-	std::shared_ptr<PMDActor>		m_pPmdActor;
 
-	std::shared_ptr<PMXRenderer>	m_pPMXRenderer;
-	std::shared_ptr<PMXActor>		m_pPMXActor;
-
-	std::unique_ptr<CameraManager>	m_upCameraManager;	// カメラマネージャー.
+	std::unique_ptr<CameraManager>	m_upCameraManager;	// カメラマネージャー(各シーンがカメラを登録・切り替える).
 	std::unique_ptr<GameTime>		m_upGameTime;		// ゲーム全体の時計.
 	std::unique_ptr<MeshManager>	m_upMeshManager;	// メッシュマネージャー.
 
@@ -67,4 +59,5 @@ private:
 	std::unique_ptr<Input>			m_upInput;			// 入力機のラッパー(キーボード/マウス/コントローラー).
 	std::unique_ptr<VirtualPad>	m_upVirtualPad;		// 仮想パッド(アクションマッピング).
 	std::unique_ptr<ImGuiManager>	m_upImGuiManager;	// ImGui統合ラッパー.
+	std::unique_ptr<SceneManager>	m_upSceneManager;	// シーンマネージャー.
 };

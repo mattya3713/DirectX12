@@ -4,7 +4,7 @@
 #include <vector>
 #include <DirectXMath.h>
 
-#include "00_Game/02_Input/Input.h"
+#include "00_Game/50_Input/Input.h"
 
 /**********************************************************************************
 * @author    : mattya3713.

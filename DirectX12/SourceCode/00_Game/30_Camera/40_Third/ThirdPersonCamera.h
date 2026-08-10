@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "00_Game/31_Camera/00_Base/CameraBase.h"
+#include "00_Game/30_Camera/00_Base/CameraBase.h"
 
 /**********************************************************************************
 * @author    : mattya3713.

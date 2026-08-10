@@ -1,21 +1,17 @@
 ﻿#include "Main.h"
 #include "10_Ggraphic/DirectX/DirectX12.h"
-#include "10_Ggraphic/PMD/PMDActor.h"
-#include "10_Ggraphic/PMD/PMDRenderer.h"
-#include "10_Ggraphic/PMX/PMXActor.h"
-#include "10_Ggraphic/PMX/PMXRenderer.h"
 #include "Time/Time.h"
 #include "20_Resource/ResourceManager/MeshManager/MeshManager.h"
-#include "00_Game/31_Camera/99_Manager/CameraManager.h"
-#include "00_Game/31_Camera/30_Debug/DebugCamera.h"
+#include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/Diagnostics/MemoryLeakDetector.h"
-#include "00_Game/02_Input/KeyInput/KeyInput.h"
-#include "00_Game/02_Input/Mouse/Mouse.h"
-#include "00_Game/02_Input/Input.h"
-#include "00_Game/02_Input/VirtualPad.h"
+#include "00_Game/50_Input/KeyInput/KeyInput.h"
+#include "00_Game/50_Input/Mouse/Mouse.h"
+#include "00_Game/50_Input/Input.h"
+#include "00_Game/50_Input/VirtualPad.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/DebugHud.h"
+#include "99_System/Scene/SceneManager.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -23,8 +19,6 @@
 
 // ウィンドウを画面中央で起動を有効にする.
 #define ENABLE_WINDOWS_CENTERING
-
-#define ISOMX 0
 
 //=================================================
 // 定数.
@@ -38,10 +32,6 @@ const TCHAR APP_NAME[]  = _T("DirectX12");
 Main::Main()
     : m_hWnd            { nullptr }
     , m_pDx12           { nullptr }
-    , m_pPmdActor       { nullptr }
-    , m_pPMDRenderer    { nullptr }
-    , m_pPMXActor       { nullptr }
-    , m_pPMXRenderer    { nullptr }
     , m_upCameraManager { nullptr }
     , m_upGameTime      { nullptr }
     , m_upMeshManager   { nullptr }
@@ -50,6 +40,7 @@ Main::Main()
     , m_upInput         { nullptr }
     , m_upVirtualPad    { nullptr }
     , m_upImGuiManager  { nullptr }
+    , m_upSceneManager  { nullptr }
 {
 }
 
@@ -90,6 +81,8 @@ HRESULT Main::Create()
 
     m_pDx12 = std::make_shared<DirectX12>();
     m_pDx12->Create(m_hWnd);
+    // 所有権はMainのまま、シーン側からも参照できるようサービスロケーターへ登録.
+    ServiceLocator::Provide<DirectX12>(m_pDx12.get());
 
     // ImGuiの構築・登録(DirectX12構築後でないとデバイスが取得できない).
     m_upImGuiManager = std::make_unique<ImGuiManager>();
@@ -99,40 +92,14 @@ HRESULT Main::Create()
         return E_FAIL;
     }
 
-    // カメラマネージャーを構築し、デバッグカメラをデフォルトで有効化.
+    // カメラマネージャーを構築(カメラの登録・有効化は各シーンが行う).
     m_upCameraManager = std::make_unique<CameraManager>();
-    m_upCameraManager->Register("Debug", std::make_unique<DebugCamera>());
-    m_upCameraManager->SetActive("Debug");
-
-    // 所有権はMainのまま、他クラスからも参照できるようサービスロケーターへ登録.
     ServiceLocator::Provide<CameraManager>(m_upCameraManager.get());
 
-    try {
-        //m_pPMDRenderer = std::make_shared<CPMDRenderer>(*m_pDx12);
-        //m_pPmdActor = std::make_shared<CPMDActor>("Data\\Model\\PMD\\Cube\\Cube.pmd", *m_pPMDRenderer);
-#if ISOMX
-        m_pPMDRenderer = std::make_shared<PMDRenderer>(*m_pDx12);
-        m_pPmdActor = std::make_shared<PMDActor>("Data\\Model\\PMD\\Defelt\\初音ミクVer2.pmd", *m_pPMDRenderer);
-
-#else
-        m_pPMXRenderer = std::make_shared<PMXRenderer>(*m_pDx12);
-        m_pPMXActor = std::make_shared<PMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-
-        //m_pPMXActor->LoadVMDFile("Data\\Model\\PMX\\Hatune\\Anim\\Anim.vmd");
-        m_pPMXActor->PlayAnimation();
-        // Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx
-        // Data\\Model\\PMX\\HatuneVer2\\初音ミクVer2.pmx
-        // Data\\Model\\PMX\\Cube\\Cube.pmx"
-        // "Data\\Model\\PMX\\Hatune\\Anim\\Anim.vmd"
-        // "Data\\Model\\PMX\\HatuneVer2\\motion\\swing.vmd"
-#endif
-    }
-    catch (const std::runtime_error& Msg) {
-        // エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
-        std::wstring WStr = MyString::StringToWString(Msg.what());
-        _ASSERT_EXPR(false, WStr.c_str());
-        return E_FAIL;
-    }
+    // シーンマネージャーを構築し、最初のシーン(MainScene)を読み込む.
+    m_upSceneManager = std::make_unique<SceneManager>();
+    ServiceLocator::Provide<SceneManager>(m_upSceneManager.get());
+    m_upSceneManager->LoadData(SceneManager::eList::MainScene);
 
     return S_OK;
 }
@@ -147,31 +114,9 @@ HRESULT Main::LoadData()
 // 更新処理.
 void Main::Update()
 {
-    if (m_upCameraManager) {
-        m_upCameraManager->Update();
-
-        // アクティブカメラの行列をDirectX12側へ反映.
-        if (CameraBase* active_camera = m_upCameraManager->GetActive()) {
-            m_pDx12->SetCamera(
-                active_camera->GetViewMatrix(),
-                active_camera->GetProjMatrix(),
-                active_camera->GetPosition());
-        }
+    if (m_upSceneManager) {
+        m_upSceneManager->Update();
     }
-
-    if (m_pDx12) {
-        m_pDx12->Update();
-    }
-
-    if (m_pPmdActor) {
-        m_pPmdActor->Update();
-    }
-
-
-    if (m_pPMXActor) {
-        m_pPMXActor->Update();
-    }
-
 }
 
 // 描画処理.
@@ -185,25 +130,8 @@ void Main::Draw()
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
 
-#if ISOMX
-	//PMD用の描画パイプラインに合わせる
-    m_pDx12->GetCommandList()->SetPipelineState(m_pPMDRenderer->GetPipelineState());
-    //ルートシグネチャもPMD用に合わせる
-    m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMDRenderer->GetRootSignature());
-#else 
-    //PMD用の描画パイプラインに合わせる
-    m_pDx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
-    //ルートシグネチャもPMX用に合わせる
-    m_pDx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
-#endif
-    m_pDx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    if (m_pPmdActor) {
-        m_pPmdActor->Draw();
-    }
-
-    if (m_pPMXActor) {
-        m_pPMXActor->Draw();
+    if (m_upSceneManager) {
+        m_upSceneManager->Draw();
     }
 
     // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
@@ -216,6 +144,12 @@ void Main::Draw()
 // 解放処理.
 void Main::Release()
 {
+    // DirectX12/CameraManagerへの参照を各シーンが持ちうるため、それらより先に解放する.
+    if (m_upSceneManager) {
+        ServiceLocator::Provide<SceneManager>(nullptr);
+        m_upSceneManager.reset();
+    }
+
     if (m_upCameraManager) {
         // サービスロケーターへの登録を先に解除してから破棄する.
         ServiceLocator::Provide<CameraManager>(nullptr);
@@ -225,21 +159,6 @@ void Main::Release()
     if (m_upMeshManager) {
         ServiceLocator::Provide<MeshManager>(nullptr);
         m_upMeshManager.reset();
-    }
-
-    if (m_pPmdActor) {
-        m_pPmdActor.reset();
-    }
-
-    if (m_pPMDRenderer) {
-        m_pPMDRenderer.reset();
-    }
-    if (m_pPMXActor) {
-        m_pPMXActor.reset();
-    }
-
-    if (m_pPMXRenderer) {
-        m_pPMXRenderer.reset();
     }
 
     if (m_upImGuiManager) {
@@ -258,6 +177,7 @@ void Main::Release()
 #endif  // _DEBUG
 
     if (m_pDx12) {
+        ServiceLocator::Provide<DirectX12>(nullptr);
         m_pDx12.reset();
     }
 

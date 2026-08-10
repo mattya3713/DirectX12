@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "00_Game/05_Object/00_Base/GameObject.h"
-#include "00_Game/05_Object/10_Character/CharacterAccessKeys.h"
+#include "00_Game/10_Object/00_Base/GameObject.h"
+#include "00_Game/10_Object/10_Character/CharacterAccessKeys.h"
 #include "99_Utility/HealthSystem/HealthSystem.h"
 
 /**********************************************************************************

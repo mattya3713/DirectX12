@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <DirectXMath.h>
 
-#include "00_Game/02_Input/XInput/XInput.h"
+#include "00_Game/50_Input/XInput/XInput.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
