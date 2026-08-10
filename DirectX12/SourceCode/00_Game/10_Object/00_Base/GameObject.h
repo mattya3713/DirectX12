@@ -44,6 +44,14 @@ public: // Getter・Setter.
 	const DirectX::XMFLOAT3& GetPosition() const noexcept { return m_Transform.Position; }
 	void SetPosition(const DirectX::XMFLOAT3& Position) noexcept { m_Transform.Position = Position; }
 
+	// 位置を加算(移動量の適用など、差分を積みたい場合に使う).
+	void AddPosition(const DirectX::XMFLOAT3& Delta) noexcept
+	{
+		m_Transform.Position.x += Delta.x;
+		m_Transform.Position.y += Delta.y;
+		m_Transform.Position.z += Delta.z;
+	}
+
 protected:
 	Transform m_Transform; // 位置・回転・スケール.
 };

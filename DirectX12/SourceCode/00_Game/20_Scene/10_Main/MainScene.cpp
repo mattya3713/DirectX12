@@ -9,9 +9,26 @@
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/50_Input/Input.h"
+#include "00_Game/10_Object/20_Player/Player.h"
+#include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
 #include "99_System/Scene/SceneManager.h"
+
+namespace {
+	// デバッグ表示用にPlayerState::eIDを文字列化する.
+	const char* ToDebugString(PlayerState::eID Id)
+	{
+		switch (Id)
+		{
+		case PlayerState::eID::Idle: return "Idle";
+		case PlayerState::eID::Run:  return "Run";
+		default:                     return "None";
+		}
+	}
+}
+
+MainScene::MainScene() = default;
 
 MainScene::~MainScene()
 {
@@ -30,6 +47,8 @@ void MainScene::Create()
 		p_camera_manager->Register("Debug", std::make_unique<DebugCamera>());
 		p_camera_manager->SetActive("Debug");
 	}
+
+	m_upPlayer = std::make_unique<Player>();
 
 	try {
 		m_pPMXRenderer = std::make_shared<PMXRenderer>(*p_dx12);
@@ -75,6 +94,10 @@ void MainScene::Update()
 	if (m_pPMXActor) {
 		m_pPMXActor->Update();
 	}
+
+	if (m_upPlayer) {
+		m_upPlayer->Update();
+	}
 }
 
 void MainScene::LateUpdate()
@@ -92,5 +115,13 @@ void MainScene::Draw()
 
 	if (m_pPMXActor) {
 		m_pPMXActor->Draw();
+	}
+
+	if (m_upPlayer) {
+		ImGui::Begin("Player", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		const DirectX::XMFLOAT3& position = m_upPlayer->GetPosition();
+		ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
+		ImGui::Text("State: %s", ToDebugString(m_upPlayer->GetCurrentStateID()));
+		ImGui::End();
 	}
 }

@@ -56,6 +56,13 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - `SourceCode/00_Game/10_Object/{10_Character, 20_Player, 30_Enemy, 40_Boss}/`に骨格のみ実装済み(入力・移動・AI・FSM・当たり判定は全て未実装で、これから)。
 - [x] FSM — `StateBase<FSM_Owner>`/`StateMachine<FSM_Owner>`(テンプレート、`SourceCode/99_Utility/StateMachine/`)をSenzanから移植。移植時に以下を修正: `<memory>`の未インクルード(潜在バグ)、`StateBase`に`virtual`デストラクタとコピー・ムーブ禁止を追加(規約4番準拠)、`m_pCurrentState`→`m_spCurrentState`(shared_ptrなのに`m_p`だった命名ミスを修正)、コンストラクタ引数のタイポ(`ownwr`)修正、`#pragma once`の重複除去。単体コンパイル+実行で動作確認済み(状態遷移・Enter/Exit・CanChangeStateによる遷移拒否)。
 - [x] Passkey(Attorney-Client)パターン — Senzanの`PlayerAccessKeys.h`は特定のState具体クラスへ丸ごとfriendする代わりに、操作の意味ごとの鍵クラス(コンストラクタprivate、必要なクラスだけfriend)を経由させる仕組み。State実装がまだ無いため、Player固有の鍵(MovementKey等)はそのまま移植できなかった。代わりに現時点で実在する`Character::ApplyDamage()`を実例に`SourceCode/00_Game/10_Object/10_Character/CharacterAccessKeys.h`(`CharacterAccess::DamageKey`、Player/Enemy/Bossのみfriend)として一般化して移植し、パターン自体を確立した。単体コンパイルでfriend側は呼べる/非friend側はC2248でコンパイルエラーになることを確認済み。今後Player/BossのState実装に入るタイミングで、同じ形の鍵クラスを追加していく想定。
+- [x] Player移動State(Idle/Run) — `SourceCode/00_Game/10_Object/20_Player/`にSenzanの`01_Player/State/`以下を参考に移植。`StateMachine<Player>`/`StateBase<Player>`(FSMで作った汎用テンプレートそのもの)を実際に使う形にし、`PlayerAccessKeys.h`(`PlayerAccess::MovementKey`、Idle/Runのみfriend)で`Player::SetMoveVec()`をCharacterAccessKeysと同じ形で保護した。
+  - Senzanからの意図的な差分: Senzanは`Root`(全ステートを`unique_ptr`で所有し`reference_wrapper`で切り替える独自のFSM実装)を経由しており、せっかく作った`StateMachine<Player>`テンプレートを使っていなかった。本プロジェクトでは`Root`層を廃止し、`Player::ChangeState(eID)`が対象ステートを`make_shared`して`StateMachine<Player>::ChangeState()`に渡す形にした(既存のFSM実装をそのまま活用)。
+  - Senzanの`Action`/`Movement`中間基底クラス(コンボ攻撃・回避・当たり判定コンポーネント保持が目的)も未実装のため省略。`PlayerStateBase`にAction::LateUpdate相当の「MoveVecの向きへラープ回転する」処理だけをデフォルト実装として残した。Combat/Dodge/当たり判定を実装するタイミングで必要なら`Action`/`Movement`層を復活させる。
+  - `PlayerState::eID`もIdle/Runのみ(System/Combat/Dodge系のIDは未実装のステートを先に生やさないため省略、実装時に追加する).
+  - SenzanのMoveVecは`XMFLOAT3`型なのに実際は`.x`/`.y`しか使わない(`.y`が実質ワールドZ)命名の紛らわしさがあったため、本プロジェクトでは`.x`=ワールドX, `.y`=常に0, `.z`=ワールドZという素直な3成分に整理した(`GameObject::AddPosition()`をそのまま渡せる).
+  - Run時の移動はアクティブカメラ(`CameraManager::GetActive()`)の`GetForward()`/`GetRight()`をXZ平面へ投影・正規化してVirtualPadの入力と合成するカメラ相対移動。Senzanにあったエフェクト(Effekseer)・アニメーション切り替え(`ChangeAnim`)・当たり判定(`CapsuleCollider`)は未移植の関連システムに依存するため今回は含めていない(それぞれのシステムを作るタイミングで追加).
+  - 動作確認用に`MainScene`へ`Player`を1体所有させ(`std::unique_ptr`)、`Update()`で毎フレーム駆動、ImGuiの`"Player"`ウィンドウにPosition/現在ステート名を表示するようにした。ビルド確認済み(`EXITCODE:0`)、起動直後は`Position: (0,0,0)`/`State: Idle`と正しく表示されることをスクリーンショットで確認済み。
 
 ### Stage 3(ワールド)
 - [ ] ファイル — スコープ要確認(汎用I/Oユーティリティなのか、シーン/マップのファイル形式なのか)

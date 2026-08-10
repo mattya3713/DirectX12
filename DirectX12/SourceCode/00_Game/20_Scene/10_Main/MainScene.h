@@ -6,6 +6,7 @@
 
 class PMXRenderer;
 class PMXActor;
+class Player;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -16,7 +17,7 @@ class PMXActor;
 class MainScene final : public SceneBase
 {
 public:
-	MainScene() = default;
+	MainScene();
 	~MainScene() override;
 
 	void Initialize() override;
@@ -28,4 +29,5 @@ public:
 private:
 	std::shared_ptr<PMXRenderer> m_pPMXRenderer;
 	std::shared_ptr<PMXActor>    m_pPMXActor;
+	std::unique_ptr<Player>      m_upPlayer;
 };
