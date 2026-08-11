@@ -32,4 +32,9 @@ protected:
 	// AnimationClipTable(AnimationEditorで保存したもの)から名前でクリップを引き、
 	// 見つかればPlayerのメッシュへ適用する(未登録なら何もしない).
 	void ApplyNamedClip(const char* ClipName) const;
+
+	// Attack/Dodge/Parryボタンが押されていれば対応するStateへ遷移する
+	// (SenzanのAction::Update()相当. Idle/Runから毎フレーム呼ぶ想定).
+	// 遷移した場合はtrueを返す(呼び出し側はtrueが返ったら即returnすること).
+	bool TryStartCombatAction() const;
 };

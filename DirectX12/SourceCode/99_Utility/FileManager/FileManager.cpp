@@ -22,7 +22,19 @@ nlohmann::json FileManager::JsonLoad(const std::filesystem::path& FilePath)
 		return out;
 	}
 
-	file >> out;
+	// 構文エラー(壊れたJSON等)で例外を投げられても呼び出し元をクラッシュさせず、
+	// 空のJSONを返す(呼び出し側はvalue(key, default)で既定値にフォールバックする想定).
+	try
+	{
+		file >> out;
+	}
+	catch (const nlohmann::json::parse_error& Error)
+	{
+		const std::wstring w_message = MyString::StringToWString(FilePath.string() + ": " + Error.what());
+		_ASSERT_EXPR(false, w_message.c_str());
+		return nlohmann::json{};
+	}
+
 	return out;
 }
 

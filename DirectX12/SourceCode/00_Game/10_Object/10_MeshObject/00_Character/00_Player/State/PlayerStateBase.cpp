@@ -3,7 +3,9 @@
 #include <cmath>
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
+#include "00_Game/50_Input/VirtualPad.h"
 #include "10_Ggraphic/PMX/AnimationClipTable.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
 	constexpr float FACING_ROTATE_SPEED = 720.0f; // 度/秒.
@@ -41,4 +43,30 @@ void PlayerStateBase::ApplyNamedClip(const char* ClipName) const
 	{
 		m_pOwner->ApplyAnimationClip(p_clip->StartFrame, p_clip->EndFrame, p_clip->Speed);
 	}
+}
+
+bool PlayerStateBase::TryStartCombatAction() const
+{
+	VirtualPad* p_pad = ServiceLocator::Get<VirtualPad>();
+	if (!p_pad) { return false; }
+
+	if (p_pad->IsActionPress(VirtualPad::eGameAction::Attack))
+	{
+		GetPlayer()->ChangeState(PlayerState::eID::AttackCombo_0);
+		return true;
+	}
+
+	if (p_pad->IsActionDown(VirtualPad::eGameAction::Dodge))
+	{
+		GetPlayer()->ChangeState(PlayerState::eID::DodgeExecute);
+		return true;
+	}
+
+	if (p_pad->IsActionDown(VirtualPad::eGameAction::Parry))
+	{
+		GetPlayer()->ChangeState(PlayerState::eID::Parry);
+		return true;
+	}
+
+	return false;
 }

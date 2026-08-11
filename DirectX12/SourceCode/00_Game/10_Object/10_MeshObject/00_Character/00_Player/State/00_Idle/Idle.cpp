@@ -25,6 +25,8 @@ void Idle::Enter()
 
 void Idle::Update()
 {
+	if (TryStartCombatAction()) { return; }
+
 	VirtualPad* p_pad = ServiceLocator::Get<VirtualPad>();
 	if (!p_pad) { return; }
 

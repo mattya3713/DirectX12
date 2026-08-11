@@ -5,6 +5,8 @@
 
 #include "00_Game/10_Object/10_MeshObject/MeshObject.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/CharacterAccessKeys.h"
+#include "00_Game/40_Collision/00_Capsule/CapsuleCollider.h"
+#include "00_Game/40_Collision/00_Core/HitEvent.h"
 #include "99_Utility/HealthSystem/HealthSystem.h"
 
 /**********************************************************************************
@@ -27,9 +29,20 @@ public:
 	Character(Character&&)                 = delete;
 	Character& operator=(Character&&)      = delete;
 
+	// MeshObject::Update()の後、自分の被弾コライダーが検出したヒットを処理する.
+	void Update() override;
+
 public:
 	// HP関連の情報取得.
 	const HealthSystem& GetHealth() const noexcept { return m_Health; }
+
+public: // 攻撃判定の制御(攻撃系Stateから呼ぶ想定).
+	void SetAttackColliderActive(bool IsActive) noexcept { m_AttackCollider.SetActive(IsActive); }
+	void SetAttackAmount(float AttackAmount) noexcept { m_AttackCollider.SetAttackAmount(AttackAmount); }
+	void SetAttackColliderOffset(const DirectX::XMFLOAT3& Offset) noexcept { m_AttackCollider.SetPositionOffset(Offset); }
+
+public: // 被弾判定の制御(パリィ等、一時的に無敵にしたいStateから呼ぶ想定).
+	void SetDamageColliderActive(bool IsActive) noexcept { m_DamageCollider.SetActive(IsActive); }
 
 public: // エフェクト再生(フックのみ. 中身は未実装 — Effekseer/自作パーティクル等、方式決定後に実装する).
 
@@ -51,6 +64,17 @@ protected:
 	void SetOnDamage(HealthSystem::DamageCallback Callback) { m_Health.SetOnDamage(std::move(Callback)); }
 	void SetOnDeath(HealthSystem::DeathCallback Callback) { m_Health.SetOnDeath(std::move(Callback)); }
 
+	// HitEventを受けてダメージを適用する(publicにはしない. ApplyDamageは必ず
+	// 自分の被弾コライダーが検出したHitEvent経由でのみ呼ばれる想定).
+	void ApplyDamage(const HitEvent& Event) noexcept { m_Health.ApplyDamage(Event.AttackAmount); }
+
+private:
+	// 自分の被弾コライダーが検出した衝突を1件ずつHitEventへ変換し、ApplyDamageへ渡す.
+	void ProcessHits();
+
 protected:
 	HealthSystem m_Health; // HP・ダメージ処理・コールバック.
+
+	CapsuleCollider m_DamageCollider; // 被弾判定(常時CollisionDetectorに登録される).
+	CapsuleCollider m_AttackCollider; // 攻撃判定(既定で非アクティブ. 攻撃系Stateが有効/無効を切り替える).
 };

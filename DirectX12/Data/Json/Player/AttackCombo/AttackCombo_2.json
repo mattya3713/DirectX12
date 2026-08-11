@@ -1,0 +1,12 @@
+{
+    "ComboStartTime": 0.60,
+    "MinComboTransTime": 1.00,
+    "ComboEndTime": 1.50,
+    "ColliderWindows": [
+        { "start": 0.30, "duration": 0.05 },
+        { "start": 0.35, "duration": 0.05 },
+        { "start": 0.40, "duration": 0.05 },
+        { "start": 0.45, "duration": 0.05 },
+        { "start": 0.51, "duration": 0.05 }
+    ]
+}

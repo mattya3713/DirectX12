@@ -25,6 +25,8 @@ void Run::Enter()
 
 void Run::Update()
 {
+	if (TryStartCombatAction()) { return; }
+
 	CalculateMoveVec();
 }
 

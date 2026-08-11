@@ -10,12 +10,17 @@ class BoxCollider;
 class CapsuleCollider;
 class SphereCollider;
 
-// 当たり判定のグループ(ビットフラグ). 具体的な区分(攻撃判定/被弾判定等)はまだ
-// Combat関連のステートが無いため、必要になったタイミングで追加していく.
+// 当たり判定のグループ(ビットフラグ). Combat系のStateを実装するタイミングで
+// 攻撃判定/被弾判定を追加した. 必要になったら随時追加していく.
 enum class eCollisionGroup : uint32_t
 {
 	None    = 0,
 	Default = 1 << 0,
+
+	PlayerAttack = 1 << 1, // Playerの攻撃判定.
+	PlayerDamage = 1 << 2, // Playerの被弾判定.
+	EnemyAttack  = 1 << 3, // Enemy/Bossの攻撃判定.
+	EnemyDamage  = 1 << 4, // Enemy/Bossの被弾判定.
 
 	_Max = 0xFFFFFFFF,
 };

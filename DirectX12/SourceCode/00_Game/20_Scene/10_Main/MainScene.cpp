@@ -22,9 +22,14 @@ namespace {
 	{
 		switch (Id)
 		{
-		case PlayerState::eID::Idle: return "Idle";
-		case PlayerState::eID::Run:  return "Run";
-		default:                     return "None";
+		case PlayerState::eID::Idle:          return "Idle";
+		case PlayerState::eID::Run:           return "Run";
+		case PlayerState::eID::AttackCombo_0: return "AttackCombo_0";
+		case PlayerState::eID::AttackCombo_1: return "AttackCombo_1";
+		case PlayerState::eID::AttackCombo_2: return "AttackCombo_2";
+		case PlayerState::eID::Parry:         return "Parry";
+		case PlayerState::eID::DodgeExecute:  return "DodgeExecute";
+		default:                              return "None";
 		}
 	}
 }

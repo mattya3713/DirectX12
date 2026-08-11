@@ -91,6 +91,19 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - `eCollisionGroup`はSenzanの`Player_Attack`/`Enemy_Damage`等ゲーム固有の区分をそのまま持ち込まず、`None`/`Default`のみの最小構成にした(Combat関連のステートがまだ無いため、具体的な区分は必要になったタイミングで追加する).
   - 動作確認: スタンドアロンの`cl.exe`単体テストで、Capsule-Sphere/Box-Sphere/Box-Capsuleを両方向の登録順で(登録順依存バグが直っていることを含め)、Box-Box/Capsule-Capsule、範囲外での非衝突、マスクフィルタによる判定除外まで計11ケース全て想定通りの結果になることを確認済み(全プロジェクトビルドも`EXITCODE:0`)。まだ実際のGameObject(Player等)へのアタッチは行っていない(Combat関連のステート実装時に、当たり判定→ダメージへの接続(HitEvent)と合わせて行う想定)。
   - 動作確認: スタンドアロンの`cl.exe`単体テストで、Capsule-vs-Sphereを両方の登録順で検証(登録順依存バグが直っていることを確認)、Capsule-vs-Capsule、範囲外での非衝突、マスクフィルタによる判定除外の5ケース全て想定通りの結果になることを確認済み。まだ実際のGameObject(Player等)へのアタッチは行っていない(Combat関連のステート実装時に、当たり判定→ダメージへの接続(HitEvent)と合わせて行う想定)。
+- [x] Combat/Dodgeステート — Senzanを参考に移植(仕様上おかしい点は下記の通り複数見つけて修正)。（※ この作業の前後でユーザーが`00_Game/10_Object/`配下を`10_MeshObject/00_Character/00_Player`のようにSenzanの入れ子構成へ手動で整理したため、以降のPlayer関連パスは新構成が前提）。
+  - `HitEvent`ベースのダメージ伝達 — `Character::ProcessHits()`が毎`Update()`後半で`m_DamageCollider.GetCollisionEvents()`をポーリングし、ヒットごとに`HitEvent{AttackAmount, ContactPoint, Normal}`を組み立てて`ApplyDamage()`へ渡す方式にした。Player固有ではなくCharacter層に置いたことでEnemy/Bossでもそのまま使える。旧`CharacterAccess::DamageKey`(Passkeyパターン)はこの方式では不要になったため未使用のまま残している(削除は保留、将来別用途で使うか判断).
+  - `eCollisionGroup`を`PlayerAttack`/`PlayerDamage`/`EnemyAttack`/`EnemyDamage`に拡張。`Character`コンストラクタで`m_DamageCollider`/`m_AttackCollider`(共にCapsule)のマスクを設定し、`CollisionDetector`へ登録・デストラクタで解除する。
+  - JSON読み込み(`FileManager::JsonLoad`/`JsonSave`、`nlohmann::json`をSenzanから単体ヘッダとしてそのままvendor) — Senzanは`nlohmann::json::parse_error`を握りつぶす(catchせず未処理例外のまま)実装だったため、本プロジェクトでは`try/catch`で捕捉し失敗時は空の`json{}`を返す+`_ASSERT_EXPR`で気付けるようにした(Combatのタイミング調整用JSONを読む前に確認済みの改善).
+  - `SoundManager`(XAudio2) — SenzanはDirectSound+mmioベースだったが、調査の過程で複数のバグ(ピッチ変更が`DSBCAPS_CTRLFREQUENCY`未設定で無効化されたまま気づかれない、拡張子判定が大文字小文字を区別してしまう、エラーを握りつぶす、`Stop()`が多重再生用の複製バッファまで止めない)が見つかったため、移植ではなくXAudio2で新規に書き直した。`ServiceLocator`経由、`Main`が`unique_ptr`で所有。SE再生のみ(BGMクロスフェード等は未着手).
+  - `CameraBase::Shake(Intensity, Duration)` — カメラ種別ごとに実装せず基底に1つ追加する方針にした(検討の結果`CameraBase`側に追加が妥当と判断)。`ViewUpdate()`内で減衰する乱数オフセットを視点位置へ加算する。
+  - コンボ/必殺ゲージ経済 — `Player`に`m_Combo`/`m_CurrentUltValue`/`m_MaxUltValue`を追加、`ComboMultiplier()`(コンボ数に応じたダメージ倍率)を提供。操作用セッターは`PlayerAccess::ComboEconomyKey`(Passkey)経由に限定し、`AttackCombo_0/1/2`/`Parry`のみfriendにした(既存のPasskey運用を踏襲).
+  - `Combat`基底クラス(`State/20_Combat/`) — `ColliderWindow`(開始時刻+持続時間)のリストをJSON(`Data\Json\Player\AttackCombo\*.json`)から読み込み、`Update()`内で現在時刻がウィンドウ内に入ったら攻撃コライダーを有効化する方式。コンボ受付は`ComboStartTime`〜`ComboEndTime`の間の攻撃入力を`UpdateComboInput()`で共通化(3つのAttackComboステートで重複させない). Senzanにあったボス追尾(`GetTargetPos()`ベースの接近・向き直し)はBossが未実装のため意図的に省略し、その場で攻撃する形にした(コメントで明記).
+  - `AttackCombo_0/1/2` — `AttackCombo_2`から`AttackCombo_0`へループする3段コンボ。ダメージ量は25/30/40。専用アニメクリップ("AttackCombo_0"等)を`ApplyNamedClip()`で適用。`AttackCombo_2`のJSONのみ、Senzanの`ColliderWindows`持続時間(0.001)をそのまま使うと判定が不安定になりかねないと判断し0.05へ変更(意図的な数値の差分).
+  - `Parry` — Senzanは`Enter()`内で基底`Combat::Enter()`の呼び出しを忘れている(コンボウィンドウ等が初期化されないバグ)ことを発見・修正して移植。構え中は`SetDamageColliderActive(false)`で無敵化、`PARRY_MAX_WAIT_TIME`経過でIdleへ自動遷移。成功/失敗判定(Just Parry)は対象のBossが無いため未実装(あと回し).
+  - `Dodge`基底 + `DodgeExecute` — Senzanは「`CollisionDetector`への登録解除」と「コライダーの`SetActive(false)`」という2種類の無敵化手段が混在していた(Parryは後者)ため、本プロジェクトでは`SetDamageColliderActive()`に統一した。移動方向はカメラ相対(入力なしなら現在の正面)、`DodgeExecute::LateUpdate()`は`MyEasing::UpdateEasing`で`InOutCubic`と`Liner`を50:50でブレンドした距離を毎フレーム差分計算して加算する(加減速のある回避移動)。専用のアニメクリップ名("DodgeExecute")を使う点は、Senzanが`Attack_0`のクリップを回避モーションとして流用していた(プレースホルダーの残骸と思われる)のを踏襲しない意図的な修正.
+  - 効果音・エフェクトへのフック — `Character`に`PlayEffect*`系の空関数(中身は未実装)を追加済み。Effekseer採用か自作パーティクルかは未決定のため後回し.
+  - 未着手・意図的にあと回し: `JustDodge`(回避成功判定)、`AfterImage`(残像演出)、`JustDodgeEffect`、`PostEffectManager`、`CombatCoordinator`(Senzanの実装は時間が無く作った急ごしらえの設計だったため、移植時に設計をやり直す予定)、Boss/Enemyの実体(現状は骨格のみ)。
 
 ### Stage 4(UI・演出、最も後)
 - [ ] 色 — Color構造体/変換ユーティリティ
