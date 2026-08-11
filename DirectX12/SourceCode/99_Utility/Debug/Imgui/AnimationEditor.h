@@ -5,6 +5,7 @@
 #include "10_Ggraphic/PMX/AnimationClipTable.h"
 
 class PMXActor;
+class XActor;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -15,6 +16,8 @@ class PMXActor;
 *            : 再生範囲(開始/終了フレーム)・再生速度もここから調整できる.
 *            : 名前付きクリップとしてAnimationClipTableへ保存・読込もできる
 *            : (Character側の再生時にこのテーブルの値を参照する).
+*            : XActor(.x)はVMDのような開始/終了フレーム編集の概念を持たない
+*            : (名前付きクリップの切り替えのみ)ため、専用のDrawオーバーロードを持つ.
 **********************************************************************************/
 
 class AnimationEditor final
@@ -30,6 +33,9 @@ public:
 
 	// 起動中のみUIを描画する. Stepボタンが押されたらtrueを返す.
 	bool Draw(PMXActor& Actor);
+
+	// 起動中のみUIを描画する(XActor用. クリップ切り替えボタンのみ、常時再生のためStepは無い).
+	void Draw(XActor& Actor);
 
 private:
 	bool               m_IsActive = false;		// 起動中かどうか(trueの間、Mainはゲームの更新を止める).

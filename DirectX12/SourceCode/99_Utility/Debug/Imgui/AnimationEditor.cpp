@@ -2,6 +2,7 @@
 
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "10_Ggraphic/PMX/PMXActor.h"
+#include "10_Ggraphic/X/XActor.h"
 
 AnimationEditor::AnimationEditor()
 {
@@ -67,4 +68,32 @@ bool AnimationEditor::Draw(PMXActor& Actor)
 	ImGui::End();
 
 	return step_requested;
+}
+
+// XActor用. VMDのような開始/終了フレーム編集の概念が無く、名前付きクリップの切り替えのみ
+// (常時再生. PMX版のような一時停止/Stepは無い)なので、専用の軽量なUIにしている.
+void AnimationEditor::Draw(XActor& Actor)
+{
+	if (!m_IsActive) { return; }
+
+	ImGui::Begin("Animation Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGuiManager::Text("起動中(F1で終了). クリップを選ぶと再生します(常時再生).");
+
+	ImGui::Separator();
+
+	const auto& clips = Actor.GetClips();
+	for (size_t i = 0; i < clips.size(); ++i)
+	{
+		ImGui::PushID(static_cast<int>(i));
+		const bool is_current = (static_cast<int>(i) == Actor.GetCurrentClipIndex());
+		if (is_current) { ImGui::Text("> "); ImGui::SameLine(); }
+		if (ImGui::Button(clips[i].Name.c_str()))
+		{
+			Actor.PlayAnimation(clips[i].Name);
+		}
+		ImGui::PopID();
+	}
+
+	ImGui::End();
 }
