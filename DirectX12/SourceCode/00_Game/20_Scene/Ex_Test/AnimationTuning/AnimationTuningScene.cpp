@@ -103,6 +103,14 @@ void AnimationTuningScene::LoadModel(int Index)
 {
 	if (Index < 0 || Index >= static_cast<int>(m_ModelList.size())) { return; }
 
+	// 現在のアクターのGPUリソース(頂点/インデックスバッファ・ディスクリプタヒープ等)を破棄する前に、
+	// それらを参照している可能性のあるGPU側の描画コマンドが完了しているのを必ず待つ.
+	// (Present直後に毎回待たないフレームインフライト方式に変更して以降、ここで待たずに破棄すると、
+	// GPUがまだ参照中のリソースを解放してしまい、アプリが不正終了する不具合があった).
+	if (DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>()) {
+		p_dx12->WaitForGPU();
+	}
+
 	// 現在のアクターを破棄する(PMX/Xどちらか一方しか同時に持たない).
 	m_pPMXActor.reset();
 	m_upXActor.reset();
