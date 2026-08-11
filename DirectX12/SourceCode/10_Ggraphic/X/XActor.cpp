@@ -1,9 +1,57 @@
 ﻿#include "XActor.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include "PMX/PMXRenderer.h"
 #include "DirectX/DirectX12.h"
 #include "Model/XParser.h"
+#include "99_System/GameLoop/Time/Time.h"
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
+
+namespace {
+
+	// 指定時刻の前後のキーを探し、区間内を線形補間する(範囲外は端のキーを使う).
+	DirectX::XMVECTOR InterpolateVector3Keys(
+		const std::vector<XSkeleton::TimedKey<DirectX::XMFLOAT3>>& Keys, float Time, DirectX::XMVECTOR DefaultValue)
+	{
+		if (Keys.empty()) { return DefaultValue; }
+		if (Time <= static_cast<float>(Keys.front().Time)) { return DirectX::XMLoadFloat3(&Keys.front().Value); }
+		if (Time >= static_cast<float>(Keys.back().Time))  { return DirectX::XMLoadFloat3(&Keys.back().Value); }
+
+		for (size_t i = 0; i + 1 < Keys.size(); ++i)
+		{
+			const float t0 = static_cast<float>(Keys[i].Time);
+			const float t1 = static_cast<float>(Keys[i + 1].Time);
+			if (Time < t0 || Time > t1) { continue; }
+
+			const float t = (t1 > t0) ? (Time - t0) / (t1 - t0) : 0.0f;
+			return DirectX::XMVectorLerp(DirectX::XMLoadFloat3(&Keys[i].Value), DirectX::XMLoadFloat3(&Keys[i + 1].Value), t);
+		}
+		return DefaultValue;
+	}
+
+	// 指定時刻の前後のキーを探し、区間内をSlerpする(範囲外は端のキーを使う).
+	DirectX::XMVECTOR InterpolateQuaternionKeys(
+		const std::vector<XSkeleton::TimedKey<DirectX::XMFLOAT4>>& Keys, float Time, DirectX::XMVECTOR DefaultValue)
+	{
+		if (Keys.empty()) { return DefaultValue; }
+		if (Time <= static_cast<float>(Keys.front().Time)) { return DirectX::XMLoadFloat4(&Keys.front().Value); }
+		if (Time >= static_cast<float>(Keys.back().Time))  { return DirectX::XMLoadFloat4(&Keys.back().Value); }
+
+		for (size_t i = 0; i + 1 < Keys.size(); ++i)
+		{
+			const float t0 = static_cast<float>(Keys[i].Time);
+			const float t1 = static_cast<float>(Keys[i + 1].Time);
+			if (Time < t0 || Time > t1) { continue; }
+
+			const float t = (t1 > t0) ? (Time - t0) / (t1 - t0) : 0.0f;
+			return DirectX::XMQuaternionSlerp(DirectX::XMLoadFloat4(&Keys[i].Value), DirectX::XMLoadFloat4(&Keys[i + 1].Value), t);
+		}
+		return DefaultValue;
+	}
+
+} // namespace
 
 XActor::XActor(const char* FilePath, PMXRenderer& Renderer)
 	: m_Renderer { Renderer }
@@ -11,7 +59,7 @@ XActor::XActor(const char* FilePath, PMXRenderer& Renderer)
 {
 	try {
 		XParser parser;
-		parser.Load(FilePath, m_ModelData);
+		parser.LoadSkeletal(FilePath, m_ModelData, m_Skeleton);
 
 		CreateResources();
 	}
@@ -26,6 +74,100 @@ XActor::~XActor()
 	if (m_pMappedTransformCB && m_pTransformConstantBuffer) {
 		m_pTransformConstantBuffer->Unmap(0, nullptr);
 		m_pMappedTransformCB = nullptr;
+	}
+	if (m_pMappedBoneTransforms && m_pBoneTransformBuffer) {
+		m_pBoneTransformBuffer->Unmap(0, nullptr);
+		m_pMappedBoneTransforms = nullptr;
+	}
+}
+
+void XActor::PlayAnimation(const std::string& ClipName)
+{
+	for (size_t i = 0; i < m_Skeleton.Clips.size(); ++i)
+	{
+		if (m_Skeleton.Clips[i].Name == ClipName)
+		{
+			m_CurrentClipIndex = static_cast<int>(i);
+			m_CurrentTime = 0.0f;
+			return;
+		}
+	}
+}
+
+void XActor::Update()
+{
+	if (m_CurrentClipIndex >= 0 && static_cast<size_t>(m_CurrentClipIndex) < m_Skeleton.Clips.size())
+	{
+		const float max_time = static_cast<float>(m_Skeleton.Clips[m_CurrentClipIndex].MaxTime);
+
+		// キーフレームの時刻はAnimTicksPerSecond単位(秒ではない)なので、実時間から変換する.
+		m_CurrentTime += GameTime::GetDeltaTime() * static_cast<float>(m_Skeleton.TicksPerSecond);
+		if (max_time > 0.0f) { m_CurrentTime = std::fmod(m_CurrentTime, max_time); } // ループ再生.
+	}
+
+	UpdateBoneMatrices();
+}
+
+void XActor::UpdateBoneMatrices()
+{
+	if (!m_pMappedBoneTransforms || m_Skeleton.Bones.empty()) { return; }
+
+	const XSkeleton::AnimationClip* p_clip =
+		(m_CurrentClipIndex >= 0 && static_cast<size_t>(m_CurrentClipIndex) < m_Skeleton.Clips.size())
+		? &m_Skeleton.Clips[m_CurrentClipIndex] : nullptr;
+
+	// ボーンIndex→そのボーンを動かすBoneAnimationへの索引(再生中クリップがそのボーンに
+	// キーを持たない場合はnullptrのまま=バインドポーズを使う).
+	std::vector<const XSkeleton::BoneAnimation*> anim_by_bone(m_Skeleton.Bones.size(), nullptr);
+	if (p_clip)
+	{
+		for (const XSkeleton::BoneAnimation& anim : p_clip->BoneAnimations)
+		{
+			if (anim.BoneIndex >= 0 && static_cast<size_t>(anim.BoneIndex) < anim_by_bone.size())
+			{
+				anim_by_bone[anim.BoneIndex] = &anim;
+			}
+		}
+	}
+
+	// ボーンは親が必ず自分より前のIndexになるように構築されている(Frame階層を親から子へ
+	// 辿りながらpush_backしているため)ので、前から1回なめるだけでワールド変換を計算できる.
+	std::vector<DirectX::XMMATRIX> world_transforms(m_Skeleton.Bones.size());
+	for (size_t i = 0; i < m_Skeleton.Bones.size(); ++i)
+	{
+		const XSkeleton::Bone& bone = m_Skeleton.Bones[i];
+
+		DirectX::XMMATRIX local;
+		if (const XSkeleton::BoneAnimation* p_anim = anim_by_bone[i])
+		{
+			const DirectX::XMVECTOR rotation = InterpolateQuaternionKeys(p_anim->RotationKeys, m_CurrentTime, DirectX::XMQuaternionIdentity());
+			const DirectX::XMVECTOR scale = InterpolateVector3Keys(p_anim->ScaleKeys, m_CurrentTime, DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f));
+			const DirectX::XMVECTOR translation = InterpolateVector3Keys(p_anim->PositionKeys, m_CurrentTime, DirectX::XMVectorZero());
+			local = DirectX::XMMatrixAffineTransformation(scale, DirectX::XMVectorZero(), rotation, translation);
+		}
+		else
+		{
+			local = DirectX::XMLoadFloat4x4(&bone.LocalBindMatrix); // アニメーションキーが無いボーンはバインドポーズのまま.
+		}
+
+		world_transforms[i] = (bone.ParentIndex >= 0 && static_cast<size_t>(bone.ParentIndex) < i)
+			? DirectX::XMMatrixMultiply(local, world_transforms[bone.ParentIndex])
+			: local;
+	}
+
+	// GPUへ送るのはボーンではなくSkinSlot単位(SkinWeights.matrixOffsetは実際には
+	// (メッシュ,ボーン)の組ごとに値が異なりうるため. 詳細はXSkeletonData.h参照).
+	for (size_t i = 0; i < m_Skeleton.SkinSlots.size(); ++i)
+	{
+		const XSkeleton::SkinSlot& slot = m_Skeleton.SkinSlots[i];
+		const DirectX::XMMATRIX offset = DirectX::XMLoadFloat4x4(&slot.OffsetMatrix);
+		const DirectX::XMMATRIX world = (slot.BoneIndex >= 0 && static_cast<size_t>(slot.BoneIndex) < world_transforms.size())
+			? world_transforms[slot.BoneIndex]
+			: DirectX::XMMatrixIdentity();
+
+		// スキニング行列 = オフセット行列(メッシュ座標系→バインド時のボーン座標系) *
+		// ボーンの現在のワールド変換(行ベクトル規約のためオフセットを先に掛ける).
+		m_pMappedBoneTransforms[i] = DirectX::XMMatrixMultiply(offset, world);
 	}
 }
 
@@ -115,22 +257,29 @@ void XActor::CreateResources()
 	MyAssert::IsFailed(_T("XActor: Transform Constant Bufferをマップ"), &ID3D12Resource::Map, m_pTransformConstantBuffer.Get(),
 		0, nullptr, (void**)&m_pMappedTransformCB);
 
-	// ボーン無しのため、常にダミーの1要素(単位行列)を指すBoneCount=1にしておく
-	// (全頂点のBoneWeightsは0なのでシェーダー側では実際には参照されない).
+	// ボーン行列バッファはSkinSlot単位(SkinWeights.matrixOffsetは(メッシュ,ボーン)の組ごとに
+	// 異なりうるため、ボーン数ではなくSkinSlot数で確保する. 詳細はXSkeletonData.h参照).
+	const UINT bone_count = static_cast<UINT>(std::max<size_t>(m_Skeleton.SkinSlots.size(), 1));
 	m_pMappedTransformCB->World     = DirectX::XMMatrixIdentity();
-	m_pMappedTransformCB->BoneCount = 1;
+	m_pMappedTransformCB->BoneCount = bone_count;
 
-	// ===== ダミーのBone StructuredBuffer (t3、単位行列1要素) =====
-	D3D12_RESOURCE_DESC bone_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(DirectX::XMMATRIX));
-	MyAssert::IsFailed(_T("XActor: ダミーBone StructuredBufferの作成"), &ID3D12Device::CreateCommittedResource, m_Dx12.GetDevice(),
+	// ===== Bone StructuredBuffer (t3、実SkinSlot数ぶん. スキニングされないファイルでも
+	// ダミーの単位行列1要素を確保しておく(ルートシグネチャ上、有効なSRVが必要なため)) =====
+	D3D12_RESOURCE_DESC bone_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(bone_count) * sizeof(DirectX::XMMATRIX));
+	MyAssert::IsFailed(_T("XActor: Bone StructuredBufferの作成"), &ID3D12Device::CreateCommittedResource, m_Dx12.GetDevice(),
 		&upload_heap_properties, D3D12_HEAP_FLAG_NONE, &bone_buffer_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(m_pDummyBoneBuffer.ReleaseAndGetAddressOf()));
+		IID_PPV_ARGS(m_pBoneTransformBuffer.ReleaseAndGetAddressOf()));
+	MyAssert::IsFailed(_T("XActor: Bone StructuredBufferをマップ"), &ID3D12Resource::Map, m_pBoneTransformBuffer.Get(),
+		0, nullptr, (void**)&m_pMappedBoneTransforms);
 
-	DirectX::XMMATRIX* p_mapped_bone = nullptr;
-	MyAssert::IsFailed(_T("XActor: ダミーBone StructuredBufferをマップ"), &ID3D12Resource::Map, m_pDummyBoneBuffer.Get(),
-		0, nullptr, (void**)&p_mapped_bone);
-	*p_mapped_bone = DirectX::XMMatrixIdentity();
-	m_pDummyBoneBuffer->Unmap(0, nullptr);
+	if (m_Skeleton.SkinSlots.empty())
+	{
+		m_pMappedBoneTransforms[0] = DirectX::XMMatrixIdentity();
+	}
+	else
+	{
+		UpdateBoneMatrices(); // バインドポーズ(未再生状態)を初期値として書き込む.
+	}
 
 	// ===== CBV/SRV/UAV ディスクリプタヒープ =====
 	UINT total_descriptors = 0;
@@ -246,16 +395,16 @@ void XActor::CreateResources()
 	}
 	p_material_upload_buffer->Unmap(0, nullptr);
 
-	// --- RP_BONE_SRV (t3、ダミーの1要素StructuredBuffer) ---
+	// --- RP_BONE_SRV (t3) ---
 	D3D12_SHADER_RESOURCE_VIEW_DESC bone_srv_desc = {};
-	bone_srv_desc.Shader4ComponentMapping  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	bone_srv_desc.Format                   = DXGI_FORMAT_UNKNOWN;
-	bone_srv_desc.ViewDimension             = D3D12_SRV_DIMENSION_BUFFER;
-	bone_srv_desc.Buffer.FirstElement       = 0;
-	bone_srv_desc.Buffer.NumElements        = 1;
+	bone_srv_desc.Shader4ComponentMapping   = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	bone_srv_desc.Format                    = DXGI_FORMAT_UNKNOWN;
+	bone_srv_desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+	bone_srv_desc.Buffer.FirstElement        = 0;
+	bone_srv_desc.Buffer.NumElements         = bone_count;
 	bone_srv_desc.Buffer.StructureByteStride = sizeof(DirectX::XMMATRIX);
-	bone_srv_desc.Buffer.Flags              = D3D12_BUFFER_SRV_FLAG_NONE;
-	m_Dx12.GetDevice()->CreateShaderResourceView(m_pDummyBoneBuffer.Get(), &bone_srv_desc, current_cpu_handle);
+	bone_srv_desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+	m_Dx12.GetDevice()->CreateShaderResourceView(m_pBoneTransformBuffer.Get(), &bone_srv_desc, current_cpu_handle);
 }
 
 MyComPtr<ID3D12Resource> XActor::LoadTexture(const std::string& Path)

@@ -200,6 +200,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDStructHeader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\X\XActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\X\XSkeletonData.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\ModelData.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\IModelParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMXParser.h" />

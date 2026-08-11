@@ -99,6 +99,7 @@
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDStructHeader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\X\XActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\X\XSkeletonData.h" />
     <ClInclude Include="SourceCode\99_Utility\DirectXMath\DirectXMathExpansion.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\ModelData.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\IModelParser.h" />

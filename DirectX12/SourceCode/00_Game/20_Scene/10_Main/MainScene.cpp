@@ -95,6 +95,7 @@ void MainScene::Create()
 		// 動作確認用に他のモデルと重ならない位置(Playerの反対側)へ配置.
 		m_upXActor = std::make_unique<XActor>("Data\\Model\\X\\player.x", *m_pPMXRenderer);
 		m_upXActor->SetWorldMatrix(DirectX::XMMatrixScaling(15.0f, 15.0f, 15.0f) * DirectX::XMMatrixTranslation(-30.0f, 0.0f, 0.0f));
+		m_upXActor->PlayAnimation("player_run"); // キーフレーム再生の動作確認用.
 	}
 	catch (const std::runtime_error& Msg) {
 		// エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
@@ -136,6 +137,10 @@ void MainScene::Update()
 		m_pPMXActor->Update();
 	}
 
+	if (m_upXActor) {
+		m_upXActor->Update();
+	}
+
 	if (m_upEnemy && m_upPlayer) {
 		// ロックオン等は無く、Playerの位置をそのままEnemyのターゲットとして毎フレーム渡す.
 		m_upEnemy->SetTargetPos(m_upPlayer->GetPosition());
@@ -169,6 +174,19 @@ void MainScene::Draw()
 
 	if (m_upXActor) {
 		m_upXActor->Draw();
+
+		ImGui::Begin("XActor Animation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		const auto& clips = m_upXActor->GetClips();
+		for (size_t i = 0; i < clips.size(); ++i) {
+			ImGui::PushID(static_cast<int>(i));
+			const bool is_current = (static_cast<int>(i) == m_upXActor->GetCurrentClipIndex());
+			if (is_current) { ImGui::Text("> "); ImGui::SameLine(); }
+			if (ImGui::Button(clips[i].Name.c_str())) {
+				m_upXActor->PlayAnimation(clips[i].Name);
+			}
+			ImGui::PopID();
+		}
+		ImGui::End();
 	}
 
 	if (m_upPlayer) {
