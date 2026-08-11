@@ -11,6 +11,7 @@
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/50_Input/Input.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
@@ -30,6 +31,19 @@ namespace {
 		case PlayerState::eID::Parry:         return "Parry";
 		case PlayerState::eID::DodgeExecute:  return "DodgeExecute";
 		default:                              return "None";
+		}
+	}
+
+	// デバッグ表示用にEnemyState::eIDを文字列化する.
+	const char* ToDebugString(EnemyState::eID Id)
+	{
+		switch (Id)
+		{
+		case EnemyState::eID::Idle:   return "Idle";
+		case EnemyState::eID::Chase:  return "Chase";
+		case EnemyState::eID::Attack: return "Attack";
+		case EnemyState::eID::Dead:   return "Dead";
+		default:                      return "None";
 		}
 	}
 }
@@ -66,6 +80,14 @@ void MainScene::Create()
 		auto p_player_mesh = std::make_shared<PMXMesh>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
 		p_player_mesh->Play();
 		m_upPlayer->AttachMesh(p_player_mesh);
+
+		// Enemy(動作確認用). Combat/Dodgeを実際に試せる相手として、Playerの近くに
+		// AggroRangeより少し離して配置する(Idle→Chaseへの遷移も確認できるように).
+		m_upEnemy = std::make_unique<Enemy>();
+		m_upEnemy->SetPosition({ 30.0f, 0.0f, 12.0f });
+		auto p_enemy_mesh = std::make_shared<PMXMesh>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
+		p_enemy_mesh->Play();
+		m_upEnemy->AttachMesh(p_enemy_mesh);
 	}
 	catch (const std::runtime_error& Msg) {
 		// エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
@@ -107,8 +129,17 @@ void MainScene::Update()
 		m_pPMXActor->Update();
 	}
 
+	if (m_upEnemy && m_upPlayer) {
+		// ロックオン等は無く、Playerの位置をそのままEnemyのターゲットとして毎フレーム渡す.
+		m_upEnemy->SetTargetPos(m_upPlayer->GetPosition());
+	}
+
 	if (m_upPlayer) {
 		m_upPlayer->Update();
+	}
+
+	if (m_upEnemy) {
+		m_upEnemy->Update();
 	}
 }
 
@@ -136,6 +167,17 @@ void MainScene::Draw()
 		const DirectX::XMFLOAT3& position = m_upPlayer->GetPosition();
 		ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
 		ImGui::Text("State: %s", ToDebugString(m_upPlayer->GetCurrentStateID()));
+		ImGui::End();
+	}
+
+	if (m_upEnemy) {
+		m_upEnemy->Draw();
+
+		ImGui::Begin("Enemy", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		const DirectX::XMFLOAT3& position = m_upEnemy->GetPosition();
+		ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
+		ImGui::Text("State: %s", ToDebugString(m_upEnemy->GetCurrentStateID()));
+		ImGui::Text("HP: %.0f / %.0f", m_upEnemy->GetHealth().GetHP(), m_upEnemy->GetHealth().GetMaxHP());
 		ImGui::End();
 	}
 }

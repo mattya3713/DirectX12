@@ -52,6 +52,9 @@ public: // Getter・Setter.
 		m_Transform.Position.z += Delta.z;
 	}
 
+	// 目標Yaw角(度)へ最短経路でラープ回転する(Player/Enemy共通で使うため本クラスに置く).
+	void RotateToTarget(float TargetAngleDeg, float SpeedDegPerSec) noexcept;
+
 protected:
 	Transform m_Transform; // 位置・回転・スケール.
 };

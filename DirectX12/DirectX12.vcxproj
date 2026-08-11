@@ -94,6 +94,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -113,6 +114,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,6 +135,7 @@
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_System\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,6 +168,7 @@ exit /b 0</Command>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_System\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -272,6 +276,12 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateID.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\00_Idle\Idle.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\10_Chase\Chase.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\20_Attack\Attack.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\30_Dead\Dead.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\Boss.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
     <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
@@ -350,6 +360,11 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\00_Idle\Idle.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\10_Chase\Chase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\20_Attack\Attack.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\30_Dead\Dead.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\Boss.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />

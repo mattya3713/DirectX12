@@ -7,6 +7,7 @@
 class PMXRenderer;
 class PMXActor;
 class Player;
+class Enemy;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -30,4 +31,5 @@ private:
 	std::shared_ptr<PMXRenderer> m_pPMXRenderer;
 	std::shared_ptr<PMXActor>    m_pPMXActor;
 	std::unique_ptr<Player>      m_upPlayer;
+	std::unique_ptr<Enemy>       m_upEnemy;
 };

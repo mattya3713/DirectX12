@@ -104,6 +104,18 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - `Dodge`基底 + `DodgeExecute` — Senzanは「`CollisionDetector`への登録解除」と「コライダーの`SetActive(false)`」という2種類の無敵化手段が混在していた(Parryは後者)ため、本プロジェクトでは`SetDamageColliderActive()`に統一した。移動方向はカメラ相対(入力なしなら現在の正面)、`DodgeExecute::LateUpdate()`は`MyEasing::UpdateEasing`で`InOutCubic`と`Liner`を50:50でブレンドした距離を毎フレーム差分計算して加算する(加減速のある回避移動)。専用のアニメクリップ名("DodgeExecute")を使う点は、Senzanが`Attack_0`のクリップを回避モーションとして流用していた(プレースホルダーの残骸と思われる)のを踏襲しない意図的な修正.
   - 効果音・エフェクトへのフック — `Character`に`PlayEffect*`系の空関数(中身は未実装)を追加済み。Effekseer採用か自作パーティクルかは未決定のため後回し.
   - 未着手・意図的にあと回し: `JustDodge`(回避成功判定)、`AfterImage`(残像演出)、`JustDodgeEffect`、`PostEffectManager`、`CombatCoordinator`(Senzanの実装は時間が無く作った急ごしらえの設計だったため、移植時に設計をやり直す予定)、Boss/Enemyの実体(現状は骨格のみ)。
+- [x] Enemy(最小限のAI) — Combat/Dodgeを実際に試せる相手として実装。Senzan調査の結果、Senzanには汎用の`Enemy`クラスが存在せず(`Boss`が`Character`を直接継承しており、AI・当たり判定・ダメージ処理などボス戦専用ロジックが約5,700行に渡って詰め込まれている)、移植元と呼べるものが無かったため、既存の`Character`/`HitEvent`/`ProcessHits()`基盤の上に最小構成で新規設計した.
+  - `StateMachine<Enemy>` + `EnemyState::{Idle, Chase, Attack, Dead}`(`10_Enemy/State/`) — Player同様`EnemyStateBase : public StateBase<Enemy>`を経由する。`DistanceToTargetXZ()`/`AngleToTargetDeg()`をEnemyStateBaseに共通実装として持たせ、各ステートから使う.
+    - `Idle`: ターゲットが`AggroRange`以内に入るまで待機(Senzanの`BossIdolState`は最初のUpdateで無条件にMoveStateへ遷移する=実質待機しないバグがあったため、そこは踏襲せずちゃんと距離判定してから遷移するようにした).
+    - `Chase`: ターゲットへ向き直りながら直進。`AttackRange`以内で`Attack`へ、`LoseRange`を超えたら`Idle`へ戻る(Senzanのボスにはこの「見失う」概念が無かったが、雑魚敵がマップ全体をどこまでも追い続けるのは不自然なので追加した).
+    - `Attack`: 予備動作→攻撃判定(`Character::SetAttackColliderActive`)有効化→硬直の3フェーズをタイマーで管理する固定1パターン攻撃。SenzanのBossMoveStateにあった8種の重み付きランダム攻撃選択・JSON外部調整・ImGuiチューニングパネルは意図的に持ち込んでいない(最小限のEnemy用途には過剰).
+    - `Dead`: `HealthSystem::SetOnDeath`のコールバックから遷移。攻撃/被弾コライダーを無効化してその場に残り続ける(SenzanのBossDeadStateは`Update()`が空で死亡演出も何も進行しない未完成スタブだったため、それをそのまま踏襲するのは避け、最低限「もう攻撃されない/攻撃しない」状態には確実に落とし込んだ。ただし消滅・リスポーン等はまだ無い).
+  - ダメージ経路はSenzanのBossのような専用実装(`HandleDamageDetection`/`HandleAttackDetection`を各クラスで個別実装、かつ`Boss::Hit()`という`ApplyDamage`を経由しない別経路が並存し、ダメージ二重適用やHPクランプ漏れが起きうるバグがあった)を踏襲せず、既存の`Character::ProcessHits()`(HitEvent方式)をそのまま利用。Enemyは`eCollisionGroup::EnemyDamage`/`EnemyAttack`(対`PlayerAttack`/`PlayerDamage`)のマスク設定を追加しただけで、専用のダメージ処理コードは1行も書いていない.
+  - ターゲット追跡は`Enemy::GetTargetPos()`/`SetTargetPos()`のみ(Senzanの`Player`⇔`Boss`相互`SetTargetPos()`と同じく、ロックオン等の探索機構は無く、シーン側が毎フレーム位置を渡すだけの単純な仕組み)。`MainScene::Update()`から`m_upEnemy->SetTargetPos(m_upPlayer->GetPosition())`を毎フレーム呼ぶ形で配線した。Player側の`GetTargetPos()`(Enemyの位置をPlayerへ渡す経路)はCombat側がまだ`GetTargetPos()`ベースの接近・向き直りを使っていない(Stage3当たり判定の節で明記した通り意図的に未移植)ため、今回は追加していない。Boss実装時にPlayer側のCombatを拡張するタイミングで必要になる想定.
+  - `GameObject::RotateToTarget()` — 元々`Player`だけに実装していたYawラープ回転処理を、Enemyでも同じロジックが必要になったタイミングで`GameObject`へ引き上げた(2箇所目の利用が実際に出てきたので、コピペではなく共通化した).
+  - 見た目は専用モデルを用意せず、動作確認用にPlayerと同じHatuneモデルを別インスタンスとして流用(位置で区別)。Cube.pmx等の別アセットはこのプロジェクトのPMXパイプラインで未検証のため、リスクを避けてPlayerで実績のあるモデルを使った.
+  - `MainScene`にImGuiの`"Enemy"`ウィンドウを追加(Position/State/HP表示、Player同様のデバッグ表示).
+  - ビルド設定の不備を発見・修正: `DirectX12.vcxproj`が`ClCompile`の`ObjectFileName`を既定値のままにしていたため、フォルダを跨いで同名の`.cpp`(Player側`State/00_Idle/Idle.cpp`とEnemy側`State/00_Idle/Idle.cpp`)が同じ中間出力ファイル名(`Idle.obj`)に衝突し、後から生成された方が前者を上書きしてリンクエラーになる問題を発見した(MSB8027警告が出ていたにもかかわらずSenzanはおそらく同名ファイルが無く顕在化していなかった類の不備)。全4構成(Debug/Release × Win32/x64)の`ClCompile`に`<ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>`を追加し、中間出力をソースの相対フォルダ構成にミラーリングすることで解消した.
 
 ### Stage 4(UI・演出、最も後)
 - [ ] 色 — Color構造体/変換ユーティリティ

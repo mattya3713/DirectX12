@@ -56,9 +56,6 @@ public:
 	// ステートを変更する(PlayerState::eIDから対応するステートを生成しStateMachineへ渡す).
 	void ChangeState(PlayerState::eID Id);
 
-	// 目標Yaw角(度)へラープ回転する.
-	void RotateToTarget(float TargetAngleDeg, float SpeedDegPerSec) noexcept;
-
 private:
 	StateMachine<Player> m_StateMachine;					// 現在ステートの保持・更新.
 	DirectX::XMFLOAT3    m_MoveVec        { 0.0f, 0.0f, 0.0f };	// 現フレームの移動ベクトル.
