@@ -7,6 +7,7 @@
 // 前方宣言.
 class DirectX12;
 class PMXActor;
+class XActor;
 
 /**************************************************
 *	PMX用描画パイプラインクラス.
@@ -16,6 +17,7 @@ class PMXActor;
 class PMXRenderer
 {
 	friend PMXActor;
+	friend XActor; // .xファイル用のXActorも同じパイプライン(Model::Vertex共通)を使うため.
 public:
 	PMXRenderer(DirectX12& dx12);
 	~PMXRenderer();

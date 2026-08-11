@@ -701,6 +701,9 @@ MyComPtr<ID3D12Resource> PMXActor::LoadTexture(const std::string& path)
 		// 例: パスが空の場合は白テクスチャを返す (用途に合わせて変更)
 		return m_pRenderer.GetWhiteTex();
 	}
-	// ここで実際にファイルが存在するかチェックすることも考慮に入れる
-	return m_pDx12.GetTextureByPath(path.c_str());
+
+	MyComPtr<ID3D12Resource> texture = m_pDx12.GetTextureByPath(path.c_str());
+	// 読み込み失敗(ファイル欠損等)時もnullptrのまま返さず、白テクスチャへフォールバックする
+	// (nullptrのままだと該当ディスクリプタスロットが未初期化のままになってしまうため).
+	return texture ? texture : m_pRenderer.GetWhiteTex();
 }

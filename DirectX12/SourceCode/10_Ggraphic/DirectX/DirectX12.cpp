@@ -612,8 +612,10 @@ MyComPtr<ID3D12Resource> DirectX12::CreateTextureFromFile(const char* Texpath)
 	HRESULT Result = m_LoadLambdaTable[Extension](wTexPath, &Metadata, ScratchImg);
 
 	if (FAILED(Result)) {
+		// テクスチャ1枚の欠損でアプリ全体をブロックしないよう、モーダル表示はせず
+		// ログのみに留める(呼び出し側がnullptrを見てデフォルトテクスチャへフォールバックする).
 		std::string_view ErrorMessage = MyAssert::HResultToJapanese(Result);
-		MessageBoxA(nullptr, std::string(ErrorMessage).c_str(), "Texture Load Error", MB_OK | MB_ICONERROR);
+		std::cerr << "Texture Load Error(" << TexPath << "): " << ErrorMessage << std::endl;
 		return MyComPtr<ID3D12Resource>();
 	}
 

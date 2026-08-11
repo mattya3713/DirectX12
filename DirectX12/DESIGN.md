@@ -9,6 +9,19 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - `SourceCode/10_Ggraphic/Model/ModelData.h` — フォーマットを問わない共通データ(`Model::Vertex` / `Model::Material` / `Model::Bone` / `Model::ModelData`)。頂点レイアウトはPMXの4ボーン形式を基準にしており、PMDの2ボーンデータもここに変換して格納する。
 - `SourceCode/10_Ggraphic/Model/IModelParser.h` — `Load(FilePath, ModelData&)`を持つパーサーの共通インターフェース。新しいモデルフォーマットに対応するときは、これを実装したパーサーを追加すればよい。
 - `SourceCode/10_Ggraphic/Model/PMXParser.h/.cpp`、`PMDParser.h/.cpp` — 各フォーマットの生バイナリ解析だけを担当。GPUリソース生成やアニメーション実行時ロジックは`PMXActor`/`PMDActor`側に残している。
+- `SourceCode/10_Ggraphic/Model/XParser.h/.cpp` — DirectXの`.x`ファイル(テキスト形式)用パーサー。`Data\Model\X\Cube.x`(6面すべて四角形、単一Mesh)と`Data\Model\X\player.x`(Senzanからコピーした、頭・胴・腕・脚・剣などパーツごとに分かれた18個の`Mesh`がFrame階層の中にネストされた実践的なリグ付きキャラクターファイル)の2ファイルを対象に実装・検証した。
+  - `.x`のMesh/MeshNormals/MeshTextureCoords/MeshMaterialListはそれぞれ独立したインデックス空間を持つ(位置・法線は面ごとに別々のIndex配列、UVのみ位置と同じIndex空間)ため、単純にPosition Indexをそのまま共有Indexバッファとして使うことができない。重複排除(頂点キーでのハッシュ結合)はモデル規模的に不要と判断し、三角形の各コーナーごとに新しい`Model::Vertex`を1つ作る単純な展開方式にした(Indicesは単調増加の連番になる)。
+  - N角形(4頂点以上の面。`Cube.x`が該当)はファン三角形分割(`0,i,i+1`)で三角形化する。
+  - マテリアルの割り当ては元の面ごとの`MeshMaterialList`のIndex配列を見て、三角形をマテリアルごとにグルーピングしてから`Indices`へ書き出す(PMX/PMD同様、同一マテリアルの区間が連続している前提で`Material.NumFaceCount`を使う描画側と合わせるため)。
+  - `.x`のMaterialテンプレートにはAmbient相当のフィールドが無いため、emissiveColorを`Model::Material::Ambient`へ流用している(厳密な等価ではない、という前提で決めた設計上の妥協)。
+  - **Frame階層(`FrameTransformMatrix`)に対応**。`Cube.x`のような単一Mesh構成では想定していなかったが、`player.x`(Senzan版)は頭・胴・腕・脚・剣等それぞれ独自のローカル座標系を持つ`Mesh`が`Frame`の中にネストされており、Frameごとの変換行列を親から子へ蓄積(`Local * ParentAccumulated`、DirectXMathの行ベクトル規約に合わせた乗算順)して各`Mesh`のワールド変換として保持し、`BuildModelData`で頂点位置に`XMVector3Transform`、法線に`XMVector3TransformNormal`を適用してから最終`Model::Vertex`を作る。この対応が無いとパーツごとのローカル座標がそのまま使われ、頭や腕が原点付近に重なって表示される(実際に発生し修正済み。修正前後のスクリーンショットで確認).
+  - **トップレベルの名前付き`Material`定義 + `MeshMaterialList`内の`{name}`参照に対応**。SenzanのX出力は`Material player_player {...}`のようにトップレベルでマテリアルを定義し、各パーツの`MeshMaterialList`からは`{player_player}`という名前参照だけを書く形式だった(全パーツで同じ`Material`を使い回すための一般的なXファイルの書き方)。`ParseChildren`が走査中に名前付き`Material`を`std::unordered_map`へ蓄積し、`ParseMeshMaterialList`が`{`から始まる子オブジェクトを名前参照として解決する。この対応が無いと`TextureFilename`を一切読めず、全マテリアルがテクスチャ無し(白)になる(実際に発生し修正済み)。定義が参照より前に出現する前提(Senzanの出力・一般的なXエクスポータの並びに合わせた割り切り、2パス化はしていない)。
+  - 検証: スタンドアロンの`cl.exe`単体テストで`Cube.x`(N角形の三角形分割、法線の面ごとの別インデックス解決)と`player.x`(全18マテリアルのテクスチャパス解決、Frame変換適用後のバウンディングボックスが直立したキャラクターとして妥当な範囲になっていること)を確認。実機(`XActor`経由の実際の描画)でもSenzan版`player.x`が正しく組み立てられ、髪・上着・ズボン・双剣が正しいテクスチャで表示されることをスクリーンショットで確認済み。
+- `SourceCode/10_Ggraphic/X/XActor.h/.cpp` — `.x`(XParser経由)を実際に描画するクラス。`PMXActor`からボーン/VMDアニメーション関連を丸ごと省いた最小構成で、頂点レイアウト・ルートシグネチャ・シェーダーは`PMXRenderer`とそのまま共用する(専用の`XRenderer`は作っていない — `Model::Vertex`という共通フォーマットの上に構築している以上、PMXRenderer側を「Model::Vertex用の汎用パイプライン」として再利用するのが自然だと判断).
+  - ボーンを持たないため、頂点の`BoneWeights`は明示的に全て0にする(シェーダー側は`totalWeight<=0.0001`のとき生の頂点座標を使うフォールバック経路を持っており、これを使う)。ルートシグネチャ上はBone StructuredBuffer(t3)に有効なSRVを渡す必要があるため、単位行列1要素のダミーバッファを作成してバインドする(シェーダーからは実際には参照されない)。
+  - `PMXRenderer`が持つ既定テクスチャ(白/黒)をトゥーン・スフィアマップの代用として使う(`.x`にはその概念が無いため)。
+  - **テクスチャ読み込み失敗時の挙動を修正**: 元々`DirectX12::CreateTextureFromFile`はテクスチャ読み込みに失敗すると`MessageBoxA`でアプリ全体をブロックする実装だったが、1枚のテクスチャ欠損でアプリが固まるのは過剰と判断し、`std::cerr`へのログのみに変更した(呼び出し側が`nullptr`を見て復帰できるように)。あわせて`PMXActor::LoadTexture`/`XActor::LoadTexture`を、読み込み失敗時(`nullptr`が返った場合)も白テクスチャへフォールバックするよう修正(元々は空パスの場合しかフォールバックしておらず、読み込み失敗時は該当ディスクリプタスロットが未初期化のまま残る潜在バグだった)。
+  - `MainScene`に動作確認用として1体配置(Playerの反対側、15倍スケール)。ImGuiの追加ウィンドウは無し(Player/Enemyと違い自律的なロジックを持たない静的表示のため)。
 
 ## カメラシステム
 

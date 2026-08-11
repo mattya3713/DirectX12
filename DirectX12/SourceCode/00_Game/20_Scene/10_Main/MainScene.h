@@ -6,6 +6,7 @@
 
 class PMXRenderer;
 class PMXActor;
+class XActor;
 class Player;
 class Enemy;
 
@@ -30,6 +31,7 @@ public:
 private:
 	std::shared_ptr<PMXRenderer> m_pPMXRenderer;
 	std::shared_ptr<PMXActor>    m_pPMXActor;
+	std::unique_ptr<XActor>      m_upXActor;
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Enemy>       m_upEnemy;
 };

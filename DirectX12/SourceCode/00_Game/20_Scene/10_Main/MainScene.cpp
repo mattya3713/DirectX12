@@ -6,6 +6,7 @@
 #include "10_Ggraphic/PMX/PMXActor.h"
 #include "10_Ggraphic/PMX/PMXRenderer.h"
 #include "10_Ggraphic/PMX/PMXMesh.h"
+#include "10_Ggraphic/X/XActor.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
@@ -88,6 +89,12 @@ void MainScene::Create()
 		auto p_enemy_mesh = std::make_shared<PMXMesh>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
 		p_enemy_mesh->Play();
 		m_upEnemy->AttachMesh(p_enemy_mesh);
+
+		// XParser経由の.x表示確認用. 元モデルは全体で約1.3x1.5x2.0(単位)しか無く、
+		// Hatuneモデル等(MMDスケール)と比べて非常に小さいため15倍に拡大して表示する.
+		// 動作確認用に他のモデルと重ならない位置(Playerの反対側)へ配置.
+		m_upXActor = std::make_unique<XActor>("Data\\Model\\X\\player.x", *m_pPMXRenderer);
+		m_upXActor->SetWorldMatrix(DirectX::XMMatrixScaling(15.0f, 15.0f, 15.0f) * DirectX::XMMatrixTranslation(-30.0f, 0.0f, 0.0f));
 	}
 	catch (const std::runtime_error& Msg) {
 		// エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
@@ -158,6 +165,10 @@ void MainScene::Draw()
 
 	if (m_pPMXActor) {
 		m_pPMXActor->Draw();
+	}
+
+	if (m_upXActor) {
+		m_upXActor->Draw();
 	}
 
 	if (m_upPlayer) {
