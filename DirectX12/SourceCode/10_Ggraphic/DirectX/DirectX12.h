@@ -113,17 +113,22 @@ public:
 	ID3D12Resource* GetSceneConstantBuffer() const { return m_pSceneConstBuff.Get(); }
 	SceneData* GetMappedSceneData() const { return m_pMappedSceneData; }
 
-	// GPUの完了待ち.
+	// GPUの完了待ち(全キューをflushする. 終了処理など、確実に同期したい箇所専用).
 	void WaitForGPU();
 
 private:// 作っていくんだよねぇ~.
+
+	// バックバッファの数(スワップチェーンのBufferCountと一致させる).
+	// コマンドアロケータをこの数だけ用意し、フレームごとに使い回すことで、
+	// Present直後に毎回GPU完了を待つ必要をなくす(CPU/GPUのパイプライニング).
+	static constexpr UINT FrameBufferCount = 2;
 
 	// DXGIの生成.
 	void CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory);
 
 	// コマンド類の生成.
 	void CreateCommandObject(
-		MyComPtr<ID3D12CommandAllocator>&	CmdAllocator,
+		MyComPtr<ID3D12CommandAllocator>	(&CmdAllocators)[FrameBufferCount],
 		MyComPtr<ID3D12GraphicsCommandList>&CmdList,
 		MyComPtr<ID3D12CommandQueue>&		CmdQueue);
 
@@ -185,9 +190,10 @@ private:
 
 	// DirectX12.
 	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
-	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocator;		// コマンドアロケータ(命令をためておくメモリ領域).	
+	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocators[FrameBufferCount]; // コマンドアロケータ(バックバッファごとに1つ. 命令をためておくメモリ領域).
 	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
 	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// コマンドキュー.
+	UINT									m_FrameIndex;			// 現在描画中のバックバッファのインデックス(BeginDraw()で設定).
 
 	// レンダーターゲット.
 	MyComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// レンダーターゲットビュー.
@@ -211,7 +217,8 @@ private:
 	// フェンス類.
 	MyComPtr<ID3D12Fence>					m_pFence;				// 処理待ち柵.
 	UINT64									m_FenceValue;			// 処理カウンター.
-	HANDLE									m_hFenceEvent;			// フェンスイベントハンドル. 
+	HANDLE									m_hFenceEvent;			// フェンスイベントハンドル.
+	UINT64									m_FrameFenceValues[FrameBufferCount] {}; // 各アロケータスロットについて「ここまで完了していれば再利用してよい」フェンス値.
 
 	// 描画周りの設定.
 	MyComPtr<ID3D12PipelineState>			m_pPipelineState;		// パイプライン.

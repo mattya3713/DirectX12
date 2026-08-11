@@ -22,6 +22,7 @@ struct RuntimeBone
 	DirectX::XMMATRIX InitialGlobalMatrix;				// 初期バインドポーズにおけるボーンのグローバル変換行列.
 	DirectX::XMMATRIX InverseInitialGlobalMatrix;		// InitialGlobalMatrix の逆行列.
 	DirectX::XMMATRIX FinalWorldMatrix;				// アニメーション適用後の最終的なボーンのグローバル変換行列.
+	std::vector<int32_t> ChildIndices;					// このボーンを親に持つボーンのIndex一覧(InitializeRuntimeBonesで一度だけ構築).
 
 	RuntimeBone() : ModelBoneData(nullptr),
 		OffsetMatrix(DirectX::XMMatrixIdentity()),

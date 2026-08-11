@@ -42,6 +42,14 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 
 `DirectX12`側は`SetCamera(View, Proj, Eye)`で行列を受け取るだけで、`CameraBase`/`CameraManager`の存在を一切知らない。`Main`が両者を仲介している(`10_Ggraphic`が`00_Game`に依存しない向きを維持するため)。
 
+## パフォーマンス
+
+実機で60FPSに安定しない(Releaseビルドでも重い)という報告を受けて調査・修正した2件。
+
+- **`PMXActor::UpdateBoneGlobalTransforms()`のO(N²)化**: ボーン階層を再帰でたどる際、「このボーンの子は誰か」を毎フレーム全ボーンから線形探索していたため、ボーン数nに対しO(n²)かかっていた。しかも`PMXMesh`が内部で専用の`PMXActor`を持つ設計のため、`MainScene`に置いている同一の重いPMXモデル(初音ミク、単独表示用+Player+Enemyの3体)がそれぞれ独立にこの重い処理を毎フレーム行っていた。対策として`RuntimeBone`に`ChildIndices`(自分を親に持つボーンのIndex一覧)を追加し、`InitializeRuntimeBones()`(コンストラクタで1回のみ)で構築、毎フレームの`UpdateBoneGlobalTransforms()`はこのリストを辿るだけにしてO(n)へ削減した。
+- **`DirectX12::EndDraw()`が毎フレームCPU/GPUを完全に直列化していた**: `Present()`直後に`WaitForGPU()`(GPU完了までCPUを止めて待つ)を呼んでからコマンドアロケータを`Reset()`する実装だったため、1フレームの所要時間が「CPU時間+GPU時間」の足し算になり、DirectX12本来のCPU/GPU並行実行(パイプライニング)ができていなかった。対策としてバックバッファ数(`FrameBufferCount=2`)ぶんのコマンドアロケータを用意する「フレームインフライト」方式に変更: `EndDraw()`はフェンスに目印(Signal)を立てるだけで待たず、`BeginDraw()`の先頭で「これから使うバッファ枠のGPU処理が完了しているか」をフェンス値で確認してから(通常は2フレーム前の処理なのでほぼ待たずに)`Reset()`する。
+- 修正後、実機のDebug HUDで`FPS: 60.0 / Delta Time: 16.667ms`が数秒間安定して表示されることをスクリーンショットで確認済み。
+
 ## アーキテクチャ方針(決定事項)
 
 - **オブジェクト基底は継承ベース**。コンポーネント合成方式は採用しない。`GameObject`(仮称)は純粋インターフェースにはせず、Transform・Update/Drawフックなど実装を持つ具象基底クラスとする。

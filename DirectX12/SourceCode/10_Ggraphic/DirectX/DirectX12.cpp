@@ -8,9 +8,9 @@ DirectX12::DirectX12()
 	, m_pSwapChain		{ nullptr }
 	, m_SwapChainDesc	{ }
 	, m_pDevice12		{ nullptr }
-	, m_pCmdAllocator	{ nullptr }
 	, m_pCmdList		{ nullptr }
 	, m_pCmdQueue		{ nullptr }
+	, m_FrameIndex		{ 0 }
 	, m_pRenderTargetViewHeap{ nullptr }
 	, m_pBackBuffer		{ }
 	, m_pDepthBuffer	{ nullptr }
@@ -57,7 +57,7 @@ bool DirectX12::Create(HWND hWnd)
 	
 		// コマンド類の生成.
 		CreateCommandObject(
-			m_pCmdAllocator,
+			m_pCmdAllocators,
 			m_pCmdList,
 			m_pCmdQueue);
 		
@@ -129,16 +129,31 @@ void DirectX12::UpdateSceneBuffer()
 
 void DirectX12::BeginDraw()
 {
+	// このフレームで使うバックバッファのインデックス(EndDraw()まで使い回す).
+	m_FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	// このバックバッファ用のアロケータをGPUがまだ使用中でないか確認してからReset()する.
+	// (Reset()は「そのアロケータから確保したコマンドの実行がGPU側で全て終わっている」場合のみ有効.
+	// 通常は2フレーム前(FrameBufferCount=2)の処理なので、ここではほぼ待たない.
+	// これによりPresentの直後に毎回GPUの完了を待つ必要がなくなり、CPUとGPUが並行して動ける).
+	if (m_pFence->GetCompletedValue() < m_FrameFenceValues[m_FrameIndex]) {
+		if (m_hFenceEvent != nullptr) {
+			m_pFence->SetEventOnCompletion(m_FrameFenceValues[m_FrameIndex], m_hFenceEvent);
+			WaitForSingleObject(m_hFenceEvent, INFINITE);
+		}
+	}
+
+	m_pCmdAllocators[m_FrameIndex]->Reset();
+	m_pCmdList->Reset(m_pCmdAllocators[m_FrameIndex].Get(), nullptr);
+
 	// DirectX処理.
-	// バックバッファのインデックスを取得.
-	auto BBIdx = m_pSwapChain->GetCurrentBackBufferIndex();
-	auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[BBIdx].Get(),
+	auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCmdList->ResourceBarrier(1, &Barrier);
 
 	// レンダーターゲットを指定.
 	auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
-	rtvH.ptr += BBIdx * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	// 深度を指定.
 	auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
@@ -156,8 +171,7 @@ void DirectX12::BeginDraw()
 
 void DirectX12::EndDraw()
 {
-	auto BBIdx = m_pSwapChain->GetCurrentBackBufferIndex();
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[BBIdx].Get(),
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	m_pCmdList->ResourceBarrier(1, &barrier);
@@ -172,12 +186,11 @@ void DirectX12::EndDraw()
 	// SwapChain の Present を呼び出す (ここで一度だけ行われる)
 	m_pSwapChain->Present(1, 0);
 
-	// 待ち.
-	WaitForGPU();
-	// キューをクリア.
-	m_pCmdAllocator->Reset();
-	// 再びコマンドリストをためる準備.
-	m_pCmdList->Reset(m_pCmdAllocator.Get(), nullptr);
+	// このフレームの完了を示すフェンス値を発行するだけで、ここでは待たない.
+	// (待つのは次にこのバックバッファ番号(m_FrameIndex)を使うBeginDraw()の役目.
+	// そちらは通常FrameBufferCountフレーム分後なので、実質待たずに済むことがほとんど).
+	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
+	m_FrameFenceValues[m_FrameIndex] = m_FenceValue;
 }
 
 // スワップチェーンを取得.
@@ -286,24 +299,28 @@ void DirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 
 // コマンド類の生成.
 void DirectX12::CreateCommandObject(
-	MyComPtr<ID3D12CommandAllocator>&	CmdAllocator,
+	MyComPtr<ID3D12CommandAllocator>	(&CmdAllocators)[FrameBufferCount],
 	MyComPtr<ID3D12GraphicsCommandList>&CmdList,
 	MyComPtr<ID3D12CommandQueue>&		CmdQueue)
 {
 	m_hFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-	MyAssert::IsFailed(
-		_T("コマンドリストアロケーターの生成"),
-		&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
-		D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンドアロケータの種類.
-		IID_PPV_ARGS(CmdAllocator.ReleaseAndGetAddressOf()));		// (Out) コマンドアロケータ.
+	// バックバッファの数だけコマンドアロケータを用意する(1フレーム1つだけだと、
+	// Presentの直後に毎回GPUの完了を待たないとReset()できず、CPU/GPUが完全に直列化されてしまう).
+	for (UINT i = 0; i < FrameBufferCount; ++i) {
+		MyAssert::IsFailed(
+			_T("コマンドリストアロケーターの生成"),
+			&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
+			D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンドアロケータの種類.
+			IID_PPV_ARGS(CmdAllocators[i].ReleaseAndGetAddressOf()));		// (Out) コマンドアロケータ.
+	}
 
 	MyAssert::IsFailed(
 		_T("コマンドリストの生成"),
 		&ID3D12Device::CreateCommandList, m_pDevice12.Get(),
 		0,									// 単一のGPU操作の場合は0.
 		D3D12_COMMAND_LIST_TYPE_DIRECT,		// 作成するコマンド リストの種類.
-		CmdAllocator.Get(),					// アロケータへのポインタ.
+		CmdAllocators[0].Get(),				// アロケータへのポインタ(最初のフレームで使う分).
 		nullptr,							// ダミーの初期パイプラインが設定される?
 		IID_PPV_ARGS(CmdList.ReleaseAndGetAddressOf()));				// (Out) コマンドリスト.
 
@@ -333,7 +350,7 @@ void DirectX12::CreateSwapChain(MyComPtr<IDXGISwapChain4>& SwapChain)
 	SwapChainDesc.SampleDesc.Count = 1;								//  ピクセル当たりのマルチサンプルの数.
 	SwapChainDesc.SampleDesc.Quality = 0;							//  品質レベル(0~1).
 	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	//  ﾊﾞｯｸﾊﾞｯﾌｧのメモリ量.
-	SwapChainDesc.BufferCount = 2;									//  ﾊﾞｯｸﾊﾞｯﾌｧの数.
+	SwapChainDesc.BufferCount = FrameBufferCount;					//  ﾊﾞｯｸﾊﾞｯﾌｧの数(コマンドアロケータの数と合わせる).
 	SwapChainDesc.Scaling = DXGI_SCALING_STRETCH;					//  ﾊﾞｯｸﾊﾞｯﾌｧのｻｲｽﾞがﾀｰｹﾞｯﾄと等しくない場合のｻｲｽﾞ変更の動作.
 	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		//  ﾌﾘｯﾌﾟ後は素早く破棄.
 	SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;			//  ｽﾜｯﾌﾟﾁｪｰﾝ,ﾊﾞｯｸﾊﾞｯﾌｧの透過性の動作

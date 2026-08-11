@@ -219,6 +219,11 @@ void PMXActor::InitializeRuntimeBones()
 			localPosition.x -= parentBone.Position.x;
 			localPosition.y -= parentBone.Position.y;
 			localPosition.z -= parentBone.Position.z;
+
+			// 隣接リスト(親→子)を事前構築しておく. これが無いと毎フレーム
+			// UpdateBoneGlobalTransforms()が子ボーンを全ボーンから線形探索することになり、
+			// ボーン数nに対してO(n^2)かかってしまう(実機でFPS低下の原因と判明).
+			m_RuntimeBones[modelBone.ParentBoneIndex].ChildIndices.push_back(static_cast<int32_t>(i));
 		}
 
 		runtimeBone.OffsetMatrix = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&localPosition));
@@ -442,13 +447,10 @@ void PMXActor::UpdateBoneGlobalTransforms(int boneIndex, const DirectX::XMMATRIX
 	// 自分のアニメーション適用後のローカル行列を、親のグローバル行列に乗算
 	runtimeBone.FinalWorldMatrix = currentLocalAnimatedMatrix * parentGlobalTransform;
 
-	// 子ボーンを再帰的に更新
-	// ModelBoneData->ChildBoneIndices がない場合は、全てのボーンをループしてParentBoneIndexで判定する方法もあります
-	for (size_t i = 0; i < m_RuntimeBones.size(); ++i) {
-		// 現在のボーンが親である全ての子ボーンを探して更新
-		if (m_RuntimeBones[i].ModelBoneData->ParentBoneIndex == boneIndex) {
-			UpdateBoneGlobalTransforms(static_cast<int>(i), runtimeBone.FinalWorldMatrix);
-		}
+	// 子ボーンを再帰的に更新(InitializeRuntimeBonesで事前構築した隣接リストを辿るだけ.
+	// 以前は毎回全ボーンを線形探索していたためO(ボーン数^2)だった).
+	for (int32_t childIndex : runtimeBone.ChildIndices) {
+		UpdateBoneGlobalTransforms(childIndex, runtimeBone.FinalWorldMatrix);
 	}
 }
 
