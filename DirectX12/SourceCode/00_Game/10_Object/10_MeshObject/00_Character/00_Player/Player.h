@@ -12,9 +12,9 @@
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/10.
-* @brief     : プレイヤークラス. StateMachine<Player>とPlayerState以下のステート群で
-*            : 入力駆動の移動(Idle/Run)を制御する.
-* @pattern   : State.
+* @brief     : プレイヤークラス. 
+*			 : StateMachine<Player>とPlayerStateで構成されるステートマシンを持つ.
+* @pattern   : FSM.
 **********************************************************************************/
 
 class Player final : public Character
