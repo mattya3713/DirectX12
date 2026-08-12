@@ -7,8 +7,16 @@
     <!-- Remove any existing FxCompile items that include HLSL files -->
     <FxCompile Remove="**\*.hlsl" />
 
-    <!-- Include all HLSL files as Content and copy to output directory when newer -->
-    <Content Include="**\*.hlsl">
+    <!-- Include HLSL files as Content and copy to output directory when newer.
+         Scoped to SourceCode\ and Data\Shader\ only (NOT a bare **\*.hlsl over the whole
+         project root): the output directories (x64\Debug\, x64\Release\) live under the
+         project root too, so an unscoped glob re-matches files this same step already
+         copied there on a previous build and copies them again one level deeper, causing
+         the output tree to nest and multiply on every single build (found 239k+ files,
+         17+ levels of x64\Debug\x64\Release\... nesting, after repeated builds). Also
+         excludes vendored third-party .hlsl files under Data\Library\ (e.g. DirectXTex's
+         own shaders), which this project never loads. -->
+    <Content Include="SourceCode\**\*.hlsl;Data\Shader\**\*.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
