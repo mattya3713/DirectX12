@@ -78,10 +78,8 @@ void ModelPreviewPanel::LoadModel(int Index)
 {
 	if (Index < 0 || Index >= static_cast<int>(m_ModelList.size())) { return; }
 
-	// 現在のアクターのGPUリソース(頂点/インデックスバッファ・ディスクリプタヒープ等)を破棄する前に、
-	// それらを参照している可能性のあるGPU側の描画コマンドが完了しているのを必ず待つ.
-	// (Present直後に毎回待たないフレームインフライト方式のため、ここで待たずに破棄すると、
-	// GPUがまだ参照中のリソースを解放してしまい、アプリが不正終了する不具合があった).
+	// GPUがまだ参照中かもしれないリソースを破棄する前に完了を待つ
+	// (フレームインフライト方式のため、待たずに破棄するとアプリが不正終了する).
 	if (DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>()) {
 		p_dx12->WaitForGPU();
 	}
@@ -95,8 +93,7 @@ void ModelPreviewPanel::LoadModel(int Index)
 	try {
 		if (model.IsXFormat) {
 			m_upXActor = std::make_unique<XActor>(model.FilePath.c_str(), m_Renderer);
-			// .xモデルはPMX(MMDスケール)よりもはるかに小さい単位系のものがあるため、
-			// MainSceneでの表示と同じ倍率(15倍)をかけて、切り替え時にカメラを動かさなくても見える大きさにする.
+			// .xはPMXよりスケール単位が小さいため、MainSceneと同じ15倍を掛けて見た目を合わせる.
 			m_upXActor->SetWorldMatrix(DirectX::XMMatrixScaling(15.0f, 15.0f, 15.0f));
 			// Editorには一時停止/Stepの概念が無く常時再生のため、先頭クリップを既定で再生しておく.
 			const auto& clips = m_upXActor->GetClips();
@@ -106,8 +103,7 @@ void ModelPreviewPanel::LoadModel(int Index)
 		}
 		else {
 			m_pPMXActor = std::make_shared<PMXActor>(model.FilePath.c_str(), m_Renderer);
-			// Editorは既定で一時停止状態(Stepボタンでのみ進む)だが、それだと初期姿勢が未計算のまま
-			// (ボーン変換が一度も更新されず)モデルが表示されないため、最初の姿勢だけ計算しておく.
+			// Editorは既定で一時停止のため、StepFrameで初期姿勢だけ計算しておく(でないと表示されない).
 			m_pPMXActor->StepFrame();
 		}
 		m_SelectedDisplayName = model.DisplayName;
@@ -122,8 +118,7 @@ void ModelPreviewPanel::LoadModel(int Index)
 void ModelPreviewPanel::Update()
 {
 	// モデル切り替え用のドロップダウン(見つかった全モデルが対象).
-	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ.
-	// 以後はimgui.rulに保存された位置があればそちらが優先される).
+	// 他のデバッグウィンドウと重ならない初期位置(初回起動時のみ).
 	ImGui::SetNextWindowPos(ImVec2(500.0f, 20.0f), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Model Select", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	if (!m_ModelList.empty()) {
