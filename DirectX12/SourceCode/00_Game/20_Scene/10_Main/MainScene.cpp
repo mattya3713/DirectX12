@@ -113,6 +113,7 @@ void MainScene::Update()
 			p_scene_manager->LoadScene(SceneManager::eList::AnimationTuning);
 		}
 	}
+
 #endif // _DEBUG.
 
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
@@ -189,24 +190,24 @@ void MainScene::Draw()
 		ImGui::End();
 	}
 
-	if (m_upPlayer) {
-		m_upPlayer->Draw();
+	//if (m_upPlayer) {
+	//	m_upPlayer->Draw();
 
-		ImGui::Begin("Player", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		const DirectX::XMFLOAT3& position = m_upPlayer->GetPosition();
-		ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
-		ImGui::Text("State: %s", ToDebugString(m_upPlayer->GetCurrentStateID()));
-		ImGui::End();
-	}
+	//	ImGui::Begin("Player", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	//	const DirectX::XMFLOAT3& position = m_upPlayer->GetPosition();
+	//	ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
+	//	ImGui::Text("State: %s", ToDebugString(m_upPlayer->GetCurrentStateID()));
+	//	ImGui::End();
+	//}
 
-	if (m_upEnemy) {
-		m_upEnemy->Draw();
+	//if (m_upEnemy) {
+	//	m_upEnemy->Draw();
 
-		ImGui::Begin("Enemy", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		const DirectX::XMFLOAT3& position = m_upEnemy->GetPosition();
-		ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
-		ImGui::Text("State: %s", ToDebugString(m_upEnemy->GetCurrentStateID()));
-		ImGui::Text("HP: %.0f / %.0f", m_upEnemy->GetHealth().GetHP(), m_upEnemy->GetHealth().GetMaxHP());
-		ImGui::End();
-	}
+	//	ImGui::Begin("Enemy", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	//	const DirectX::XMFLOAT3& position = m_upEnemy->GetPosition();
+	//	ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
+	//	ImGui::Text("State: %s", ToDebugString(m_upEnemy->GetCurrentStateID()));
+	//	ImGui::Text("HP: %.0f / %.0f", m_upEnemy->GetHealth().GetHP(), m_upEnemy->GetHealth().GetMaxHP());
+	//	ImGui::End();
+	//}
 }
