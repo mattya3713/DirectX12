@@ -14,6 +14,7 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
 #include "99_System/Scene/SceneManager.h"
@@ -96,6 +97,12 @@ void MainScene::Create()
 		m_upXActor = std::make_unique<XActor>("Data\\Model\\X\\player.x", *m_pPMXRenderer);
 		m_upXActor->SetWorldMatrix(DirectX::XMMatrixScaling(15.0f, 15.0f, 15.0f) * DirectX::XMMatrixTranslation(-30.0f, 0.0f, 0.0f));
 		m_upXActor->PlayAnimation("player_run"); // キーフレーム再生の動作確認用.
+
+#if _DEBUG
+		// モデル確認用パネル(デバッグ専用). シーンを切り替えなくても常にモデルプレビュー・
+		// アニメーション確認ができるように、MainScene側にも常駐させておく.
+		m_upModelPreviewPanel = std::make_unique<ModelPreviewPanel>(*m_pPMXRenderer);
+#endif // _DEBUG.
 	}
 	catch (const std::runtime_error& Msg) {
 		// エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
@@ -142,6 +149,12 @@ void MainScene::Update()
 		m_upXActor->Update();
 	}
 
+#if _DEBUG
+	if (m_upModelPreviewPanel) {
+		m_upModelPreviewPanel->Update();
+	}
+#endif // _DEBUG.
+
 	if (m_upEnemy && m_upPlayer) {
 		// ロックオン等は無く、Playerの位置をそのままEnemyのターゲットとして毎フレーム渡す.
 		m_upEnemy->SetTargetPos(m_upPlayer->GetPosition());
@@ -176,6 +189,8 @@ void MainScene::Draw()
 	if (m_upXActor) {
 		m_upXActor->Draw();
 
+		// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
+		ImGui::SetNextWindowPos(ImVec2(20.0f, 420.0f), ImGuiCond_FirstUseEver);
 		ImGui::Begin("XActor Animation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		const auto& clips = m_upXActor->GetClips();
 		for (size_t i = 0; i < clips.size(); ++i) {
@@ -189,6 +204,12 @@ void MainScene::Draw()
 		}
 		ImGui::End();
 	}
+
+#if _DEBUG
+	if (m_upModelPreviewPanel) {
+		m_upModelPreviewPanel->Draw();
+	}
+#endif // _DEBUG.
 
 	//if (m_upPlayer) {
 	//	m_upPlayer->Draw();

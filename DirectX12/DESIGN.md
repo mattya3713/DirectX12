@@ -154,9 +154,11 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - シーン切り替え(`LoadScene()`)は即時ではなく予約制。シーン自身の`Update()`の中から`LoadScene()`を呼んでも、実際の切り替え(`m_upScene.reset()`)は次の`SceneManager::Update()`の先頭で行われるため、シーンが自分自身のUpdate実行中に自分自身を破棄する事故を防いでいる(Senzanはフェード完了待ちで同じ問題を回避していたが、このプロジェクトにまだFadeManagerが無いため単純な1フレーム遅延にした)。
   - `SourceCode/99_System/Scene/`に配置(GameObject/Character等と違いゲーム内容に依存しないため`00_Game`ではなく`99_System`)。
 - [x] `MainScene` — 元々Main.cppが直接持っていたPMXモデル表示部分(カメラ登録・PMXActor生成・Update・Draw)をシーンとして抽出.
-- [x] `AnimationTuningScene`(デバッグ専用) — Senzanの同名シーンを参考に新設。専用のPMXActor+カメラを持ち、`AnimationEditor`を常時表示する。`F1`でMainScene⇔AnimationTuningを切り替え可能。デバッグ時は`SceneManager`のImGuiウィンドウ(現在のシーン名表示+切り替えボタン)からも切り替えられる。
-- [x] `AnimationEditor`(`SourceCode/99_Utility/Debug/Imgui/`) — アニメーションの再生範囲(開始/終了フレーム)・再生速度を調整し、1フレームずつステップ実行できるImGuiツール。`PMXActor`に`SetPlaybackRange()`/`SetAnimationSpeed()`/`StepFrame()`(壁時計に依存しない単一フレーム前進)を追加して対応。
-  - 落とし穴: `AnimationTuningScene`は既定で一時停止状態(Stepボタンでのみ進む)のため、`Create()`で最初の`StepFrame()`を1回呼ばないとボーン変換が一度も計算されずモデルが非表示になる(実際に発生し修正済み).
+- [x] `AnimationTuningScene`(デバッグ専用) — Senzanの同名シーンを参考に新設。`F1`でMainScene⇔AnimationTuningを切り替え可能。デバッグ時は`SceneManager`のImGuiウィンドウ(現在のシーン名表示+切り替えボタン)からも切り替えられる。
+- [x] `ModelPreviewPanel`(`SourceCode/99_Utility/Debug/Imgui/`) — `Data\Model\PMX`・`Data\Model\X`配下で見つかった全モデルをドロップダウンで切り替えながら`AnimationEditor`で再生・調整できるデバッグパネル。元々`AnimationTuningScene`専用だった実装(モデル走査・切り替え・PMXActor/XActor所有)をシーンに依存しない部品として切り出した。
+  - 切り出した理由: 「モデル確認のためだけにシーンを切り替える(=MainSceneを一旦破棄して作り直す)」のはUnityのシーンビュー/ゲームビューの感覚と違い不便、という指摘を受けた。`MainScene`にも同じ`ModelPreviewPanel`を常駐させることで、ゲーム本体(Player/Enemy等)を止めずにいつでもモデルプレビュー・アニメーション確認ができるようにした。`AnimationTuningScene`は現在ではこの`ModelPreviewPanel`を専用カメラ付きで表示するだけの薄いラッパーになっている(重複コードを避けるため、両シーンから同じクラスを利用する形にした)。
+  - 落とし穴: PMX選択時は既定で一時停止状態(Stepボタンでのみ進む)のため、`LoadModel()`内で最初の`StepFrame()`を1回呼ばないとボーン変換が一度も計算されずモデルが非表示になる(実際に発生し修正済み).
+- [x] ImGuiウィンドウの初期位置固定 — `imgui.rul`(実行時生成のレイアウト保存ファイル)が無い状態(初回起動・削除後)だと全てのウィンドウが既定位置(60,60)に重なって表示され邪魔だったため、`Debug HUD`・`Scene`・`Model Select`・`Animation Editor`・`XActor Animation`の各ウィンドウに`ImGui::SetNextWindowPos(..., ImGuiCond_FirstUseEver)`で重ならない初期位置を指定した。`FirstUseEver`のため、一度`imgui.rul`に保存されればユーザーが動かした位置がそれ以降優先される(強制的に固定するわけではない).
 
 ### 完了済み(参考)
 - モデルデータ層・PMX/PMDパーサー分離・`IModelParser`

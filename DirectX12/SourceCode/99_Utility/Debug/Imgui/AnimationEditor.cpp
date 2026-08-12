@@ -17,9 +17,10 @@ bool AnimationEditor::Draw(PMXActor& Actor)
 
 	bool step_requested = false;
 
+	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
+	ImGui::SetNextWindowPos(ImVec2(500.0f, 110.0f), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Animation Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGuiManager::Text("起動中: ゲームの更新を停止しています(F1で終了)");
 	ImGui::Text("Frame: %.1f / %u", Actor.GetCurrentAnimationTime(), Actor.GetMaxFrame());
 
 	ImGui::Separator();
@@ -76,9 +77,11 @@ void AnimationEditor::Draw(XActor& Actor)
 {
 	if (!m_IsActive) { return; }
 
+	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
+	ImGui::SetNextWindowPos(ImVec2(500.0f, 110.0f), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Animation Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGuiManager::Text("起動中(F1で終了). クリップを選ぶと再生します(常時再生).");
+	ImGuiManager::Text("クリップを選ぶと再生します(常時再生).");
 
 	ImGui::Separator();
 

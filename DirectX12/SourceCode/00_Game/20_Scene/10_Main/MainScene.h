@@ -9,6 +9,7 @@ class PMXActor;
 class XActor;
 class Player;
 class Enemy;
+class ModelPreviewPanel;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -34,4 +35,10 @@ private:
 	std::unique_ptr<XActor>      m_upXActor;
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Enemy>       m_upEnemy;
+
+#if _DEBUG
+	// モデル確認用パネル(デバッグ専用). シーンを切り替えずにいつでも任意のモデルを
+	// プレビュー・アニメーション確認できる(Unityのシーンビュー/ゲームビューのイメージ).
+	std::unique_ptr<ModelPreviewPanel> m_upModelPreviewPanel;
+#endif // _DEBUG.
 };

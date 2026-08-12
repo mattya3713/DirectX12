@@ -64,6 +64,8 @@ void SceneManager::Update()
 		default: break;
 	}
 
+	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
+	ImGui::SetNextWindowPos(ImVec2(20.0f, 290.0f), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Scene");
 	ImGui::Text("Current: %s", scene_name);
 	ImGui::Separator();

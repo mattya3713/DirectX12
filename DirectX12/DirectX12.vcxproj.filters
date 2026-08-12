@@ -124,6 +124,7 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
     <ClInclude Include="SourceCode\99_System\Scene\SceneManager.h" />
     <ClInclude Include="SourceCode\99_System\Scene\SceneBase.h" />
     <ClInclude Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.h" />
@@ -217,6 +218,7 @@
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.cpp" />
     <ClCompile Include="SourceCode\99_System\Scene\SceneManager.cpp" />
     <ClCompile Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
