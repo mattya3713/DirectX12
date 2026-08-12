@@ -140,7 +140,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug;Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
@@ -167,7 +167,7 @@ exit /b 0</Command>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_System\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
@@ -175,15 +175,17 @@ exit /b 0</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug;Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Data\Library\DirectXTex\DirectXTex\Bin\Desktop_2022_Win10\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /I /E "$(ProjectDir)Data\Shader" "$(OutDir)Data\Shader\"
-xcopy /Y /I /E "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
+      <Command>xcopy /Y /I /E "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
 xcopy /Y /I /E "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
 xcopy /Y /I /E "$(ProjectDir)Data\Font" "$(OutDir)Data\Font\"
+if not exist "$(OutDir)Data\Shader\PMX\" mkdir "$(OutDir)Data\Shader\PMX\"
+fxc.exe /nologo /T vs_5_0 /E VS /Fo "$(OutDir)Data\Shader\PMX\Vertex.cso" "$(ProjectDir)Data\Shader\PMX\Vertex.hlsl"
+fxc.exe /nologo /T ps_5_0 /E PS /Fo "$(OutDir)Data\Shader\PMX\Pixel.cso" "$(ProjectDir)Data\Shader\PMX\Pixel.hlsl"
 exit /b 0</Command>
-      <Message>Data\Shader・Data\Model・Data\Sound・Data\Fontを出力先へコピー(実行時に相対パスで読み込むため).</Message>
+      <Message>Data\Model・Data\Sound・Data\Fontを出力先へコピー、PMXシェーダーはfxc.exeで.csoへ事前コンパイル(配布物にソースを含めないため).</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

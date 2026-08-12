@@ -182,7 +182,10 @@ void PMXRenderer::CreateGraphicsPipelineForPMX() {
 	MyComPtr<ID3DBlob> ErrerBlob(nullptr);	// エラーのブロブ.
 	HRESULT   result = S_OK;
 
-	// 頂点シェーダーの読み込み.
+	// シェーダーの読み込み.
+	// Debug: .hlslソースを実行時コンパイル(編集して即実行できるように).
+	// Release: ビルド時にfxc.exeで事前コンパイルした.csoを読むだけ(配布物にソースを含めない).
+#if _DEBUG
 	CompileShaderFromFile(
 		L"Data\\Shader\\PMX\\Vertex.hlsl",
 		"VS", "vs_5_0",
@@ -192,6 +195,15 @@ void PMXRenderer::CreateGraphicsPipelineForPMX() {
 		L"Data\\Shader\\PMX\\Pixel.hlsl",
 		"PS", "ps_5_0",
 		PSBlob.ReleaseAndGetAddressOf());
+#else
+	LoadCompiledShader(
+		L"Data\\Shader\\PMX\\Vertex.cso",
+		VSBlob.ReleaseAndGetAddressOf());
+
+	LoadCompiledShader(
+		L"Data\\Shader\\PMX\\Pixel.cso",
+		PSBlob.ReleaseAndGetAddressOf());
+#endif // _DEBUG.
 
 	D3D12_INPUT_ELEMENT_DESC PMXInputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -389,6 +401,17 @@ HRESULT PMXRenderer::CompileShaderFromFile(
 	MyAssert::ErrorBlob(Result, ErrorBlob);
 
 	return Result;
+}
+
+// 事前コンパイル済みシェーダー(.cso)の読み込み(Releaseビルド用).
+HRESULT PMXRenderer::LoadCompiledShader(
+	const std::wstring& FilePath,
+	ID3DBlob** ShaderBlob)
+{
+	MyAssert::IsFailed(_T("コンパイル済みシェーダー(.cso)の読み込み(Releaseビルドを最初からやり直してください)"),
+		D3DReadFileToBlob, FilePath.c_str(), ShaderBlob);
+
+	return S_OK;
 }
 
 // PMD用のパイプラインステートを取得.

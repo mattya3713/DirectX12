@@ -50,6 +50,16 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
 - **`DirectX12::EndDraw()`が毎フレームCPU/GPUを完全に直列化していた**: `Present()`直後に`WaitForGPU()`(GPU完了までCPUを止めて待つ)を呼んでからコマンドアロケータを`Reset()`する実装だったため、1フレームの所要時間が「CPU時間+GPU時間」の足し算になり、DirectX12本来のCPU/GPU並行実行(パイプライニング)ができていなかった。対策としてバックバッファ数(`FrameBufferCount=2`)ぶんのコマンドアロケータを用意する「フレームインフライト」方式に変更: `EndDraw()`はフェンスに目印(Signal)を立てるだけで待たず、`BeginDraw()`の先頭で「これから使うバッファ枠のGPU処理が完了しているか」をフェンス値で確認してから(通常は2フレーム前の処理なのでほぼ待たずに)`Reset()`する。
 - 修正後、実機のDebug HUDで`FPS: 60.0 / Delta Time: 16.667ms`が数秒間安定して表示されることをスクリーンショットで確認済み。
 
+## シェーダーの配布方式(Debug=実行時コンパイル / Release=事前コンパイル)
+
+人に配布する予定があるため、Releaseビルドの配布物にシェーダーのソースコード(`.hlsl`)が残らないようにした。DebugとReleaseで方式を分けている。
+
+- **Debug**: 従来通り`Data\Shader\PMX\*.hlsl`をビルド後に出力先へコピーし、`PMXRenderer::CompileShaderFromFile()`(`D3DCompileFromFile`、`D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION`付き)で起動のたびに実行時コンパイルする。編集して即実行できる開発の身軽さを維持するため。
+- **Release**: `PostBuildEvent`で`fxc.exe`を使い、ビルド時に`Vertex.hlsl`/`Pixel.hlsl`をそれぞれ`Vertex.cso`/`Pixel.cso`(コンパイル済みバイナリ、最適化あり・デバッグ情報なしが既定)へ変換して出力先へ直接書き出す。実行時は`PMXRenderer::LoadCompiledShader()`(`D3DReadFileToBlob`)で読むだけ。`Directory.Build.targets`の`Data\Shader\**\*.hlsl`のContentコピーは`'$(Configuration)'=='Debug'`条件を付けてReleaseでは行わないようにし、`.hlsl`ソースが配布物に含まれないようにした。
+- 分岐は`PMXRenderer::CreateGraphicsPipelineForPMX()`内の`#if _DEBUG` / `#else`で行っている。PMD(`PMDRenderer`)は現状どのシーンからも生成されない未使用コードのため対象外とした。
+- ついでに発覚した不具合: Release構成の`RuntimeLibrary`が`MultiThreadedDebugDLL`(デバッグ版CRT)のままだった上に、`AdditionalLibraryDirectories`がDebug/Release両方のDirectXTex.libパスを同時に含んでいたため、Releaseビルドでも常にDebug版のDirectXTex.libがリンクされていた(配布物としては致命的: VC++デバッグランタイムが無い環境で起動できない)。`RuntimeLibrary`を`MultiThreadedDLL`に、`AdditionalLibraryDirectories`をDebug/Releaseそれぞれ自分の構成のパスのみに修正した。
+- 検証: DebugとReleaseそれぞれクリーンビルド後に起動し、Debugは`.hlsl`実行時コンパイル、Releaseは出力先に`.cso`のみ(`.hlsl`/`Header.hlsli`は含まれない)が生成されること、両方とも正常に描画されることをスクリーンショットで確認済み。
+
 ## アーキテクチャ方針(決定事項)
 
 - **オブジェクト基底は継承ベース**。コンポーネント合成方式は採用しない。`GameObject`(仮称)は純粋インターフェースにはせず、Transform・Update/Drawフックなど実装を持つ具象基底クラスとする。

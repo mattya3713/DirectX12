@@ -72,6 +72,17 @@ private:
 		LPCSTR Target,
 		ID3DBlob** ShaderBlob);
 
+	/*******************************************
+	* @brief	事前コンパイル済みシェーダー(.cso)の読み込み(Releaseビルド用).
+	*            : ビルド時にfxc.exeで.hlsl→.csoへ変換したものをそのまま読むだけで、
+	*            : 実行時コンパイルもソース同梱も不要にする(配布物にシェーダーコードを含めないため).
+	* @param	ファイルパス(.cso).
+	* @param	シェーダーブロブ(巨大バイナリ).
+	*******************************************/
+	HRESULT LoadCompiledShader(
+		const std::wstring& FilePath,
+		ID3DBlob** ShaderBlob);
+
 private:
 	DirectX12& m_pDx12;
 

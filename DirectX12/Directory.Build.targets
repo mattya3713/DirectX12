@@ -16,7 +16,15 @@
          17+ levels of x64\Debug\x64\Release\... nesting, after repeated builds). Also
          excludes vendored third-party .hlsl files under Data\Library\ (e.g. DirectXTex's
          own shaders), which this project never loads. -->
-    <Content Include="SourceCode\**\*.hlsl;Data\Shader\**\*.hlsl">
+    <!-- PMD(SourceCode\配下)のシェーダーは常にソースをコピーする(未使用コードだが既存挙動を変えない). -->
+    <Content Include="SourceCode\**\*.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+
+    <!-- PMX(Data\Shader\配下)はDebugのみソースをコピーする(実行時コンパイルで使うため).
+         Releaseはfxc.exeで事前コンパイルした.csoをPostBuildEventで直接出力先へ書き出すので、
+         配布物にシェーダーのソースコードを含めないためここではコピーしない. -->
+    <Content Include="Data\Shader\**\*.hlsl" Condition="'$(Configuration)'=='Debug'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
