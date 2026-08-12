@@ -6,7 +6,7 @@
 #include<string>
 #include"PMX/PMXStructHeader.h"	// TransformConstantBuffer(b1)を共用する.
 #include"Model/ModelData.h"		// フォーマットを問わないモデルデータ.
-#include"XSkeletonData.h"			// ボーン階層・アニメーションクリップ.
+#include"XSkeletonData.h"		// ボーン階層・アニメーションクリップ.
 
 // 前方宣言.
 class DirectX12;
@@ -16,9 +16,6 @@ class PMXRenderer;
 * @author    : mattya3713.
 * @date      : 2026/08/12.
 * @brief     : .xファイル(XParser経由)をPMXRendererの既存パイプラインで描画するクラス.
-*            : ボーン階層・スキニング・キーフレームアニメーション(XSkeleton)に対応する.
-*            : 頂点レイアウト(Model::Vertex)・ルートシグネチャ・シェーダーはPMXActorと
-*            : 共通のため、専用のXRendererは用意していない.
 **********************************************************************************/
 
 class XActor
@@ -32,7 +29,6 @@ public:
 	XActor(XActor&&)                 = delete;
 	XActor& operator=(XActor&&)      = delete;
 
-	// 現在のクリップの再生時間を進め、ボーン行列を更新する(Draw前に毎フレーム呼ぶこと).
 	void Update();
 	void Draw();
 
@@ -64,8 +60,7 @@ private:
 	// テクスチャがなければレンダラーの白テクスチャを返す.
 	MyComPtr<ID3D12Resource> LoadTexture(const std::string& Path);
 
-	// 現在のクリップ・再生時刻から各ボーンのローカル変換を求め、階層をたどってワールド変換を
-	// 計算し、GPUへ送るFinalMatrix(OffsetMatrix * ワールド変換)を全ボーン分書き込む.
+	// FinalMatrix全ボーン分書き込む.
 	void UpdateBoneMatrices();
 
 private:

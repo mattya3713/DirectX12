@@ -22,18 +22,13 @@ class AnimationEditor;
 class ModelPreviewPanel final
 {
 public:
-	// Rendererは外部(呼び出し元シーン)が所有するものをそのまま共有する.
 	explicit ModelPreviewPanel(PMXRenderer& Renderer);
 	~ModelPreviewPanel();
 
 	ModelPreviewPanel(const ModelPreviewPanel&)            = delete;
 	ModelPreviewPanel& operator=(const ModelPreviewPanel&) = delete;
 
-	// モデル選択ドロップダウン・AnimationEditorのUI描画、選択中アクターの更新を行う.
 	void Update();
-
-	// 選択中のアクター(PMXActor/XActorどちらか一方)を描画する.
-	// 呼び出し側でPipelineState/RootSignature/PrimitiveTopologyを設定済みであること.
 	void Draw();
 
 private:

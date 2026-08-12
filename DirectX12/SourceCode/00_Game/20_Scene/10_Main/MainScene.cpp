@@ -19,37 +19,6 @@
 #include "99_Utility/String/String.h"
 #include "99_System/Scene/SceneManager.h"
 
-namespace {
-	// デバッグ表示用にPlayerState::eIDを文字列化する.
-	const char* ToDebugString(PlayerState::eID Id)
-	{
-		switch (Id)
-		{
-		case PlayerState::eID::Idle:          return "Idle";
-		case PlayerState::eID::Run:           return "Run";
-		case PlayerState::eID::AttackCombo_0: return "AttackCombo_0";
-		case PlayerState::eID::AttackCombo_1: return "AttackCombo_1";
-		case PlayerState::eID::AttackCombo_2: return "AttackCombo_2";
-		case PlayerState::eID::Parry:         return "Parry";
-		case PlayerState::eID::DodgeExecute:  return "DodgeExecute";
-		default:                              return "None";
-		}
-	}
-
-	// デバッグ表示用にEnemyState::eIDを文字列化する.
-	const char* ToDebugString(EnemyState::eID Id)
-	{
-		switch (Id)
-		{
-		case EnemyState::eID::Idle:   return "Idle";
-		case EnemyState::eID::Chase:  return "Chase";
-		case EnemyState::eID::Attack: return "Attack";
-		case EnemyState::eID::Dead:   return "Dead";
-		default:                      return "None";
-		}
-	}
-}
-
 MainScene::MainScene() = default;
 
 MainScene::~MainScene()
@@ -72,40 +41,8 @@ void MainScene::Create()
 
 	try {
 		m_pPMXRenderer = std::make_shared<PMXRenderer>(*p_dx12);
-		m_pPMXActor = std::make_shared<PMXActor>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-		m_pPMXActor->PlayAnimation();
-
-		// Playerの見た目(PMXMesh). 同じレンダラー(パイプライン)を共有する.
-		// 動作確認しやすいよう原点から少しずらして配置(重ならないように).
-		m_upPlayer = std::make_unique<Player>();
-		m_upPlayer->SetPosition({ 30.0f, 0.0f, 0.0f });
-		auto p_player_mesh = std::make_shared<PMXMesh>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-		p_player_mesh->Play();
-		m_upPlayer->AttachMesh(p_player_mesh);
-
-		// Enemy(動作確認用). Combat/Dodgeを実際に試せる相手として、Playerの近くに
-		// AggroRangeより少し離して配置する(Idle→Chaseへの遷移も確認できるように).
-		m_upEnemy = std::make_unique<Enemy>();
-		m_upEnemy->SetPosition({ 30.0f, 0.0f, 12.0f });
-		auto p_enemy_mesh = std::make_shared<PMXMesh>("Data\\Model\\PMX\\Hatune\\REM式プロセカ風初音ミクN25.pmx", *m_pPMXRenderer);
-		p_enemy_mesh->Play();
-		m_upEnemy->AttachMesh(p_enemy_mesh);
-
-		// XParser経由の.x表示確認用. 元モデルは全体で約1.3x1.5x2.0(単位)しか無く、
-		// Hatuneモデル等(MMDスケール)と比べて非常に小さいため15倍に拡大して表示する.
-		// 動作確認用に他のモデルと重ならない位置(Playerの反対側)へ配置.
-		m_upXActor = std::make_unique<XActor>("Data\\Model\\X\\player.x", *m_pPMXRenderer);
-		m_upXActor->SetWorldMatrix(DirectX::XMMatrixScaling(15.0f, 15.0f, 15.0f) * DirectX::XMMatrixTranslation(-30.0f, 0.0f, 0.0f));
-		m_upXActor->PlayAnimation("player_run"); // キーフレーム再生の動作確認用.
-
-#if _DEBUG
-		// モデル確認用パネル(デバッグ専用). シーンを切り替えなくても常にモデルプレビュー・
-		// アニメーション確認ができるように、MainScene側にも常駐させておく.
-		m_upModelPreviewPanel = std::make_unique<ModelPreviewPanel>(*m_pPMXRenderer);
-#endif // _DEBUG.
 	}
 	catch (const std::runtime_error& Msg) {
-		// エラーメッセージを表示(未捕捉のまま伝播させてabortするのを防ぐ).
 		std::wstring w_str = MyString::StringToWString(Msg.what());
 		_ASSERT_EXPR(false, w_str.c_str());
 	}
@@ -141,20 +78,6 @@ void MainScene::Update()
 		p_dx12->Update();
 	}
 
-	if (m_pPMXActor) {
-		m_pPMXActor->Update();
-	}
-
-	if (m_upXActor) {
-		m_upXActor->Update();
-	}
-
-#if _DEBUG
-	if (m_upModelPreviewPanel) {
-		m_upModelPreviewPanel->Update();
-	}
-#endif // _DEBUG.
-
 	if (m_upEnemy && m_upPlayer) {
 		// ロックオン等は無く、Playerの位置をそのままEnemyのターゲットとして毎フレーム渡す.
 		m_upEnemy->SetTargetPos(m_upPlayer->GetPosition());
@@ -181,54 +104,4 @@ void MainScene::Draw()
 	p_dx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
 	p_dx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
 	p_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	if (m_pPMXActor) {
-		m_pPMXActor->Draw();
-	}
-
-	if (m_upXActor) {
-		m_upXActor->Draw();
-
-		// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
-		ImGui::SetNextWindowPos(ImVec2(20.0f, 420.0f), ImGuiCond_FirstUseEver);
-		ImGui::Begin("XActor Animation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		const auto& clips = m_upXActor->GetClips();
-		for (size_t i = 0; i < clips.size(); ++i) {
-			ImGui::PushID(static_cast<int>(i));
-			const bool is_current = (static_cast<int>(i) == m_upXActor->GetCurrentClipIndex());
-			if (is_current) { ImGui::Text("> "); ImGui::SameLine(); }
-			if (ImGui::Button(clips[i].Name.c_str())) {
-				m_upXActor->PlayAnimation(clips[i].Name);
-			}
-			ImGui::PopID();
-		}
-		ImGui::End();
-	}
-
-#if _DEBUG
-	if (m_upModelPreviewPanel) {
-		m_upModelPreviewPanel->Draw();
-	}
-#endif // _DEBUG.
-
-	//if (m_upPlayer) {
-	//	m_upPlayer->Draw();
-
-	//	ImGui::Begin("Player", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	//	const DirectX::XMFLOAT3& position = m_upPlayer->GetPosition();
-	//	ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
-	//	ImGui::Text("State: %s", ToDebugString(m_upPlayer->GetCurrentStateID()));
-	//	ImGui::End();
-	//}
-
-	//if (m_upEnemy) {
-	//	m_upEnemy->Draw();
-
-	//	ImGui::Begin("Enemy", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	//	const DirectX::XMFLOAT3& position = m_upEnemy->GetPosition();
-	//	ImGui::Text("Position: (%.2f, %.2f, %.2f)", position.x, position.y, position.z);
-	//	ImGui::Text("State: %s", ToDebugString(m_upEnemy->GetCurrentStateID()));
-	//	ImGui::Text("HP: %.0f / %.0f", m_upEnemy->GetHealth().GetHP(), m_upEnemy->GetHealth().GetMaxHP());
-	//	ImGui::End();
-	//}
 }

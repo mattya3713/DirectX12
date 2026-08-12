@@ -11,9 +11,6 @@ class PMXRenderer;
 * @author    : mattya3713.
 * @date      : 2026/08/10.
 * @brief     : PMXActorをラップし、MeshObjectから必要な最低限の操作だけを見せるクラス.
-*            : ボーン・GPUバッファ等の低レベルな詳細はPMXActor内に隠蔽する.
-*            : PMXActor自体はshared_ptrで保持する(現状は1インスタンス=1所有だが、
-*            : 将来モデルデータを複数GameObjectで使い回す拡張の余地を残すため).
 **********************************************************************************/
 
 class PMXMesh final
@@ -26,10 +23,8 @@ public:
 	PMXMesh& operator=(const PMXMesh&) = delete;
 	PMXMesh(PMXMesh&&)                 = delete;
 	PMXMesh& operator=(PMXMesh&&)      = delete;
-
-	// 毎フレーム更新.
+	
 	void Update();
-	// 描画(パイプライン・ルートシグネチャの設定は呼び出し側で行っておくこと).
 	void Draw();
 
 	// ワールド変換を反映する(GameObject::GetTransform()等から渡す).
