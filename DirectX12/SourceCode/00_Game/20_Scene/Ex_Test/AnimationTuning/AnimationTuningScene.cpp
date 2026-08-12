@@ -154,6 +154,7 @@ void AnimationTuningScene::Update()
 			return;
 		}
 	}
+
 #endif // _DEBUG.
 
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();

@@ -2,6 +2,8 @@
 
 #include "99_System/Scene/SceneBase.h"
 #include "00_Game/20_Scene/10_Main/MainScene.h"
+#include "10_Ggraphic/DirectX/DirectX12.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 #if _DEBUG
 #include "00_Game/20_Scene/Ex_Test/AnimationTuning/AnimationTuningScene.h"
@@ -32,6 +34,14 @@ void SceneManager::Update()
 	if (m_NextSceneID != eList::MAX) {
 		eList next = m_NextSceneID;
 		m_NextSceneID = eList::MAX;
+
+		// 旧シーンが持つGPUリソース(頂点バッファ・ディスクリプタヒープ等)を破棄する前に、
+		// それらを参照している可能性のあるGPU側の描画コマンドが完了しているのを必ず待つ.
+		// (Present直後に毎回待たないフレームインフライト方式のため、ここで待たずに破棄すると
+		// GPUがまだ参照中のリソースを解放してしまい、アプリが不正終了する).
+		if (DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>()) {
+			p_dx12->WaitForGPU();
+		}
 
 		m_upScene.reset();
 		MakeScene(next);
