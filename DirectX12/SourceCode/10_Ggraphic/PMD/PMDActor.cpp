@@ -471,7 +471,7 @@ void PMDActor::PlayAnimation()
 void PMDActor::MotionUpdate()
 {
 	auto elapsedTime = timeGetTime() - m_StartTime;
-	unsigned int frameNo = 30 * (elapsedTime / 1000.0f);
+	unsigned int frameNo = static_cast<unsigned int>(30 * (elapsedTime / 1000.0f));
 
 
 	//行列をクリア(しないと前フレームのポーズが重ね掛けされてモデルが崩れる)

@@ -102,7 +102,7 @@ ID3D12Resource* PMXRenderer::CreateAlphaTexture()
 		&ID3D12Resource::WriteToSubresource, TransparentBuff,
 		0, nullptr,
 		static_cast<void*>(data.data()),
-		PMDTexWide * 4,
+		static_cast<UINT>(PMDTexWide) * 4,
 		static_cast<UINT>(data.size()));
 
 	return TransparentBuff;

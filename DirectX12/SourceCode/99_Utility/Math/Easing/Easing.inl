@@ -2,6 +2,11 @@
 #pragma once
 
 namespace MyEasing {
+
+    // M_PIはdouble型のため、float演算の中でそのまま使うと式全体がdoubleに昇格し、
+    // Out(T=float等)への代入でC4244(double→float)警告が大量に出る. float版を用意して使い回す.
+    constexpr float PI_F = static_cast<float>(M_PI);
+
     template<typename T>
     void UpdateEasing(Type Type, float Time, float MaxTime, T Start, T End, T& Out)
     {
@@ -84,28 +89,28 @@ namespace MyEasing {
     template<typename T>
     void Liner(float Time, float MaxTime, T Start, T End, T& Out)
     {
-        float t = Time / MaxTime; 
+        float t = Time / MaxTime;
         Out = Start + (End - Start) * t;
     }
 
     template<typename T>
     void InSine(float Time, float MaxTime, T Start, T End, T& Out) {
         float t = Time / MaxTime;
-        Out = Start + (End - Start) * (1 - std::cos(t * (M_PI * 0.5f)));
+        Out = Start + (End - Start) * (1 - std::cos(t * (PI_F * 0.5f)));
     }
 
     template<typename T>
     void OutSine(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        Out = Start + (End - Start) * std::sin(t * (M_PI * 0.5f));
+        Out = Start + (End - Start) * std::sin(t * (PI_F * 0.5f));
     }
 
     template<typename T>
     void InOutSine(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        Out = Start + (End - Start) * (-(std::cos(M_PI * t) - 1) * 0.5f);
+        Out = Start + (End - Start) * (-(std::cos(PI_F * t) - 1) * 0.5f);
     }
 
     template<typename T>
@@ -126,7 +131,7 @@ namespace MyEasing {
     void InOutQuad(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t < 0.5f) Out = Start + (End - Start) * 2 * t * t;
+        if (t < 0.5f) { Out = Start + (End - Start) * 2 * t * t; return; }
         Out = Start + (End - Start) * (-1 + (4 - 2 * t) * t);
     }
 
@@ -149,7 +154,7 @@ namespace MyEasing {
     void InOutCubic(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t < 0.5f) Out = Start + (End - Start) * 4 * t * t * t;
+        if (t < 0.5f) { Out = Start + (End - Start) * 4 * t * t * t; return; }
         t -= 1;
         Out = Start + (End - Start) * (t * t * t * 4 + 1);
     }
@@ -173,7 +178,7 @@ namespace MyEasing {
     void InOutQuart(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t < 0.5f) Out = Start + (End - Start) * 8 * t * t * t * t;
+        if (t < 0.5f) { Out = Start + (End - Start) * 8 * t * t * t * t; return; }
         t -= 1;
         Out = Start + (End - Start) * (1 - t * t * t * t);
     }
@@ -197,7 +202,7 @@ namespace MyEasing {
     void InOutQuint(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t < 0.5f) Out = Start + (End - Start) * 16 * t * t * t * t * t;
+        if (t < 0.5f) { Out = Start + (End - Start) * 16 * t * t * t * t * t; return; }
         t -= 1;
         Out = Start + (End - Start) * (t * t * t * t * t * 16 + 1);
     }
@@ -206,24 +211,24 @@ namespace MyEasing {
     void InExpo(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        Out = Start + (End - Start) * (t == 0 ? 0 : std::pow(2, 10 * (t - 1)));
+        Out = Start + (End - Start) * (t == 0 ? 0 : std::pow(2.0f, 10 * (t - 1)));
     }
 
     template<typename T>
     void OutExpo(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        Out = Start + (End - Start) * (t == 1 ? 1 : 1 - std::pow(2, -10 * t));
+        Out = Start + (End - Start) * (t == 1 ? 1 : 1 - std::pow(2.0f, -10 * t));
     }
 
     template<typename T>
     void InOutExpo(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t == 0) Out = Start;
-        if (t == 1) Out = End;
-        if (t < 0.5f) Out = Start + (End - Start) * 0.5f * std::pow(2, 10 * (2 * t - 1));
-        Out = Start + (End - Start) * 0.5f * (2 - std::pow(2, -10 * (2 * t - 1)));
+        if (t == 0) { Out = Start; return; }
+        if (t == 1) { Out = End; return; }
+        if (t < 0.5f) { Out = Start + (End - Start) * 0.5f * std::pow(2.0f, 10 * (2 * t - 1)); return; }
+        Out = Start + (End - Start) * 0.5f * (2 - std::pow(2.0f, -10 * (2 * t - 1)));
     }
 
     template<typename T>
@@ -245,7 +250,7 @@ namespace MyEasing {
     void InOutCirc(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t < 0.5f) Out = Start + (End - Start) * 0.5f * (1 - std::sqrt(1 - 4 * t * t));
+        if (t < 0.5f) { Out = Start + (End - Start) * 0.5f * (1 - std::sqrt(1 - 4 * t * t)); return; }
         t = t * 2 - 1;
         Out = Start + (End - Start) * 0.5f * (std::sqrt(1 - t * t) + 1);
     }
@@ -272,7 +277,7 @@ namespace MyEasing {
     {
         const float s = 1.70158f * 1.525f;
         float t = Time / MaxTime;
-        if (t < 0.5f) Out = Start + (End - Start) * 0.5f * (t * t * ((s + 1) * 2 * t - s));
+        if (t < 0.5f) { Out = Start + (End - Start) * 0.5f * (t * t * ((s + 1) * 2 * t - s)); return; }
         t = 2 * t - 1;
         Out = Start + (End - Start) * 0.5f * (t * t * ((s + 1) * t + s) + 1);
     }
@@ -281,34 +286,34 @@ namespace MyEasing {
     void InElastic(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t == 0) Out = Start;
-        if (t == 1) Out = End;
-        Out = Start - (End - Start) * std::pow(2, 10 * (t - 1)) * std::sin((t - 1.1f) * 5 * M_PI);
+        if (t == 0) { Out = Start; return; }
+        if (t == 1) { Out = End; return; }
+        Out = Start - (End - Start) * std::pow(2.0f, 10 * (t - 1)) * std::sin((t - 1.1f) * 5 * PI_F);
     }
 
     template<typename T>
     void OutElastic(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t == 0) Out = Start;
-        if (t == 1) Out = End;
-        Out = Start + (End - Start) * std::pow(2, -10 * t) * std::sin((t - 0.1f) * 5 * M_PI) + (End - Start);
+        if (t == 0) { Out = Start; return; }
+        if (t == 1) { Out = End; return; }
+        Out = Start + (End - Start) * std::pow(2.0f, -10 * t) * std::sin((t - 0.1f) * 5 * PI_F) + (End - Start);
     }
 
     template<typename T>
     void InOutElastic(float Time, float MaxTime, T Start, T End, T& Out)
     {
         float t = Time / MaxTime;
-        if (t == 0) Out = Start;
-        if (t == 1) Out = End;
+        if (t == 0) { Out = Start; return; }
+        if (t == 1) { Out = End; return; }
         if (t < 0.5f) {
             t *= 2;
-            Out = Start - (End - Start) * 0.5f * std::pow(2, 10 * (t - 1)) * std::sin((t - 1.1f) * 5 * M_PI);
+            Out = Start - (End - Start) * 0.5f * std::pow(2.0f, 10 * (t - 1)) * std::sin((t - 1.1f) * 5 * PI_F);
         }
         else
         {
             t = t * 2 - 1;
-            Out = Start + (End - Start) * 0.5f * std::pow(2, -10 * t) * std::sin((t - 0.1f) * 5 * M_PI);
+            Out = Start + (End - Start) * 0.5f * std::pow(2.0f, -10 * t) * std::sin((t - 0.1f) * 5 * PI_F);
         }
     }
 

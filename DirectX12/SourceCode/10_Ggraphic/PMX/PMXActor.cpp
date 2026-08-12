@@ -574,7 +574,7 @@ void PMXActor::CreateResources()
 	D3D12_RESOURCE_DESC MaterialBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(MaterialBufferSizeAligned) * m_ModelData.Materials.size());
 
 	MyComPtr<ID3D12Resource> pMaterialUploadBuffer;
-	const UINT materialUploadBufferSize = static_cast<UINT64>(m_ModelData.Materials.size()) * MaterialBufferSizeAligned;
+	const UINT materialUploadBufferSize = static_cast<UINT>(static_cast<UINT64>(m_ModelData.Materials.size()) * MaterialBufferSizeAligned);
 	D3D12_RESOURCE_DESC materialUploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(materialUploadBufferSize);
 	MyAssert::IsFailed(_T("マテリアルアップロードバッファの作成"), &ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
 		&uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &materialUploadBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,

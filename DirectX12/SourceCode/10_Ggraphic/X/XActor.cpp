@@ -322,7 +322,7 @@ void XActor::CreateResources()
 
 	// --- マテリアルごとの (CBV + BaseTex SRV + ToonTex SRV + SphTex SRV) ---
 	const int material_buffer_size_aligned = (Model::GPU_MATERIAL_SIZE + 255) & ~255;
-	const UINT material_upload_buffer_size = static_cast<UINT64>(m_ModelData.Materials.size()) * material_buffer_size_aligned;
+	const UINT material_upload_buffer_size = static_cast<UINT>(static_cast<UINT64>(m_ModelData.Materials.size()) * material_buffer_size_aligned);
 
 	MyComPtr<ID3D12Resource> p_material_upload_buffer;
 	D3D12_RESOURCE_DESC material_upload_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(material_upload_buffer_size);
