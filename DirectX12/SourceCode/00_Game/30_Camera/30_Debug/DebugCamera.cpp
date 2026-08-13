@@ -13,9 +13,10 @@ DebugCamera::DebugCamera()
 	, m_MoveSpeed		{ DEFAULT_MOVE_SPEED }
 	, m_SlowMoveSpeed	{ SLOW_MOVE_SPEED }
 {
-	// 元々DirectX12.cpp側に直書きされていたデバッグカメラの初期値を踏襲.
-	SetPosition({ 0.0f, 20.0f, -40.0f });
-	SetLook({ 0.0f, 15.0f, 0.0f });
+	// Player(原点)・Boss(Z=8)がコライダー基準の等身大スケールに補正された後の見え方に合わせた初期値
+	// (旧DirectX12.cpp時代の値は、まだ大きすぎたモデルスケール基準だったため近すぎて見えなくなっていた).
+	SetPosition({ 0.0f, 4.0f, -8.0f });
+	SetLook({ 0.0f, 1.5f, 4.0f });
 }
 
 DebugCamera::~DebugCamera()
