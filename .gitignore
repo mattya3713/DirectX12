@@ -20,6 +20,10 @@ mono_crash.*
 # 作業ディレクトリを指定せず実行した場合などプロジェクトルート直下に生成されることがあるため保険で除外).
 imgui.rul
 
+# Codexへのタスク委譲(scripts/codex-task.ps1)が毎回生成する完了報告(実行結果のログであり、
+# 履歴として残す価値が無いため除外. 完了したタスクの記録はtasks/done/へ手動で移すこと).
+DirectX12/tasks/.codex-last-report.json
+
 # Build results
 # NOTE: 元テンプレートは無指定([Dd]ebug/等)だったが、SourceCode/99_Utility/Debug/という
 #       ソースフォルダを巻き込んでしまっていた(ずっとgit管理外になっていた)ためルート直下に限定した.

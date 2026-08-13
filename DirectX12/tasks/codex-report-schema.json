@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CodexCompletionReport",
+  "description": "Structured completion report for a delegated tasks/current.md task. Mirrors AGENTS.md's 'Completion report' section. Pass this file to `codex exec --output-schema` so Claude can parse the result instead of re-reading free-form prose.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "stop_reason", "summary", "files_changed", "build", "test", "unresolved_problems", "review_points"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["done", "stopped"],
+      "description": "'done' = task completed per Acceptance Criteria. 'stopped' = hit one of AGENTS.md's Stop conditions before finishing; see stop_reason."
+    },
+    "stop_reason": {
+      "type": ["string", "null"],
+      "description": "Required and non-empty when status is 'stopped'. Null when status is 'done'. Which Stop condition was hit and why."
+    },
+    "summary": {
+      "type": "string",
+      "description": "What was implemented, in a few sentences."
+    },
+    "files_changed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "change"],
+        "properties": {
+          "path": { "type": "string" },
+          "change": { "type": "string", "enum": ["created", "modified", "deleted"] }
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "passed", "errors", "warnings"],
+      "properties": {
+        "command": { "type": "string", "description": "Exact command run, e.g. powershell -File scripts\\build.ps1" },
+        "passed": { "type": "boolean" },
+        "errors": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "test": {
+      "type": ["string", "null"],
+      "description": "What was manually verified and how, or why it couldn't be (this project has no automated test suite — see docs/coding-rules.md)."
+    },
+    "unresolved_problems": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    },
+    "review_points": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "Specific things Codex wants Claude to look at: deviations from the task, uncertain judgment calls, anything that felt like it needed a bigger design decision."
+    }
+  }
+}
