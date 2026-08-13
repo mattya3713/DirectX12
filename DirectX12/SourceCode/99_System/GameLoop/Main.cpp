@@ -13,6 +13,7 @@
 #include "99_Utility/Debug/Imgui/DebugHud.h"
 #include "99_Utility/Sound/SoundManager.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
+#include "00_Game/60_Combat/CombatCoordinator.h"
 #include "99_System/Scene/SceneManager.h"
 
 #ifdef _DEBUG
@@ -45,6 +46,7 @@ Main::Main()
     , m_upSceneManager  { nullptr }
     , m_upSoundManager  { nullptr }
     , m_upCollisionDetector { nullptr }
+    , m_upCombatCoordinator { nullptr }
 {
 }
 
@@ -108,6 +110,10 @@ HRESULT Main::Create()
     // 当たり判定検出器を構築(各シーン・GameObjectがコライダーを登録する).
     m_upCollisionDetector = std::make_unique<CollisionDetector>();
     ServiceLocator::Provide<CollisionDetector>(m_upCollisionDetector.get());
+
+    // 戦闘演出の仲介役を構築(Player/Bossの実体はまだ無いため、シーン側がInitialize()を呼ぶまで空のまま).
+    m_upCombatCoordinator = std::make_unique<CombatCoordinator>();
+    ServiceLocator::Provide<CombatCoordinator>(m_upCombatCoordinator.get());
 
     // シーンマネージャーを構築し、最初のシーン(MainScene)を読み込む.
     m_upSceneManager = std::make_unique<SceneManager>();
@@ -175,6 +181,13 @@ void Main::Release()
     if (m_upCollisionDetector) {
         ServiceLocator::Provide<CollisionDetector>(nullptr);
         m_upCollisionDetector.reset();
+    }
+
+    if (m_upCombatCoordinator) {
+        // Player/Bossより先に解放されるため、寿命の切れたポインタを持ち続けないようClear()してから登録解除する.
+        m_upCombatCoordinator->Clear();
+        ServiceLocator::Provide<CombatCoordinator>(nullptr);
+        m_upCombatCoordinator.reset();
     }
 
     if (m_upSoundManager) {

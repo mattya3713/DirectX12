@@ -153,7 +153,7 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - 見た目は専用モデルを用意せず、動作確認用にPlayerと同じHatuneモデルを別インスタンスとして流用(位置で区別)。Cube.pmx等の別アセットはこのプロジェクトのPMXパイプラインで未検証のため、リスクを避けてPlayerで実績のあるモデルを使った.
   - `MainScene`にImGuiの`"Enemy"`ウィンドウを追加(Position/State/HP表示、Player同様のデバッグ表示).
   - ビルド設定の不備を発見・修正: `DirectX12.vcxproj`が`ClCompile`の`ObjectFileName`を既定値のままにしていたため、フォルダを跨いで同名の`.cpp`(Player側`State/00_Idle/Idle.cpp`とEnemy側`State/00_Idle/Idle.cpp`)が同じ中間出力ファイル名(`Idle.obj`)に衝突し、後から生成された方が前者を上書きしてリンクエラーになる問題を発見した(MSB8027警告が出ていたにもかかわらずSenzanはおそらく同名ファイルが無く顕在化していなかった類の不備)。全4構成(Debug/Release × Win32/x64)の`ClCompile`に`<ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>`を追加し、中間出力をソースの相対フォルダ構成にミラーリングすることで解消した.
-- [x] Boss(最小構成) — Enemyを土台にBoss本体を実装(パリィ・専用攻撃パターン・CombatCoordinator連携は未実装、あと回し).
+- [x] Boss(最小構成) — Enemyを土台にBoss本体を実装(専用攻撃パターンは未実装、あと回し).
   - `Boss : public Enemy`だが、`Enemy::m_StateMachine`(`StateMachine<Enemy>`、private)はBossから触れず再利用できないため、Boss専用に`StateMachine<Boss>` + `BossState::{Idle, Move, Attack, Dead}`(`20_Boss/State/`)を別途持たせた(`BossStateBase : public StateBase<Boss>`、EnemyStateBaseと同じ形で`DistanceToTargetXZ`/`AngleToTargetDeg`を共通実装)。Enemy自身の`m_StateMachine`はBoss構築時にIdleへ初期化されたまま以後一切Updateされない未使用状態で残る(Enemyのコンストラクタが共有ロジックのため許容している).
   - `Boss::Update()`は`Enemy::Update()`を経由せず`Character::Update()`を直接呼ぶ(Enemy側の未使用StateMachineを動かさないため)。`Boss::ChangeState(BossState::eID)`は同名の`Enemy::ChangeState(EnemyState::eID)`を意図的に名前で隠蔽する(Bossに対して誤ってEnemy側のステート変更を呼べないようにするため).
   - Enemyの索敵AI調整値(MoveSpeed/AggroRange/AttackRange/LoseRange)は元々private固定値だったため、`Enemy(float,float,float,float)`という保護コンストラクタを追加してBossから上書きできるようにした(Enemy自身のコメントが「将来種類ごとに変えたくなったらコンストラクタ引数化する」と予告していた通りの対応)。Bossは仮値(MoveSpeed=3.0/AggroRange=15.0/AttackRange=3.5/LoseRange=30.0、Enemyの4.0/10.0/2.5/20.0より広め・強め)を渡している.
@@ -162,6 +162,13 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - 攻撃は1パターンのみ(予備動作0.6s→判定0.3s→硬直0.8s、威力25。EnemyのAttackより大振り・高威力だが仮値)。SenzanのBossMoveStateにあった8種の重み付き攻撃選択・JSON調整・ImGuiパネルは今回持ち込んでいない.
   - パリィ演出用に`KeyframeCamera`(`00_Game/30_Camera/50_Keyframe/`)を新設。`CameraKeyframe{Position, Look, FovY, Duration, Easing}`の列を`Easing.inl`で補間再生し、`CameraManager::PlayOneShot(Name, Keyframes, IsRelativeToFirst)`で一時的に切り替えると、再生終了時に自動で元のアクティブカメラへ戻る(呼び出し元はタイマーを持たなくてよい)。`IsRelativeToFirst`は先頭キーフレームを基準に以降を相対座標として指定できるオプション。ただしBossのどのステートからもまだ呼び出していない(パリィ判定自体が未実装のため).
   - `MainScene`への実体配線(`m_upEnemy`同様の`SetTargetPos`呼び出し等)は、`MainScene`自体がユーザーの手で整理中(Player/Enemyの生成コードが一時的に外れている)だったため、今回は見送った.
+- [x] CombatCoordinator(設計やり直し版) — SOLIDのS(単一責任)/O(開放閉鎖)だけを意識的に効かせた設計にした。I(インターフェース分離)/D(依存性逆転)による`Player`/`Boss`の抽象化は、このゲームがPlayer 1種・Boss 1種しか持たない規模のため今回は見送っている(将来Boss種類が増える具体的な見込みが出たら検討).
+  - **責務分離**: `CombatCoordinator`(`00_Game/60_Combat/`)は「いつ・どんな演出データにするか」の計算とトリガーだけを担当し、実際にTransformへ書き込むのは各アクター自身のステートに一任する。同じフレームに2箇所からTransformが書き換えられる競合(CombatCoordinatorと、そのアクター自身の現在ステートの両方が同時に位置を操作してしまう)を避けるための分離であり、SenzanのCombatCoordinator(計算と書き込みを両方自分でやっていた)から意図的に変えた点.
+  - Boss側は`Boss::EnterParryReaction(TargetPosition, TargetYawDeg, Duration)`という専用エントリ経由で`BossState::ParryReaction`(`20_Boss/State/40_ParryReaction/`)へ入る(汎用の`ChangeState(BossState::eID)`は追加データを渡せないため、あえて経由しない)。位置は`MyEasing`で補間、向きは既存の`RotateToTarget`(最短経路ラープ)を流用し、硬直中は攻撃判定を無効化する。終わったらMove(見失っていればIdle)へ戻る.
+  - Player側は新しいStateクラスを作らず、既存の`PlayerState::Parry`自身に「`Player::HasParryReactionTarget()`が立っていれば目標位置・向きへ遷移する」処理を追加した。パリィ成立は定義上Playerが既に`Parry`ステートに入っている時にしか起こり得ないため、リアクションの責任も既にそのステートが持つべきと判断し、Boss側のような新規ステートは作らなかった(この非対称性は意図的).
+  - データの受け渡しは、Boss同様の専用エントリではなく`Player::SetParryReactionTarget(...)`という設定メソッド+Playerメンバのフラグ経由にした(Playerの現在ステートがParryか外部から確実に判別する手段が無いため。Parry::Update()が毎フレームフラグを確認し、無ければ何もしない)。CombatCoordinatorだけが書き込めるよう、既存の`PlayerAccessKeys.h`(Passkeyパターン)に`CombatCoordinatorKey`を追加して鍵越しにした.
+  - `CameraManager`と同じくMain.cppで構築しServiceLocatorへ登録(`Main::Release()`は他の解放処理より前に`Clear()`してから登録解除する)。Player/Bossの実体はシーンにしか無いため、`Initialize(player, boss)`はどのシーンからもまだ呼んでいない.
+  - **未実装**: パリィの成立/失敗自体の判定(Senzanの`Player_Parry_Suc/Fai/Noc`のようなコライダーマスクの拡張が必要、`eCollisionGroup`は現状6種類のみ)。`OnParrySuccess()`はロジックとして完成しているが、まだどこからも呼ばれていない(KeyframeCameraと同じく「配線待ち」の状態).
 
 ### Stage 4(UI・演出、最も後)
 - [ ] 色 — Color構造体/変換ユーティリティ

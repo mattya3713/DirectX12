@@ -29,6 +29,10 @@ public:
 	// ステートを変更する(BossState::eIDから対応するステートを生成しStateMachineへ渡す).
 	void ChangeState(BossState::eID Id);
 
+	// パリィされた瞬間、CombatCoordinatorから呼ばれる. 目標位置・向きへ遷移するリアクションへ入る
+	// (汎用のChangeState(BossState::eID)では追加データを渡せないため専用メソッドにしている).
+	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration);
+
 	// 現在ステートIDの取得(デバッグ表示等、外部からの参照用).
 	BossState::eID GetCurrentStateID() const noexcept { return m_CurrentStateID; }
 

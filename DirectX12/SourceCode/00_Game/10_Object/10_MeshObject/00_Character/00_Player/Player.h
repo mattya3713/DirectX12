@@ -52,6 +52,26 @@ public: // Getter・Setter.
 	void AddUltValue(float Amount, PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = std::clamp(m_CurrentUltValue + Amount, 0.0f, m_MaxUltValue); }
 	void ResetUltValue(PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = 0.0f; }
 
+	// パリィ成立時のリアクション目標を設定する(CombatCoordinatorのみ呼べる).
+	// 実際にTransformへ適用するのは現在アクティブなPlayerState::Parry自身(Update内で消費する).
+	// このクラスは目標値を保持するだけで、書き込みの実行主体にはならない.
+	void SetParryReactionTarget(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration, PlayerAccess::CombatCoordinatorKey) noexcept
+	{
+		m_ParryReactionTargetPos    = TargetPosition;
+		m_ParryReactionTargetYawDeg = TargetYawDeg;
+		m_ParryReactionDuration     = Duration;
+		m_HasParryReactionTarget    = true;
+	}
+
+	// リアクション目標が設定されているか(PlayerState::Parryが毎フレーム確認する).
+	bool HasParryReactionTarget() const noexcept { return m_HasParryReactionTarget; }
+	const DirectX::XMFLOAT3& GetParryReactionTargetPos() const noexcept { return m_ParryReactionTargetPos; }
+	float GetParryReactionTargetYawDeg() const noexcept { return m_ParryReactionTargetYawDeg; }
+	float GetParryReactionDuration() const noexcept { return m_ParryReactionDuration; }
+
+	// リアクション消費完了をPlayerState::Parry自身が通知する(次回また使えるようフラグを戻すだけ).
+	void ClearParryReactionTarget() noexcept { m_HasParryReactionTarget = false; }
+
 public:
 	// ステートを変更する(PlayerState::eIDから対応するステートを生成しStateMachineへ渡す).
 	void ChangeState(PlayerState::eID Id);
@@ -65,4 +85,10 @@ private:
 	int   m_Combo           = 0;		// 現在のコンボ数.
 	float m_CurrentUltValue = 0.0f;	// 必殺ゲージ(現在値).
 	float m_MaxUltValue     = 10000.0f;	// 必殺ゲージ(最大値).
+
+	// パリィ成立時のリアクション目標(CombatCoordinatorが設定、PlayerState::Parryが消費する).
+	bool              m_HasParryReactionTarget    = false;
+	DirectX::XMFLOAT3 m_ParryReactionTargetPos    { 0.0f, 0.0f, 0.0f };
+	float             m_ParryReactionTargetYawDeg = 0.0f;
+	float             m_ParryReactionDuration     = 0.0f;
 };

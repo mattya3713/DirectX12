@@ -173,6 +173,8 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\10_Move\Move.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\20_Attack\Attack.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
+    <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
     <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
     <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
@@ -263,6 +265,8 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\10_Move\Move.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\20_Attack\Attack.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.cpp" />
+    <ClCompile Include="SourceCode\00_Game\60_Combat\CombatCoordinator.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />

@@ -15,6 +15,7 @@ class ImGuiManager;
 class SceneManager;
 class SoundManager;
 class CollisionDetector;
+class CombatCoordinator;
 
 /**************************************************
 *	メインクラス.
@@ -64,4 +65,5 @@ private:
 	std::unique_ptr<SceneManager>	m_upSceneManager;	// シーンマネージャー.
 	std::unique_ptr<SoundManager>	m_upSoundManager;	// SE再生マネージャー.
 	std::unique_ptr<CollisionDetector> m_upCollisionDetector; // 当たり判定検出器.
+	std::unique_ptr<CombatCoordinator> m_upCombatCoordinator; // 戦闘演出の仲介役(Player/Bossの実体はシーン側がInitialize()で渡す).
 };

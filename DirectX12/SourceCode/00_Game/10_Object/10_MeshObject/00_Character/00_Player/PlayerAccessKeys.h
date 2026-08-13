@@ -9,6 +9,7 @@ namespace PlayerState {
 	class AttackCombo_2;
 	class Parry;
 }
+class CombatCoordinator;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -37,6 +38,13 @@ namespace PlayerAccess {
 		friend class PlayerState::AttackCombo_2;
 		friend class PlayerState::Parry;
 		ComboEconomyKey() {}
+	};
+
+	// パリィ成立時のリアクション目標をPlayerへ渡してよいクラス(CombatCoordinatorのみ).
+	class CombatCoordinatorKey
+	{
+		friend class ::CombatCoordinator;
+		CombatCoordinatorKey() {}
 	};
 
 } // namespace PlayerAccess

@@ -4,6 +4,7 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/10_Move/Move.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/20_Attack/Attack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/30_Dead/Dead.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/40_ParryReaction/ParryReaction.h"
 
 namespace {
 	// Enemyの既定値(4.0/10.0/2.5/20.0)より大柄・広範囲(仮値. 専用攻撃パターン実装時に見直す).
@@ -59,4 +60,10 @@ void Boss::ChangeState(BossState::eID Id)
 	}
 
 	m_CurrentStateID = Id;
+}
+
+void Boss::EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration)
+{
+	m_StateMachine.ChangeState(std::make_shared<BossState::ParryReaction>(this, TargetPosition, TargetYawDeg, Duration));
+	m_CurrentStateID = BossState::eID::ParryReaction;
 }
