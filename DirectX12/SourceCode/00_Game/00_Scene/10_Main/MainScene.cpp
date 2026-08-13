@@ -57,14 +57,14 @@ void MainScene::Create()
 		m_upPlayer->AttachMesh(std::make_shared<XMesh>("Data/Model/X/Player/player.X", *m_pPMXRenderer));
 		Transform player_transform;
 		player_transform.Position = { 0.0f, 0.0f, 0.0f };
-		player_transform.Scale = { 15.0f, 15.0f, 15.0f };
+		player_transform.Scale = { 1.36f, 1.36f, 1.36f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upPlayer->SetTransform(player_transform);
 
 		m_upBoss = std::make_unique<Boss>();
 		m_upBoss->AttachMesh(std::make_shared<XMesh>("Data/Model/X/Boss/boss.X", *m_pPMXRenderer));
 		Transform boss_transform;
 		boss_transform.Position = { 0.0f, 0.0f, 8.0f };
-		boss_transform.Scale = { 15.0f, 15.0f, 15.0f };
+		boss_transform.Scale = { 1.05f, 1.05f, 1.05f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upBoss->SetTransform(boss_transform);
 
 		if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
@@ -88,6 +88,33 @@ void MainScene::Update()
 	}
 
 #endif // _DEBUG.
+
+#if _DEBUG
+	// 実行中にPlayer/BossのScaleを調整できるデバッグパネル(モデルサイズ調整用).
+	ImGui::Begin("Actor Scale (Debug)", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	if (m_upPlayer) {
+		Transform transform = m_upPlayer->GetTransform();
+		float scale = transform.Scale.x;
+		ImGuiManager::Input("Player Scale", scale, true, 0.1f, 1.0f);
+		if (scale > 0.0f) {
+			transform.Scale = { scale, scale, scale };
+			m_upPlayer->SetTransform(transform);
+		}
+	}
+
+	if (m_upBoss) {
+		Transform transform = m_upBoss->GetTransform();
+		float scale = transform.Scale.x;
+		ImGuiManager::Input("Boss Scale", scale, true, 0.1f, 1.0f);
+		if (scale > 0.0f) {
+			transform.Scale = { scale, scale, scale };
+			m_upBoss->SetTransform(transform);
+		}
+	}
+
+	ImGui::End();
+#endif
 
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 
