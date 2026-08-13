@@ -24,13 +24,17 @@ public:
 	// 毎フレーム更新(現在ステートのUpdate/LateUpdateを順に呼ぶ).
 	void Update() override;
 
+protected:
+	// 派生クラス(Boss等)が索敵AI用の調整値を変えたい場合に使う.
+	Enemy(float MoveSpeed, float AggroRange, float AttackRange, float LoseRange);
+
 public: // Getter・Setter.
 
 	// ターゲット(Player)の位置. ロックオン等は無く、シーン側が毎フレーム設定する想定.
 	const DirectX::XMFLOAT3& GetTargetPos() const noexcept { return m_TargetPos; }
 	void SetTargetPos(const DirectX::XMFLOAT3& TargetPos) noexcept { m_TargetPos = TargetPos; }
 
-	// AI用の調整値の取得(現状は固定値. 将来種類ごとに変えたくなったらコンストラクタ引数化する).
+	// AI用の調整値の取得(既定値はEnemy()、変更したい場合は上の保護コンストラクタ経由で渡す).
 	float GetMoveSpeed() const noexcept { return m_MoveSpeed; }
 	float GetAggroRange() const noexcept { return m_AggroRange; }
 	float GetAttackRange() const noexcept { return m_AttackRange; }
@@ -48,8 +52,8 @@ private:
 	DirectX::XMFLOAT3    m_TargetPos      { 0.0f, 0.0f, 0.0f };  // ターゲット(Player)の位置.
 	EnemyState::eID       m_CurrentStateID = EnemyState::eID::None;
 
-	float m_MoveSpeed   = 4.0f;  // 追跡移動速度(単位/秒).
-	float m_AggroRange  = 10.0f; // この距離以内でIdle→Chase.
-	float m_AttackRange = 2.5f;  // この距離以内でChase→Attack.
-	float m_LoseRange   = 20.0f; // この距離を超えたら追跡を諦めてIdleへ戻る.
+	float m_MoveSpeed;   // 追跡移動速度(単位/秒). 既定値はコンストラクタ参照.
+	float m_AggroRange;  // この距離以内でIdle→Chase.
+	float m_AttackRange; // この距離以内でChase→Attack.
+	float m_LoseRange;   // この距離を超えたら追跡を諦めてIdleへ戻る.
 };

@@ -153,6 +153,15 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - 見た目は専用モデルを用意せず、動作確認用にPlayerと同じHatuneモデルを別インスタンスとして流用(位置で区別)。Cube.pmx等の別アセットはこのプロジェクトのPMXパイプラインで未検証のため、リスクを避けてPlayerで実績のあるモデルを使った.
   - `MainScene`にImGuiの`"Enemy"`ウィンドウを追加(Position/State/HP表示、Player同様のデバッグ表示).
   - ビルド設定の不備を発見・修正: `DirectX12.vcxproj`が`ClCompile`の`ObjectFileName`を既定値のままにしていたため、フォルダを跨いで同名の`.cpp`(Player側`State/00_Idle/Idle.cpp`とEnemy側`State/00_Idle/Idle.cpp`)が同じ中間出力ファイル名(`Idle.obj`)に衝突し、後から生成された方が前者を上書きしてリンクエラーになる問題を発見した(MSB8027警告が出ていたにもかかわらずSenzanはおそらく同名ファイルが無く顕在化していなかった類の不備)。全4構成(Debug/Release × Win32/x64)の`ClCompile`に`<ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>`を追加し、中間出力をソースの相対フォルダ構成にミラーリングすることで解消した.
+- [x] Boss(最小構成) — Enemyを土台にBoss本体を実装(パリィ・専用攻撃パターン・CombatCoordinator連携は未実装、あと回し).
+  - `Boss : public Enemy`だが、`Enemy::m_StateMachine`(`StateMachine<Enemy>`、private)はBossから触れず再利用できないため、Boss専用に`StateMachine<Boss>` + `BossState::{Idle, Move, Attack, Dead}`(`20_Boss/State/`)を別途持たせた(`BossStateBase : public StateBase<Boss>`、EnemyStateBaseと同じ形で`DistanceToTargetXZ`/`AngleToTargetDeg`を共通実装)。Enemy自身の`m_StateMachine`はBoss構築時にIdleへ初期化されたまま以後一切Updateされない未使用状態で残る(Enemyのコンストラクタが共有ロジックのため許容している).
+  - `Boss::Update()`は`Enemy::Update()`を経由せず`Character::Update()`を直接呼ぶ(Enemy側の未使用StateMachineを動かさないため)。`Boss::ChangeState(BossState::eID)`は同名の`Enemy::ChangeState(EnemyState::eID)`を意図的に名前で隠蔽する(Bossに対して誤ってEnemy側のステート変更を呼べないようにするため).
+  - Enemyの索敵AI調整値(MoveSpeed/AggroRange/AttackRange/LoseRange)は元々private固定値だったため、`Enemy(float,float,float,float)`という保護コンストラクタを追加してBossから上書きできるようにした(Enemy自身のコメントが「将来種類ごとに変えたくなったらコンストラクタ引数化する」と予告していた通りの対応)。Bossは仮値(MoveSpeed=3.0/AggroRange=15.0/AttackRange=3.5/LoseRange=30.0、Enemyの4.0/10.0/2.5/20.0より広め・強め)を渡している.
+  - `SetOnDeath`はEnemyのコンストラクタが一度`ChangeState(EnemyState::eID::Dead)`を登録するが、Boss自身の`StateMachine<Boss>`を正しく死亡させるため、Bossのコンストラクタで`ChangeState(BossState::eID::Dead)`を呼ぶコールバックに登録し直している.
+  - HP(`Character::m_Health`、既定100固定)は今回変更していない。HP調整もEnemyのAI調整値と同様にコンストラクタ引数化が必要で、あと回し.
+  - 攻撃は1パターンのみ(予備動作0.6s→判定0.3s→硬直0.8s、威力25。EnemyのAttackより大振り・高威力だが仮値)。SenzanのBossMoveStateにあった8種の重み付き攻撃選択・JSON調整・ImGuiパネルは今回持ち込んでいない.
+  - パリィ演出用に`KeyframeCamera`(`00_Game/30_Camera/50_Keyframe/`)を新設。`CameraKeyframe{Position, Look, FovY, Duration, Easing}`の列を`Easing.inl`で補間再生し、`CameraManager::PlayOneShot(Name, Keyframes, IsRelativeToFirst)`で一時的に切り替えると、再生終了時に自動で元のアクティブカメラへ戻る(呼び出し元はタイマーを持たなくてよい)。`IsRelativeToFirst`は先頭キーフレームを基準に以降を相対座標として指定できるオプション。ただしBossのどのステートからもまだ呼び出していない(パリィ判定自体が未実装のため).
+  - `MainScene`への実体配線(`m_upEnemy`同様の`SetTargetPos`呼び出し等)は、`MainScene`自体がユーザーの手で整理中(Player/Enemyの生成コードが一時的に外れている)だったため、今回は見送った.
 
 ### Stage 4(UI・演出、最も後)
 - [ ] 色 — Color構造体/変換ユーティリティ

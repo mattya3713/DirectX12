@@ -6,7 +6,16 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/State/30_Dead/Dead.h"
 
 Enemy::Enemy()
+	: Enemy(4.0f, 10.0f, 2.5f, 20.0f) // 既定の索敵AI調整値(コメント参照).
+{
+}
+
+Enemy::Enemy(float MoveSpeed, float AggroRange, float AttackRange, float LoseRange)
 	: m_StateMachine { this }
+	, m_MoveSpeed    { MoveSpeed }
+	, m_AggroRange   { AggroRange }
+	, m_AttackRange  { AttackRange }
+	, m_LoseRange    { LoseRange }
 {
 	m_DamageCollider.SetMyMask(eCollisionGroup::EnemyDamage);
 	m_DamageCollider.SetTargetMask(eCollisionGroup::PlayerAttack);

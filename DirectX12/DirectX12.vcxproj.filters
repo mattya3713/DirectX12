@@ -111,6 +111,7 @@
     <ClInclude Include="SourceCode\00_Game\30_Camera\20_LookAt\LookAtCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\30_Debug\DebugCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\40_Third\ThirdPersonCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\30_Camera\50_Keyframe\KeyframeCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\99_Manager\CameraManager.h" />
     <ClInclude Include="SourceCode\99_Utility\ServiceLocator\ServiceLocator.h" />
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
@@ -166,6 +167,12 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\20_Attack\Attack.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\30_Dead\Dead.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\Boss.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\BossStateID.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\BossStateBase.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\00_Idle\Idle.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\10_Move\Move.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\20_Attack\Attack.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
     <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
     <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
@@ -207,6 +214,7 @@
     <ClCompile Include="SourceCode\00_Game\30_Camera\20_LookAt\LookAtCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\30_Debug\DebugCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\40_Third\ThirdPersonCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\30_Camera\50_Keyframe\KeyframeCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\99_Manager\CameraManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.cpp" />
@@ -250,6 +258,11 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\20_Attack\Attack.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\30_Dead\Dead.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\Boss.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\BossStateBase.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\00_Idle\Idle.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\10_Move\Move.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\20_Attack\Attack.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />

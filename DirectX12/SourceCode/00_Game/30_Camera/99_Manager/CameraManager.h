@@ -4,8 +4,10 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
+#include "00_Game/30_Camera/50_Keyframe/KeyframeCamera.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -36,7 +38,13 @@ public:
 	// アクティブカメラのUpdateを呼び出す.
 	void Update();
 
+	// Keyframesを一度だけ再生する演出用カメラにNameで切り替える. 再生が終わると
+	// 自動的に、この呼び出し時点でアクティブだったカメラへ戻る(呼び出し元はタイマー等を持たなくてよい).
+	// IsRelativeToFirst: trueなら先頭以外のキーフレームを先頭からの相対座標として扱う(KeyframeCamera参照).
+	void PlayOneShot(std::string_view Name, std::vector<CameraKeyframe> Keyframes, bool IsRelativeToFirst = false);
+
 private:
 	std::unordered_map<std::string, std::unique_ptr<CameraBase>> m_Cameras;	// 登録済みカメラ.
 	CameraBase* m_pActiveCamera;	// アクティブカメラ(非所有).
+	std::string m_ActiveName;		// アクティブカメラの登録名(PlayOneShotの戻り先解決用).
 };
