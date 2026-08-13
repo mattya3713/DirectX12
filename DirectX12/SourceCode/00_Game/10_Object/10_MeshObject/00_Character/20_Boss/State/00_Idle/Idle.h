@@ -18,6 +18,7 @@ namespace BossState {
 
 		BossState::eID GetStateID() const override { return BossState::eID::Idle; }
 
+		void Enter() override;
 		void Update() override;
 	};
 

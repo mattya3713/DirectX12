@@ -1,10 +1,11 @@
 ﻿#pragma once
 
 #include <memory>
+#include <string>
 
 #include "00_Game/10_Object/00_Base/GameObject.h"
 
-class PMXMesh;
+class IMesh;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -25,11 +26,11 @@ public:
 
 public:
 	// メッシュをアタッチする.
-	void AttachMesh(std::shared_ptr<PMXMesh> pMesh) noexcept { m_pMesh = std::move(pMesh); }
+	void AttachMesh(std::shared_ptr<IMesh> pMesh) noexcept { m_pMesh = std::move(pMesh); }
 
 	// アニメーションの再生範囲・速度をまとめて適用する(メッシュ未アタッチなら何もしない).
-	void ApplyAnimationClip(float StartFrame, float EndFrame, float Speed);
+	void PlayNamedClip(const std::string& ClipName);
 
 protected:
-	std::shared_ptr<PMXMesh> m_pMesh; // アタッチ中のメッシュ.
+	std::shared_ptr<IMesh> m_pMesh; // アタッチ中のメッシュ.
 };

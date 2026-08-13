@@ -9,6 +9,11 @@ Idle::Idle(Boss* pOwner) noexcept
 {
 }
 
+void Idle::Enter()
+{
+	ApplyNamedClip("boss_idle");
+}
+
 void Idle::Update()
 {
 	if (DistanceToTargetXZ() <= GetBoss()->GetAggroRange())

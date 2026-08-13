@@ -20,7 +20,7 @@ Run::Run(Player* pOwner) noexcept
 
 void Run::Enter()
 {
-	ApplyNamedClip("Run");
+	ApplyNamedClip("player_run");
 }
 
 void Run::Update()

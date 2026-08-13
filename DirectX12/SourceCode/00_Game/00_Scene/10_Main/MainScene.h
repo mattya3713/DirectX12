@@ -8,7 +8,7 @@ class PMXRenderer;
 class PMXActor;
 class XActor;
 class Player;
-class Enemy;
+class Boss;
 class ModelPreviewPanel;
 
 /**********************************************************************************
@@ -33,5 +33,5 @@ private:
 	std::shared_ptr<PMXRenderer> m_pPMXRenderer;
 
 	std::unique_ptr<Player>      m_upPlayer;
-	std::unique_ptr<Enemy>       m_upEnemy;
+	std::unique_ptr<Boss>        m_upBoss;
 };

@@ -20,6 +20,7 @@ namespace BossState {
 
 		BossState::eID GetStateID() const override { return BossState::eID::Move; }
 
+		void Enter() override;
 		void Update() override;
 	};
 

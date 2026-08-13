@@ -37,7 +37,7 @@ void DodgeExecute::Enter()
 	m_MaxTime          = DODGE_DURATION;
 	m_TraveledDistance = 0.0f;
 
-	ApplyNamedClip("DodgeExecute");
+	ApplyNamedClip("player_perfect_dodge");
 }
 
 void DodgeExecute::LateUpdate()

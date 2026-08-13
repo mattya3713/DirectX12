@@ -4,7 +4,6 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/50_Input/VirtualPad.h"
-#include "10_Ggraphic/PMX/AnimationClipTable.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
@@ -36,13 +35,7 @@ void PlayerStateBase::LateUpdate()
 
 void PlayerStateBase::ApplyNamedClip(const char* ClipName) const
 {
-	AnimationClipTable clip_table;
-	clip_table.Load(AnimationClipTable::DEFAULT_FILE_PATH);
-
-	if (const AnimationClipData* p_clip = clip_table.Find(ClipName))
-	{
-		m_pOwner->ApplyAnimationClip(p_clip->StartFrame, p_clip->EndFrame, p_clip->Speed);
-	}
+	m_pOwner->PlayNamedClip(ClipName);
 }
 
 bool PlayerStateBase::TryStartCombatAction() const

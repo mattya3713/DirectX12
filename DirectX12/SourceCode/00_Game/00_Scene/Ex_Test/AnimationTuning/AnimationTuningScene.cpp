@@ -10,7 +10,7 @@
 #include "00_Game/50_Input/Input.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
-#include "00_Game/00_Scene/00_Base/SceneManager.h"
+#include "00_Game/00_Scene/SceneManager.h"
 
 AnimationTuningScene::AnimationTuningScene()
 {

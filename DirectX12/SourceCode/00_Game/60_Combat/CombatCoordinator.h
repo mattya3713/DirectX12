@@ -1,9 +1,10 @@
 ﻿#pragma once
 
 #include <DirectXMath.h>
+#include <optional>
 
-class Player;
-class Boss;
+#include "00_Game/60_Combat/BossCombatView.h"
+#include "00_Game/60_Combat/PlayerCombatView.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -31,7 +32,7 @@ public:
 	CombatCoordinator& operator=(const CombatCoordinator&) = delete;
 
 	// Player/Bossの参照を設定する(両方揃って初めて演出をトリガーできる).
-	void Initialize(Player* pPlayer, Boss* pBoss) noexcept;
+	void Initialize(const PlayerCombatView& PlayerView, const BossCombatView& BossView) noexcept;
 
 	// シーン終了時に参照を手放す(寿命の切れたポインタを持ち続けないため).
 	void Clear() noexcept;
@@ -41,6 +42,6 @@ public:
 	void OnParrySuccess() noexcept;
 
 private:
-	Player* m_pPlayer = nullptr; // 非所有.
-	Boss*   m_pBoss   = nullptr; // 非所有.
+	std::optional<PlayerCombatView> m_PlayerView; // Playerへの限定公開View.
+	std::optional<BossCombatView>   m_BossView;   // Bossへの限定公開View.
 };

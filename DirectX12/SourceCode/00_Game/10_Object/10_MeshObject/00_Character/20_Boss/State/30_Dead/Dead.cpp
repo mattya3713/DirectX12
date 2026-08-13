@@ -11,6 +11,7 @@ Dead::Dead(Boss* pOwner) noexcept
 
 void Dead::Enter()
 {
+	ApplyNamedClip("boss_die");
 	GetBoss()->SetAttackColliderActive(false);
 	GetBoss()->SetDamageColliderActive(false);
 }

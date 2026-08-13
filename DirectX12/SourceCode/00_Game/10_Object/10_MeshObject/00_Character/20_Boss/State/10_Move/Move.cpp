@@ -16,6 +16,11 @@ Move::Move(Boss* pOwner) noexcept
 {
 }
 
+void Move::Enter()
+{
+	ApplyNamedClip("boss_walk1");
+}
+
 void Move::Update()
 {
 	const float distance = DistanceToTargetXZ();

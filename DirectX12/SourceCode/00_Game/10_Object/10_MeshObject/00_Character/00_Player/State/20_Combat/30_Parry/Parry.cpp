@@ -30,7 +30,7 @@ void Parry::Enter()
 	GetPlayer()->SetDamageColliderActive(false); // 構え中は通常のダメージを受けない.
 	GetPlayer()->SetParryColliderActive(true);   // パリィ判定を有効化.
 
-	ApplyNamedClip("Parry");
+	ApplyNamedClip("player_parry");
 }
 
 void Parry::Update()

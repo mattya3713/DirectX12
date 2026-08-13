@@ -29,13 +29,12 @@ void SceneManager::LoadScene(eList Scene)
 
 void SceneManager::Update()
 {
-	// 予約中のシーン切り替えを、Update()実行中に自分自身を破棄しないようここで安全に行う.
+	// 予約中をUpdate()実行中にしない.
 	if (m_NextSceneID != eList::MAX) {
 		eList next = m_NextSceneID;
 		m_NextSceneID = eList::MAX;
 
-		// GPUがまだ参照中かもしれない旧シーンのリソースを破棄する前に完了を待つ
-		// (フレームインフライト方式のため、待たずに破棄するとアプリが不正終了する).
+		// GPUがまだ参照中かもしれない旧シーンのリソースを破棄する前に完了を待つ.
 		if (DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>()) {
 			p_dx12->WaitForGPU();
 		}

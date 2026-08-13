@@ -1,6 +1,6 @@
 ﻿#include "MeshObject.h"
 
-#include "10_Ggraphic/PMX/PMXMesh.h"
+#include "10_Ggraphic/Model/IMesh.h"
 
 void MeshObject::Update()
 {
@@ -17,9 +17,9 @@ void MeshObject::Draw()
 	m_pMesh->Draw();
 }
 
-void MeshObject::ApplyAnimationClip(float StartFrame, float EndFrame, float Speed)
+void MeshObject::PlayNamedClip(const std::string& ClipName)
 {
 	if (!m_pMesh) { return; }
 
-	m_pMesh->ApplyAnimationClip(StartFrame, EndFrame, Speed);
+	m_pMesh->PlayNamedClip(ClipName);
 }

@@ -10,6 +10,8 @@
 #include "00_Game/40_Collision/00_Capsule/CapsuleCollider.h"
 #include "99_Utility/StateMachine/StateMachine.h"
 
+class PlayerCombatView;
+
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/10.
@@ -20,6 +22,8 @@
 
 class Player final : public Character
 {
+	friend class PlayerCombatView; // CombatCoordinator用の限定公開Viewにだけリアクション設定を許可する.
+
 public:
 	Player();
 	~Player() override; // defaultから変更(パリィ判定コライダーの登録解除が必要なため).
@@ -53,17 +57,6 @@ public: // Getter・Setter.
 	void AddUltValue(float Amount, PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = std::clamp(m_CurrentUltValue + Amount, 0.0f, m_MaxUltValue); }
 	void ResetUltValue(PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = 0.0f; }
 
-	// パリィ成立時のリアクション目標を設定する(CombatCoordinatorのみ呼べる).
-	// 実際にTransformへ適用するのは現在アクティブなPlayerState::Parry自身(Update内で消費する).
-	// このクラスは目標値を保持するだけで、書き込みの実行主体にはならない.
-	void SetParryReactionTarget(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration, PlayerAccess::CombatCoordinatorKey) noexcept
-	{
-		m_ParryReactionTargetPos    = TargetPosition;
-		m_ParryReactionTargetYawDeg = TargetYawDeg;
-		m_ParryReactionDuration     = Duration;
-		m_HasParryReactionTarget    = true;
-	}
-
 	// リアクション目標が設定されているか(PlayerState::Parryが毎フレーム確認する).
 	bool HasParryReactionTarget() const noexcept { return m_HasParryReactionTarget; }
 	const DirectX::XMFLOAT3& GetParryReactionTargetPos() const noexcept { return m_ParryReactionTargetPos; }
@@ -82,6 +75,15 @@ public: // Getter・Setter.
 public:
 	// ステートを変更する(PlayerState::eIDから対応するステートを生成しStateMachineへ渡す).
 	void ChangeState(PlayerState::eID Id);
+
+private:
+	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration) noexcept
+	{
+		m_ParryReactionTargetPos    = TargetPosition;
+		m_ParryReactionTargetYawDeg = TargetYawDeg;
+		m_ParryReactionDuration     = Duration;
+		m_HasParryReactionTarget    = true;
+	}
 
 private:
 	StateMachine<Player> m_StateMachine;					// 現在ステートの保持・更新.

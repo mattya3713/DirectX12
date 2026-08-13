@@ -14,7 +14,7 @@
 #include "99_Utility/Sound/SoundManager.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
-#include "00_Game/00_Scene/00_Base/SceneManager.h"
+#include "00_Game/00_Scene/SceneManager.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -63,31 +63,35 @@ HRESULT Main::Create()
     // ここから先で増えたメモリ確保をリーク検知の対象にする.
     Diagnostics::BeginMemoryLeakCheck();
 
-    // GameTimeは毎フレーム最初に使われるため、他の何よりも先に構築・登録する.
+    // ゲーム全体の時間.
     m_upGameTime = std::make_unique<GameTime>();
     ServiceLocator::Provide<GameTime>(m_upGameTime.get());
 
+    // メッシュ生成.
     m_upMeshManager = std::make_unique<MeshManager>();
     ServiceLocator::Provide<MeshManager>(m_upMeshManager.get());
 
-    // 入力系(キーボード/マウス/コントローラー/仮想パッド)の構築・登録.
+	// 入力系の構築.
     m_upKeyInput = std::make_unique<KeyInput>();
     ServiceLocator::Provide<KeyInput>(m_upKeyInput.get());
-
+    
+	// マウス入力の構築.
     m_upMouse = std::make_unique<Mouse>();
     ServiceLocator::Provide<Mouse>(m_upMouse.get());
 
+	// 入力ラッパーの構築(キーボード/マウス/コントローラー).
     m_upInput = std::make_unique<Input>();
     ServiceLocator::Provide<Input>(m_upInput.get());
     Input::SethWnd(m_hWnd);
 
+	// 仮想パッドの構築(アクションマッピング).
     m_upVirtualPad = std::make_unique<VirtualPad>();
     ServiceLocator::Provide<VirtualPad>(m_upVirtualPad.get());
     m_upVirtualPad->SetupDefaultBindings();
 
+	// DirectX12の構築.
     m_pDx12 = std::make_shared<DirectX12>();
     m_pDx12->Create(m_hWnd);
-    // 所有権はMainのまま、シーン側からも参照できるようサービスロケーターへ登録.
     ServiceLocator::Provide<DirectX12>(m_pDx12.get());
 
     // ImGuiの構築・登録(DirectX12構築後でないとデバイスが取得できない).
@@ -184,7 +188,6 @@ void Main::Release()
     }
 
     if (m_upCombatCoordinator) {
-        // Player/Bossより先に解放されるため、寿命の切れたポインタを持ち続けないようClear()してから登録解除する.
         m_upCombatCoordinator->Clear();
         ServiceLocator::Provide<CombatCoordinator>(nullptr);
         m_upCombatCoordinator.reset();
@@ -196,7 +199,6 @@ void Main::Release()
     }
 
     if (m_upCameraManager) {
-        // サービスロケーターへの登録を先に解除してから破棄する.
         ServiceLocator::Provide<CameraManager>(nullptr);
         m_upCameraManager.reset();
     }
@@ -207,7 +209,6 @@ void Main::Release()
     }
 
     if (m_upImGuiManager) {
-        // ReportLiveDeviceObjects()より前に解放し、ImGuiが確保したD3D12リソースをリーク扱いさせない.
         ServiceLocator::Provide<ImGuiManager>(nullptr);
         m_upImGuiManager->Shutdown();
         m_upImGuiManager.reset();

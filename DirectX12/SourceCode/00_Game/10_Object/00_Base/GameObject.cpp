@@ -35,12 +35,10 @@ void GameObject::RotateToTarget(float TargetAngleDeg, float SpeedDegPerSec) noex
 
 	const float max_step_rad = DirectX::XMConvertToRadians(SpeedDegPerSec) * GameTime::GetDeltaTime();
 
-	if (std::fabs(diff_rad) <= max_step_rad)
-	{
+	if (std::fabs(diff_rad) <= max_step_rad) {
 		m_Transform.Rotation.y = target_rad;
 	}
-	else
-	{
+	else {
 		m_Transform.Rotation.y += (diff_rad > 0.0f ? max_step_rad : -max_step_rad);
 	}
 }

@@ -1,6 +1,7 @@
 ﻿#include "PMXMesh.h"
 
 #include "10_Ggraphic/PMX/PMXActor.h"
+#include "10_Ggraphic/PMX/AnimationClipTable.h"
 #include "99_Utility/Transform/Transform.h"
 
 PMXMesh::PMXMesh(const std::string& FilePath, PMXRenderer& Renderer)
@@ -23,6 +24,17 @@ void PMXMesh::Draw()
 void PMXMesh::SetWorldTransform(const Transform& InTransform)
 {
 	m_pActor->SetWorldMatrix(InTransform.GetMatrix());
+}
+
+void PMXMesh::PlayNamedClip(const std::string& ClipName)
+{
+	AnimationClipTable clip_table;
+	clip_table.Load(AnimationClipTable::DEFAULT_FILE_PATH);
+
+	if (const AnimationClipData* p_clip = clip_table.Find(ClipName.c_str()))
+	{
+		ApplyAnimationClip(p_clip->StartFrame, p_clip->EndFrame, p_clip->Speed);
+	}
 }
 
 void PMXMesh::LoadMotion(const std::string& VmdFilePath)

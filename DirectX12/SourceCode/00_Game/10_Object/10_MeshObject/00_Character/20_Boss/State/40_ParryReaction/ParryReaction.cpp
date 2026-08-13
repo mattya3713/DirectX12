@@ -23,6 +23,7 @@ ParryReaction::ParryReaction(Boss* pOwner, const DirectX::XMFLOAT3& TargetPositi
 
 void ParryReaction::Enter()
 {
+	ApplyNamedClip("boss_take_damage");
 	m_ElapsedTime   = 0.0f;
 	m_StartPosition = GetBoss()->GetPosition();
 

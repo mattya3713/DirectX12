@@ -9,6 +9,11 @@ BossStateBase::BossStateBase(Boss* pOwner) noexcept
 {
 }
 
+void BossStateBase::ApplyNamedClip(const char* ClipName) const
+{
+	GetBoss()->PlayNamedClip(ClipName);
+}
+
 float BossStateBase::DistanceToTargetXZ() const noexcept
 {
 	const DirectX::XMFLOAT3& self_pos   = m_pOwner->GetPosition();

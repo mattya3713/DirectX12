@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "99_Utility/Singleton/SingletonTemplate.h"
 
 class KeyDebbuger : public Singleton<KeyDebbuger>

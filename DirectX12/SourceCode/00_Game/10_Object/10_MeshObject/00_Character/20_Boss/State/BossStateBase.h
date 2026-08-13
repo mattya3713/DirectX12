@@ -33,4 +33,7 @@ protected:
 
 	// 自分からターゲット(Player)へ向く角度(度. atan2f(x,z)基準、PlayerStateBaseと同じ規約).
 	float AngleToTargetDeg() const noexcept;
+
+	// Bossのメッシュへ名前でクリップを適用する.
+	void ApplyNamedClip(const char* ClipName) const;
 };

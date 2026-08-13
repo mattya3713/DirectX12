@@ -17,7 +17,7 @@ void AttackCombo_2::Enter()
 {
 	Combat::Enter();
 
-	ApplyNamedClip("AttackCombo_2");
+	ApplyNamedClip("player_attack3");
 	GetPlayer()->SetAttackAmount(ATTACK_AMOUNT);
 }
 

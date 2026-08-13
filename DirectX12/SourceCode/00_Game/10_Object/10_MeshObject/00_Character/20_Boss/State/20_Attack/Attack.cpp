@@ -22,6 +22,7 @@ Attack::Attack(Boss* pOwner) noexcept
 
 void Attack::Enter()
 {
+	ApplyNamedClip("boss_attack1");
 	m_ElapsedTime = 0.0f;
 	GetBoss()->SetAttackColliderActive(false);
 	GetBoss()->SetAttackAmount(ATTACK_AMOUNT);

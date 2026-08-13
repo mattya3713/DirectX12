@@ -38,6 +38,8 @@ public:
 	// 名前でアニメーションクリップを再生する(見つからない場合は何もしない).
 	void PlayAnimation(const std::string& ClipName);
 
+	void StopAnimation() noexcept { m_CurrentClipIndex = -1; }
+
 	// 読み込まれているクリップ名の一覧(ImGui等での一覧表示用).
 	const std::vector<XSkeleton::AnimationClip>& GetClips() const noexcept { return m_Skeleton.Clips; }
 	int GetCurrentClipIndex() const noexcept { return m_CurrentClipIndex; }

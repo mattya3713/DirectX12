@@ -202,8 +202,10 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDStructHeader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\X\XActor.h" />
+	<ClInclude Include="SourceCode\10_Ggraphic\X\XMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\X\XSkeletonData.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\ModelData.h" />
+	<ClInclude Include="SourceCode\10_Ggraphic\Model\IMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\IModelParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMXParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMDParser.h" />
@@ -249,7 +251,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
-    <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\SceneManager.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneBase.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
@@ -298,6 +300,8 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
+    <ClInclude Include="SourceCode\00_Game\60_Combat\BossCombatView.h" />
+    <ClInclude Include="SourceCode\00_Game\60_Combat\PlayerCombatView.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
     <ClInclude Include="Data\Library\ImGui\imgui_internal.h" />
     <ClInclude Include="Data\Library\ImGui\imstb_rectpack.h" />
@@ -319,6 +323,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\X\XActor.cpp" />
+	<ClCompile Include="SourceCode\10_Ggraphic\X\XMesh.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\XParser.cpp" />
@@ -354,7 +359,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.cpp" />
-    <ClCompile Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_Scene\SceneManager.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
@@ -392,6 +397,8 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\CombatCoordinator.cpp" />
+    <ClCompile Include="SourceCode\00_Game\60_Combat\BossCombatView.cpp" />
+    <ClCompile Include="SourceCode\00_Game\60_Combat\PlayerCombatView.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_draw.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui_widgets.cpp" />
