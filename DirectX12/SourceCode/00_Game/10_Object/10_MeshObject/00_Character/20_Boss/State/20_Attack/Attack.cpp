@@ -1,7 +1,7 @@
 ﻿#include "Attack.h"
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 
 namespace {
 	// Enemy::Attackより大振り・高威力(仮値. 専用攻撃パターン実装時に見直す).

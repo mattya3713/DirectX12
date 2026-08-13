@@ -1,12 +1,12 @@
 ﻿#include "SceneManager.h"
 
-#include "99_System/Scene/SceneBase.h"
-#include "00_Game/20_Scene/10_Main/MainScene.h"
+#include "00_Game/00_Scene/00_Base/SceneBase.h"
+#include "00_Game/00_Scene/10_Main/MainScene.h"
 #include "10_Ggraphic/DirectX/DirectX12.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 #if _DEBUG
-#include "00_Game/20_Scene/Ex_Test/AnimationTuning/AnimationTuningScene.h"
+#include "00_Game/00_Scene/Ex_Test/AnimationTuning/AnimationTuningScene.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #endif // _DEBUG.
 

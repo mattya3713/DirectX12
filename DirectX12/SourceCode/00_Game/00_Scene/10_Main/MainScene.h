@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "99_System/Scene/SceneBase.h"
+#include "00_Game/00_Scene/00_Base/SceneBase.h"
 
 class PMXRenderer;
 class PMXActor;

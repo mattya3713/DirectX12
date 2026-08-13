@@ -14,7 +14,7 @@
 #include "99_Utility/Sound/SoundManager.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
-#include "99_System/Scene/SceneManager.h"
+#include "00_Game/00_Scene/00_Base/SceneManager.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>

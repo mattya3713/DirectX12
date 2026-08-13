@@ -4,7 +4,7 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 #include "99_Utility/DirectXMath/DirectXMathExpansion.h"
 #include "99_Utility/Math/Easing/Easing.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"

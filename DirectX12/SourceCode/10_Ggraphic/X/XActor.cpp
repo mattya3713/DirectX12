@@ -6,7 +6,7 @@
 #include "PMX/PMXRenderer.h"
 #include "DirectX/DirectX12.h"
 #include "Model/XParser.h"
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
 
 namespace {

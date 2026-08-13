@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DebugCamera.h"
 
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 
 namespace {
 	constexpr float DEFAULT_MOVE_SPEED = 20.0f;

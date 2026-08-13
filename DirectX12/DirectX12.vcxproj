@@ -133,7 +133,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_System\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
@@ -166,7 +166,7 @@ exit /b 0</Command>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_System\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
@@ -209,7 +209,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMDParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\XParser.h" />
     <ClInclude Include="SourceCode\Global.h" />
-    <ClInclude Include="SourceCode\99_System\GameLoop\Main.h" />
+    <ClInclude Include="SourceCode\00_Game\00_GameLoop\Main.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
     <ClInclude Include="SourceCode\99_Utility\Singleton\SingletonTemplate.h" />
     <ClInclude Include="SourceCode\99_Utility\Buffer\Any.h" />
@@ -227,7 +227,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\SingleTrigger\SingleTrigger.h" />
     <ClInclude Include="SourceCode\99_Utility\String\FilePath\FilePath.h" />
     <ClInclude Include="SourceCode\99_Utility\String\String.h" />
-    <ClInclude Include="SourceCode\99_System\GameLoop\Time\Time.h" />
+    <ClInclude Include="SourceCode\00_Game\00_GameLoop\Time\Time.h" />
     <ClInclude Include="SourceCode\99_Utility\Transform\Transform.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\00_Base\CameraBase.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\10_First\FirstPersonCamera.h" />
@@ -249,10 +249,10 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
-    <ClInclude Include="SourceCode\99_System\Scene\SceneManager.h" />
-    <ClInclude Include="SourceCode\99_System\Scene\SceneBase.h" />
-    <ClInclude Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.h" />
-    <ClInclude Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneBase.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\00_Base\GameObject.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\IHealthSystem.h" />
@@ -322,8 +322,8 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\XParser.cpp" />
-    <ClCompile Include="SourceCode\99_System\GameLoop\Main.cpp" />
-    <ClCompile Include="SourceCode\99_System\GameLoop\WinMain.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_GameLoop\Main.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_GameLoop\WinMain.cpp" />
     <ClCompile Include="SourceCode\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -335,7 +335,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\String\String.cpp" />
     <ClCompile Include="SourceCode\99_Utility\FileManager\FileManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Sound\SoundManager.cpp" />
-    <ClCompile Include="SourceCode\99_System\GameLoop\Time\Time.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_GameLoop\Time\Time.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\00_Base\CameraBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\10_First\FirstPersonCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\20_LookAt\LookAtCamera.cpp" />
@@ -354,9 +354,9 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.cpp" />
-    <ClCompile Include="SourceCode\99_System\Scene\SceneManager.cpp" />
-    <ClCompile Include="SourceCode\00_Game\20_Scene\10_Main\MainScene.cpp" />
-    <ClCompile Include="SourceCode\00_Game\20_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.cpp" />
+    <ClCompile Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />

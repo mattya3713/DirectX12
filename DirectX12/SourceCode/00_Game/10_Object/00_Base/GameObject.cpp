@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 
 GameObject::GameObject()
 	: m_Transform {}

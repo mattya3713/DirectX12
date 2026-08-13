@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include "LookAtCamera.h"
 
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 
 namespace {
 	constexpr float DEFAULT_DISTANCE    = 30.0f;

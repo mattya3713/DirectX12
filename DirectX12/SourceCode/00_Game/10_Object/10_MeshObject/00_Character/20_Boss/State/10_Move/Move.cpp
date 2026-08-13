@@ -3,7 +3,7 @@
 #include <cmath>
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 
 namespace {
 	constexpr float MOVE_ROTATE_SPEED = 360.0f; // 度/秒.

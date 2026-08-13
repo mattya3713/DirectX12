@@ -1,7 +1,7 @@
 ﻿#include "Attack.h"
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
-#include "99_System/GameLoop/Time/Time.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 
 namespace {
 	constexpr float ATTACK_WINDUP_TIME   = 0.4f;   // 予備動作(この間は攻撃判定なし).
