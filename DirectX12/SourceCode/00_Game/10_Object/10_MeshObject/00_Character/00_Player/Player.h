@@ -7,6 +7,7 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/PlayerAccessKeys.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/PlayerStateID.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/PlayerStateBase.h"
+#include "00_Game/40_Collision/00_Capsule/CapsuleCollider.h"
 #include "99_Utility/StateMachine/StateMachine.h"
 
 /**********************************************************************************
@@ -21,7 +22,7 @@ class Player final : public Character
 {
 public:
 	Player();
-	~Player() override = default;
+	~Player() override; // defaultから変更(パリィ判定コライダーの登録解除が必要なため).
 
 	// 毎フレーム更新(現在ステートのUpdate/LateUpdateを順に呼ぶ).
 	void Update() override;
@@ -72,12 +73,19 @@ public: // Getter・Setter.
 	// リアクション消費完了をPlayerState::Parry自身が通知する(次回また使えるようフラグを戻すだけ).
 	void ClearParryReactionTarget() noexcept { m_HasParryReactionTarget = false; }
 
+	// パリィ判定コライダーの有効/無効(PlayerState::Parryが構え中だけ有効化する).
+	void SetParryColliderActive(bool IsActive) noexcept { m_ParryCollider.SetActive(IsActive); }
+
+	// パリィ判定の結果(PlayerState::Parryが毎フレーム確認する. EnemyAttackを検出したら成立とみなす).
+	const std::vector<CollisionInfo>& GetParryCollisionEvents() const noexcept { return m_ParryCollider.GetCollisionEvents(); }
+
 public:
 	// ステートを変更する(PlayerState::eIDから対応するステートを生成しStateMachineへ渡す).
 	void ChangeState(PlayerState::eID Id);
 
 private:
 	StateMachine<Player> m_StateMachine;					// 現在ステートの保持・更新.
+	CapsuleCollider       m_ParryCollider;					// パリィ判定専用(m_DamageColliderとは別物. Parry中のみ有効).
 	DirectX::XMFLOAT3    m_MoveVec        { 0.0f, 0.0f, 0.0f };	// 現フレームの移動ベクトル.
 	float                m_RunMoveSpeed   = 8.0f;				// 走り移動速度(単位/秒).
 	PlayerState::eID     m_CurrentStateID = PlayerState::eID::None;	// 現在ステートID(デバッグ表示用).

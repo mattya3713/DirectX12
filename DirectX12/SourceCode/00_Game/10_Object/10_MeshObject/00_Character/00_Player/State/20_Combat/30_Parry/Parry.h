@@ -10,10 +10,11 @@ namespace PlayerState {
 	* @author    : mattya3713.
 	* @date      : 2026/08/11.
 	* @brief     : パリィ. 一定時間、通常の被弾判定を無効化する(無敵)構え.
-	*            : 成功判定(コライダーマスクでの矛盾検出)自体はまだ無いが、CombatCoordinator
-	*            : が外部からパリィ成立を検知した場合に備え、Player::HasParryReactionTarget()
-	*            : が立っていれば目標位置・向きへ遷移するリアクションをこのステート自身が
-	*            : 消費する(BossState::ParryReactionと対になる. 詳細はCombatCoordinator参照).
+	*            : 構え中はm_DamageColliderの代わりにPlayer::m_ParryCollider(PlayerParryマスク)
+	*            : を有効化し、EnemyAttackを検出したら成立とみなしてCombatCoordinator::
+	*            : OnParrySuccess()を呼ぶ. 成立するとPlayer::HasParryReactionTarget()が立ち、
+	*            : 目標位置・向きへ遷移するリアクションをこのステート自身が消費する
+	*            : (BossState::ParryReactionと対になる. 詳細はCombatCoordinator参照).
 	*            : SenzanのParry::Enter()はCombat::Enter()を呼んでおらずm_CurrentTimeが
 	*            : リセットされない状態依存のバグに見えたため、こちらでは正しく呼ぶ.
 	**********************************************************************************/

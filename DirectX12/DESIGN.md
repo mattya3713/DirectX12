@@ -168,7 +168,7 @@ PMX/PMDそれぞれのバイナリ形式を読むパーサーと、ゲームが�
   - Player側は新しいStateクラスを作らず、既存の`PlayerState::Parry`自身に「`Player::HasParryReactionTarget()`が立っていれば目標位置・向きへ遷移する」処理を追加した。パリィ成立は定義上Playerが既に`Parry`ステートに入っている時にしか起こり得ないため、リアクションの責任も既にそのステートが持つべきと判断し、Boss側のような新規ステートは作らなかった(この非対称性は意図的).
   - データの受け渡しは、Boss同様の専用エントリではなく`Player::SetParryReactionTarget(...)`という設定メソッド+Playerメンバのフラグ経由にした(Playerの現在ステートがParryか外部から確実に判別する手段が無いため。Parry::Update()が毎フレームフラグを確認し、無ければ何もしない)。CombatCoordinatorだけが書き込めるよう、既存の`PlayerAccessKeys.h`(Passkeyパターン)に`CombatCoordinatorKey`を追加して鍵越しにした.
   - `CameraManager`と同じくMain.cppで構築しServiceLocatorへ登録(`Main::Release()`は他の解放処理より前に`Clear()`してから登録解除する)。Player/Bossの実体はシーンにしか無いため、`Initialize(player, boss)`はどのシーンからもまだ呼んでいない.
-  - **未実装**: パリィの成立/失敗自体の判定(Senzanの`Player_Parry_Suc/Fai/Noc`のようなコライダーマスクの拡張が必要、`eCollisionGroup`は現状6種類のみ)。`OnParrySuccess()`はロジックとして完成しているが、まだどこからも呼ばれていない(KeyframeCameraと同じく「配線待ち」の状態).
+  - **未実装だった箇所を後日実装**: パリィの成立判定自体。`eCollisionGroup`に`PlayerParry`を追加し、`Enemy`(Bossも含む)の攻撃コライダーの対象マスクへ`PlayerDamage | PlayerParry`を設定(Parry中は`PlayerDamage`が無効化されているため、これが無いとパリィ中の攻撃が誰にも衝突しなくなる)。Playerには`m_DamageCollider`とは別に専用の`m_ParryCollider`(`PlayerParry`マスク、通常時は無効)を追加し、`PlayerState::Parry::Enter/Exit`で有効/無効を切り替える。`Parry::Update()`が毎フレーム`m_ParryCollider`の衝突結果を確認し、ヒットしていれば`CombatCoordinator::OnParrySuccess()`を呼ぶ(これで「配線待ち」だった`OnParrySuccess()`が実際に呼ばれるようになった). Senzanの`Player_Parry_Suc/Fai/Noc`(成功/失敗/無効の3分岐)は今回持ち込まず、「当たれば成功」の1段階のみにした(失敗判定はまだ無い. あと回し).
 
 ### Stage 4(UI・演出、最も後)
 - [ ] 色 — Color構造体/変換ユーティリティ

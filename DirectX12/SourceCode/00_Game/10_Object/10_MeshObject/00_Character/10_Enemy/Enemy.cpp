@@ -21,7 +21,9 @@ Enemy::Enemy(float MoveSpeed, float AggroRange, float AttackRange, float LoseRan
 	m_DamageCollider.SetTargetMask(eCollisionGroup::PlayerAttack);
 
 	m_AttackCollider.SetMyMask(eCollisionGroup::EnemyAttack);
-	m_AttackCollider.SetTargetMask(eCollisionGroup::PlayerDamage);
+	// PlayerParryも対象にする(PlayerState::Parry中はPlayerParryだけが有効なため、
+	// これが無いとパリィ中の攻撃が誰にも衝突しなくなってしまう).
+	m_AttackCollider.SetTargetMask(eCollisionGroup::PlayerDamage | eCollisionGroup::PlayerParry);
 
 	// HPが0になった瞬間にDeadへ遷移する(HealthSystem側で生存→死亡の1回だけ発火する).
 	SetOnDeath([this]() { ChangeState(EnemyState::eID::Dead); });
