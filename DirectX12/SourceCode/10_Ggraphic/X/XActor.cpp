@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cfloat>
 
 #include "PMX/PMXRenderer.h"
 #include "DirectX/DirectX12.h"
@@ -60,6 +61,19 @@ XActor::XActor(const char* FilePath, PMXRenderer& Renderer)
 	try {
 		XParser parser;
 		parser.LoadSkeletal(FilePath, m_ModelData, m_Skeleton);
+
+#if _DEBUG
+		{
+			float min_y = FLT_MAX;
+			float max_y = -FLT_MAX;
+			for (const Model::Vertex& vertex : m_ModelData.Vertices)
+			{
+				min_y = std::min(min_y, vertex.Position.y);
+				max_y = std::max(max_y, vertex.Position.y);
+			}
+			m_LocalHeight = (max_y > min_y) ? (max_y - min_y) : 0.0f;
+		}
+#endif
 
 		CreateResources();
 	}

@@ -25,6 +25,10 @@ public:
 	void SetWorldTransform(const Transform& InTransform) override;
 	void PlayNamedClip(const std::string& ClipName) override;
 
+#if _DEBUG
+	float GetLocalHeight() const override;
+#endif
+
 private:
 	std::unique_ptr<XActor> m_upActor;
 };

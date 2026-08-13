@@ -40,6 +40,11 @@ public:
 
 	void StopAnimation() noexcept { m_CurrentClipIndex = -1; }
 
+#if _DEBUG
+	// バインドポーズでのY軸方向の高さ(Scaleを掛ける前. モデルサイズ検知用).
+	float GetLocalHeight() const noexcept { return m_LocalHeight; }
+#endif
+
 	// 読み込まれているクリップ名の一覧(ImGui等での一覧表示用).
 	const std::vector<XSkeleton::AnimationClip>& GetClips() const noexcept { return m_Skeleton.Clips; }
 	int GetCurrentClipIndex() const noexcept { return m_CurrentClipIndex; }
@@ -86,6 +91,10 @@ private:
 
 	Model::ModelData        m_ModelData;
 	XSkeleton::SkeletalData m_Skeleton;
+
+#if _DEBUG
+	float m_LocalHeight = 0.0f; // バインドポーズでの高さ(Y方向 max-min. モデルサイズ検知用).
+#endif
 
 	std::vector<MyComPtr<ID3D12Resource>> m_pTextureResource; // ベーステクスチャ(MaterialIndexに対応).
 

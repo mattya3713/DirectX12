@@ -43,6 +43,10 @@ public:
 	// アニメーションの再生範囲・速度をまとめて適用する.
 	void ApplyAnimationClip(float StartFrame, float EndFrame, float Speed);
 
+#if _DEBUG
+	float GetLocalHeight() const override;
+#endif
+
 private:
 	std::shared_ptr<PMXActor> m_pActor;
 };

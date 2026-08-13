@@ -53,3 +53,10 @@ void PMXMesh::ApplyAnimationClip(float StartFrame, float EndFrame, float Speed)
 	m_pActor->SetPlaybackRange(StartFrame, EndFrame);
 	m_pActor->SetAnimationSpeed(Speed);
 }
+
+#if _DEBUG
+float PMXMesh::GetLocalHeight() const
+{
+	return m_pActor->GetLocalHeight();
+}
+#endif

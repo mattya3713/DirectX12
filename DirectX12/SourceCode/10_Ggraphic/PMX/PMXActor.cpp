@@ -5,6 +5,8 @@
 #include "Model/PMXParser.h"
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
 #include <chrono>
+#include <algorithm>
+#include <cfloat>
 
 // PMXActor コンストラクタ
 PMXActor::PMXActor(const char* filepath, PMXRenderer& renderer)
@@ -37,6 +39,19 @@ PMXActor::PMXActor(const char* filepath, PMXRenderer& renderer)
 		// 1. PMXファイルからCPU側データ（ヘッダー、頂点、インデックス、マテリアル、ボーンなど）を読み込む
 		PMXParser parser;
 		parser.Load(filepath, m_ModelData);
+
+#if _DEBUG
+		{
+			float min_y = FLT_MAX;
+			float max_y = -FLT_MAX;
+			for (const Model::Vertex& vertex : m_ModelData.Vertices)
+			{
+				min_y = std::min(min_y, vertex.Position.y);
+				max_y = std::max(max_y, vertex.Position.y);
+			}
+			m_LocalHeight = (max_y > min_y) ? (max_y - min_y) : 0.0f;
+		}
+#endif
 
 		// 2. 読み込んだPMXボーンデータに基づいてRuntimeBonesを初期化し、親子関係やマップを構築
 		InitializeRuntimeBones();

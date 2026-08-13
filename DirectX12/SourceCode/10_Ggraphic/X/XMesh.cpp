@@ -39,3 +39,10 @@ void XMesh::PlayNamedClip(const std::string& ClipName)
 
 	m_upActor->StopAnimation();
 }
+
+#if _DEBUG
+float XMesh::GetLocalHeight() const
+{
+	return m_upActor->GetLocalHeight();
+}
+#endif

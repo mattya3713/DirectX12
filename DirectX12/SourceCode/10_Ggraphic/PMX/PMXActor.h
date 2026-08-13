@@ -69,6 +69,11 @@ public:
 	// ワールド行列を設定する(移動・回転・拡縮の反映用).
 	void SetWorldMatrix(const DirectX::XMMATRIX& World) noexcept { if (m_pMappedTransformCB) { m_pMappedTransformCB->World = World; } }
 
+#if _DEBUG
+	// バインドポーズでのY軸方向の高さ(Scaleを掛ける前. モデルサイズ検知用).
+	float GetLocalHeight() const noexcept { return m_LocalHeight; }
+#endif
+
 	// 再生範囲を設定する(StartFrame <= EndFrameの範囲でループする).
 	void SetPlaybackRange(float StartFrame, float EndFrame) noexcept { m_StartFrame = StartFrame; m_EndFrame = EndFrame; }
 	// 再生速度を設定する(例: 30.0fで等倍、15.0fで半速).
@@ -148,6 +153,10 @@ private:
 
 	// モデルデータ (CPU側、フォーマットを問わない共通データ).
 	Model::ModelData m_ModelData;
+
+#if _DEBUG
+	float m_LocalHeight = 0.0f; // バインドポーズでの高さ(Y方向 max-min. モデルサイズ検知用).
+#endif
 
 	// テクスチャリソース (GPU側).
 	std::vector<MyComPtr<ID3D12Resource>> m_pTextureResource; // ベーステクスチャ (MaterialIndexに対応)

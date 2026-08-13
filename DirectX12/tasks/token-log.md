@@ -18,6 +18,8 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 
 | 2026-08-14 | `.X`モデル差し替え一式: `IMesh`インターフェース新設、`PMXMesh`/`XMesh`両対応、Player/Boss全State(7+5箇所)のクリップ名差し替え、`MainScene`のモデル切り替え、vcxproj登録 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claudeは調査・設計・タスク仕様書作成のみ行い、実装はCodexに完全委任) | 114,515 (実測) | 成功。0エラー0警告でビルド。範囲外のBOM自動修正が1ファイル対で発生(害はない)。設計(IMesh/XMesh形状・クリップ名対応表)はClaudeが事前に確定し仕様書に明記していたため、Codexの実装判断の余地はほぼ無かった |
 
+| 2026-08-14 | モデルサイズ検知(`_DEBUG`限定): `IMesh`/`PMXMesh`/`XMesh`/`MeshObject`へ`GetLocalHeight()`配線、`Character::Draw()`でコライダーサイズと比較しImGui警告 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claudeは`PMXActor`/`XActor`側の下準備のみ直接実装し、残りの配線はタスク仕様書のみ渡して委任) | 56,237 (実測) | Claude側の実装漏れ(XActor.hに`m_LocalHeight`本体を追加し忘れ)が原因でビルドが4エラーで失敗。CodexはXActor変更禁止のスコープを正しく守り、原因を`review_points`で正確に報告して停止した(スコープ逸脱で無理に直さなかった判断は正しい)。Claudeが自分のミスを2ファイルだけ直接修正して解決 |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

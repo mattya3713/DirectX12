@@ -4,8 +4,7 @@
 #include <string>
 
 #include "00_Game/10_Object/00_Base/GameObject.h"
-
-class IMesh;
+#include "10_Ggraphic/Model/IMesh.h"
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -30,6 +29,11 @@ public:
 
 	// アニメーションの再生範囲・速度をまとめて適用する(メッシュ未アタッチなら何もしない).
 	void PlayNamedClip(const std::string& ClipName);
+
+#if _DEBUG
+	// アタッチ中のメッシュのローカル高さを取得する(Debugビルドのみ).
+	float GetLocalHeight() const noexcept { return m_pMesh ? m_pMesh->GetLocalHeight() : 0.0f; }
+#endif
 
 protected:
 	std::shared_ptr<IMesh> m_pMesh; // アタッチ中のメッシュ.

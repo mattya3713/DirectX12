@@ -32,6 +32,11 @@ public:
 	// MeshObject::Update()の後、自分の被弾コライダーが検出したヒットを処理する.
 	void Update() override;
 
+#if _DEBUG
+	// MeshObject::Draw()の後にモデルサイズとコライダーサイズを検査する(Debugビルドのみ).
+	void Draw() override;
+#endif
+
 public:
 	// HP関連の情報取得.
 	const HealthSystem& GetHealth() const noexcept { return m_Health; }
