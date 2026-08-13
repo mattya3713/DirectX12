@@ -249,6 +249,8 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\50_Input\VirtualPad.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\SceneManager.h" />
@@ -357,6 +359,8 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\50_Input\VirtualPad.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_Scene\SceneManager.cpp" />

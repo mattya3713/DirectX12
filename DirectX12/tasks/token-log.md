@@ -22,6 +22,8 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 
 | 2026-08-14 | Player/BossのScaleを実行中にImGuiで調整できるデバッグパネルをMainSceneへ追加 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(1ファイルのみの小タスク、仕様書を渡して完全委任) | 45,728 (実測) | 成功。既存の無関係なシェーダー警告(Vertex.hlsl)以外は0エラー0警告。作業前からあったPlayer Scale=1.0fのテスト値も指示通りスコープ外として触らず維持した |
 
+| 2026-08-14 | ログコンソール機能: `DebugLog`(ServiceLocator登録)+`DebugConsole`(ImGuiスクロール表示、色分け)を新設、Senzanの`Log`シングルトンをServiceLocator版として移植 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Senzanの参照ファイルパスのみ提示、実装は完全委任) | 112,334 (実測) | 成功。副産物として`.gitignore`の`[Ll]og/`パターンが新設フォルダを誤って除外することを`review_points`で正確に報告(自分では.gitignoreを直さず、正しくスコープ外として報告のみ)。Claudeが除外例外を追加して解決 |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

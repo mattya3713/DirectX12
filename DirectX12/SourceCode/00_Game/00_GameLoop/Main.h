@@ -16,6 +16,7 @@ class SceneManager;
 class SoundManager;
 class CollisionDetector;
 class CombatCoordinator;
+class DebugLog;
 
 /**************************************************
 *	メインクラス.
@@ -62,6 +63,7 @@ private:
 	std::unique_ptr<Input>			m_upInput;			// 入力機のラッパー(キーボード/マウス/コントローラー).
 	std::unique_ptr<VirtualPad>	m_upVirtualPad;		// 仮想パッド(アクションマッピング).
 	std::unique_ptr<ImGuiManager>	m_upImGuiManager;	// ImGui統合ラッパー.
+	std::unique_ptr<DebugLog>		m_upDebugLog;		// 実行時ログ管理.
 	std::unique_ptr<SceneManager>	m_upSceneManager;	// シーンマネージャー.
 	std::unique_ptr<SoundManager>	m_upSoundManager;	// SE再生マネージャー.
 	std::unique_ptr<CollisionDetector> m_upCollisionDetector; // 当たり判定検出器.

@@ -11,6 +11,8 @@
 #include "00_Game/50_Input/VirtualPad.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/DebugHud.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/Debug/Imgui/DebugConsole.h"
 #include "99_Utility/Sound/SoundManager.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
@@ -43,6 +45,7 @@ Main::Main()
     , m_upInput         { nullptr }
     , m_upVirtualPad    { nullptr }
     , m_upImGuiManager  { nullptr }
+    , m_upDebugLog      { nullptr }
     , m_upSceneManager  { nullptr }
     , m_upSoundManager  { nullptr }
     , m_upCollisionDetector { nullptr }
@@ -101,6 +104,10 @@ HRESULT Main::Create()
         _ASSERT_EXPR(false, _T("ImGuiの初期化に失敗しました"));
         return E_FAIL;
     }
+
+	// ログ管理を構築し、DebugConsoleから参照できるよう登録する.
+	m_upDebugLog = std::make_unique<DebugLog>();
+	ServiceLocator::Provide<DebugLog>(m_upDebugLog.get());
 
     // カメラマネージャーを構築(カメラの登録・有効化は各シーンが行う).
     m_upCameraManager = std::make_unique<CameraManager>();
@@ -161,6 +168,7 @@ void Main::Draw()
 
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
+	DebugConsole::Draw();
 
     if (m_upSceneManager) {
         m_upSceneManager->Draw();
@@ -213,6 +221,11 @@ void Main::Release()
         m_upImGuiManager->Shutdown();
         m_upImGuiManager.reset();
     }
+
+	if (m_upDebugLog) {
+		ServiceLocator::Provide<DebugLog>(nullptr);
+		m_upDebugLog.reset();
+	}
 
 #if _DEBUG
     // オブジェクトの解放ミスを検出.

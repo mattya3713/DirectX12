@@ -55,6 +55,15 @@
     <Filter Include="Shader">
       <UniqueIdentifier>{6d1e14d3-11b0-4bee-99ff-bb3667eb787f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SourceCode\99_Utility\Debug">
+      <UniqueIdentifier>{9c3f8e0d-6a4e-4c3b-9a69-0e5e7a18b6e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\99_Utility\Debug\Imgui">
+      <UniqueIdentifier>{ba4a1a37-1db4-4a95-bf7f-5d36d4be7a0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceCode\99_Utility\Debug\Log">
+      <UniqueIdentifier>{f0b12cc9-0a6a-4ea9-b7a7-0a9a5b6e2d41}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SourceCode\Global.h">
@@ -126,6 +135,12 @@
     <ClInclude Include="SourceCode\00_Game\50_Input\VirtualPad.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h">
+      <Filter>SourceCode\99_Utility\Debug\Log</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.h" />
@@ -232,6 +247,12 @@
     <ClCompile Include="SourceCode\00_Game\50_Input\VirtualPad.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.cpp">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp">
+      <Filter>SourceCode\99_Utility\Debug\Log</Filter>
+    </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.cpp" />
