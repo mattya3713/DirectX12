@@ -40,6 +40,11 @@ void XMesh::PlayNamedClip(const std::string& ClipName)
 	m_upActor->StopAnimation();
 }
 
+void XMesh::SetCurrentFrame(float ActionFrame)
+{
+	m_upActor->SetCurrentFrame(ActionFrame);
+}
+
 #if _DEBUG
 float XMesh::GetLocalHeight() const
 {

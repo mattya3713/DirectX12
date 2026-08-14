@@ -37,6 +37,13 @@ public:
 
 	// 名前でアニメーションクリップを再生する(見つからない場合は何もしない).
 	void PlayAnimation(const std::string& ClipName);
+	// 外部から指定したActionFrameで姿勢を固定する.
+	void SetCurrentFrame(float ActionFrame) noexcept
+	{
+		if (m_CurrentClipIndex < 0) { return; }
+		m_CurrentTime = ActionFrame / 30.0f * static_cast<float>(m_Skeleton.TicksPerSecond);
+		m_IsExternallyDriven = true;
+	}
 
 	void StopAnimation() noexcept { m_CurrentClipIndex = -1; }
 
@@ -100,4 +107,5 @@ private:
 
 	int   m_CurrentClipIndex = -1; // 再生中のクリップ(m_Skeleton.Clipsへのインデックス. -1=未再生=バインドポーズ).
 	float m_CurrentTime      = 0.0f; // 現在のクリップ内再生時刻(ファイル依存の時間軸. 秒ではない).
+	bool  m_IsExternallyDriven = false; // 外部指定フレームで再生を停止中.
 };

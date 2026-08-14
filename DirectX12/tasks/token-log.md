@@ -24,6 +24,10 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 
 | 2026-08-14 | ログコンソール機能: `DebugLog`(ServiceLocator登録)+`DebugConsole`(ImGuiスクロール表示、色分け)を新設、Senzanの`Log`シングルトンをServiceLocator版として移植 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Senzanの参照ファイルパスのみ提示、実装は完全委任) | 112,334 (実測) | 成功。副産物として`.gitignore`の`[Ll]og/`パターンが新設フォルダを誤って除外することを`review_points`で正確に報告(自分では.gitignoreを直さず、正しくスコープ外として報告のみ)。Claudeが除外例外を追加して解決 |
 
+| 2026-08-14 | Action Timeline Editor設計のための事前調査(アニメーション/Combat/JSON/ドキュメント計15項目、コード変更無し) | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claude Code側のExploreエージェント2体がセッション制限に到達し失敗したため、調査自体をCodexへ切り替えた) | 91,116 (実測) | Claude Codeの5時間セッション制限を避けるため、通常はClaude(Explore agent)で行っていた「調査」自体もCodexに委任する初の試み。`tasks/investigation-report.md`という構造化された報告ファイルを出力させ、Claudeはそれを読むだけで設計を進められた |
+
+| 2026-08-14 | Action Timeline Editorの基盤: PMXActor/XActorへ`SetCurrentFrame`(外部駆動フレーム固定)を追加し、IMesh/PMXMesh/XMesh/MeshObjectへ配線、ModelPreviewPanelに検証用デバッグスライダーを追加 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(設計はClaudeが事前調査+tasks/current.mdで確定、実装は完全委任) | 119,419 (実測、1回目失敗分は除く) | 1回目の実行はCodex側の要因(原因不明、ファイル変更無しで異常終了)で失敗、リトライで成功。既存のPMXActor生成箇所を自分で検索して安全性を確認するなど、指示範囲を超えない丁寧な実装だった |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

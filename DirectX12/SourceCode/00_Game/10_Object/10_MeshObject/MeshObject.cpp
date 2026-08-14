@@ -23,3 +23,8 @@ void MeshObject::PlayNamedClip(const std::string& ClipName)
 
 	m_pMesh->PlayNamedClip(ClipName);
 }
+
+void MeshObject::SetCurrentFrame(float ActionFrame) noexcept
+{
+	if (m_pMesh) { m_pMesh->SetCurrentFrame(ActionFrame); }
+}

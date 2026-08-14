@@ -24,6 +24,7 @@ public:
 	void Draw() override;
 	void SetWorldTransform(const Transform& InTransform) override;
 	void PlayNamedClip(const std::string& ClipName) override;
+	void SetCurrentFrame(float ActionFrame) override;
 
 #if _DEBUG
 	float GetLocalHeight() const override;

@@ -115,8 +115,11 @@ void XActor::Update()
 		const float max_time = static_cast<float>(m_Skeleton.Clips[m_CurrentClipIndex].MaxTime);
 
 		// キーフレームの時刻はAnimTicksPerSecond単位(秒ではない)なので、実時間から変換する.
-		m_CurrentTime += GameTime::GetDeltaTime() * static_cast<float>(m_Skeleton.TicksPerSecond);
-		if (max_time > 0.0f) { m_CurrentTime = std::fmod(m_CurrentTime, max_time); } // ループ再生.
+		if (!m_IsExternallyDriven)
+		{
+			m_CurrentTime += GameTime::GetDeltaTime() * static_cast<float>(m_Skeleton.TicksPerSecond);
+			if (max_time > 0.0f) { m_CurrentTime = std::fmod(m_CurrentTime, max_time); } // ループ再生.
+		}
 	}
 
 	UpdateBoneMatrices();

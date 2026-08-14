@@ -30,6 +30,9 @@ public:
 	// アニメーションの再生範囲・速度をまとめて適用する(メッシュ未アタッチなら何もしない).
 	void PlayNamedClip(const std::string& ClipName);
 
+	// アタッチ中のメッシュへActionFrameを直接指定する.
+	void SetCurrentFrame(float ActionFrame) noexcept;
+
 #if _DEBUG
 	// アタッチ中のメッシュのローカル高さを取得する(Debugビルドのみ).
 	float GetLocalHeight() const noexcept { return m_pMesh ? m_pMesh->GetLocalHeight() : 0.0f; }

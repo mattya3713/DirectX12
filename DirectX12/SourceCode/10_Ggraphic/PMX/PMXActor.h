@@ -78,6 +78,12 @@ public:
 	void SetPlaybackRange(float StartFrame, float EndFrame) noexcept { m_StartFrame = StartFrame; m_EndFrame = EndFrame; }
 	// 再生速度を設定する(例: 30.0fで等倍、15.0fで半速).
 	void SetAnimationSpeed(float Speed) noexcept { m_AnimationSpeed = Speed; }
+	// 外部から指定したフレームで姿勢を固定する.
+	void SetCurrentFrame(float ActionFrame) noexcept
+	{
+		m_CurrentAnimationTime = ActionFrame;
+		m_IsPlayingAnimation = false;
+	}
 
 	float GetStartFrame() const noexcept { return m_StartFrame; }
 	float GetEndFrame() const noexcept { return m_EndFrame; }

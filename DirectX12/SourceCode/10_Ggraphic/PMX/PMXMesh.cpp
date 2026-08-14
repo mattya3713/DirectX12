@@ -43,6 +43,11 @@ void PMXMesh::LoadMotion(const std::string& VmdFilePath)
 	m_pActor->PlayAnimation();
 }
 
+void PMXMesh::SetCurrentFrame(float ActionFrame)
+{
+	m_pActor->SetCurrentFrame(ActionFrame);
+}
+
 void PMXMesh::Play()
 {
 	m_pActor->PlayAnimation();

@@ -33,6 +33,7 @@ public:
 	void SetWorldTransform(const Transform& InTransform) override;
 
 	void PlayNamedClip(const std::string& ClipName) override;
+	void SetCurrentFrame(float ActionFrame) override;
 
 	// モーション(VMD)を読み込み再生を開始する.
 	void LoadMotion(const std::string& VmdFilePath);

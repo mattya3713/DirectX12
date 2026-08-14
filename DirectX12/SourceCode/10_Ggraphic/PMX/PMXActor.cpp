@@ -20,7 +20,7 @@ PMXActor::PMXActor(const char* filepath, PMXRenderer& renderer)
 	, m_MotionData{}
 	, m_PMXBoneNameToIndexMap{}
 	, m_VMDBoneNameToPmxBoneIndexMap{}
-	, m_IsPlayingAnimation(false)
+	, m_IsPlayingAnimation(true)
 	, m_CurrentAnimationTime(0.0f)
 	, m_AnimationSpeed(30.0f)
 	, m_MaxFrame(0)
@@ -98,7 +98,7 @@ PMXActor::~PMXActor()
 
 void PMXActor::Update() {
 
-	if (true) {
+	if (m_IsPlayingAnimation) {
 		// 現在時刻から経過時間を計算
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float> deltaTimeChrono = currentTime - m_AnimationStartTime;
@@ -111,9 +111,9 @@ void PMXActor::Update() {
 		// アニメーションフレーム数に変換 (MMDは30FPSが標準)
 		m_CurrentAnimationTime = m_StartFrame + fmod(deltaTime * m_AnimationSpeed, range); // ループ再生
 
-		// アニメーションを更新
-		UpdateAnimation();
 	}
+
+	UpdateAnimation();
 }
 
 void PMXActor::StepFrame() {

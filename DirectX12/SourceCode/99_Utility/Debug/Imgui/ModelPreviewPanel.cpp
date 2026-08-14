@@ -139,6 +139,18 @@ void ModelPreviewPanel::Update()
 	}
 	ImGui::End();
 
+	const float previous_action_frame = m_ActionFrame;
+	ImGuiManager::Tweak("Action Frame (Debug)", m_ActionFrame, 0.0f, 120.0f);
+	if (m_ActionFrame != previous_action_frame)
+	{
+		if (m_pPMXActor)
+		{
+			m_pPMXActor->SetCurrentFrame(m_ActionFrame);
+			m_pPMXActor->Update();
+		}
+		if (m_upXActor) { m_upXActor->SetCurrentFrame(m_ActionFrame); }
+	}
+
 	if (m_pPMXActor) {
 		const bool step_requested = m_upAnimationEditor->Draw(*m_pPMXActor);
 

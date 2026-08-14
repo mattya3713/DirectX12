@@ -57,4 +57,5 @@ private:
 	std::vector<ModelEntry>  m_ModelList;
 	std::vector<std::string> m_ModelDisplayNames; // m_ModelListと対応するDisplayNameの一覧(Combo用).
 	std::string              m_SelectedDisplayName;
+	float                    m_ActionFrame = 0.0f; // 外部駆動確認用のActionFrame.
 };
