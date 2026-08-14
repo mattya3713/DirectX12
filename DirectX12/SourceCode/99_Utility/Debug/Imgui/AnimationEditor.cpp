@@ -19,7 +19,7 @@ bool AnimationEditor::Draw(PMXActor& Actor)
 
 	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
 	ImGui::SetNextWindowPos(ImVec2(500.0f, 110.0f), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Animation Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Animation Editor");
 
 	ImGui::Text("Frame: %.1f / %u", Actor.GetCurrentAnimationTime(), Actor.GetMaxFrame());
 
@@ -79,7 +79,7 @@ void AnimationEditor::Draw(XActor& Actor)
 
 	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
 	ImGui::SetNextWindowPos(ImVec2(500.0f, 110.0f), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Animation Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Animation Editor");
 
 	ImGuiManager::Text("クリップを選ぶと再生します(常時再生).");
 

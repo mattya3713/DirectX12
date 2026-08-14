@@ -396,6 +396,12 @@ LRESULT CALLBACK Main::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
             }
             break;
 
+        case WM_MOUSEWHEEL:
+            // 1フレーム中に複数ノッチ分のメッセージが届くことがあるため、上書きではなく積算する
+            // (DebugCamera側が1フレームに1回読み取ってリセットする).
+            Input::SetWheelDirection(Input::GetWheelDirection() + (GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? 1 : -1));
+            break;
+
             // キーボードが押されたとき.
         case WM_KEYDOWN:
             if (wParam == VK_ESCAPE) {

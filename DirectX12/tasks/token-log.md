@@ -40,6 +40,9 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 | 2026-08-14 | 実機確認バグ修正2回目: DebugDockSpace::Draw()の呼び出しをMain::Draw()からMain::Update()冒頭(各パネルのBegin()より前)へ移動 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが1回目の失敗結果とフレーム順序の仮説を仕様書に詳述) | 78,716 (実測) | Claudeの仮説と一致する妥当な修正で部分的に効果あり。Scene Viewパネルが初めて正しく表示されるようになったが、新たな症状(Scene View以外の全パネルが消える)が発生 |
 | 2026-08-14 | 実機確認バグ修正3回目: DockBuilderのleft/right/bottom各ノードをさらに分割し、各パネルに専用ノードを割り当て(複数パネルが同一ノードを共有していたことが原因) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが2回目の新症状を仕様書に詳述し、実行時診断ログでの原因特定を明示的に指示) | 136,058 (実測) | 成功。Claudeが2回クリーンな状態で実機確認し、Unity風ドッキングレイアウト(Debug HUD/Scene=左、Animation Editor=右、Console/Model Select=下、Scene View=中央、レターボックス+グリッド床)が正しく表示されることを確認 |
 
+| 2026-08-15 | DebugCameraにUnity SceneView風の右クリック回転・WASD/QE移動のYaw/Pitch化・ホイールズームを追加 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(仕様書に既存コード構造・CameraBaseの既存API・注意点を詳述) | 79,342 (実測) | 成功したがPitchの符号が逆だった(実機確認前提を書いたが未検証のまま完了報告). Claudeが実機確認で発見し、符号2箇所を直接修正(数行のため委任せず) |
+| 2026-08-15 | ドッキングパネル(Debug HUD/Animation Editor/Model Select)からImGuiWindowFlags_AlwaysAutoResizeを除去(比率崩れ・リサイズ時のはみ出し対策) | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claudeが原因の仮説=AutoResize+Docking相性問題を仕様書に明記) | 46,864 (実測) | 成功。指示通りMainScene専用のActor Scale (Debug)は対象外のまま維持 |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

@@ -23,4 +23,5 @@ public:
 private:
 	float m_MoveSpeed;		// 移動速度.
 	float m_SlowMoveSpeed;	// Shift押下時の低速移動速度.
+	bool  m_IsRotating;		// 前フレームで右ドラッグ回転中だったか(押下開始・解放の検出用).
 };

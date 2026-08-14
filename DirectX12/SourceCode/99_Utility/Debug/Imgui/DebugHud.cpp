@@ -10,7 +10,7 @@ void DebugHud::Draw()
 {
 	// 常に同じ初期位置に置き、他のデバッグウィンドウと重ならないようにする(初回起動時のみ).
 	ImGui::SetNextWindowPos(ImVec2(20.0f, 20.0f), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Debug HUD", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Debug HUD");
 
 	// FPS・デルタタイム.
 	const float delta_time = GameTime::GetDeltaTime();

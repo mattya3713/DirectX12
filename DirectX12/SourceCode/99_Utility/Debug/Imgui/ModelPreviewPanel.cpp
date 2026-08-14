@@ -120,7 +120,7 @@ void ModelPreviewPanel::Update()
 	// モデル切り替え用のドロップダウン(見つかった全モデルが対象).
 	// 他のデバッグウィンドウと重ならない初期位置(初回起動時のみ).
 	ImGui::SetNextWindowPos(ImVec2(500.0f, 20.0f), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Model Select", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Model Select");
 	if (!m_ModelList.empty()) {
 		const std::string previous = m_SelectedDisplayName;
 		ImGuiManager::Combo("Model", m_SelectedDisplayName, m_ModelDisplayNames, true);

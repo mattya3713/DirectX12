@@ -18,7 +18,7 @@ struct PSInput
 PSInput main(VSInput Input)
 {
 	PSInput Output;
-	Output.Position = mul(float4(Input.Position, 1.0f), ViewProj);
+	Output.Position = mul(ViewProj, float4(Input.Position, 1.0f));
 	Output.Color = Input.Color;
 	return Output;
 }
