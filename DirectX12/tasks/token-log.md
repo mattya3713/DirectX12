@@ -28,6 +28,11 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 
 | 2026-08-14 | Action Timeline Editorの基盤: PMXActor/XActorへ`SetCurrentFrame`(外部駆動フレーム固定)を追加し、IMesh/PMXMesh/XMesh/MeshObjectへ配線、ModelPreviewPanelに検証用デバッグスライダーを追加 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(設計はClaudeが事前調査+tasks/current.mdで確定、実装は完全委任) | 119,419 (実測、1回目失敗分は除く) | 1回目の実行はCodex側の要因(原因不明、ファイル変更無しで異常終了)で失敗、リトライで成功。既存のPMXActor生成箇所を自分で検索して安全性を確認するなど、指示範囲を超えない丁寧な実装だった |
 
+| 2026-08-14 | Scene Viewパネルの動的リサイズ・カメラアスペクト追従・ドッキング統合(Stage B/C) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(前タスクの構造をClaudeが仕様書に詳述) | 94,843 (実測) | 成功 |
+| 2026-08-14 | Scene Viewを固定16:9でレターボックス/ピラーボックス表示するよう変更 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり | 42,804 (実測) | 成功。低リスクなImGuiレイアウトのみの変更 |
+| 2026-08-14 | 実ウィンドウのリサイズ対応(WM_SIZE→スワップチェーン/バックバッファ/深度バッファ/ビューポート再構築) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが既存コード構造を事前確認済み) | 91,250 (実測) | 成功 |
+| 2026-08-14 | オフスクリーンシーン用ビューポート不整合の修正+レターボックス帯を灰色に変更 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeがバグの原因箇所を特定してから委任) | 74,854 (実測) | 成功。ユーザーからの「比率がおかしい」報告を受け、Claudeが原因(誤ったビューポート使用)を先に特定してから仕様書に明記した |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

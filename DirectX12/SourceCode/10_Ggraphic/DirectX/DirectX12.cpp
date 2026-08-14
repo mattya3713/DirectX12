@@ -19,6 +19,12 @@ DirectX12::DirectX12()
 	, m_DepthClearValue	{ }
 	, m_pSceneColorBuffer  { nullptr }
 	, m_pSceneColorRTVHeap { nullptr }
+	, m_pImGuiManagerForSceneSrv { nullptr }
+	, m_SceneColorWidth { 0 }
+	, m_SceneColorHeight { 0 }
+	, m_SceneColorResizeRequested { false }
+	, m_SceneColorRequestedWidth { 0 }
+	, m_SceneColorRequestedHeight { 0 }
 	, m_pSceneConstBuff	{ nullptr }
 	, m_pMappedSceneData{ nullptr }
 	, m_pFence			{ nullptr }
@@ -132,6 +138,13 @@ void DirectX12::UpdateSceneBuffer()
 
 void DirectX12::BeginDraw()
 {
+	if (m_SceneColorResizeRequested)
+	{
+		WaitForGPU();
+		ResizeSceneColorTarget(m_SceneColorRequestedWidth, m_SceneColorRequestedHeight);
+		m_SceneColorResizeRequested = false;
+	}
+
 	// このフレームで使うバックバッファのインデックス(EndDraw()まで使い回す).
 	m_FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
@@ -169,8 +182,8 @@ void DirectX12::BeginDraw()
 	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
 	//ビューポート、0.シザー矩形のセット.
-	m_pCmdList->RSSetViewports(1, m_pViewport.get());
-	m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+	m_pCmdList->RSSetViewports(1, m_pSceneColorViewport.get());
+	m_pCmdList->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
 }
 
 void DirectX12::PrepareUIRenderTarget()
@@ -201,14 +214,68 @@ void DirectX12::PrepareUIRenderTarget()
 
 void DirectX12::CreateSceneColorTarget(ImGuiManager& ImGuiMgr)
 {
+	m_pImGuiManagerForSceneSrv = &ImGuiMgr;
+
 	DXGI_SWAP_CHAIN_DESC1 Desc = {};
 	MyAssert::IsFailed(
 		_T("スワップチェーンの取り出し(シーンカラーバッファ用)"),
 		&IDXGISwapChain4::GetDesc1, m_pSwapChain.Get(),
 		&Desc);
 
+	ResizeSceneColorTarget(Desc.Width, Desc.Height);
+}
+
+void DirectX12::RequestSceneColorResize(UINT Width, UINT Height) noexcept
+{
+	if (Width == 0 || Height == 0)
+	{
+		return;
+	}
+
+	if (Width == m_SceneColorWidth && Height == m_SceneColorHeight)
+	{
+		return;
+	}
+
+	m_SceneColorRequestedWidth = Width;
+	m_SceneColorRequestedHeight = Height;
+	m_SceneColorResizeRequested = true;
+}
+
+void DirectX12::OnWindowResize(UINT Width, UINT Height)
+{
+	if (Width == 0 || Height == 0 || !m_pSwapChain)
+	{
+		return;
+	}
+
+	WaitForGPU();
+
+	for (auto& BackBuffer : m_pBackBuffer)
+	{
+		BackBuffer.Reset();
+	}
+	m_pDepthBuffer.Reset();
+	m_pDepthHeap.Reset();
+	m_pDepthSRVHeap.Reset();
+
+	MyAssert::IsFailed(
+		_T("スワップチェーンのバッファーをリサイズ"),
+		&IDXGISwapChain4::ResizeBuffers, m_pSwapChain.Get(),
+		FrameBufferCount, Width, Height,
+		m_SwapChainDesc.Format, m_SwapChainDesc.Flags);
+
+	CreateRenderTarget(m_pRenderTargetViewHeap, m_pBackBuffer);
+	CreateDepthDesc(m_pDepthBuffer, m_pDepthHeap, m_pDepthSRVHeap);
+}
+
+void DirectX12::ResizeSceneColorTarget(UINT Width, UINT Height)
+{
+	m_pSceneColorBuffer.Reset();
+
+
 	D3D12_RESOURCE_DESC ColorResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, Desc.Width, Desc.Height, 1, 1, 1, 0,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, Width, Height, 1, 1, 1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
 	D3D12_CLEAR_VALUE ColorClearValue = {};
@@ -255,6 +322,9 @@ void DirectX12::CreateSceneColorTarget(ImGuiManager& ImGuiMgr)
 		&ColorRtvDesc,
 		m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart());
 
+	m_pSceneColorViewport.reset(new CD3DX12_VIEWPORT(m_pSceneColorBuffer.Get()));
+	m_pSceneColorScissorRect.reset(new CD3DX12_RECT(0, 0, static_cast<LONG>(Width), static_cast<LONG>(Height)));
+
 	// ImGuiのSRVヒープ(スロット1)へ直接SRVを作成する(ImGui::Image()から参照できるようにするため).
 	D3D12_SHADER_RESOURCE_VIEW_DESC ColorSrvDesc = {};
 	ColorSrvDesc.Format                    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
@@ -265,7 +335,10 @@ void DirectX12::CreateSceneColorTarget(ImGuiManager& ImGuiMgr)
 	m_pDevice12->CreateShaderResourceView(
 		m_pSceneColorBuffer.Get(),
 		&ColorSrvDesc,
-		ImGuiMgr.GetSceneTextureCpuHandle());
+		m_pImGuiManagerForSceneSrv->GetSceneTextureCpuHandle());
+
+	m_SceneColorWidth = Width;
+	m_SceneColorHeight = Height;
 }
 
 void DirectX12::EndDraw()
@@ -483,11 +556,14 @@ void DirectX12::CreateRenderTarget(
 	HeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// ヒープのオプション(特になしを設定).
 	HeapDesc.NodeMask = 0;								// 単一アダプタ.					
 
-	MyAssert::IsFailed(
-		_T("ディスクリプタヒープの作成"),
-		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
-		&HeapDesc,														// ディスクリプタヒープ構造体を登録.
-		IID_PPV_ARGS(RenderTargetViewHeap.ReleaseAndGetAddressOf()));	// (Out)ディスクリプタヒープ.
+	if (!RenderTargetViewHeap)
+	{
+		MyAssert::IsFailed(
+			_T("ディスクリプタヒープの作成"),
+			&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+			&HeapDesc,
+			IID_PPV_ARGS(RenderTargetViewHeap.ReleaseAndGetAddressOf()));
+	}
 
 	// スワップチェーン構造体.
 	DXGI_SWAP_CHAIN_DESC SwcDesc = {};
@@ -500,7 +576,7 @@ void DirectX12::CreateRenderTarget(
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle = RenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
 
 	// バックバッファをヒープの数分宣言.
-	m_pBackBuffer.resize(SwcDesc.BufferCount);
+	BackBuffer.resize(SwcDesc.BufferCount);
 
 	// SRGBレンダーターゲットビュー設定.
 	D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
@@ -514,9 +590,9 @@ void DirectX12::CreateRenderTarget(
 			_T("スワップチェーン内のバッファーとビューを関連づける"),
 			&IDXGISwapChain4::GetBuffer, m_pSwapChain.Get(),
 			i,
-			IID_PPV_ARGS(m_pBackBuffer[i].GetAddressOf()));
+			IID_PPV_ARGS(BackBuffer[i].GetAddressOf()));
 
-		RTVDesc.Format = m_pBackBuffer[i]->GetDesc().Format;
+		RTVDesc.Format = BackBuffer[i]->GetDesc().Format;
 
 		// レンダーターゲットビューを生成する.
 		m_pDevice12->CreateRenderTargetView(

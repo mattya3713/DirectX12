@@ -108,6 +108,12 @@ public:
 	// ImGuiのSRVヒープへ直接SRVを作成するため、初期化済みのImGuiManagerが必要).
 	void CreateSceneColorTarget(ImGuiManager& ImGuiMgr);
 
+	// Scene Viewパネルの現在サイズをリクエストする. 実際のリサイズはBeginDraw()の先頭で行う.
+	void RequestSceneColorResize(UINT Width, UINT Height) noexcept;
+
+	// 実ウィンドウのリサイズ時にスワップチェーンと関連する描画資源を作り直す.
+	void OnWindowResize(UINT Width, UINT Height);
+
 	// スワップチェーン取得.
 	const MyComPtr<IDXGISwapChain4> GetSwapChain();
 
@@ -161,6 +167,9 @@ private:// 作っていくんだよねぇ~.
 
 	// フェンスの作成.
 	void CreateFance(MyComPtr<ID3D12Fence>& Fence);
+
+	// 指定サイズでシーンカラーバッファとビューを再作成する.
+	void ResizeSceneColorTarget(UINT Width, UINT Height);
 
 
 
@@ -218,6 +227,12 @@ private:
 	// オフスクリーンのシーンカラーバッファ(Scene Viewパネル表示用. 3DシーンはここへBeginDraw()で描く).
 	MyComPtr<ID3D12Resource>				m_pSceneColorBuffer;
 	MyComPtr<ID3D12DescriptorHeap>			m_pSceneColorRTVHeap;	// ↑専用のRTVヒープ(1ディスクリプタ).
+	ImGuiManager*							m_pImGuiManagerForSceneSrv;	// シーンテクスチャSRVの再作成先.
+	UINT								m_SceneColorWidth;
+	UINT								m_SceneColorHeight;
+	bool								m_SceneColorResizeRequested;
+	UINT								m_SceneColorRequestedWidth;
+	UINT								m_SceneColorRequestedHeight;
 
 	//シーンを構成するバッファまわり
 	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン定数バッファのリソース
@@ -239,6 +254,8 @@ private:
 	MyComPtr<ID3D12RootSignature>			m_pRootSignature;		// ルートシグネチャ.
 	std::unique_ptr<D3D12_VIEWPORT>			m_pViewport;			// ビューポート.
 	std::unique_ptr<D3D12_RECT>				m_pScissorRect;			// シザー矩形.
+	std::unique_ptr<D3D12_VIEWPORT>			m_pSceneColorViewport;		// オフスクリーン用ビューポート.
+	std::unique_ptr<D3D12_RECT>				m_pSceneColorScissorRect;		// オフスクリーン用シザー矩形.
 
 	using LoadLambda_t = std::function<HRESULT(const std::wstring& Path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
 	std::map<std::string, LoadLambda_t>		m_LoadLambdaTable;

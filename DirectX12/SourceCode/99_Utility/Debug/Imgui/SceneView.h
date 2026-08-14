@@ -9,6 +9,8 @@
 *            : そのまま表示するのみ). ドッキングレイアウトへの統合は別タスクで行う.
 **********************************************************************************/
 
+#include "ImGui/imgui.h"
+
 class SceneView final
 {
 public:
@@ -18,4 +20,7 @@ public:
 	// 毎フレーム描画(ImGuiManager::NewFrame()〜Render()の間、DirectX12::PrepareUIRenderTarget()の後で呼ぶ.
 	// オフスクリーンバッファがPIXEL_SHADER_RESOURCE状態になっている必要があるため).
 	static void Draw();
+
+	// Draw()で計測したパネル表示可能領域のサイズ(px)を返す.
+	static ImVec2 GetContentSize() noexcept;
 };

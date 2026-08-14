@@ -17,6 +17,7 @@
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
+#include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
 #include "00_Game/00_Scene/SceneManager.h"
@@ -123,6 +124,11 @@ void MainScene::Update()
 
 		// アクティブカメラの行列をDirectX12側へ反映.
 		if (CameraBase* active_camera = p_camera_manager->GetActive()) {
+			const ImVec2 scene_view_size = SceneView::GetContentSize();
+			if (scene_view_size.x > 0.0f && scene_view_size.y > 0.0f)
+			{
+				active_camera->SetAspect(scene_view_size.x / scene_view_size.y);
+			}
 			p_dx12->SetCamera(
 				active_camera->GetViewMatrix(),
 				active_camera->GetProjMatrix(),

@@ -377,6 +377,14 @@ LRESULT CALLBACK Main::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
             PostQuitMessage(0);
             break;
 
+        case WM_SIZE:
+            if (pMain->m_pDx12) {
+                const UINT width = LOWORD(lParam);
+                const UINT height = HIWORD(lParam);
+                pMain->m_pDx12->OnWindowResize(width, height);
+            }
+            break;
+
             // キーボードが押されたとき.
         case WM_KEYDOWN:
             if (wParam == VK_ESCAPE) {

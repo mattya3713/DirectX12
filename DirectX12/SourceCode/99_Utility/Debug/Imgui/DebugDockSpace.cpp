@@ -46,6 +46,7 @@ void DebugDockSpace::Draw()
 		ImGui::DockBuilderDockWindow("Actor Scale (Debug)", right);
 		ImGui::DockBuilderDockWindow("Console", bottom);
 		ImGui::DockBuilderDockWindow("Model Select", bottom);
+		ImGui::DockBuilderDockWindow("Scene View", center);
 
 		ImGui::DockBuilderFinish(dockspace_id);
 	}
