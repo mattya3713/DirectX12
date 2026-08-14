@@ -137,10 +137,11 @@ void ModelPreviewPanel::Update()
 	else {
 		ImGuiManager::Text("Data\\Model\\PMX、Data\\Model\\Xにモデルが見つかりませんでした.");
 	}
-	ImGui::End();
 
 	const float previous_action_frame = m_ActionFrame;
 	ImGuiManager::Tweak("Action Frame (Debug)", m_ActionFrame, 0.0f, 120.0f);
+	ImGui::End();
+
 	if (m_ActionFrame != previous_action_frame)
 	{
 		if (m_pPMXActor)

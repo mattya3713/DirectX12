@@ -19,7 +19,7 @@ param(
     [string]$Configuration = 'Debug',
     [ValidateSet('x64', 'Win32')]
     [string]$Platform = 'x64',
-    [string]$Model  # e.g. 'gpt-5.6-luna'. Omit to use Codex's own configured default.
+    [string]$Model = 'gpt-5.6-luna'  # project default model. Pass -Model '' to use Codex's own configured default instead.
 )
 
 $ErrorActionPreference = 'Stop'

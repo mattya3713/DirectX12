@@ -150,6 +150,13 @@ HRESULT Main::LoadData()
 // 更新処理.
 void Main::Update()
 {
+#if _DEBUG
+    if (m_upSceneManager && m_upSceneManager->IsAnimationTuningActive()) {
+        // ドッキング対象のBegin()より先にホストを提出し、ImGuiのドッキング処理順を保証する.
+        DebugDockSpace::Draw();
+    }
+#endif
+
     if (m_upSceneManager) {
         m_upSceneManager->Update();
     }
@@ -178,19 +185,13 @@ void Main::Draw()
     // 全体の描画準備.
     m_pDx12->BeginDraw(is_editor_scene);
 
-	if (is_editor_scene) {
-		// デバッグウィンドウを配置するドック領域を先に作成する.
-		DebugDockSpace::Draw();
-	}
-
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
 	DebugConsole::Draw();
 	if (is_editor_scene) {
 		SceneView::Draw();
 	}
-
-    if (m_upSceneManager) {
+	if (m_upSceneManager) {
         m_upSceneManager->Draw();
     }
 

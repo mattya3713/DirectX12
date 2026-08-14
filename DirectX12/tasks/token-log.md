@@ -36,6 +36,10 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 | 2026-08-14 | AnimationTuningScene用のDCCツール風グリッド床(独自ライン描画パイプライン新設) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeがシェーダー/ルートシグネチャ構成を仕様書に詳述) | 100,171 (実測) | 成功。新規レンダリングパスの追加だが既存パイプラインには非干渉なので低リスク |
 | 2026-08-14 | MainScene/AnimationTuningSceneで描画方式を分岐(MainSceneは直接描画に復帰、AnimationTuningSceneはエディタ風UIを維持) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが分岐設計とBeginDraw()両分岐の正確なコードを仕様書に明記) | 84,176 (実測) | 成功。ユーザーから「MainSceneにもUnity風UIが適用されている」との指摘を受けたスコープ修正 |
 
+| 2026-08-14 | 実機確認バグ修正1回目: DockBuilderAddNodeにImGuiDockNodeFlags_DockSpaceフラグを追加 | Codex (gpt-5.6-luna, danger-full-access, デフォルトモデル化後の初回実行) | ゼロから(Claudeが実機で「全パネルが左上に重なって浮動」というバグを発見し、再現手順と仮説を仕様書に詳述) | 77,219 (実測) | ImGuiのDockSpace API仕様として妥当な修正だったが、Claudeが実機再確認したところ症状は変化せず。原因の一部に過ぎなかった |
+| 2026-08-14 | 実機確認バグ修正2回目: DebugDockSpace::Draw()の呼び出しをMain::Draw()からMain::Update()冒頭(各パネルのBegin()より前)へ移動 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが1回目の失敗結果とフレーム順序の仮説を仕様書に詳述) | 78,716 (実測) | Claudeの仮説と一致する妥当な修正で部分的に効果あり。Scene Viewパネルが初めて正しく表示されるようになったが、新たな症状(Scene View以外の全パネルが消える)が発生 |
+| 2026-08-14 | 実機確認バグ修正3回目: DockBuilderのleft/right/bottom各ノードをさらに分割し、各パネルに専用ノードを割り当て(複数パネルが同一ノードを共有していたことが原因) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが2回目の新症状を仕様書に詳述し、実行時診断ログでの原因特定を明示的に指示) | 136,058 (実測) | 成功。Claudeが2回クリーンな状態で実機確認し、Unity風ドッキングレイアウト(Debug HUD/Scene=左、Animation Editor=右、Console/Model Select=下、Scene View=中央、レターボックス+グリッド床)が正しく表示されることを確認 |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

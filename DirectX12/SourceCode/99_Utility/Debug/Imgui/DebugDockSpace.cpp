@@ -28,7 +28,9 @@ void DebugDockSpace::Draw()
 	if (ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
 	{
 		ImGui::DockBuilderRemoveNode(dockspace_id);
-		ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGui::DockBuilderAddNode(
+			dockspace_id,
+			ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
 		ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->WorkSize);
 
 		// Unityの既定レイアウト(Hierarchy=左、Inspector=右、Project/Console=下段が画面幅いっぱい、
@@ -39,12 +41,15 @@ void DebugDockSpace::Draw()
 		ImGuiID center = top_area;
 		ImGuiID left   = ImGui::DockBuilderSplitNode(center, ImGuiDir_Left,  0.18f, nullptr, &center);
 		ImGuiID right  = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.22f, nullptr, &center);
+		ImGuiID left_top    = ImGui::DockBuilderSplitNode(left, ImGuiDir_Up, 0.35f, nullptr, &left);
+		ImGuiID right_top   = ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, 0.50f, nullptr, &right);
+		ImGuiID bottom_left = ImGui::DockBuilderSplitNode(bottom, ImGuiDir_Left, 0.50f, nullptr, &bottom);
 
-		ImGui::DockBuilderDockWindow("Debug HUD", left);
+		ImGui::DockBuilderDockWindow("Debug HUD", left_top);
 		ImGui::DockBuilderDockWindow("Scene", left);
-		ImGui::DockBuilderDockWindow("Animation Editor", right);
+		ImGui::DockBuilderDockWindow("Animation Editor", right_top);
 		ImGui::DockBuilderDockWindow("Actor Scale (Debug)", right);
-		ImGui::DockBuilderDockWindow("Console", bottom);
+		ImGui::DockBuilderDockWindow("Console", bottom_left);
 		ImGui::DockBuilderDockWindow("Model Select", bottom);
 		ImGui::DockBuilderDockWindow("Scene View", center);
 
