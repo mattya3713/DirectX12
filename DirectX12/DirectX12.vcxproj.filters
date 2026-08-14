@@ -134,8 +134,14 @@
     <ClInclude Include="SourceCode\00_Game\50_Input\Input.h" />
     <ClInclude Include="SourceCode\00_Game\50_Input\VirtualPad.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugDockSpace.h">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\SceneView.h">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h">
@@ -246,8 +252,14 @@
     <ClCompile Include="SourceCode\00_Game\50_Input\Input.cpp" />
     <ClCompile Include="SourceCode\00_Game\50_Input\VirtualPad.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugDockSpace.cpp">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.cpp">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\SceneView.cpp">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp">

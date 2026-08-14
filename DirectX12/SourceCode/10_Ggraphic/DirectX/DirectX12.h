@@ -23,6 +23,8 @@
 // モデルの頂点サイズ.
 constexpr size_t PmdVertexSize = 38;
 
+class ImGuiManager;
+
 /**********************************************************
 * @author      : 淵脇未来.
 * @date        : 2025/02/18.
@@ -97,6 +99,14 @@ public:
 
 	void BeginDraw();
 	void EndDraw();
+
+	// 3Dシーンをオフスクリーンへ描き終えた後、ImGui(Scene Viewパネル含む)を実際の
+	// バックバッファへ描くための準備をする(SceneManager::Draw()の後、ImGuiManager::Render()の前に呼ぶ).
+	void PrepareUIRenderTarget();
+
+	// オフスクリーンのシーンカラーバッファを作成する(ImGuiManager::Init()成功後に1度だけ呼ぶ.
+	// ImGuiのSRVヒープへ直接SRVを作成するため、初期化済みのImGuiManagerが必要).
+	void CreateSceneColorTarget(ImGuiManager& ImGuiMgr);
 
 	// スワップチェーン取得.
 	const MyComPtr<IDXGISwapChain4> GetSwapChain();
@@ -201,9 +211,13 @@ private:
 
 	// 深度バッファ.
 	MyComPtr<ID3D12Resource>				m_pDepthBuffer;			// 深度バッファ.
-	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビュー. 
-	MyComPtr<ID3D12DescriptorHeap>			m_pDepthSRVHeap;		// 深度ステンシルビューのデスクリプタヒープ. 
+	MyComPtr<ID3D12DescriptorHeap>			m_pDepthHeap;			// 深度ステンシルビュー.
+	MyComPtr<ID3D12DescriptorHeap>			m_pDepthSRVHeap;		// 深度ステンシルビューのデスクリプタヒープ.
 	D3D12_CLEAR_VALUE						m_DepthClearValue;		// 深度のクリア値.
+
+	// オフスクリーンのシーンカラーバッファ(Scene Viewパネル表示用. 3DシーンはここへBeginDraw()で描く).
+	MyComPtr<ID3D12Resource>				m_pSceneColorBuffer;
+	MyComPtr<ID3D12DescriptorHeap>			m_pSceneColorRTVHeap;	// ↑専用のRTVヒープ(1ディスクリプタ).
 
 	//シーンを構成するバッファまわり
 	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン定数バッファのリソース

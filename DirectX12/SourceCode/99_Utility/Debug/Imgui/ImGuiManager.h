@@ -71,6 +71,13 @@ public: // 値調整用ラッパー("##"でラベル表示とウィジェットI
 	// コンボボックス表示. 選択中の項目名を返す.
 	static std::string Combo(const char* Label, std::string& NowItem, const std::vector<std::string>& List, bool IsLabel = false, float Space = 100.0f);
 
+public:
+	// オフスクリーンシーンテクスチャ用ディスクリプタ(SRVヒープのスロット1. スロット0はフォント用).
+	// ImGui::Image()に渡すため、DirectX12側がこのヒープへ直接SRVを作成する(ImGui_ImplDX12_Init時に
+	// 渡した1つのヒープしか描画時にバインドされないため、別ヒープを作っても使えない).
+	D3D12_CPU_DESCRIPTOR_HANDLE GetSceneTextureCpuHandle() const noexcept;
+	D3D12_GPU_DESCRIPTOR_HANDLE GetSceneTextureGpuHandle() const noexcept;
+
 private:
 	// フォントSRV用のディスクリプタヒープを作成する.
 	bool CreateSrvHeap(DirectX12& Dx12);

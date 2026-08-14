@@ -97,13 +97,27 @@ bool ImGuiManager::CreateSrvHeap(DirectX12& Dx12)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC heap_desc = {};
 	heap_desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	heap_desc.NumDescriptors = 1;
+	heap_desc.NumDescriptors = 2; // スロット0=フォント, スロット1=オフスクリーンシーンテクスチャ.
 	heap_desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	auto device = Dx12.GetDevice();
 	HRESULT hr = device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(m_cpSrvHeap.GetAddressOf()));
 
 	return SUCCEEDED(hr);
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE ImGuiManager::GetSceneTextureCpuHandle() const noexcept
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE handle = m_cpSrvHeap->GetCPUDescriptorHandleForHeapStart();
+	handle.ptr += m_pDx12->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	return handle;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE ImGuiManager::GetSceneTextureGpuHandle() const noexcept
+{
+	D3D12_GPU_DESCRIPTOR_HANDLE handle = m_cpSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle.ptr += m_pDx12->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	return handle;
 }
 
 void ImGuiManager::NewFrame()

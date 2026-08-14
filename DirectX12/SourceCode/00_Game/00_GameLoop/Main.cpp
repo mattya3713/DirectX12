@@ -10,9 +10,11 @@
 #include "00_Game/50_Input/Input.h"
 #include "00_Game/50_Input/VirtualPad.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Imgui/DebugDockSpace.h"
 #include "99_Utility/Debug/Imgui/DebugHud.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/Debug/Imgui/DebugConsole.h"
+#include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Sound/SoundManager.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
@@ -105,6 +107,10 @@ HRESULT Main::Create()
         return E_FAIL;
     }
 
+	// 3Dシーンをオフスクリーンへレンダリングするためのカラーバッファを作成する
+	// (Scene ViewパネルがImGui::Image()で表示する. ImGuiManager初期化済みである必要がある).
+	m_pDx12->CreateSceneColorTarget(*m_upImGuiManager);
+
 	// ログ管理を構築し、DebugConsoleから参照できるよう登録する.
 	m_upDebugLog = std::make_unique<DebugLog>();
 	ServiceLocator::Provide<DebugLog>(m_upDebugLog.get());
@@ -166,13 +172,22 @@ void Main::Draw()
     // 全体の描画準備.
     m_pDx12->BeginDraw();
 
+	// デバッグウィンドウを配置するドック領域を先に作成する.
+	// (以前は3DがバックバッファへDockSpaceと競合して真っ黒になっていたが、3DをオフスクリーンのScene
+	// Viewパネルへ移したことで構造的に解消したはずなので再度有効化する).
+	DebugDockSpace::Draw();
+
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
 	DebugConsole::Draw();
+	SceneView::Draw();
 
     if (m_upSceneManager) {
         m_upSceneManager->Draw();
     }
+
+	// 3DシーンをオフスクリーンからPIXEL_SHADER_RESOURCEへ、実際のバックバッファをImGui用のRENDER_TARGETへ.
+	m_pDx12->PrepareUIRenderTarget();
 
     // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
     ImGuiManager::Render();

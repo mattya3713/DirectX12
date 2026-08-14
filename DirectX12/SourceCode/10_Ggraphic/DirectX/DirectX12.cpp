@@ -1,5 +1,6 @@
 ﻿#include "DirectX12.h"
 #include "99_Utility/String/FilePath/FilePath.h"
+#include "99_Utility/Debug/Imgui/ImGuiManager.h"
 
 
 DirectX12::DirectX12()
@@ -16,6 +17,8 @@ DirectX12::DirectX12()
 	, m_pDepthBuffer	{ nullptr }
 	, m_pDepthHeap		{ nullptr }
 	, m_DepthClearValue	{ }
+	, m_pSceneColorBuffer  { nullptr }
+	, m_pSceneColorRTVHeap { nullptr }
 	, m_pSceneConstBuff	{ nullptr }
 	, m_pMappedSceneData{ nullptr }
 	, m_pFence			{ nullptr }
@@ -146,14 +149,15 @@ void DirectX12::BeginDraw()
 	m_pCmdAllocators[m_FrameIndex]->Reset();
 	m_pCmdList->Reset(m_pCmdAllocators[m_FrameIndex].Get(), nullptr);
 
-	// DirectX処理.
-	auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	// 3DシーンはオフスクリーンのシーンカラーバッファへPIXEL_SHADER_RESOURCE→RENDER_TARGETで描く
+	// (実際のバックバッファはPrepareUIRenderTarget()でImGui用に別途RENDER_TARGETへ遷移させる.
+	// Scene ViewパネルがこのバッファをImGui::Image()でサンプルする).
+	auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pSceneColorBuffer.Get(),
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_pCmdList->ResourceBarrier(1, &Barrier);
 
-	// レンダーターゲットを指定.
-	auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
-	rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	// レンダーターゲットを指定(オフスクリーンのシーンカラーバッファ).
+	auto rtvH = m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart();
 
 	// 深度を指定.
 	auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
@@ -167,6 +171,101 @@ void DirectX12::BeginDraw()
 	//ビューポート、0.シザー矩形のセット.
 	m_pCmdList->RSSetViewports(1, m_pViewport.get());
 	m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+}
+
+void DirectX12::PrepareUIRenderTarget()
+{
+	// オフスクリーンのシーンカラーバッファをRENDER_TARGET→PIXEL_SHADER_RESOURCEへ
+	// (このフレームのImGui::Image()でサンプルできるようにする).
+	auto ToSrv = CD3DX12_RESOURCE_BARRIER::Transition(m_pSceneColorBuffer.Get(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	m_pCmdList->ResourceBarrier(1, &ToSrv);
+
+	// 実際のバックバッファをImGui描画用にPRESENT→RENDER_TARGETへ(EndDraw()で戻す).
+	auto ToRt = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_pCmdList->ResourceBarrier(1, &ToRt);
+
+	auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
+
+	// ドッキングされていない隙間に前フレームの残像が出ないようクリアする(ImGuiパネルは後で上書きされる).
+	float ClearColor[] = { 0.f,0.f,0.f,1.0f };
+	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+
+	m_pCmdList->RSSetViewports(1, m_pViewport.get());
+	m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+}
+
+void DirectX12::CreateSceneColorTarget(ImGuiManager& ImGuiMgr)
+{
+	DXGI_SWAP_CHAIN_DESC1 Desc = {};
+	MyAssert::IsFailed(
+		_T("スワップチェーンの取り出し(シーンカラーバッファ用)"),
+		&IDXGISwapChain4::GetDesc1, m_pSwapChain.Get(),
+		&Desc);
+
+	D3D12_RESOURCE_DESC ColorResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, Desc.Width, Desc.Height, 1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+	D3D12_CLEAR_VALUE ColorClearValue = {};
+	ColorClearValue.Format    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	ColorClearValue.Color[0]  = 0.0f;
+	ColorClearValue.Color[1]  = 0.0f;
+	ColorClearValue.Color[2]  = 0.0f;
+	ColorClearValue.Color[3]  = 1.0f;
+
+	D3D12_HEAP_PROPERTIES ColorHeapProperty = {};
+	ColorHeapProperty.Type                  = D3D12_HEAP_TYPE_DEFAULT;
+	ColorHeapProperty.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	ColorHeapProperty.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
+
+	MyAssert::IsFailed(
+		_T("シーンカラーバッファリソースを作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(),
+		&ColorHeapProperty,
+		D3D12_HEAP_FLAG_NONE,
+		&ColorResourceDesc,
+		// 毎フレームBeginDraw()の遷移元と一致させるため、PIXEL_SHADER_RESOURCEを初期状態にする
+		// (最初のBeginDraw()も含め、常に同じ遷移で扱えるようにするため).
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		&ColorClearValue,
+		IID_PPV_ARGS(m_pSceneColorBuffer.ReleaseAndGetAddressOf()));
+
+	D3D12_DESCRIPTOR_HEAP_DESC RtvHeapDesc = {};
+	RtvHeapDesc.NumDescriptors = 1;
+	RtvHeapDesc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	RtvHeapDesc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+	MyAssert::IsFailed(
+		_T("シーンカラーバッファ用RTVヒープを作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+		&RtvHeapDesc,
+		IID_PPV_ARGS(m_pSceneColorRTVHeap.ReleaseAndGetAddressOf()));
+
+	D3D12_RENDER_TARGET_VIEW_DESC ColorRtvDesc = {};
+	ColorRtvDesc.Format        = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	ColorRtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+	m_pDevice12->CreateRenderTargetView(
+		m_pSceneColorBuffer.Get(),
+		&ColorRtvDesc,
+		m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart());
+
+	// ImGuiのSRVヒープ(スロット1)へ直接SRVを作成する(ImGui::Image()から参照できるようにするため).
+	D3D12_SHADER_RESOURCE_VIEW_DESC ColorSrvDesc = {};
+	ColorSrvDesc.Format                    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	ColorSrvDesc.ViewDimension              = D3D12_SRV_DIMENSION_TEXTURE2D;
+	ColorSrvDesc.Texture2D.MipLevels        = 1;
+	ColorSrvDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	m_pDevice12->CreateShaderResourceView(
+		m_pSceneColorBuffer.Get(),
+		&ColorSrvDesc,
+		ImGuiMgr.GetSceneTextureCpuHandle());
 }
 
 void DirectX12::EndDraw()
