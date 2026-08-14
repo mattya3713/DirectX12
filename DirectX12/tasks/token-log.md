@@ -33,6 +33,9 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 | 2026-08-14 | 実ウィンドウのリサイズ対応(WM_SIZE→スワップチェーン/バックバッファ/深度バッファ/ビューポート再構築) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが既存コード構造を事前確認済み) | 91,250 (実測) | 成功 |
 | 2026-08-14 | オフスクリーンシーン用ビューポート不整合の修正+レターボックス帯を灰色に変更 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeがバグの原因箇所を特定してから委任) | 74,854 (実測) | 成功。ユーザーからの「比率がおかしい」報告を受け、Claudeが原因(誤ったビューポート使用)を先に特定してから仕様書に明記した |
 
+| 2026-08-14 | AnimationTuningScene用のDCCツール風グリッド床(独自ライン描画パイプライン新設) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeがシェーダー/ルートシグネチャ構成を仕様書に詳述) | 100,171 (実測) | 成功。新規レンダリングパスの追加だが既存パイプラインには非干渉なので低リスク |
+| 2026-08-14 | MainScene/AnimationTuningSceneで描画方式を分岐(MainSceneは直接描画に復帰、AnimationTuningSceneはエディタ風UIを維持) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(Claudeが分岐設計とBeginDraw()両分岐の正確なコードを仕様書に明記) | 84,176 (実測) | 成功。ユーザーから「MainSceneにもUnity風UIが適用されている」との指摘を受けたスコープ修正 |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

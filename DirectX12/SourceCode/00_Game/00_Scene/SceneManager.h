@@ -46,6 +46,11 @@ public:
 	// 描画.
 	void Draw();
 
+#if _DEBUG
+	// 現在アニメーション調整シーンが有効かを返す.
+	bool IsAnimationTuningActive() const noexcept { return m_CurrentSceneID == eList::AnimationTuning; }
+#endif // _DEBUG.
+
 private:
 	// シーンを生成する.
 	void MakeScene(eList Scene);

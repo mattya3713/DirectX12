@@ -6,6 +6,9 @@
 
 class PMXRenderer;
 class ModelPreviewPanel;
+#if _DEBUG
+class DebugGrid;
+#endif
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -32,4 +35,7 @@ public:
 private:
 	std::shared_ptr<PMXRenderer>       m_pPMXRenderer;
 	std::unique_ptr<ModelPreviewPanel> m_upModelPreviewPanel;
+#if _DEBUG
+	std::unique_ptr<DebugGrid> m_upDebugGrid;
+#endif
 };

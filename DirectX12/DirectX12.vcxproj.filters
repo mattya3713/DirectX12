@@ -93,6 +93,7 @@
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\AnimationClipTable.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\Debug\DebugGrid.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
     <ClInclude Include="SourceCode\99_Utility\CustomSTL\pair\Pair.h" />
@@ -226,6 +227,7 @@
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXMesh.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\AnimationClipTable.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\Debug\DebugGrid.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\XParser.cpp" />

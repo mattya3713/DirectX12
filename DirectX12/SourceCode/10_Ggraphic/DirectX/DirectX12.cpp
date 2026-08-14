@@ -136,7 +136,7 @@ void DirectX12::UpdateSceneBuffer()
 	}
 }
 
-void DirectX12::BeginDraw()
+void DirectX12::BeginDraw(bool UseOffscreenScene)
 {
 	if (m_SceneColorResizeRequested)
 	{
@@ -162,28 +162,51 @@ void DirectX12::BeginDraw()
 	m_pCmdAllocators[m_FrameIndex]->Reset();
 	m_pCmdList->Reset(m_pCmdAllocators[m_FrameIndex].Get(), nullptr);
 
-	// 3DシーンはオフスクリーンのシーンカラーバッファへPIXEL_SHADER_RESOURCE→RENDER_TARGETで描く
-	// (実際のバックバッファはPrepareUIRenderTarget()でImGui用に別途RENDER_TARGETへ遷移させる.
-	// Scene ViewパネルがこのバッファをImGui::Image()でサンプルする).
-	auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pSceneColorBuffer.Get(),
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_pCmdList->ResourceBarrier(1, &Barrier);
+	if (UseOffscreenScene)
+	{
+		// 3DシーンはオフスクリーンのシーンカラーバッファへPIXEL_SHADER_RESOURCE→RENDER_TARGETで描く
+		// (実際のバックバッファはPrepareUIRenderTarget()でImGui用に別途RENDER_TARGETへ遷移させる.
+		// Scene ViewパネルがこのバッファをImGui::Image()でサンプルする).
+		auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pSceneColorBuffer.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pCmdList->ResourceBarrier(1, &Barrier);
 
-	// レンダーターゲットを指定(オフスクリーンのシーンカラーバッファ).
-	auto rtvH = m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart();
+		// レンダーターゲットを指定(オフスクリーンのシーンカラーバッファ).
+		auto rtvH = m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart();
 
-	// 深度を指定.
-	auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
-	m_pCmdList->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		// 深度を指定.
+		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
+		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		m_pCmdList->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	// 画面クリア.
-	float ClearColor[] = { 0.f,0.f,0.f,1.0f };
-	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+		// 画面クリア.
+		float ClearColor[] = { 0.f,0.f,0.f,1.0f };
+		m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
-	//ビューポート、0.シザー矩形のセット.
-	m_pCmdList->RSSetViewports(1, m_pSceneColorViewport.get());
-	m_pCmdList->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
+		//ビューポート、0.シザー矩形のセット.
+		m_pCmdList->RSSetViewports(1, m_pSceneColorViewport.get());
+		m_pCmdList->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
+	}
+	else
+	{
+		// 実際のバックバッファへ直接描画する(MainScene用).
+		auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		m_pCmdList->ResourceBarrier(1, &Barrier);
+
+		auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
+		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		m_pCmdList->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+		float ClearColor[] = { 0.f,0.f,0.f,1.0f };
+		m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+
+		m_pCmdList->RSSetViewports(1, m_pViewport.get());
+		m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+	}
 }
 
 void DirectX12::PrepareUIRenderTarget()

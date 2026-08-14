@@ -169,25 +169,35 @@ void Main::Draw()
 {
     if (!m_pDx12) return;
 
-    // 全体の描画準備.
-    m_pDx12->BeginDraw();
+#if _DEBUG
+    const bool is_editor_scene = m_upSceneManager && m_upSceneManager->IsAnimationTuningActive();
+#else
+    constexpr bool is_editor_scene = false;
+#endif
 
-	// デバッグウィンドウを配置するドック領域を先に作成する.
-	// (以前は3DがバックバッファへDockSpaceと競合して真っ黒になっていたが、3DをオフスクリーンのScene
-	// Viewパネルへ移したことで構造的に解消したはずなので再度有効化する).
-	DebugDockSpace::Draw();
+    // 全体の描画準備.
+    m_pDx12->BeginDraw(is_editor_scene);
+
+	if (is_editor_scene) {
+		// デバッグウィンドウを配置するドック領域を先に作成する.
+		DebugDockSpace::Draw();
+	}
 
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
 	DebugConsole::Draw();
-	SceneView::Draw();
+	if (is_editor_scene) {
+		SceneView::Draw();
+	}
 
     if (m_upSceneManager) {
         m_upSceneManager->Draw();
     }
 
-	// 3DシーンをオフスクリーンからPIXEL_SHADER_RESOURCEへ、実際のバックバッファをImGui用のRENDER_TARGETへ.
-	m_pDx12->PrepareUIRenderTarget();
+	if (is_editor_scene) {
+		// 3DシーンをオフスクリーンからPIXEL_SHADER_RESOURCEへ、実際のバックバッファをImGui用のRENDER_TARGETへ.
+		m_pDx12->PrepareUIRenderTarget();
+	}
 
     // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
     ImGuiManager::Render();

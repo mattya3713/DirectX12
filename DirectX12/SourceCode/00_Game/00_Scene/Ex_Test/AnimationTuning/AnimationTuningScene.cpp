@@ -4,6 +4,9 @@
 
 #include "10_Ggraphic/DirectX/DirectX12.h"
 #include "10_Ggraphic/PMX/PMXRenderer.h"
+#if _DEBUG
+#include "10_Ggraphic/Debug/DebugGrid.h"
+#endif
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
@@ -35,6 +38,9 @@ void AnimationTuningScene::Create()
 	}
 
 	m_pPMXRenderer = std::make_shared<PMXRenderer>(*p_dx12);
+#if _DEBUG
+	m_upDebugGrid = std::make_unique<DebugGrid>(*p_dx12);
+#endif
 	m_upModelPreviewPanel = std::make_unique<ModelPreviewPanel>(*m_pPMXRenderer);
 }
 
@@ -80,6 +86,12 @@ void AnimationTuningScene::Draw()
 {
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 	if (!p_dx12) { return; }
+
+#if _DEBUG
+	if (m_upDebugGrid) {
+		m_upDebugGrid->Draw();
+	}
+#endif
 
 	p_dx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
 	p_dx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());

@@ -97,7 +97,8 @@ public:
 	// カメラ行列を設定する(呼び出し側でCameraBase派生クラスから取得して渡す).
 	void SetCamera(const DirectX::XMMATRIX& View, const DirectX::XMMATRIX& Proj, const DirectX::XMFLOAT3& Eye);
 
-	void BeginDraw();
+	// UseOffscreenSceneがtrueならシーンカラーバッファへ、falseならバックバッファへ直接描画する.
+	void BeginDraw(bool UseOffscreenScene);
 	void EndDraw();
 
 	// 3Dシーンをオフスクリーンへ描き終えた後、ImGui(Scene Viewパネル含む)を実際の
