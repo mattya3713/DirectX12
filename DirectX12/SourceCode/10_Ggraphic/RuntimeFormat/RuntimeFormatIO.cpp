@@ -144,20 +144,58 @@ namespace {
 		return std::memcmp(Magic, ExpectedMagic, 4) == 0 && Version == RuntimeFormatVersion;
 	}
 
-	// 2つのテクスチャパスの長さがヘッダーに格納可能か確認する.
-	bool ValidateTextureLengths(const std::string& BaseColor, const std::string& Normal, std::uint64_t& OutSize)
+	// 2つの文字列の長さがヘッダーに格納可能か確認する.
+	bool ValidateStringLengths(const std::string& First, const std::string& Second, std::uint64_t& OutSize)
 	{
-		if (!CanRepresentAsUint32(BaseColor.size()) || !CanRepresentAsUint32(Normal.size()))
+		if (!CanRepresentAsUint32(First.size()) || !CanRepresentAsUint32(Second.size()))
 		{
 			return false;
 		}
-		if (!CanAdd(BaseColor.size(), Normal.size(), OutSize))
+		if (!CanAdd(First.size(), Second.size(), OutSize))
 		{
 			return false;
 		}
 		return true;
 	}
 
+}
+
+bool RuntimeFormatIO::WriteMmat(const std::filesystem::path& FilePath, const RuntimeFormat::MmatData& Data)
+{
+	std::uint64_t path_size = 0;
+	if (!ValidateStringLengths(Data.BaseColorTexturePath, Data.NormalMapTexturePath, path_size))
+	{
+		return false;
+	}
+	RuntimeFormat::MmatHeader header{{'M', 'M', 'A', 'T'}, RuntimeFormatVersion,
+		static_cast<std::uint32_t>(Data.BaseColorTexturePath.size()), static_cast<std::uint32_t>(Data.NormalMapTexturePath.size())};
+	std::vector<char> payload;
+	payload.reserve(static_cast<std::size_t>(path_size));
+	return AppendBytes(payload, Data.BaseColorTexturePath.data(), Data.BaseColorTexturePath.size()) &&
+		AppendBytes(payload, Data.NormalMapTexturePath.data(), Data.NormalMapTexturePath.size()) &&
+		WriteFile(FilePath, header, payload);
+}
+
+bool RuntimeFormatIO::ReadMmat(const std::filesystem::path& FilePath, RuntimeFormat::MmatData& OutData)
+{
+	RuntimeFormat::MmatHeader header{};
+	std::vector<char> payload;
+	if (!OpenAndReadPayload(FilePath, &header, sizeof(header), payload) ||
+		!HasMagicAndVersion(header.Magic, "MMAT", header.Version))
+	{
+		return false;
+	}
+	std::uint64_t expected = 0;
+	if (!CanAdd(header.BaseColorTexturePathLength, header.NormalMapTexturePathLength, expected) ||
+		expected != payload.size())
+	{
+		return false;
+	}
+	RuntimeFormat::MmatData data;
+	data.BaseColorTexturePath.assign(payload.data(), header.BaseColorTexturePathLength);
+	data.NormalMapTexturePath.assign(payload.data() + header.BaseColorTexturePathLength, header.NormalMapTexturePathLength);
+	OutData = std::move(data);
+	return true;
 }
 
 bool RuntimeFormatIO::WriteMstc(const std::filesystem::path& FilePath, const RuntimeFormat::MstcData& Data)
@@ -167,22 +205,21 @@ bool RuntimeFormatIO::WriteMstc(const std::filesystem::path& FilePath, const Run
 	{
 		return false;
 	}
-	std::uint64_t path_size = 0;
-	if (!ValidateTextureLengths(Data.BaseColorTexturePath, Data.NormalMapTexturePath, path_size))
+	if (!CanRepresentAsUint32(Data.MaterialPath.size()))
 	{
 		return false;
 	}
 
 	RuntimeFormat::MstcHeader header{{'M', 'S', 'T', 'C'}, RuntimeFormatVersion,
 		static_cast<std::uint32_t>(Data.Vertices.size()), static_cast<std::uint32_t>(Data.Indices.size()),
-		static_cast<std::uint32_t>(Data.BaseColorTexturePath.size()), static_cast<std::uint32_t>(Data.NormalMapTexturePath.size())};
+		static_cast<std::uint32_t>(Data.MaterialPath.size())};
 	std::vector<char> payload;
 	std::uint64_t vertex_bytes = 0;
 	std::uint64_t index_bytes = 0;
 	if (!CanMultiply(Data.Vertices.size(), sizeof(RuntimeFormat::StaticVertex), vertex_bytes) ||
 		!CanMultiply(Data.Indices.size(), sizeof(std::uint16_t), index_bytes) ||
 		!CanAdd(vertex_bytes, index_bytes, vertex_bytes) ||
-		!CanAdd(vertex_bytes, path_size, vertex_bytes) ||
+		!CanAdd(vertex_bytes, Data.MaterialPath.size(), vertex_bytes) ||
 		vertex_bytes > std::numeric_limits<std::size_t>::max())
 	{
 		return false;
@@ -198,8 +235,7 @@ bool RuntimeFormatIO::WriteMstc(const std::filesystem::path& FilePath, const Run
 	{
 		return false;
 	}
-	if (!AppendBytes(payload, Data.BaseColorTexturePath.data(), Data.BaseColorTexturePath.size()) ||
-		!AppendBytes(payload, Data.NormalMapTexturePath.data(), Data.NormalMapTexturePath.size()))
+	if (!AppendBytes(payload, Data.MaterialPath.data(), Data.MaterialPath.size()))
 	{
 		return false;
 	}
@@ -220,7 +256,7 @@ bool RuntimeFormatIO::ReadMstc(const std::filesystem::path& FilePath, RuntimeFor
 	std::uint64_t bytes = 0;
 	if (!CanMultiply(header.VertexCount, sizeof(RuntimeFormat::StaticVertex), bytes) || !CanAdd(expected, bytes, expected) ||
 		!CanMultiply(header.IndexCount, sizeof(std::uint16_t), bytes) || !CanAdd(expected, bytes, expected) ||
-		!CanAdd(expected, header.BaseColorTexturePathLength, expected) || !CanAdd(expected, header.NormalMapTexturePathLength, expected) ||
+		!CanAdd(expected, header.MaterialPathLength, expected) ||
 		expected != payload.size())
 	{
 		return false;
@@ -234,9 +270,7 @@ bool RuntimeFormatIO::ReadMstc(const std::filesystem::path& FilePath, RuntimeFor
 	{
 		return false;
 	}
-	data.BaseColorTexturePath.assign(payload.data() + offset, header.BaseColorTexturePathLength);
-	offset += header.BaseColorTexturePathLength;
-	data.NormalMapTexturePath.assign(payload.data() + offset, header.NormalMapTexturePathLength);
+	data.MaterialPath.assign(payload.data() + offset, header.MaterialPathLength);
 	OutData = std::move(data);
 	return true;
 }
@@ -246,7 +280,7 @@ bool RuntimeFormatIO::WriteMskn(const std::filesystem::path& FilePath, const Run
 	if (Data.Vertices.size() > MaximumVertexCount ||
 		!CanRepresentAsUint32(Data.Indices.size()) ||
 		!CanRepresentAsUint32(Data.Bones.size()) ||
-		!CanRepresentAsUint32(Data.BaseColorTexturePath.size()))
+		!CanRepresentAsUint32(Data.Submeshes.size()))
 	{
 		return false;
 	}
@@ -257,14 +291,27 @@ bool RuntimeFormatIO::WriteMskn(const std::filesystem::path& FilePath, const Run
 			return false;
 		}
 	}
+	std::uint64_t submesh_index_count = 0;
+	for (const RuntimeFormat::SkinSubmesh& submesh : Data.Submeshes)
+	{
+		if (std::memchr(submesh.MaterialPath, '\0', sizeof(submesh.MaterialPath)) == nullptr ||
+			!CanAdd(submesh_index_count, submesh.IndexCount, submesh_index_count))
+		{
+			return false;
+		}
+	}
+	if (submesh_index_count != Data.Indices.size())
+	{
+		return false;
+	}
 	RuntimeFormat::MsknHeader header{{'M', 'S', 'K', 'N'}, RuntimeFormatVersion,
 		static_cast<std::uint32_t>(Data.Vertices.size()), static_cast<std::uint32_t>(Data.Indices.size()),
-		static_cast<std::uint32_t>(Data.Bones.size()), static_cast<std::uint32_t>(Data.BaseColorTexturePath.size())};
+		static_cast<std::uint32_t>(Data.Bones.size()), static_cast<std::uint32_t>(Data.Submeshes.size())};
 	std::vector<char> payload;
 	if (!AppendBytes(payload, Data.Vertices.data(), Data.Vertices.size() * sizeof(RuntimeFormat::SkinVertex)) ||
 		!AppendBytes(payload, Data.Indices.data(), Data.Indices.size() * sizeof(std::uint16_t)) ||
 		!AppendBytes(payload, Data.Bones.data(), Data.Bones.size() * sizeof(RuntimeFormat::SkinBone)) ||
-		!AppendBytes(payload, Data.BaseColorTexturePath.data(), Data.BaseColorTexturePath.size()))
+		!AppendBytes(payload, Data.Submeshes.data(), Data.Submeshes.size() * sizeof(RuntimeFormat::SkinSubmesh)))
 	{
 		return false;
 	}
@@ -289,7 +336,8 @@ bool RuntimeFormatIO::ReadMskn(const std::filesystem::path& FilePath, RuntimeFor
 		!CanAdd(expected, bytes, expected) ||
 		!CanMultiply(header.BoneCount, sizeof(RuntimeFormat::SkinBone), bytes) ||
 		!CanAdd(expected, bytes, expected) ||
-		!CanAdd(expected, header.BaseColorTexturePathLength, expected) ||
+		!CanMultiply(header.SubmeshCount, sizeof(RuntimeFormat::SkinSubmesh), bytes) ||
+		!CanAdd(expected, bytes, expected) ||
 		expected != payload.size())
 	{
 		return false;
@@ -298,14 +346,28 @@ bool RuntimeFormatIO::ReadMskn(const std::filesystem::path& FilePath, RuntimeFor
 	data.Vertices.resize(header.VertexCount);
 	data.Indices.resize(header.IndexCount);
 	data.Bones.resize(header.BoneCount);
+	data.Submeshes.resize(header.SubmeshCount);
 	std::size_t offset = 0;
 	if (!ReadBytes(payload, offset, data.Vertices.data(), data.Vertices.size() * sizeof(RuntimeFormat::SkinVertex)) ||
 		!ReadBytes(payload, offset, data.Indices.data(), data.Indices.size() * sizeof(std::uint16_t)) ||
-		!ReadBytes(payload, offset, data.Bones.data(), data.Bones.size() * sizeof(RuntimeFormat::SkinBone)))
+		!ReadBytes(payload, offset, data.Bones.data(), data.Bones.size() * sizeof(RuntimeFormat::SkinBone)) ||
+		!ReadBytes(payload, offset, data.Submeshes.data(), data.Submeshes.size() * sizeof(RuntimeFormat::SkinSubmesh)))
 	{
 		return false;
 	}
-	data.BaseColorTexturePath.assign(payload.data() + offset, header.BaseColorTexturePathLength);
+	std::uint64_t submesh_index_count = 0;
+	for (const RuntimeFormat::SkinSubmesh& submesh : data.Submeshes)
+	{
+		if (std::memchr(submesh.MaterialPath, '\0', sizeof(submesh.MaterialPath)) == nullptr ||
+			!CanAdd(submesh_index_count, submesh.IndexCount, submesh_index_count))
+		{
+			return false;
+		}
+	}
+	if (submesh_index_count != data.Indices.size())
+	{
+		return false;
+	}
 	OutData = std::move(data);
 	return true;
 }

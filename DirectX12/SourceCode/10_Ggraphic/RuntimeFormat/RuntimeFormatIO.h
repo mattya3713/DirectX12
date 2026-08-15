@@ -12,6 +12,10 @@
 
 namespace RuntimeFormatIO {
 
+	// マテリアルデータをMMAT形式で書き出す.
+	bool WriteMmat(const std::filesystem::path& FilePath, const RuntimeFormat::MmatData& Data);
+	// MMAT形式を読み込む.
+	bool ReadMmat(const std::filesystem::path& FilePath, RuntimeFormat::MmatData& OutData);
 	// 静的メッシュデータをMSTC形式で書き出す。パスが開けない場合やサイズが表現範囲を超える場合はfalseを返す.
 	bool WriteMstc(const std::filesystem::path& FilePath, const RuntimeFormat::MstcData& Data);
 	// MSTC形式を読み込み、マジック・バージョン・ペイロード長が不正な場合はfalseを返す.
