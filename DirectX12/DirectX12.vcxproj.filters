@@ -118,6 +118,8 @@
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMXParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMDParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\XParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormat.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormatIO.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\00_Base\CameraBase.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\10_First\FirstPersonCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\20_LookAt\LookAtCamera.h" />
@@ -239,6 +241,7 @@
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\X\XActor.cpp" />
 	<ClCompile Include="SourceCode\10_Ggraphic\X\XMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormatIO.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\00_Base\CameraBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\10_First\FirstPersonCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\20_LookAt\LookAtCamera.cpp" />

@@ -43,6 +43,9 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 | 2026-08-15 | DebugCameraにUnity SceneView風の右クリック回転・WASD/QE移動のYaw/Pitch化・ホイールズームを追加 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(仕様書に既存コード構造・CameraBaseの既存API・注意点を詳述) | 79,342 (実測) | 成功したがPitchの符号が逆だった(実機確認前提を書いたが未検証のまま完了報告). Claudeが実機確認で発見し、符号2箇所を直接修正(数行のため委任せず) |
 | 2026-08-15 | ドッキングパネル(Debug HUD/Animation Editor/Model Select)からImGuiWindowFlags_AlwaysAutoResizeを除去(比率崩れ・リサイズ時のはみ出し対策) | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claudeが原因の仮説=AutoResize+Docking相性問題を仕様書に明記) | 46,864 (実測) | 成功。指示通りMainScene専用のActor Scale (Debug)は対象外のまま維持 |
 
+| 2026-08-15 | 独自ランタイムモデルフォーマット(.mstc/.mskn/.mclp)の構造体定義+バイナリ読み書きユーティリティを実装 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(バイト単位のレイアウトまで対話で確定させた詳細仕様書を渡した) | 115,910 (実測) | 成功。オーバーフロー安全な算術ヘルパー等、仕様以上の防御的実装が付加されていた。Codex環境ではvswhere.exe不在でスタンドアロン往復テストの実行までは出来なかったが、実装自体は正しかった(Claudeが別途検証) |
+| 2026-08-15 | 上記へのコメント・書式修正(coding-rules.md未準拠だった1行コメント欠如を追加、書式を1文1行に整形) | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(直前タスクの成果物への修正指示) | 56,564 (実測) | 成功。ロジック変更が一切無いことをClaudeがバックアップとの差分比較+往復テスト再実行で確認済み |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。

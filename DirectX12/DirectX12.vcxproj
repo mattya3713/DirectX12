@@ -211,6 +211,8 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMXParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\PMDParser.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\Model\XParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormat.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormatIO.h" />
     <ClInclude Include="SourceCode\Global.h" />
     <ClInclude Include="SourceCode\00_Game\00_GameLoop\Main.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
@@ -329,7 +331,8 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\Debug\DebugGrid.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\X\XActor.cpp" />
-	<ClCompile Include="SourceCode\10_Ggraphic\X\XMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\X\XMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormatIO.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\Model\XParser.cpp" />

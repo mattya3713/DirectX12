@@ -30,6 +30,45 @@ instead when:
 - Codex could not resolve something within its task scope, and it needs Claude's
   direct judgment to move forward (see `AGENTS.md`'s "Stop conditions").
 
+## Learning-first development (read this before every new feature)
+
+This project has **two goals**, not one:
+
+1. Build a working DirectX12-based game engine.
+2. Grow the user's own skill as a game engine programmer.
+
+**Do not optimize for completion speed alone.** The measure of success for a task
+is not just "it works" — it's "it works, and the user understands why." Concretely,
+before implementing any new feature:
+
+1. Extract the list of things the user would need to learn to understand this
+   feature, and sort them into three buckets, presented to the user:
+   - **今回必須 (required for this task)** — concepts load-bearing enough that
+     without them, the user can't meaningfully review, explain, or debug the
+     result.
+   - **理解推奨 (recommended, not required)** — useful context that deepens
+     understanding but isn't essential to follow this particular change.
+   - **今回は後回し (deferred)** — real topics, deliberately out of scope for now,
+     so the learning surface doesn't balloon into "learn everything at once."
+2. For anything in **今回必須** the user doesn't yet understand, help them
+   understand it (explain, point at the relevant existing code, work through it
+   together) **before** delegating implementation to Codex. Don't hand off a task
+   the user can't yet follow.
+3. For design decisions, prefer letting the user propose an approach first and
+   reviewing it, rather than leading with Claude's own finished design. Jumping
+   straight to a polished proposal is the default failure mode to avoid here —
+   only do so when the user asks for it directly, or when there's no real design
+   choice to make.
+4. After Codex finishes implementing, check whether the user is in a position to
+   explain the implementation in their own words — not just "does it build and
+   run." Any important part they can't explain becomes a new learning item, not
+   something to silently paper over.
+
+The end goal is **not** "the AI can build a game engine." It's "the user can
+understand, design, and debug a game engine themselves, with AI as a force
+multiplier on that ability." When this section and plain task-completion speed
+pull in different directions, this section wins.
+
 ## Development workflow
 
 For a normal feature/fix:
@@ -37,22 +76,27 @@ For a normal feature/fix:
 1. Understand what the user is actually asking for.
 2. Investigate the relevant existing code.
 3. Understand the current design around that area (`DESIGN.md`, the code itself).
-4. Decide the implementation approach.
-5. Update `docs/` if the approach changes something documented there.
-6. Break the work into small implementation tasks.
-7. Write the current task to `tasks/current.md` (see its template — be concrete:
+4. Apply "Learning-first development" above: surface the 必須/推奨/後回し learning
+   breakdown, and close any gaps in 今回必須 items with the user before proceeding.
+5. Decide the implementation approach — for real design choices, let the user
+   propose first per "Learning-first development," then review it together.
+6. Update `docs/` if the approach changes something documented there.
+7. Break the work into small implementation tasks.
+8. Write the current task to `tasks/current.md` (see its template — be concrete:
    Codex should not have to guess scope, files, or acceptance criteria).
-8. Invoke Codex CLI to implement it (see "Invoking Codex" below).
-9. After Codex finishes, review with `git diff`.
-10. Check the build result.
-11. Check test results, where applicable (see `docs/coding-rules.md` — this project
+9. Invoke Codex CLI to implement it (see "Invoking Codex" below).
+10. After Codex finishes, review with `git diff`.
+11. Check the build result.
+12. Check test results, where applicable (see `docs/coding-rules.md` — this project
     has no automated test suite, so this usually means manual verification).
-12. If there's a problem, write a follow-up instruction and have Codex fix it.
-13. Review again.
-14. Repeat 9–13 until there's nothing left to fix.
-15. Move the finished task from `tasks/current.md` to `tasks/done/` (e.g.
+13. Check the user can explain the implementation (see "Learning-first
+    development") — treat anything they can't as a fresh learning item.
+14. If there's a problem, write a follow-up instruction and have Codex fix it.
+15. Review again.
+16. Repeat 10–15 until there's nothing left to fix.
+17. Move the finished task from `tasks/current.md` to `tasks/done/` (e.g.
     `tasks/done/2026-08-13-boss-parry-collision.md` — date-prefixed, short slug).
-16. Report to the user: what changed, what was verified, what's still open.
+18. Report to the user: what changed, what was verified, what's still open.
 
 ## Invoking Codex
 
