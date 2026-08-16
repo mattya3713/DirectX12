@@ -1,6 +1,6 @@
 ﻿#include "ImGuiManager.h"
 
-#include "10_Ggraphic/DirectX/DirectX12.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 #include "ImGui/imgui_impl_win32.h"

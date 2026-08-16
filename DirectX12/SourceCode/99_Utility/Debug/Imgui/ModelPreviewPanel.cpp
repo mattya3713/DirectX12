@@ -4,17 +4,16 @@
 #include <cctype>
 #include <filesystem>
 
-#include "10_Ggraphic/DirectX/DirectX12.h"
-#include "10_Ggraphic/PMX/PMXActor.h"
-#include "10_Ggraphic/PMX/PMXRenderer.h"
-#include "10_Ggraphic/X/XActor.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlActor.h"
 #include "99_Utility/Debug/Imgui/AnimationEditor.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
 
 namespace {
-	// 拡張子を小文字化して比較する(Data\Model\X配下はCube.x/player.Xのように大文字小文字が混在するため).
+	// 拡張子を小文字化して比較する.
 	bool HasExtension(const std::filesystem::path& FilePath, const std::string& LowerExt)
 	{
 		std::string ext = FilePath.extension().string();
@@ -23,7 +22,7 @@ namespace {
 	}
 }
 
-ModelPreviewPanel::ModelPreviewPanel(PMXRenderer& Renderer)
+ModelPreviewPanel::ModelPreviewPanel(MmdlRenderer& Renderer)
 	: m_Renderer(Renderer)
 {
 	ScanModels();
@@ -37,7 +36,7 @@ ModelPreviewPanel::ModelPreviewPanel(PMXRenderer& Renderer)
 
 ModelPreviewPanel::~ModelPreviewPanel() = default;
 
-// Data\Model\PMX配下の.pmx、Data\Model\X配下の.xをそれぞれ再帰的に探し、m_ModelListへ集約する.
+// Data\Model\mmdl\mskin配下の.msknだけを再帰的に探す.
 void ModelPreviewPanel::ScanModels()
 {
 	namespace fs = std::filesystem;
@@ -45,29 +44,14 @@ void ModelPreviewPanel::ScanModels()
 	m_ModelList.clear();
 	m_ModelDisplayNames.clear();
 
-	const fs::path pmx_root = "Data\\Model\\PMX";
-	if (fs::exists(pmx_root)) {
-		for (const auto& entry : fs::recursive_directory_iterator(pmx_root)) {
-			if (!entry.is_regular_file() || !HasExtension(entry.path(), ".pmx")) { continue; }
+	const fs::path mskin_root = "Data\\Model\\mmdl\\mskin";
+	if (fs::exists(mskin_root)) {
+		for (const auto& entry : fs::recursive_directory_iterator(mskin_root)) {
+			if (!entry.is_regular_file() || !HasExtension(entry.path(), ".mskn")) { continue; }
 
 			ModelEntry model;
 			model.FilePath    = entry.path().string();
-			model.DisplayName = "PMX/" + fs::relative(entry.path(), pmx_root).string();
-			model.IsXFormat   = false;
-			m_ModelDisplayNames.push_back(model.DisplayName);
-			m_ModelList.push_back(std::move(model));
-		}
-	}
-
-	const fs::path x_root = "Data\\Model\\X";
-	if (fs::exists(x_root)) {
-		for (const auto& entry : fs::recursive_directory_iterator(x_root)) {
-			if (!entry.is_regular_file() || !HasExtension(entry.path(), ".x")) { continue; }
-
-			ModelEntry model;
-			model.FilePath    = entry.path().string();
-			model.DisplayName = "X/" + fs::relative(entry.path(), x_root).string();
-			model.IsXFormat   = true;
+			model.DisplayName = fs::relative(entry.path(), mskin_root).string();
 			m_ModelDisplayNames.push_back(model.DisplayName);
 			m_ModelList.push_back(std::move(model));
 		}
@@ -84,27 +68,19 @@ void ModelPreviewPanel::LoadModel(int Index)
 		p_dx12->WaitForGPU();
 	}
 
-	// 現在のアクターを破棄する(PMX/Xどちらか一方しか同時に持たない).
-	m_pPMXActor.reset();
-	m_upXActor.reset();
+	// 現在のランタイムアクターを破棄する.
+	m_upActor.reset();
 
 	const ModelEntry& model = m_ModelList[Index];
 
 	try {
-		if (model.IsXFormat) {
-			m_upXActor = std::make_unique<XActor>(model.FilePath.c_str(), m_Renderer);
-			// .xはPMXよりスケール単位が小さいため、MainSceneと同じ15倍を掛けて見た目を合わせる.
-			m_upXActor->SetWorldMatrix(DirectX::XMMatrixScaling(15.0f, 15.0f, 15.0f));
-			// Editorには一時停止/Stepの概念が無く常時再生のため、先頭クリップを既定で再生しておく.
-			const auto& clips = m_upXActor->GetClips();
-			if (!clips.empty()) {
-				m_upXActor->PlayAnimation(clips.front().Name);
-			}
-		}
-		else {
-			m_pPMXActor = std::make_shared<PMXActor>(model.FilePath.c_str(), m_Renderer);
-			// Editorは既定で一時停止のため、StepFrameで初期姿勢だけ計算しておく(でないと表示されない).
-			m_pPMXActor->StepFrame();
+		m_upActor = std::make_unique<MmdlActor>(std::filesystem::path{ model.FilePath }, m_Renderer);
+		const float local_height = m_upActor->GetLocalHeight();
+		const float preview_scale = local_height > 0.0001f ? std::clamp(20.0f / local_height, 0.1f, 100.0f) : 1.0f;
+		m_upActor->SetWorldMatrix(DirectX::XMMatrixScaling(preview_scale, preview_scale, preview_scale));
+		const auto& clips = m_upActor->GetClips();
+		if (!clips.empty()) {
+			m_upActor->PlayAnimation(clips.front().Name);
 		}
 		m_SelectedDisplayName = model.DisplayName;
 	}
@@ -135,7 +111,7 @@ void ModelPreviewPanel::Update()
 		}
 	}
 	else {
-		ImGuiManager::Text("Data\\Model\\PMX、Data\\Model\\Xにモデルが見つかりませんでした.");
+		ImGuiManager::Text("Data\\Model\\mmdl\\mskinにMSKNが見つかりませんでした.");
 	}
 
 	const float previous_action_frame = m_ActionFrame;
@@ -144,34 +120,16 @@ void ModelPreviewPanel::Update()
 
 	if (m_ActionFrame != previous_action_frame)
 	{
-		if (m_pPMXActor)
-		{
-			m_pPMXActor->SetCurrentFrame(m_ActionFrame);
-			m_pPMXActor->Update();
-		}
-		if (m_upXActor) { m_upXActor->SetCurrentFrame(m_ActionFrame); }
+		if (m_upActor) { m_upActor->SetCurrentFrame(m_ActionFrame); }
 	}
 
-	if (m_pPMXActor) {
-		const bool step_requested = m_upAnimationEditor->Draw(*m_pPMXActor);
-
-		if (step_requested) {
-			m_pPMXActor->StepFrame();
-		}
-	}
-	else if (m_upXActor) {
-		// XActorには一時停止/Stepの概念が無く常時再生のため、毎フレームUpdateする.
-		m_upXActor->Update();
-		m_upAnimationEditor->Draw(*m_upXActor);
+	if (m_upActor) {
+		m_upActor->Update();
+		m_upAnimationEditor->Draw(*m_upActor);
 	}
 }
 
 void ModelPreviewPanel::Draw()
 {
-	if (m_pPMXActor) {
-		m_pPMXActor->Draw();
-	}
-	else if (m_upXActor) {
-		m_upXActor->Draw();
-	}
+	if (m_upActor) { m_upActor->Draw(); }
 }

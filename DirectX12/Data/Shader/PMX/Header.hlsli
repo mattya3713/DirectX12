@@ -57,6 +57,8 @@ cbuffer Material : register(b2)
     float4 diffuse;
     float4 specular;
     float3 ambient;
+    float UseSphereMap;
+    float UseToonMap;
 };
 
 Texture2D<float4> tex : register(t0);
@@ -64,4 +66,3 @@ Texture2D<float4> toon : register(t1);
 Texture2D<float4> sph : register(t2);
 
 StructuredBuffer<float4x4> boneTransforms : register(t3);
-

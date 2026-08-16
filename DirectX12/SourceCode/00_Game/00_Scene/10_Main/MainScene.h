@@ -4,9 +4,7 @@
 
 #include "00_Game/00_Scene/00_Base/SceneBase.h"
 
-class PMXRenderer;
-class PMXActor;
-class XActor;
+class MmdlRenderer;
 class Player;
 class Boss;
 class ModelPreviewPanel;
@@ -30,7 +28,7 @@ public:
 	void Draw() override;
 
 private:
-	std::shared_ptr<PMXRenderer> m_pPMXRenderer;
+	std::shared_ptr<MmdlRenderer> m_pMmdlRenderer;
 
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Boss>        m_upBoss;

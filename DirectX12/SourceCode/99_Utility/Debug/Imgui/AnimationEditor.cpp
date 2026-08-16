@@ -1,8 +1,8 @@
 ﻿#include "AnimationEditor.h"
 
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
-#include "10_Ggraphic/PMX/PMXActor.h"
-#include "10_Ggraphic/X/XActor.h"
+#include "10_Ggraphic/90_Legacy/PMX/PMXActor.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlActor.h"
 
 AnimationEditor::AnimationEditor()
 {
@@ -71,9 +71,9 @@ bool AnimationEditor::Draw(PMXActor& Actor)
 	return step_requested;
 }
 
-// XActor用. VMDのような開始/終了フレーム編集の概念が無く、名前付きクリップの切り替えのみ
+// MmdlActor用. VMDのような開始/終了フレーム編集の概念が無く、名前付きクリップの切り替えのみ
 // (常時再生. PMX版のような一時停止/Stepは無い)なので、専用の軽量なUIにしている.
-void AnimationEditor::Draw(XActor& Actor)
+void AnimationEditor::Draw(MmdlActor& Actor)
 {
 	if (!m_IsActive) { return; }
 

@@ -133,7 +133,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\20_Render\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
@@ -144,7 +144,7 @@
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
-      <AdditionalIncludeDirectories>SourceCode\Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>SourceCode\10_Ggraphic\20_Render\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <PostBuildEvent>
       <Command>xcopy /Y /I /E /D "$(ProjectDir)Data\Shader" "$(OutDir)Data\Shader\"
@@ -166,7 +166,7 @@ exit /b 0</Command>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Data\Library\DirectXTex\DirectXTex;SourceCode\00_Game\;SourceCode\10_Ggraphic\;SourceCode\20_Resource\;SourceCode\99_Utility\;SourceCode\99_Utility\Singleton\;Data\Library\;SourceCode\10_Ggraphic\20_Render\Shader\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
@@ -191,28 +191,40 @@ exit /b 0</Command>
   <ItemGroup>
     <ClInclude Include="SourceCode\99_Utility\Debug\DebugKey\KeyDebbuger.h" />
     <ClInclude Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\DirectX\DirectX12.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDActor.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMD\PMDRenderer.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXActor.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXMesh.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\AnimationClipTable.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\Debug\DebugGrid.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\PMXStructHeader.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\PMX\VMD\VMDStructHeader.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\X\XActor.h" />
-	<ClInclude Include="SourceCode\10_Ggraphic\X\XMesh.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\X\XSkeletonData.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\Model\ModelData.h" />
-	<ClInclude Include="SourceCode\10_Ggraphic\Model\IMesh.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\Model\IModelParser.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\Model\PMXParser.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\Model\PMDParser.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\Model\XParser.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormat.h" />
-    <ClInclude Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormatIO.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXMesh.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\AnimationClipTable.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MmdlRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXStructHeader.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\VMD\VMDLoader.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\VMD\VMDStructHeader.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\X\XActor.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\X\XMesh.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\X\XSkeletonData.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Debug\DebugGrid.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlResource.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlSkeletonData.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\ModelData.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\IMesh.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\IModelParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMDParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormat.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormatIO.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeConverter.h" />
     <ClInclude Include="SourceCode\Global.h" />
     <ClInclude Include="SourceCode\00_Game\00_GameLoop\Main.h" />
     <ClInclude Include="SourceCode\stdafx.h" />
@@ -321,21 +333,32 @@ exit /b 0</Command>
   <ItemGroup>
     <ClCompile Include="SourceCode\99_Utility\Debug\DebugKey\KeyDebbuger.cpp" />
     <ClCompile Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\DirectX\DirectX12.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMD\PMDActor.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMD\PMDRenderer.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXActor.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXMesh.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMX\AnimationClipTable.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMX\PMXRenderer.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\Debug\DebugGrid.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\PMX\VMD\VMDLoader.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\X\XActor.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\X\XMesh.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\RuntimeFormat\RuntimeFormatIO.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\Model\PMXParser.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\Model\PMDParser.cpp" />
-    <ClCompile Include="SourceCode\10_Ggraphic\Model\XParser.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDActor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXActor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\AnimationClipTable.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MmdlRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXRenderer.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\VMD\VMDLoader.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\X\XActor.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\X\XMesh.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Debug\DebugGrid.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlResource.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormatIO.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeConverter.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMDParser.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_GameLoop\Main.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_GameLoop\WinMain.cpp" />
     <ClCompile Include="SourceCode\stdafx.cpp">
@@ -424,7 +447,7 @@ exit /b 0</Command>
     <None Include="Data\Shader\BasicShaderHeader.hlsli" />
     <None Include="Directory.Build.props" />
     <None Include="Directory.Build.targets" />
-    <None Include="SourceCode\10_Ggraphic\Shader\BasicShaderHeader.hlsli" />
+    <None Include="SourceCode\10_Ggraphic\20_Render\Shader\BasicShaderHeader.hlsli" />
     <None Include="SourceCode\99_Utility\Assert\Assert.inl" />
     <None Include="SourceCode\99_Utility\Math\Easing\Easing.inl" />
     <None Include="SourceCode\99_Utility\Math\Math.inl" />
@@ -454,12 +477,12 @@ exit /b 0</Command>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="SourceCode\Ggraphic\Shader\Basic\BasicPixelShader.hlsl">
+    <FxCompile Include="SourceCode\10_Ggraphic\20_Render\Shader\Basic\BasicPixelShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">BasicPS</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">BasicPS</EntryPointName>
     </FxCompile>
-    <FxCompile Include="SourceCode\Ggraphic\Shader\Basic\BasicVertexShader.hlsl">
+    <FxCompile Include="SourceCode\10_Ggraphic\20_Render\Shader\Basic\BasicVertexShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">BasicVS</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">BasicPS</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>

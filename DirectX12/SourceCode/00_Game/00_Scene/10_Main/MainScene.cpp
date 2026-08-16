@@ -1,13 +1,11 @@
 ﻿#include "MainScene.h"
 
 #include <cassert>
+#include <filesystem>
 
-#include "10_Ggraphic/DirectX/DirectX12.h"
-#include "10_Ggraphic/PMX/PMXActor.h"
-#include "10_Ggraphic/PMX/PMXRenderer.h"
-#include "10_Ggraphic/PMX/PMXMesh.h"
-#include "10_Ggraphic/X/XActor.h"
-#include "10_Ggraphic/X/XMesh.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlMesh.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
@@ -18,6 +16,7 @@
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
 #include "00_Game/00_Scene/SceneManager.h"
@@ -46,23 +45,26 @@ void MainScene::Create()
 	}
 
 	try {
-		m_pPMXRenderer = std::make_shared<PMXRenderer>(*p_dx12);
+		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
 	}
 	catch (const std::runtime_error& Msg) {
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogError(Msg.what());
+		}
 		std::wstring w_str = MyString::StringToWString(Msg.what());
 		_ASSERT_EXPR(false, w_str.c_str());
 	}
 
 	try {
 		m_upPlayer = std::make_unique<Player>();
-		m_upPlayer->AttachMesh(std::make_shared<XMesh>("Data/Model/X/Player/player.X", *m_pPMXRenderer));
+		m_upPlayer->AttachMesh(std::make_shared<MMdlMesh>(std::filesystem::path{"Data/Model/mmdl/mskin/player.mskn"}, *m_pMmdlRenderer));
 		Transform player_transform;
 		player_transform.Position = { 0.0f, 0.0f, 0.0f };
 		player_transform.Scale = { 1.36f, 1.36f, 1.36f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upPlayer->SetTransform(player_transform);
 
 		m_upBoss = std::make_unique<Boss>();
-		m_upBoss->AttachMesh(std::make_shared<XMesh>("Data/Model/X/Boss/boss.X", *m_pPMXRenderer));
+		m_upBoss->AttachMesh(std::make_shared<MMdlMesh>(std::filesystem::path{"Data/Model/mmdl/mskin/boss.mskn"}, *m_pMmdlRenderer));
 		Transform boss_transform;
 		boss_transform.Position = { 0.0f, 0.0f, 8.0f };
 		boss_transform.Scale = { 1.05f, 1.05f, 1.05f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
@@ -73,6 +75,9 @@ void MainScene::Create()
 		}
 	}
 	catch (const std::runtime_error& Msg) {
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogError(Msg.what());
+		}
 		std::wstring w_str = MyString::StringToWString(Msg.what());
 		_ASSERT_EXPR(false, w_str.c_str());
 	}
@@ -163,8 +168,7 @@ void MainScene::Draw()
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 	if (!p_dx12) { return; }
 
-	p_dx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
-	p_dx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
+	m_pMmdlRenderer->BeforDraw();
 	p_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	if (m_upPlayer) {

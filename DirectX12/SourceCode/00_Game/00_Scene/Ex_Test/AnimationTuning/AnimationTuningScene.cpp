@@ -2,10 +2,10 @@
 
 #include <cassert>
 
-#include "10_Ggraphic/DirectX/DirectX12.h"
-#include "10_Ggraphic/PMX/PMXRenderer.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
 #if _DEBUG
-#include "10_Ggraphic/Debug/DebugGrid.h"
+#include "10_Ggraphic/20_Render/Debug/DebugGrid.h"
 #endif
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
@@ -37,11 +37,11 @@ void AnimationTuningScene::Create()
 		p_camera_manager->SetActive("Debug");
 	}
 
-	m_pPMXRenderer = std::make_shared<PMXRenderer>(*p_dx12);
+	m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
 #if _DEBUG
 	m_upDebugGrid = std::make_unique<DebugGrid>(*p_dx12);
 #endif
-	m_upModelPreviewPanel = std::make_unique<ModelPreviewPanel>(*m_pPMXRenderer);
+	m_upModelPreviewPanel = std::make_unique<ModelPreviewPanel>(*m_pMmdlRenderer);
 }
 
 void AnimationTuningScene::Update()
@@ -93,8 +93,7 @@ void AnimationTuningScene::Draw()
 	}
 #endif
 
-	p_dx12->GetCommandList()->SetPipelineState(m_pPMXRenderer->GetPipelineState());
-	p_dx12->GetCommandList()->SetGraphicsRootSignature(m_pPMXRenderer->GetRootSignature());
+	m_pMmdlRenderer->BeforDraw();
 	p_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	if (m_upModelPreviewPanel) {

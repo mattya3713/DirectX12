@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{4D5C4B8F-7F91-4B7C-9FC3-BBE76DF4FBA8}</ProjectGuid>
+    <RootNamespace>RuntimeConverter</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><WholeProgramOptimization>true</WholeProgramOptimization><CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel><SDLCheck>true</SDLCheck><ConformanceMode>true</ConformanceMode><LanguageStandard>stdcpp20</LanguageStandard><PrecompiledHeader>NotUsing</PrecompiledHeader><ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <PreprocessorDefinitions>_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)SourceCode;$(ProjectDir)SourceCode\10_Ggraphic;$(ProjectDir)SourceCode\99_Utility;$(ProjectDir)Data\Library;$(ProjectDir)Data\Library\DirectXTex\Common;$(ProjectDir)Data\Library\DirectXTex\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link><SubSystem>Console</SubSystem><GenerateDebugInformation>true</GenerateDebugInformation></Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeConverter.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormat.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormatIO.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\IModelParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\ModelData.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlSkeletonData.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\VMD\VMDLoader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeConverterMain.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeConverter.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormatIO.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\VMD\VMDLoader.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\String\String.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

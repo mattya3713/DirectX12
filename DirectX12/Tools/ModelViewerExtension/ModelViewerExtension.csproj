@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <StartupObject>ModelViewerExtension.App</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+    <Page Include="MainWindow.xaml" />
+    <Compile Remove="ModelViewerControl.xaml.cs;ModelViewerPackage.cs;ModelViewerToolWindow.cs;ShowModelViewerCommand.cs;FrameworkPolyfills.cs" />
+    <Page Remove="ModelViewerControl.xaml" />
+  </ItemGroup>
+</Project>

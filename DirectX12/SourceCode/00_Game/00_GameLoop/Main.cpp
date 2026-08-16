@@ -1,5 +1,5 @@
 ﻿#include "Main.h"
-#include "10_Ggraphic/DirectX/DirectX12.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "Time/Time.h"
 #include "20_Resource/ResourceManager/MeshManager/MeshManager.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"

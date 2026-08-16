@@ -73,7 +73,7 @@ Output VS(VSInput input)
     output.normal = float4(normalize(worldNormal.xyz), 0.0f); // ここで正規化
     output.pos = worldPos;
     output.vnormal = float4(normalize(worldNormal.xyz), 0.0f);
-    output.ray = float4(normalize(eye - worldPos.xyz), 0.0f);
+    output.ray = normalize(eye - worldPos.xyz);
 
     return output;
 }

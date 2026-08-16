@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <UseWPF>true</UseWPF>
+    <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <RootNamespace>ModelViewerExtension</RootNamespace>
+    <AssemblyName>ModelViewerExtension</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
+    <StartArguments>/rootsuffix Exp</StartArguments>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Design" />
+    <ProjectCapability Include="CreateVsixContainer" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.9.820" />
+    <!-- net472 のVSIXへSystem.Memoryの実行時依存を確実に同梱する。 -->
+    <PackageReference Include="System.Buffers" Version="4.6.0" ForceIncludeInVSIX="true" />
+    <PackageReference Include="System.Memory" Version="4.6.0" ForceIncludeInVSIX="true" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" ForceIncludeInVSIX="true" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" ForceIncludeInVSIX="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="RuntimeFormatReader.cs" Link="RuntimeFormatReader.cs" />
+    <Compile Include="ModelViewerControl.xaml.cs" Link="ModelViewerControl.xaml.cs" />
+    <Compile Include="ModelViewerPackage.cs" />
+    <Compile Include="ModelViewerToolWindow.cs" />
+    <Compile Include="ShowModelViewerCommand.cs" />
+    <Compile Include="FrameworkPolyfills.cs" />
+    <Page Include="ModelViewerControl.xaml" />
+    <VSCTCompile Include="ModelViewer.vsct" />
+    <None Include="source.extension.vsixmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- CopyLocal参照は出力先へコピーされるだけでVSIXへ入らないため、明示的に登録する。 -->
+    <Content Include="$(TargetDir)System.Buffers.dll" Link="System.Buffers.dll" IncludeInVSIX="true" />
+    <Content Include="$(TargetDir)System.Memory.dll" Link="System.Memory.dll" IncludeInVSIX="true" />
+    <Content Include="$(TargetDir)System.Numerics.Vectors.dll" Link="System.Numerics.Vectors.dll" IncludeInVSIX="true" />
+    <Content Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" Link="System.Runtime.CompilerServices.Unsafe.dll" IncludeInVSIX="true" />
+  </ItemGroup>
+</Project>

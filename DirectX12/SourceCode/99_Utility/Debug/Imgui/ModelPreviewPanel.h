@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 
-class PMXRenderer;
-class PMXActor;
-class XActor;
+class MmdlRenderer;
+class MmdlActor;
 class AnimationEditor;
 
 /**********************************************************************************
@@ -22,7 +21,7 @@ class AnimationEditor;
 class ModelPreviewPanel final
 {
 public:
-	explicit ModelPreviewPanel(PMXRenderer& Renderer);
+	explicit ModelPreviewPanel(MmdlRenderer& Renderer);
 	~ModelPreviewPanel();
 
 	ModelPreviewPanel(const ModelPreviewPanel&)            = delete;
@@ -35,23 +34,20 @@ private:
 	// 1モデルぶんの情報(ドロップダウン表示・切り替え用).
 	struct ModelEntry
 	{
-		std::string DisplayName;       // ドロップダウンに表示する名前(Data\Model\から下の相対パス).
-		std::string FilePath;          // ロード時に使う実際のパス.
-		bool        IsXFormat = false; // false=PMX(PMXActor)、true=.x(XActor).
+		std::string DisplayName;       // ドロップダウンに表示する名前.
+		std::string FilePath;          // ロード時に使うMSKNのパス.
 	};
 
 	// Data\Model\PMX・Data\Model\X配下を再帰的に走査し、m_ModelList/m_ModelDisplayNamesを構築する.
 	void ScanModels();
 
-	// Indexのモデルへ切り替える. 現在のPMXActor/XActor(どちらか一方しか同時に持たない)を破棄し、
-	// モデルの形式に応じて対応する方を作り直す.
+	// Indexのランタイムモデルへ切り替える.
 	void LoadModel(int Index);
 
 private:
-	PMXRenderer& m_Renderer;
+	MmdlRenderer& m_Renderer;
 
-	std::shared_ptr<PMXActor>        m_pPMXActor; // PMXモデル選択中のみ有効.
-	std::unique_ptr<XActor>          m_upXActor;  // .xモデル選択中のみ有効.
+	std::unique_ptr<MmdlActor>          m_upActor; // ランタイムモデル選択中のみ有効.
 	std::unique_ptr<AnimationEditor> m_upAnimationEditor;
 
 	std::vector<ModelEntry>  m_ModelList;

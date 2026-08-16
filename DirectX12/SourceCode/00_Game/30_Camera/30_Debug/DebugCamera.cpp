@@ -44,7 +44,7 @@ void DebugCamera::Update()
 	const float delta_time = GameTime::GetDeltaTime();
 	const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
 
-	const bool is_rmb_down = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+	const bool is_rmb_down = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0 && (GetAsyncKeyState(VK_LMENU) & 0x8000) != 0;
 
 	if (is_rmb_down)
 	{

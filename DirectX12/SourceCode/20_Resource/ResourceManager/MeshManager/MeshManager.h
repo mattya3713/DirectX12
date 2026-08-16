@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "10_Ggraphic\\PMD\\PMDActor.h"
+#include "10_Ggraphic\\90_Legacy\\PMD\\PMDActor.h"
 
 /*****************************
 * メッシュマネージャークラス.

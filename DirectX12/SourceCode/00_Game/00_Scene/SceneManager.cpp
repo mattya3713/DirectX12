@@ -2,7 +2,7 @@
 
 #include "00_Game/00_Scene/00_Base/SceneBase.h"
 #include "00_Game/00_Scene/10_Main/MainScene.h"
-#include "10_Ggraphic/DirectX/DirectX12.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 #if _DEBUG

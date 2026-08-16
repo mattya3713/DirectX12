@@ -119,6 +119,12 @@ Action Timeline Editor(Player攻撃アクションのフレーム単位調整)�
   ごとに連続したインデックス数を持つ`SkinSubmesh`の配列)でマルチマテリアルに
   対応する。マテリアルパスは固定長`char MaterialPath[128]`(ボーン名と同じ理由・
   同じ「超過時エラー」方針)。
+- **MSKN v4ではSkinSubmeshへモデル固有のFrontComposite役割(Normal/Source/
+  RelaxedOccluder)を持たせ、ヘッダーへOpacity/MaxDistanceを保存する**。共有される
+  MMATへ役割を入れないのは、同じマテリアルでもモデル内の描画用途が異なるため。
+  変換元隣接の`*.mmdl.json`が無い場合は全サブメッシュをNormalとして従来描画し、
+  設定がある場合だけ番号・値を検証してMSKNへ反映する。旧MSKNはバージョン不一致で
+  明示的に拒否する。
 - **構造体はメンバー間・末尾にパディングが生まれないよう、4byte境界に揃う型
   (float/uint32_t、および4の倍数サイズの固定長`char`配列)だけで構成している**
   (ユーザー指摘を受けて確認・徹底)。バイト列としてそのまま読み書きする都合上、
@@ -147,11 +153,32 @@ Action Timeline Editor(Player攻撃アクションのフレーム単位調整)�
 - PMX/X両方を変換対象にする(Player/BossはX、`Data\Model\PMX`配下のテスト
   モデルはPMXのため)。
 
+### PMX/X変換パイプライン実装済み事項
+
+- `RuntimeConverter`はPMX+任意VMD、またはXを明示的に呼び出して`.mskn`/`.mmat`/`.mclp`へ変換する。ゲーム起動時の自動変換は行わない。
+- Xの変換用中間データは、頂点ごとのMesh変換とメッシュ・ボーン組ごとのSkinSlotを保持する。共通モデル空間へ頂点を移す際はSkinSlotのオフセットへMesh変換の逆行列を合成する。不正な親ボーンはルートとして警告付きで近似し、逆行列を作れない場合や固定長名の超過はエラーにする。
+- PMXのSDEFは`PMXParser`で検出し、`C`/`R0`/`R1`を無視してBDEF2相当へ警告付きで近似変換する。VMDは30fps、XのAnimationSetは`TicksPerSecond`で秒へ正規化し、補間曲線は保存しない。
+- `.mmat`は拡張値と4本の固定長パスを含むVersion 2、`.mskn`はSkinSlot配列とuint32インデックスを含むVersion 3とし、旧Versionは読み込まない。マテリアル共有はFNV-1aを候補検索だけに使い、全フィールド比較後に再利用する。
+
+### mmdlスキニング姿勢・クリップ規約
+
+- `.mclp`はVersion 2とし、各`Keyframe`へ完全な親相対ローカル姿勢を保存する。PMX+VMDはPMXのバインド位置へVMD差分を加え、Xは全チャンネルの時刻和集合で各成分を補間してから書き出す。
+- PMXボーンは親が必ず前に来るトポロジカル順へ並べ替え、SkinSlotとVMDトラックの参照も同じ対応で再マップする。SkinSlotのOffsetMatrixはバインド時モデル空間行列の逆行列とする。
+- クリップ名は`<model>__<clip>.mclp`でモデルごとに名前空間化し、ランタイムはMSKNのstem接頭辞に一致するクリップだけを読み込む。ModelPreviewは頂点AABBの高さから目標高さ20へ自動縮尺する。
+
+### mmdlランタイムのResource/Actor分離
+
+- 旧`XActor`/`XMesh`は入力形式名と実行時の責務が一致しなくなったため、`MmdlActor`/`MmdlMesh`へ改名した。実行時は`.mskin`だけを読み、PMX/Xはオフライン変換入力として扱う。
+- `MmdlResource`はモデルの基準CPUデータと、Vertex/Indexバッファ、マテリアル定数バッファ、Base/Toon/Sphereテクスチャを所有する。同じ`shared_ptr<MmdlResource>`を複数の`MmdlMesh`へ渡した場合、これらの静的GPU資源を再生成しない。
+- `MmdlActor`はWorldTransform、再生クリップと時刻、外部指定フレーム、Transform CB、ボーン行列StructuredBuffer、Actor専用ディスクリプタヒープを個体ごとに持つ。個体ごとに変化する資源は共有しない。
+- Resourceは最初のActor生成時に遅延初期化されるため、共有コンストラクタは`shared_ptr<MmdlResource>`を受け取る。グローバルなモデルキャッシュ、非同期ロード、GPU遅延破棄は今回は導入しない。
+- 現在のActorは既存コードへの影響を抑えるため、Resourceの基準CPUデータをローカル配列へ複製して参照している。CPU側の完全なzero-copy化は、Actorの参照寿命設計と合わせて後回しとする。
+
 ### 実装順序
 
 Action Timeline Editor本体より**先に**この基盤を完成させる方針(ユーザー決定)。
 `PMXParser`/`XParser`は今後「オフライン変換の入力読み取り専用」という役割に
-変わる想定(既存のランタイム側`PMXActor`/`XActor`との置き換え範囲は実装しながら
+変わる想定(既存のランタイム側`PMXActor`/`MmdlActor`との置き換え範囲は実装しながら
 判断する)。
 
 ## カメラシステム
@@ -346,3 +373,9 @@ Action Timeline Editor本体に進む前に完成させる基盤(詳細は上記
 - Dear ImGui(コア+Win32+DX12バックエンド、v1.90.6)を導入し`ImGuiManager`でラップ。`Text`/`Slider`/`Input`/`CheckBox`/`Combo`/`Tweak`(値をC++リテラルとしてクリップボードへコピー)を提供。日本語ラベルは実行時文字コード(ANSI)→UTF-8の自動変換で文字化けを解消
 - `MyComPtr`に`Attach`/`As<U>`/変換コピーコンストラクタ/等価比較演算子を追加し本物の`ComPtr`に近づけた
 - 未使用の古いPMXシェーダーファイル(`SourceCode/10_Ggraphic/Shader/PMX/`)とvcxprojの空参照を削除
+
+## 独自ランタイムモデルViewer初期実装
+
+`Tools/ModelViewerExtension/`に、VSIX SDKやHelixToolkitがまだ導入されていない環境でも変換後データを確認できるWPFホストを追加した。`RuntimeFormatReader`はC++の`RuntimeFormatIO`と同じリトルエンディアンの固定レイアウトを読み、MSKN v4の件数・ペイロード範囲・親順序・インデックス・スキンスロット・サブメッシュ役割と、MMAT v2/v3の値・固定長パスを検証してから実行時データへ変換する。
+
+初期ViewerはバインドポーズのCPUスキニングを`Viewport3D`へ表示し、サブメッシュ単位のテクスチャ・Diffuse・Specular・Ambient・トゥーン・スフィア情報と、FrontCompositeの設定値を表示する。VSIXの`ToolWindow`への接続、HelixToolkit依存、MCLP再生、ボーン表示、特殊合成はSDK骨格が配置された後の次段階とする。

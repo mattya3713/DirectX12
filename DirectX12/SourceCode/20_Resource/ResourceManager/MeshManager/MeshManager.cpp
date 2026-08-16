@@ -1,5 +1,5 @@
 ﻿#include "MeshManager.h"
-#include "10_Ggraphic\\PMD\\PMDRenderer.h"
+#include "10_Ggraphic\\90_Legacy\\PMD\\PMDRenderer.h"
 #include "99_Utility\\String\\String.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include <filesystem>

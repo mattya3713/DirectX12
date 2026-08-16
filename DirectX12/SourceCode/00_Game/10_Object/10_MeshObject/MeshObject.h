@@ -4,7 +4,7 @@
 #include <string>
 
 #include "00_Game/10_Object/00_Base/GameObject.h"
-#include "10_Ggraphic/Model/IMesh.h"
+#include "10_Ggraphic/30_Asset/Parser/IMesh.h"
 
 /**********************************************************************************
 * @author    : mattya3713.

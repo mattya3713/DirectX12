@@ -17,6 +17,9 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 | 2026-08-14 | `CombatCoordinator::OnParrySuccess()`にパリィ演出カメラ(`KeyframeCamera`)呼び出しを追加配線 | Claude (直接実装) | 既存文脈あり(同じ調査の流れで`CombatCoordinator.cpp`/`KeyframeCamera.h`/`CameraManager.h`を既読) | 目安: 追加で読んだファイル3件(合計約100行)、Edit呼び出し2回。既読分の再読み込みコストは無し | 既に文脈を持っていたため、Codexに投げていたら同じファイル群をゼロから読み直す形になり非効率だったと判断し直接実装した |
 
 | 2026-08-14 | `.X`モデル差し替え一式: `IMesh`インターフェース新設、`PMXMesh`/`XMesh`両対応、Player/Boss全State(7+5箇所)のクリップ名差し替え、`MainScene`のモデル切り替え、vcxproj登録 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claudeは調査・設計・タスク仕様書作成のみ行い、実装はCodexに完全委任) | 114,515 (実測) | 成功。0エラー0警告でビルド。範囲外のBOM自動修正が1ファイル対で発生(害はない)。設計(IMesh/XMesh形状・クリップ名対応表)はClaudeが事前に確定し仕様書に明記していたため、Codexの実装判断の余地はほぼ無かった |
+| 2026-08-15 | MMdlマテリアルのトゥーン使用分岐 | Codex (gpt-5.6-luna) | 既存のMMdl移行文脈あり。Codexの変更後にClaudeが差分確認と独立ビルドを実施 | 不明(レポートが前回タスクの古い内容) | Debug/Releaseとも0エラー0警告。BOM 215ファイルOK。実機確認は未実施 |
+| 2026-08-15 | トゥーン影の一時無効化 | Codex (gpt-5.6-luna) | 既存のMMdl/UseToonMap実装を前提に小変更を委任 | 不明(レポートに申告なし) | PMX変換時とMMdl読み込み時にfalseを強制。Debug/Releaseとも0エラー0警告。BOM 215ファイルOK |
+| 2026-08-16 | 無効なスペキュラー計算によるNaNの修正 | Codex (gpt-5.6-luna) | RenderDocで原因を特定済み。HLSL 1ファイルの小変更 | 不明(レポートに申告なし) | Debug/Releaseとも0エラー0警告。HLSL BOMなしを確認 |
 
 | 2026-08-14 | モデルサイズ検知(`_DEBUG`限定): `IMesh`/`PMXMesh`/`XMesh`/`MeshObject`へ`GetLocalHeight()`配線、`Character::Draw()`でコライダーサイズと比較しImGui警告 | Codex (gpt-5.6-luna, danger-full-access) | ゼロから(Claudeは`PMXActor`/`XActor`側の下準備のみ直接実装し、残りの配線はタスク仕様書のみ渡して委任) | 56,237 (実測) | Claude側の実装漏れ(XActor.hに`m_LocalHeight`本体を追加し忘れ)が原因でビルドが4エラーで失敗。CodexはXActor変更禁止のスコープを正しく守り、原因を`review_points`で正確に報告して停止した(スコープ逸脱で無理に直さなかった判断は正しい)。Claudeが自分のミスを2ファイルだけ直接修正して解決 |
 
@@ -48,8 +51,25 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 
 | 2026-08-15 | RuntimeFormatにマテリアル外出し(.mmat新設)+SkinSubmesh配列化+static_assert追加 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(前タスクの成果物を仕様変更で改修) | 76,249 (実測) | 成功。書き込み・読み込み両方にサブメッシュ整合性検証(マテリアルパス終端・IndexCount合計)を対称的に実装していた(指示は書き込み側のみだったが読み込み側にも追加、妥当な判断). Claudeが往復テストを更新し19項目全てパス確認 |
 
+| 2026-08-15 | mmdlの完全ローカル姿勢化: PMX逆バインド/親順序/VMD bind加算、X全チャンネル補間、モデル別MCLP、Preview自動縮尺 | Codex (gpt-5.6-luna, danger-full-access) | 既存文脈あり(原因分析・姿勢規約・受け入れ基準をtasks/current.mdで確定後に委任) | 2,842,680 (実測、うちcached input 2,691,840) | 成功。Codex後に独立レビューでX不正親の近似方針とSDEF文書矛盾を補正。6 MSKN/40 MCLPの数値検査、Debug/Releaseビルド、実機表示まで確認済み |
+
+| 2026-08-15 | mmdlランタイムのMmdlResource/MmdlActor/MmdlMesh分離と静的GPU資源共有 | Codex (gpt-5.6-sol, danger-full-access) | Lunaでの途中実装を復旧した状態から、共有境界と不足箇所をtasks/current.mdで明示して委任 | 143,786 (実測) | 成功。Vertex/Index/Material/Base/Toon/SphereをResource所有、Transform/姿勢/ボーンBufferをActor所有に分離。独立レビューでconst_pointer_castを除去し、Debug/Release 0警告0エラー、5秒起動確認済み |
+
+| 2026-08-15 | 10_Ggraphicの責務別ディレクトリ整理 | Codex (gpt-5.6-luna, danger-full-access) | 既存ディレクトリを責務別に移動し、参照更新をtasks/current.mdで明示して委任 | レポートに記録なし | 成功。Debug/Release 0警告0エラー。移動後の旧パス参照を除去し、BOM確認済み。手動起動は未実施 |
+| 2026-08-15 | PMXRendererのMMdl用複製と旧実装のビルド除外 | Codex + 手動修正 | PMXRendererを残したままMmdlRendererへ複製し、現行MMdl経路を切り替え | Codexレポートのtokens used記録なし | 成功。Debug/Release 0警告0エラー。手動起動は未実施 |
+| 2026-08-15 | MmdlRendererのActor所有除去 | Codex (gpt-5.6-luna, danger-full-access) | MmdlRendererをGPU状態管理専用にし、Actorの更新・描画をGameObject/Actor側へ分離 | Codexレポートのtokens used記録なし | 成功。Debug/Release 0警告0エラー、BOM確認済み。手動起動は未実施 |
+
 ## 傾向メモ
 
 - Codexの`tokens used`は「そのタスクを実行するために必要だった調査+生成」の総量。単純な単発コマンド(ファイル1つ作成)でも約4,000〜20,000トークンかかっており、タスクの複雑さより「ゼロから何を読んだか」に強く左右される。
 - Claudeが既に文脈を持っている状態でCodexに委任すると、Codexが同じ調査をやり直すため二重コストになりやすい。**委任の効果が一番出るのは、Claudeがまだ何も調べていない・大きめの実装タスクを最初から丸投げする場合**。
 - 実例(`.X`モデル差し替え、114,515トークン): Claude側は設計(`IMesh`のメソッド構成、クリップ名対応表の確定)と`tasks/current.md`の作成に事前調査のトークンを使ったが、実際のコード編集(16ファイル、新規3+既存13)・vcxproj登録・ビルド確認・エラー時の自己修正は全てCodex側のこの114,515トークンに含まれる。もしClaudeが直接この分量を編集していたら、同程度かそれ以上のファイル読み込み+Edit呼び出しが発生していたはずで、体感的には「大きな実装ほど委任の効果が出る」という上記の仮説と整合する結果だった。
+
+| 2026-08-16 | mmdl Visual Studio Viewer初期実装 | Codex report: build 0 errors/0 warnings; Debug/Release viewer and DX12 Debug/Release verified |
+
+| 2026-08-16 | Visual Studio VSIX ToolWindow統合 | Codex report: standalone/VSIX/DX12 Debug成功; VSIX Release 0 errors/0 warnings |
+
+| 2026-08-16 | VSIX登録・表示修正 | Version 1.0.1; VSIX Debug/Release 0 errors/0 warnings; package/manifest/pkgdef/GUID検証済み |
+
+| 2026-08-16 | VSIX CTMENUリソース名修正 | ProvideMenuResourceをModelViewer.ctmenuへ修正; Version 1.0.2; Debug/Release 0 errors/0 warnings |
+| 2026-08-17 | VSIX Package依存DLL同梱修正 | Codex report: tokens used記録なし; ForceIncludeInVSIXでSystem.Memory等4 DLLを同梱; Debug/Release 0 errors/0 warnings; VSIX ZIP検証済み |

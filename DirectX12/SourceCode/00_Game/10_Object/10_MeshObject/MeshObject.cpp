@@ -1,6 +1,6 @@
 ﻿#include "MeshObject.h"
 
-#include "10_Ggraphic/Model/IMesh.h"
+#include "10_Ggraphic/30_Asset/Parser/IMesh.h"
 
 void MeshObject::Update()
 {

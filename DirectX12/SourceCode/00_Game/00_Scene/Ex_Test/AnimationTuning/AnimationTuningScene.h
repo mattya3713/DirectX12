@@ -4,7 +4,7 @@
 
 #include "00_Game/00_Scene/00_Base/SceneBase.h"
 
-class PMXRenderer;
+class MmdlRenderer;
 class ModelPreviewPanel;
 #if _DEBUG
 class DebugGrid;
@@ -33,7 +33,7 @@ public:
 	void Draw() override;
 
 private:
-	std::shared_ptr<PMXRenderer>       m_pPMXRenderer;
+	std::shared_ptr<MmdlRenderer>       m_pMmdlRenderer;
 	std::unique_ptr<ModelPreviewPanel> m_upModelPreviewPanel;
 #if _DEBUG
 	std::unique_ptr<DebugGrid> m_upDebugGrid;

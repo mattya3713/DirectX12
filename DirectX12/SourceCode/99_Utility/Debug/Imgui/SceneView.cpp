@@ -1,6 +1,6 @@
 ﻿#include "SceneView.h"
 
-#include "10_Ggraphic/DirectX/DirectX12.h"
+#include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
