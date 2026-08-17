@@ -25,6 +25,7 @@ public:
 	void SetWorldTransform(const Transform& InTransform) override;
 	void PlayNamedClip(const std::string& ClipName) override;
 	void SetCurrentFrame(float ActionFrame) override;
+	float GetCurrentAnimationSeconds() const override;
 
 #if _DEBUG
 	float GetLocalHeight() const override;

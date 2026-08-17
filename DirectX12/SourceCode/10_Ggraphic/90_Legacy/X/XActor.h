@@ -55,6 +55,12 @@ public:
 	// 読み込まれているクリップ名の一覧(ImGui等での一覧表示用).
 	const std::vector<XSkeleton::AnimationClip>& GetClips() const noexcept { return m_Skeleton.Clips; }
 	int GetCurrentClipIndex() const noexcept { return m_CurrentClipIndex; }
+	// 現在のアニメーション内再生位置を秒で取得する(クリップ未再生なら0).
+	float GetCurrentAnimationSeconds() const noexcept
+	{
+		if (m_CurrentClipIndex < 0 || m_Skeleton.TicksPerSecond <= 0) { return 0.0f; }
+		return m_CurrentTime / static_cast<float>(m_Skeleton.TicksPerSecond);
+	}
 
 private:
 	// ルートパラメータのインデックス(PMXActorと同じシェーダー・ルートシグネチャを使うため揃える).

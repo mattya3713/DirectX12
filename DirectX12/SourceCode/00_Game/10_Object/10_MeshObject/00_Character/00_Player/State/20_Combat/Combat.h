@@ -58,7 +58,7 @@ namespace PlayerState {
 		float m_MinComboTransTime = 0.0f; // これ以降でないとコンボ入力を受け付けない.
 		float m_ComboStartTime    = 0.0f; // コンボ入力の受付開始時刻.
 		float m_ComboEndTime      = 1.0f; // このステートの終了時刻(コンボ入力が無ければIdleへ).
-		float m_CurrentTime       = 0.0f; // Enterからの経過時間(秒).
+		float m_CurrentTime       = 0.0f; // 攻撃クリップの現在の再生位置(秒).
 		bool  m_IsComboAccepted   = false; // コンボ入力(次の攻撃ボタン)を受け付け済みか.
 
 		std::vector<ColliderWindow> m_ColliderWindows;

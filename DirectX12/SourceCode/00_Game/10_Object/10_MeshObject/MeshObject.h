@@ -33,6 +33,9 @@ public:
 	// アタッチ中のメッシュへActionFrameを直接指定する.
 	void SetCurrentFrame(float ActionFrame) noexcept;
 
+	// アタッチ中のメッシュの現在のアニメーション内再生位置を秒で取得する.
+	float GetCurrentAnimationSeconds() const noexcept { return m_pMesh ? m_pMesh->GetCurrentAnimationSeconds() : 0.0f; }
+
 #if _DEBUG
 	// アタッチ中のメッシュのローカル高さを取得する(Debugビルドのみ).
 	float GetLocalHeight() const noexcept { return m_pMesh ? m_pMesh->GetLocalHeight() : 0.0f; }

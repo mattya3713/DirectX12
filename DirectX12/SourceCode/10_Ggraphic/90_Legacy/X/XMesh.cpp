@@ -45,6 +45,11 @@ void XMesh::SetCurrentFrame(float ActionFrame)
 	m_upActor->SetCurrentFrame(ActionFrame);
 }
 
+float XMesh::GetCurrentAnimationSeconds() const
+{
+	return m_upActor->GetCurrentAnimationSeconds();
+}
+
 #if _DEBUG
 float XMesh::GetLocalHeight() const
 {

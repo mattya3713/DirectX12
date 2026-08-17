@@ -55,6 +55,11 @@ void MMdlMesh::SetCurrentFrame(float ActionFrame)
 	m_upActor->SetCurrentFrame(ActionFrame);
 }
 
+float MMdlMesh::GetCurrentAnimationSeconds() const
+{
+	return m_upActor->GetCurrentAnimationSeconds();
+}
+
 #if _DEBUG
 float MMdlMesh::GetLocalHeight() const
 {

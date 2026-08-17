@@ -181,6 +181,57 @@ Action Timeline Editor本体より**先に**この基盤を完成させる方針
 変わる想定(既存のランタイム側`PMXActor`/`MmdlActor`との置き換え範囲は実装しながら
 判断する)。
 
+**2026-08-15〜17に基盤が完成した**(詳細は`tasks/done/2026-08-15〜17`の各ファイル
+参照): `RuntimeConverter`(PMX/X→`.mskn`/`.mmat`/`.mclp`変換、自動スキャン対応)、
+`MmdlActor`/`MMdlMesh`/`MMdlResource`/`MmdlRenderer`(新形式を描画・アニメーション
+するランタイム)。**Player/Bossは既に両方とも`MMdlMesh`(`player.mskn`/
+`boss.mskn`)へ移行済み**であり、当初の課題だった「PMXは秒駆動・Xはtick駆動」の
+不一致はゲームプレイコードから解消されている。`10_Ggraphic`配下も責務別に
+再編済み(`10_Device`/`20_Render`/`30_Asset/{Parser,RuntimeFormat,RuntimeModel/MMdl}`/
+`90_Legacy`)。あわせてVisual Studio拡張機能(VSIX)`Runtime Model Viewer`
+(`Tools/ModelViewerExtension`)も新設し、`.mskn`/`.mmat`をVisual Studio内で
+確認できるようにした(メニュー非表示問題を継続調査中)。
+
+## Combat/アニメーション時間軸の統合(Action Timeline Editorの前提・続き)
+
+上記の基盤完成を受けて、Action Timeline Editor本体に進む前に残っていた設計課題
+(`Combat`の秒ベース時間管理と、`MmdlActor`のActionFrame(30fps)をどう繋ぐか)を
+対話で詰めた。
+
+### 検討の経緯
+
+- 当初案(a): `Combat`自体を秒からフレームベースへ書き換える。
+- 当初案(b): JSON側はフレームで保存し、読み込み時に秒へ変換する。
+- ユーザーから「フレームベースだとエディタとゲームでズレそう、秒で統一したい」
+  という指摘。検証の結果、`MmdlActor::SetCurrentFrame`の式
+  (`m_CurrentTime = ActionFrame / 30 * TicksPerSecond`)を使う限り、
+  「秒を真実の値とし、プレビュー時だけ`ActionFrame = 秒 × 30`を計算する」
+  やり方は、ゲーム内の通常再生(`m_CurrentTime += 経過秒 × TicksPerSecond`)と
+  数式的に完全に一致することを確認した(30が計算途中で相殺されるため、
+  秒を保持する分には案(a)(b)いずれとも異なる、より単純な第3の形になる)。
+- 次に「区間ごとのアニメーション速度」(攻撃の振りだけ速くしたい等)を検討した際、
+  「Combatが独立した時計を持ち続ける限り、速度を変えるたびに2つの時計が
+  ズレる」という問題が判明。
+- **最終決定(ユーザー発案)**: 実行時の速度倍率機能は作らない。区間ごとの速さは
+  **アニメーションクリップ自体のキーフレーム間隔**で表現する(`.mclp`は疎な
+  キーフレーム形式なので、間隔を詰めれば速く・空ければ遅く見える、という表現力を
+  既に持っている)。クリップは常に等速(1倍)で再生し、**`Combat`は独自の時計を
+  持つのをやめて、紐づく`MmdlActor`の現在の再生位置(秒換算)をそのまま自分の
+  経過時間として使う**。こうすることでCombat側とアニメーション側は最初から
+  同じ1本の時間軸を共有するだけになり、速度調整をしても原理的にズレない。
+
+### 必要な実装(次タスク)
+
+- `MmdlActor`に現在の再生位置を秒で返すゲッターを追加する(内部は
+  `m_Skeleton.TicksPerSecond`基準のtick単位で持っているため変換が要る)。
+- `IMesh`インターフェースに同等のメソッドを追加し、`MMdlMesh`が`MmdlActor`へ
+  委譲する形にする(既存の`SetCurrentFrame`/`PlayNamedClip`と同じパターン)。
+- `MeshObject`に委譲メソッドを追加する(既存の`GetLocalHeight`等と同じパターン)。
+- `Combat.h/.cpp`の`m_CurrentTime`(`GameTime::GetDeltaTime()`を積算する独自時計)を
+  廃止し、`GetPlayer()`経由で紐づくメッシュの再生位置を毎フレーム読むように
+  変更する。`ColliderWindow`・`ComboStartTime`等のJSON側スキーマは変更不要
+  (今のまま秒).
+
 ## カメラシステム
 
 `SourceCode/00_Game/30_Camera/`配下。`CameraBase`(抽象基底)を継承する形で用途別に分割している。

@@ -73,3 +73,4 @@ Claude(Lead)とCodex(Implementation Engineer)、どちらに実装を任せた�
 
 | 2026-08-16 | VSIX CTMENUリソース名修正 | ProvideMenuResourceをModelViewer.ctmenuへ修正; Version 1.0.2; Debug/Release 0 errors/0 warnings |
 | 2026-08-17 | VSIX Package依存DLL同梱修正 | Codex report: tokens used記録なし; ForceIncludeInVSIXでSystem.Memory等4 DLLを同梱; Debug/Release 0 errors/0 warnings; VSIX ZIP検証済み |
+| 2026-08-18 | Combat/アニメーション時間軸統合(MmdlActor::GetCurrentAnimationSeconds追加、Combatの独自時計をMmdlActorの再生位置読み取りに置換) | Codex (danger-full-access) | 対話で詰めた設計(DESIGN.mdのCombat節)をtasks/current.mdに明文化して委任 | Codexレポートのtokens used記録なし | 成功。Claude側で独立ビルド再実行し0エラー0警告を確認、check-bom.ps1 -Fixで217ファイルBOM確認済み。Legacy PMX/X互換getter(PMXMesh/XActor/XMesh)の差分をレビューし既存API(PMXActor::GetCurrentAnimationTime、XActor同名パターン)の妥当な再利用であることを確認。AttackCombo_0/1/2・ParryのEnter()順序(Combat::Enter()→ApplyNamedClip)が全て一貫しており、m_CurrentTimeの初期値0とアニメーション再生位置の不整合なしと確認。実機での攻撃/コンボ/パリィ動作確認は未実施 |

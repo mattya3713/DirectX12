@@ -48,6 +48,11 @@ void PMXMesh::SetCurrentFrame(float ActionFrame)
 	m_pActor->SetCurrentFrame(ActionFrame);
 }
 
+float PMXMesh::GetCurrentAnimationSeconds() const
+{
+	return m_pActor->GetCurrentAnimationTime() / 30.0f;
+}
+
 void PMXMesh::Play()
 {
 	m_pActor->PlayAnimation();

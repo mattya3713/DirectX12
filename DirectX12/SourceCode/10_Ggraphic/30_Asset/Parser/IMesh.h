@@ -15,6 +15,8 @@ public:
 	virtual void PlayNamedClip(const std::string& ClipName) = 0;
 	// 外部からActionFrameを指定して姿勢を固定する.
 	virtual void SetCurrentFrame(float ActionFrame) = 0;
+	// 現在のアニメーション内再生位置を秒で取得する(クリップ未再生なら0).
+	virtual float GetCurrentAnimationSeconds() const = 0;
 
 #if _DEBUG
 	// バインドポーズでのY軸方向の高さを取得する(Debugビルドのみ).
