@@ -3,24 +3,26 @@
   <Extern href="stdidcmd.h" />
   <Extern href="vsshlids.h" />
   <Commands package="guidModelViewerPackage">
-    <Groups>
-      <Group guid="guidModelViewerCommandSet" id="ModelViewerGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
-      </Group>
-    </Groups>
     <Buttons>
       <Button guid="guidModelViewerCommandSet" id="cmdidShowModelViewer" priority="0x0100" type="Button">
-        <Parent guid="guidModelViewerCommandSet" id="ModelViewerGroup" />
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
         <Strings>
           <ButtonText>Runtime Model Viewer</ButtonText>
         </Strings>
       </Button>
     </Buttons>
   </Commands>
+  <CommandPlacements>
+    <!-- Keep a second reliable entry point under Tools. -->
+    <CommandPlacement guid="guidModelViewerCommandSet"
+                      id="cmdidShowModelViewer"
+                      priority="0x0600">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_TOOLS_EXT_TOOLS" />
+    </CommandPlacement>
+  </CommandPlacements>
   <Symbols>
     <GuidSymbol name="guidModelViewerPackage" value="{4c3a16d8-ecaa-48d9-8b67-c3f6d8e7235b}" />
     <GuidSymbol name="guidModelViewerCommandSet" value="{a7e33d45-cf1f-4f71-9dc0-34d4f3348e3b}">
-      <IDSymbol name="ModelViewerGroup" value="0x1020" />
       <IDSymbol name="cmdidShowModelViewer" value="0x0100" />
     </GuidSymbol>
   </Symbols>

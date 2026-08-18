@@ -33,10 +33,14 @@
     <Compile Include="ModelViewerControl.xaml.cs" Link="ModelViewerControl.xaml.cs" />
     <Compile Include="ModelViewerPackage.cs" />
     <Compile Include="ModelViewerToolWindow.cs" />
+    <Compile Include="ModelViewerEditorFactory.cs" />
+    <Compile Include="ModelViewerEditorPane.cs" />
     <Compile Include="ShowModelViewerCommand.cs" />
     <Compile Include="FrameworkPolyfills.cs" />
     <Page Include="ModelViewerControl.xaml" />
-    <VSCTCompile Include="ModelViewer.vsct" />
+    <VSCTCompile Include="ModelViewer.vsct">
+      <ResourceName>ModelViewer.CTMENU</ResourceName>
+    </VSCTCompile>
     <None Include="source.extension.vsixmanifest" />
   </ItemGroup>
   <ItemGroup>
