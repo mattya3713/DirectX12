@@ -1,5 +1,7 @@
 ﻿#include "Player.h"
 
+#include <cmath>
+
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/00_Idle/Idle.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/10_Run/Run.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/20_Combat/00_AttackCombo_0/AttackCombo_0.h"
@@ -7,9 +9,16 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/20_Combat/20_AttackCombo_2/AttackCombo_2.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/20_Combat/30_Parry/Parry.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/30_Dodge/00_DodgeExecute/DodgeExecute.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/40_KnockBack/KnockBack.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
+
+namespace {
+	constexpr float KNOCKBACK_HORIZONTAL_SPEED = 6.0f; // ノックバックの水平初速(KnockBack State側の定数と合わせる).
+	constexpr float KNOCKBACK_VERTICAL_SPEED   = 3.0f; // ノックバックの垂直初速.
+}
 
 Player::Player()
 	: m_StateMachine  { this }
@@ -74,6 +83,45 @@ void Player::DrawDebugColliders() const
 }
 #endif
 
+void Player::OnDamaged(const HitEvent& Event)
+{
+	// TODO(一時デバッグ): ノックバック実機確認用. 確認後に削除する.
+	if (DebugLog* p_log = ServiceLocator::Get<DebugLog>()) {
+		p_log->LogInfo("OnDamaged fired: amount=" + std::to_string(Event.AttackAmount));
+	}
+
+	// 吹き飛び方向を求める(接触点から離れる水平方向が最も確実.
+	// Normalの向きは衝突判定の引数順に依存するため、フォールバック扱いにする).
+	DirectX::XMFLOAT3 direction{ 0.0f, 0.0f, 1.0f };
+	{
+		const DirectX::XMFLOAT3& my_pos = GetPosition();
+		const float dir_x = my_pos.x - Event.ContactPoint.x;
+		const float dir_z = my_pos.z - Event.ContactPoint.z;
+		const float length_sq = dir_x * dir_x + dir_z * dir_z;
+
+		if (length_sq > 1e-6f) {
+			const float inv_length = 1.0f / std::sqrtf(length_sq);
+			direction = { dir_x * inv_length, 0.0f, dir_z * inv_length };
+		}
+		else {
+			// 接触点が自分の中心と一致した場合は法線(自分→相手方向)の逆へ吹き飛ぶ.
+			const float normal_x = -Event.Normal.x;
+			const float normal_z = -Event.Normal.z;
+			const float length = std::sqrtf(normal_x * normal_x + normal_z * normal_z);
+			if (length > 1e-6f) {
+				direction = { normal_x / length, 0.0f, normal_z / length };
+			}
+		}
+	}
+
+	m_KnockBackVelocity = {
+		direction.x * KNOCKBACK_HORIZONTAL_SPEED,
+		KNOCKBACK_VERTICAL_SPEED,
+		direction.z * KNOCKBACK_HORIZONTAL_SPEED };
+
+	ChangeState(PlayerState::eID::KnockBack);
+}
+
 void Player::ChangeState(PlayerState::eID Id)
 {
 	switch (Id)
@@ -104,6 +152,10 @@ void Player::ChangeState(PlayerState::eID Id)
 
 	case PlayerState::eID::DodgeExecute:
 		m_StateMachine.ChangeState(std::make_shared<PlayerState::DodgeExecute>(this));
+		break;
+
+	case PlayerState::eID::KnockBack:
+		m_StateMachine.ChangeState(std::make_shared<PlayerState::KnockBack>(this));
 		break;
 
 	default:

@@ -50,6 +50,9 @@ public: // Getter・Setter.
 	const DirectX::XMFLOAT3& GetMoveVec() const noexcept { return m_MoveVec; }
 	void SetMoveVec(const DirectX::XMFLOAT3& MoveVec, PlayerAccess::MovementKey) noexcept { m_MoveVec = MoveVec; }
 
+	// ノックバック初速の取得(OnDamaged()が設定する. KnockBack StateがEnter時に受け取る).
+	const DirectX::XMFLOAT3& GetKnockBackVelocity() const noexcept { return m_KnockBackVelocity; }
+
 	// 走り移動速度(単位/秒)の取得.
 	float GetRunMoveSpeed() const noexcept { return m_RunMoveSpeed; }
 
@@ -98,10 +101,16 @@ private:
 		m_HasParryReactionTarget    = true;
 	}
 
+protected:
+	// 被弾リアクション: 吹き飛び方向を計算してKnockBack Stateへ遷移する.
+	// (Boss/Enemyは既定の空実装のまま. ノックバック初速はKnockBack StateがGetKnockBackVelocity()で受け取る.)
+	void OnDamaged(const HitEvent& Event) override;
+
 private:
 	StateMachine<Player> m_StateMachine;					// 現在ステートの保持・更新.
 	CapsuleCollider       m_ParryCollider;					// パリィ判定専用(m_DamageColliderとは別物. Parry中のみ有効).
 	DirectX::XMFLOAT3    m_MoveVec        { 0.0f, 0.0f, 0.0f };	// 現フレームの移動ベクトル.
+	DirectX::XMFLOAT3    m_KnockBackVelocity{ 0.0f, 0.0f, 0.0f };	// ノックバック初速(OnDamagedが計算し、KnockBack Stateが消費する).
 	float                m_RunMoveSpeed   = 8.0f;				// 走り移動速度(単位/秒).
 	PlayerState::eID     m_CurrentStateID = PlayerState::eID::None;	// 現在ステートID(デバッグ表示用).
 #if _DEBUG

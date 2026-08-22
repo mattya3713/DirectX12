@@ -305,6 +305,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\20_Combat\30_Parry\Parry.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateID.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.h" />
@@ -423,6 +424,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\20_Combat\30_Parry\Parry.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\00_Idle\Idle.cpp" />

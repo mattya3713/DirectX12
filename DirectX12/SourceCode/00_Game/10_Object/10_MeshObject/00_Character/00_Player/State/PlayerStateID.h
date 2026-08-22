@@ -23,6 +23,8 @@ namespace PlayerState {
 
 		DodgeExecute, // 回避.
 
+		KnockBack, // 被弾ノックバック(吹き飛び→着地でIdleへ戻る).
+
 		_Max
 	};
 

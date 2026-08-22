@@ -70,13 +70,21 @@ public: // エフェクト再生(フックのみ. 中身は未実装 — Effekse
 
 protected:
 
+	// 被弾時のリアクション(派生クラスで上書き. 既定は何もしない.
+	// HP減算はApplyDamage()側で済むため、ここでは見た目・挙動の反応だけを扱う).
+	virtual void OnDamaged(const HitEvent& Event) {}
+
 	// ダメージ/死亡コールバックの登録
 	void SetOnDamage(HealthSystem::DamageCallback Callback) { m_Health.SetOnDamage(std::move(Callback)); }
 	void SetOnDeath(HealthSystem::DeathCallback Callback) { m_Health.SetOnDeath(std::move(Callback)); }
 
 	// HitEventを受けてダメージを適用する(publicにはしない. ApplyDamageは必ず
 	// 自分の被弾コライダーが検出したHitEvent経由でのみ呼ばれる想定).
-	void ApplyDamage(const HitEvent& Event) noexcept { m_Health.ApplyDamage(Event.AttackAmount); }
+	void ApplyDamage(const HitEvent& Event) noexcept
+	{
+		m_Health.ApplyDamage(Event.AttackAmount);
+		OnDamaged(Event); // 被弾リアクション(HP減算後に呼ぶ. Playerのノックバック等で上書きされる).
+	}
 
 #if _DEBUG
 	// コライダーをワイヤーフレームで描画する(Debugビルドのみ. 派生クラスのDrawDebugColliders()からも呼べる).

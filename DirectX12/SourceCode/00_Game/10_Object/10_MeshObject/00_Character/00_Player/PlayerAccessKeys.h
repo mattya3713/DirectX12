@@ -8,6 +8,7 @@ namespace PlayerState {
 	class AttackCombo_1;
 	class AttackCombo_2;
 	class Parry;
+	class KnockBack;
 }
 
 /**********************************************************************************
@@ -26,6 +27,7 @@ namespace PlayerAccess {
 	{
 		friend class PlayerState::Idle;
 		friend class PlayerState::Run;
+		friend class PlayerState::KnockBack; // 吹き飛び方向を向かせるため.
 		MovementKey() {}
 	};
 
