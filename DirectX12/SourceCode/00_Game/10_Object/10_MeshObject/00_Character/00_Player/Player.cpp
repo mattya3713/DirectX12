@@ -12,7 +12,6 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/40_KnockBack/KnockBack.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
-#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
@@ -56,18 +55,6 @@ Player::~Player()
 
 void Player::Update()
 {
-#if _DEBUG
-	// TODO(一時デバッグ): ノックバック実機確認用の人工被弾トリガー(F3). 確認後に削除する.
-	if (GetAsyncKeyState(VK_F3) & 0x8000) {
-		HitEvent fake{};
-		fake.AttackAmount = 0.0f; // HPを減らさず挙動だけ確認する.
-		const DirectX::XMFLOAT3& pos = GetPosition();
-		fake.ContactPoint = { pos.x + 1.0f, pos.y + 1.0f, pos.z };
-		fake.Normal       = { -1.0f, 0.0f, 0.0f };
-		OnDamaged(fake);
-	}
-#endif
-
 	m_StateMachine.Update();
 	m_StateMachine.LateUpdate();
 
@@ -97,11 +84,6 @@ void Player::DrawDebugColliders() const
 
 void Player::OnDamaged(const HitEvent& Event)
 {
-	// TODO(一時デバッグ): ノックバック実機確認用. 確認後に削除する.
-	if (DebugLog* p_log = ServiceLocator::Get<DebugLog>()) {
-		p_log->LogInfo("OnDamaged fired: amount=" + std::to_string(Event.AttackAmount));
-	}
-
 	// 吹き飛び方向を求める(接触点から離れる水平方向が最も確実.
 	// Normalの向きは衝突判定の引数順に依存するため、フォールバック扱いにする).
 	DirectX::XMFLOAT3 direction{ 0.0f, 0.0f, 1.0f };

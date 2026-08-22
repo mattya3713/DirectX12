@@ -4,8 +4,6 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
-#include "99_Utility/Debug/Log/DebugLog.h"
-#include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
 	constexpr float KNOCKBACK_HORIZONTAL_SPEED = 6.0f; // 水平初速(単位/秒). 演出バランスは後で調整する.
@@ -24,12 +22,6 @@ KnockBack::KnockBack(Player* pOwner) noexcept
 
 void KnockBack::Enter()
 {
-	// TODO(一時デバッグ): ノックバック実機確認用. 確認後に削除する.
-	if (DebugLog* p_log = ServiceLocator::Get<DebugLog>()) {
-		const DirectX::XMFLOAT3& v = GetPlayer()->GetKnockBackVelocity();
-		p_log->LogInfo("KnockBack Enter: v=(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")");
-	}
-
 	// 吹き飛び初速はPlayer::OnDamaged()が被弾時に計算して保持しているものを受け取る.
 	m_Velocity = GetPlayer()->GetKnockBackVelocity();
 
