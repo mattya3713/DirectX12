@@ -28,6 +28,7 @@ void CollisionDetector::ExecuteCollisionDetection()
 
 			// Aへの情報(相手Bの攻撃力を持たせる).
 			info.AttackAmount = p_collider_b->GetAttackAmount();
+			info.AttackActivationId = p_collider_b->GetActivationId();
 			p_collider_a->AddCollisionInfo(info);
 
 			// Bへは法線を反転し、コライダーの左右を入れ替えた情報を渡す.
@@ -39,6 +40,7 @@ void CollisionDetector::ExecuteCollisionDetection()
 			info_reverse.SelfCollider    = info.OtherCollider;
 			info_reverse.OtherCollider    = info.SelfCollider;
 			info_reverse.AttackAmount = p_collider_a->GetAttackAmount();
+			info_reverse.AttackActivationId = p_collider_a->GetActivationId();
 
 			p_collider_b->AddCollisionInfo(info_reverse);
 		}

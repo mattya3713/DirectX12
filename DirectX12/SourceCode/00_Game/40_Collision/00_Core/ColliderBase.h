@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <DirectXMath.h>
+#include <cstdint>
 #include <vector>
 
 #include "00_Game/40_Collision/00_Core/CollisionInfo.h"
@@ -77,9 +78,16 @@ public: // Getter・Setter.
 	const DirectX::XMFLOAT3& GetPositionOffset() const noexcept { return m_PositionOffset; }
 	void SetPositionOffset(const DirectX::XMFLOAT3& PositionOffset) noexcept { m_PositionOffset = PositionOffset; }
 
-	// 有効か否かの取得・設定.
+	// 有効か否かの取得・設定(非アクティブ→アクティブへの切替時に有効化IDを振り直す).
 	bool GetActive() const noexcept { return m_IsActive; }
-	void SetActive(bool IsActive) noexcept { m_IsActive = IsActive; }
+	void SetActive(bool IsActive) noexcept
+	{
+		if (IsActive && !m_IsActive) { ++m_ActivationId; } // 同一スイング中の重複ヒット判定に使用.
+		m_IsActive = IsActive;
+	}
+
+	// 有効化IDの取得(false→trueで切替えるたびに増加する通し番号).
+	std::uint32_t GetActivationId() const noexcept { return m_ActivationId; }
 
 	// 攻撃力の取得・設定.
 	float GetAttackAmount() const noexcept { return m_AttackAmount; }
@@ -123,6 +131,8 @@ protected:
 	DirectX::XMFLOAT3 m_PositionOffset { 0.0f, 0.0f, 0.0f };
 	bool  m_IsActive     = true;
 	float m_AttackAmount = 0.0f;
+
+	std::uint32_t m_ActivationId = 0; // 有効化の通し番号(false→trueで切替るたびに増加).
 
 	eCollisionGroup m_MyMask     = eCollisionGroup::_Max; // 自身が所属するグループ.
 	eCollisionGroup m_TargetMask = eCollisionGroup::_Max; // 衝突対象とするグループ.

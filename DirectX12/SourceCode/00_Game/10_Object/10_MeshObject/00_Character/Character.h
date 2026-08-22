@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <DirectXMath.h>
+#include <map>
 #include <string>
 
 #include "00_Game/10_Object/10_MeshObject/MeshObject.h"
@@ -100,4 +101,8 @@ protected:
 
 	CapsuleCollider m_DamageCollider; // 被弾判定(常時CollisionDetectorに登録される).
 	CapsuleCollider m_AttackCollider; // 攻撃判定(既定で非アクティブ. 攻撃系Stateが有効/無効を切り替える).
+
+	// 相手コライダーごとに最後にダメージを適用した攻撃の有効化ID
+	// (同一スイング中は重なっても1回しかヒットさせないための記録).
+	std::map<const ColliderBase*, std::uint32_t> m_ProcessedAttackIds;
 };

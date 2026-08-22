@@ -110,6 +110,12 @@ void Character::ProcessHits()
 	{
 		if (!info.IsHit) { continue; }
 
+		// 同一スイング(相手攻撃コライダーの同一有効化)中の再ヒットは無視する
+		// (重なっているフレームの間ダメージが毎フレーム入ることを防ぐ).
+		const auto it = m_ProcessedAttackIds.find(info.OtherCollider);
+		if (it != m_ProcessedAttackIds.end() && it->second >= info.AttackActivationId) { continue; }
+		m_ProcessedAttackIds[info.OtherCollider] = info.AttackActivationId;
+
 		HitEvent hit_event{};
 		hit_event.AttackAmount = info.AttackAmount;
 		hit_event.ContactPoint = info.ContactPoint;

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <DirectXMath.h>
+#include <cstdint>
 
 class ColliderBase;
 
@@ -20,6 +21,8 @@ struct CollisionInfo
 	DirectX::XMFLOAT3 ContactPoint = {};	// 接触点(ワールド座標).
 
 	float AttackAmount = 0.0f; // 相手の攻撃力(CollisionDetectorが設定する).
+
+	std::uint32_t AttackActivationId = 0; // 攻撃側コライダーの有効化ID(同一スイング中の重複ヒット防止用. CollisionDetectorが設定する).
 
 	const ColliderBase* SelfCollider = nullptr; // 衝突に関わったコライダー.
 	const ColliderBase* OtherCollider = nullptr;
