@@ -7,6 +7,9 @@
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlMesh.h"
+#if _DEBUG
+#include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
+#endif
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/40_Third/ThirdPersonCamera.h"
@@ -215,14 +218,18 @@ void MainScene::Draw()
 	}
 
 #if _DEBUG
-	// コライダーのワイヤーフレーム描画はRoot Signature/PSOを切り替えるため、
-	// 全キャラのメッシュ描画が終わった後にまとめて行う(混ぜるとPSO競合でクラッシュする).
+	// コライダー描画は「各キャラが登録→DebugColliderRendererがまとめて描画」の分離方式.
+	// Root Signature/PSOの切替はDebugColliderRenderer::Draw()の1箇所に集約される.
 	if (m_upPlayer) {
 		m_upPlayer->DrawDebugColliders();
 	}
 
 	if (m_upBoss) {
 		m_upBoss->DrawDebugColliders();
+	}
+
+	if (DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>()) {
+		p_collider_renderer->Draw();
 	}
 #endif
 }

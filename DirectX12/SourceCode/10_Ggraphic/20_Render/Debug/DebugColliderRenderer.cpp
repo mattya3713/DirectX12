@@ -1,9 +1,11 @@
 ﻿#include "DebugColliderRenderer.h"
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstring>
 #include <d3dcompiler.h>
+#include <tchar.h>
 
 #include "d3dx12.h"
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
@@ -28,6 +30,13 @@ namespace
 		(RING_SEGMENT_COUNT * 2) * 2 +   // 上下2本のリング.
 		(SILHOUETTE_LINE_COUNT * 2) +    // 側面の縦線.
 		(ARC_SEGMENT_COUNT * 2) * 8;     // 上下2半球 x 0/90/180/270度4方向の円弧(2本だけだと半球が半分欠ける).
+
+	// 同時登録できるカプセル数の上限(頂点バッファを固定長で確保するため.
+	// フレーム途中の再確保はGPU実行中バッファの解放ハザードになるため行わない).
+	constexpr int MAX_CAPSULE_COUNT = 256;
+
+	// カプセル1本あたりの頂点数を超えた分は無視する旨のアサート用メッセージ.
+	constexpr TCHAR OVERFLOW_MESSAGE[] = _T("DebugColliderRenderer: 同時登録カプセル数が上限(MAX_CAPSULE_COUNT)を超えました。");
 
 	// 中心Center・半径Radiusの円周(XZ平面)上、角度Angle(rad)の点を求める.
 	DirectX::XMFLOAT3 RingPoint(const DirectX::XMFLOAT3& Center, float Radius, float Angle) noexcept
@@ -79,29 +88,29 @@ namespace
 		return Index;
 	}
 
-	// カプセル1本分のワイヤーフレーム頂点(線分リスト)を組み立てる.
-	void BuildCapsuleVertices(std::array<LineVertex, CAPSULE_VERTEX_COUNT>& OutVertices,
+	// カプセル1本分のワイヤーフレーム頂点(線分リスト)をpOutに組み立てる(184頂点書き込む).
+	void BuildCapsuleVertices(LineVertex* pOut,
 		const DirectX::XMFLOAT3& SegStart, const DirectX::XMFLOAT3& SegEnd, float Radius, const DirectX::XMFLOAT3& Color) noexcept
 	{
 		int index = 0;
-		index = AppendRing(OutVertices.data(), index, SegStart, Radius, Color);
-		index = AppendRing(OutVertices.data(), index, SegEnd, Radius, Color);
+		index = AppendRing(pOut, index, SegStart, Radius, Color);
+		index = AppendRing(pOut, index, SegEnd, Radius, Color);
 
 		for (int i = 0; i < SILHOUETTE_LINE_COUNT; ++i)
 		{
 			const float angle = DirectX::XM_2PI * static_cast<float>(i) / static_cast<float>(SILHOUETTE_LINE_COUNT);
-			OutVertices[index++] = { RingPoint(SegStart, Radius, angle), Color };
-			OutVertices[index++] = { RingPoint(SegEnd, Radius, angle), Color };
+			pOut[index++] = { RingPoint(SegStart, Radius, angle), Color };
+			pOut[index++] = { RingPoint(SegEnd, Radius, angle), Color };
 		}
 
-		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, 0.0f, false, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, DirectX::XM_PIDIV2, false, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, DirectX::XM_PI, false, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, DirectX::XM_PI * 1.5f, false, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, 0.0f, true, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, DirectX::XM_PIDIV2, true, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, DirectX::XM_PI, true, Color);
-		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, DirectX::XM_PI * 1.5f, true, Color);
+		index = AppendCapArc(pOut, index, SegStart, Radius, 0.0f, false, Color);
+		index = AppendCapArc(pOut, index, SegStart, Radius, DirectX::XM_PIDIV2, false, Color);
+		index = AppendCapArc(pOut, index, SegStart, Radius, DirectX::XM_PI, false, Color);
+		index = AppendCapArc(pOut, index, SegStart, Radius, DirectX::XM_PI * 1.5f, false, Color);
+		index = AppendCapArc(pOut, index, SegEnd, Radius, 0.0f, true, Color);
+		index = AppendCapArc(pOut, index, SegEnd, Radius, DirectX::XM_PIDIV2, true, Color);
+		index = AppendCapArc(pOut, index, SegEnd, Radius, DirectX::XM_PI, true, Color);
+		index = AppendCapArc(pOut, index, SegEnd, Radius, DirectX::XM_PI * 1.5f, true, Color);
 	}
 }
 
@@ -112,7 +121,8 @@ DebugColliderRenderer::DebugColliderRenderer(DirectX12& Dx12)
 
 	const D3D12_HEAP_PROPERTIES upload_heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
-	const UINT vertex_buffer_size = static_cast<UINT>(CAPSULE_VERTEX_COUNT * sizeof(LineVertex));
+	// 全カプセル分を1枚にまとめて積めるよう固定長で確保する(実行中の再確保・解放を避ける).
+	const UINT vertex_buffer_size = static_cast<UINT>(MAX_CAPSULE_COUNT * CAPSULE_VERTEX_COUNT * sizeof(LineVertex));
 	const D3D12_RESOURCE_DESC vertex_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(vertex_buffer_size);
 	MyAssert::IsFailed(_T("DebugColliderRendererの頂点バッファ作成"), &ID3D12Device::CreateCommittedResource,
 		m_Dx12.GetDevice(), &upload_heap_properties, D3D12_HEAP_FLAG_NONE, &vertex_buffer_desc,
@@ -208,16 +218,37 @@ void DebugColliderRenderer::CreatePipeline()
 		m_Dx12.GetDevice(), &pipeline_desc, IID_PPV_ARGS(m_pPipelineState.ReleaseAndGetAddressOf()));
 }
 
-void DebugColliderRenderer::DrawCapsule(const DirectX::XMFLOAT3& SegStart, const DirectX::XMFLOAT3& SegEnd, float Radius, const DirectX::XMFLOAT3& Color)
+void DebugColliderRenderer::RegisterCapsule(const DirectX::XMFLOAT3& SegStart, const DirectX::XMFLOAT3& SegEnd, float Radius, const DirectX::XMFLOAT3& Color)
 {
-	CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>();
-	CameraBase* p_active_camera = p_camera_manager != nullptr ? p_camera_manager->GetActive() : nullptr;
-	if (p_active_camera == nullptr || m_pMappedConstantBuffer == nullptr || m_pMappedVertexBuffer == nullptr) {
+	if (static_cast<int>(m_PendingCapsules.size()) >= MAX_CAPSULE_COUNT) {
+		_ASSERT_EXPR(false, OVERFLOW_MESSAGE); // 登録し忘れや毎フレーム登録漏れクリア等の不具合検知用.
 		return;
 	}
 
-	std::array<LineVertex, CAPSULE_VERTEX_COUNT> vertices{};
-	BuildCapsuleVertices(vertices, SegStart, SegEnd, Radius, Color);
+	m_PendingCapsules.push_back({ SegStart, SegEnd, Radius, Color });
+}
+
+void DebugColliderRenderer::Draw()
+{
+	if (m_PendingCapsules.empty()) { return; }
+
+	CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>();
+	CameraBase* p_active_camera = p_camera_manager != nullptr ? p_camera_manager->GetActive() : nullptr;
+	if (p_active_camera == nullptr || m_pMappedConstantBuffer == nullptr || m_pMappedVertexBuffer == nullptr) {
+		m_PendingCapsules.clear();
+		return;
+	}
+
+	// 全カプセル分の頂点を1枚の頂点バッファへまとめて書き込み、DrawInstancedは1回だけ発行する
+	// (呼び出しごとに同じバッファへ上書きすると、GPU実行時には最後の内容しか残らず描画が消える).
+	std::vector<LineVertex> vertices;
+	vertices.reserve(static_cast<size_t>(m_PendingCapsules.size()) * CAPSULE_VERTEX_COUNT);
+	for (const CapsuleRequest& request : m_PendingCapsules)
+	{
+		vertices.resize(vertices.size() + CAPSULE_VERTEX_COUNT);
+		LineVertex* p_out = vertices.data() + (vertices.size() - CAPSULE_VERTEX_COUNT);
+		BuildCapsuleVertices(p_out, request.SegStart, request.SegEnd, request.Radius, request.Color);
+	}
 	std::memcpy(m_pMappedVertexBuffer, vertices.data(), vertices.size() * sizeof(LineVertex));
 
 	*m_pMappedConstantBuffer = p_active_camera->GetViewProjMatrix();
@@ -228,5 +259,7 @@ void DebugColliderRenderer::DrawCapsule(const DirectX::XMFLOAT3& SegStart, const
 	p_command_list->IASetVertexBuffers(0, 1, &m_VertexBufferView);
 	p_command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 	p_command_list->SetGraphicsRootConstantBufferView(0, m_pConstantBuffer->GetGPUVirtualAddress());
-	p_command_list->DrawInstanced(CAPSULE_VERTEX_COUNT, 1, 0, 0);
+	p_command_list->DrawInstanced(static_cast<UINT>(vertices.size()), 1, 0, 0);
+
+	m_PendingCapsules.clear();
 }

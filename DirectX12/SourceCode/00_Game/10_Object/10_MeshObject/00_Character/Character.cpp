@@ -94,11 +94,13 @@ void Character::DrawColliderDebug(const CapsuleCollider& Collider, const DirectX
 	DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>();
 	if (p_collider_renderer == nullptr) { return; }
 
+	// 実際の描画は行わず、DebugColliderRendererへ情報を登録するだけ
+	// (描画はMainSceneのDraw末尾でDebugColliderRenderer::Draw()がまとめて行う).
 	DirectX::XMFLOAT3 start{};
 	DirectX::XMFLOAT3 end{};
 	DirectX::XMStoreFloat3(&start, Collider.GetSegmentStart());
 	DirectX::XMStoreFloat3(&end, Collider.GetSegmentEnd());
-	p_collider_renderer->DrawCapsule(start, end, Collider.GetRadius(), Color);
+	p_collider_renderer->RegisterCapsule(start, end, Collider.GetRadius(), Color);
 }
 #endif
 
