@@ -56,6 +56,18 @@ Player::~Player()
 
 void Player::Update()
 {
+#if _DEBUG
+	// TODO(一時デバッグ): ノックバック実機確認用の人工被弾トリガー(F3). 確認後に削除する.
+	if (GetAsyncKeyState(VK_F3) & 0x8000) {
+		HitEvent fake{};
+		fake.AttackAmount = 0.0f; // HPを減らさず挙動だけ確認する.
+		const DirectX::XMFLOAT3& pos = GetPosition();
+		fake.ContactPoint = { pos.x + 1.0f, pos.y + 1.0f, pos.z };
+		fake.Normal       = { -1.0f, 0.0f, 0.0f };
+		OnDamaged(fake);
+	}
+#endif
+
 	m_StateMachine.Update();
 	m_StateMachine.LateUpdate();
 
