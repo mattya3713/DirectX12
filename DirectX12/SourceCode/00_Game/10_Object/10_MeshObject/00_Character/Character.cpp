@@ -5,6 +5,7 @@
 
 #if _DEBUG
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
 
 #include <typeinfo>
 
@@ -12,6 +13,9 @@ namespace
 {
 	constexpr float SIZE_WARNING_RATIO_MIN = 0.5f;
 	constexpr float SIZE_WARNING_RATIO_MAX = 2.0f;
+
+	constexpr DirectX::XMFLOAT3 DAMAGE_COLLIDER_COLOR{ 0.0f, 0.4f, 1.0f }; // 被弾判定=青.
+	constexpr DirectX::XMFLOAT3 ATTACK_COLLIDER_COLOR{ 1.0f, 0.15f, 0.15f }; // 攻撃判定=赤.
 }
 #endif
 
@@ -75,6 +79,26 @@ void Character::Draw()
 		ImGui::Text("Height: %.2f / Expected: %.2f (x%.2f)", world_height, expected_height, ratio);
 		ImGui::End();
 	}
+}
+
+void Character::DrawDebugColliders() const
+{
+	DrawColliderDebug(m_DamageCollider, DAMAGE_COLLIDER_COLOR);
+	DrawColliderDebug(m_AttackCollider, ATTACK_COLLIDER_COLOR);
+}
+
+void Character::DrawColliderDebug(const CapsuleCollider& Collider, const DirectX::XMFLOAT3& Color) const
+{
+	if (!Collider.GetActive()) { return; }
+
+	DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>();
+	if (p_collider_renderer == nullptr) { return; }
+
+	DirectX::XMFLOAT3 start{};
+	DirectX::XMFLOAT3 end{};
+	DirectX::XMStoreFloat3(&start, Collider.GetSegmentStart());
+	DirectX::XMStoreFloat3(&end, Collider.GetSegmentEnd());
+	p_collider_renderer->DrawCapsule(start, end, Collider.GetRadius(), Color);
 }
 #endif
 

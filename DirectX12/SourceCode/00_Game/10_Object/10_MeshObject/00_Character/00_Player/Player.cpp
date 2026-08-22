@@ -53,6 +53,31 @@ void Player::Update()
 	Character::Update(); // Transform確定後にメッシュへ反映しつつ、被弾判定も処理する.
 }
 
+void Player::Draw()
+{
+	if (m_pMesh)
+	{
+		Transform rotated_transform = GetTransform();
+		rotated_transform.Rotation.y += DirectX::XM_PI; // モデルが180度反転した状態で作られているため、描画時だけ正面を合わせる.
+		m_pMesh->SetWorldTransform(rotated_transform);
+	}
+
+	Character::Draw();
+
+	if (m_pMesh)
+	{
+		m_pMesh->SetWorldTransform(GetTransform()); // 当たり判定計算等に影響しないよう、次フレームのUpdateまでに実際のTransformへ戻す.
+	}
+}
+
+#if _DEBUG
+void Player::DrawDebugColliders() const
+{
+	Character::DrawDebugColliders();
+	DrawColliderDebug(m_ParryCollider, { 0.1f, 1.0f, 0.2f }); // パリィ判定=緑.
+}
+#endif
+
 void Player::ChangeState(PlayerState::eID Id)
 {
 	switch (Id)

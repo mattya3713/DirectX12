@@ -178,4 +178,16 @@ void MainScene::Draw()
 	if (m_upBoss) {
 		m_upBoss->Draw();
 	}
+
+#if _DEBUG
+	// コライダーのワイヤーフレーム描画はRoot Signature/PSOを切り替えるため、
+	// 全キャラのメッシュ描画が終わった後にまとめて行う(混ぜるとPSO競合でクラッシュする).
+	if (m_upPlayer) {
+		m_upPlayer->DrawDebugColliders();
+	}
+
+	if (m_upBoss) {
+		m_upBoss->DrawDebugColliders();
+	}
+#endif
 }

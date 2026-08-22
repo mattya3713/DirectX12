@@ -19,6 +19,9 @@
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/00_Scene/SceneManager.h"
+#if _DEBUG
+#include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
+#endif
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -52,6 +55,9 @@ Main::Main()
     , m_upSoundManager  { nullptr }
     , m_upCollisionDetector { nullptr }
     , m_upCombatCoordinator { nullptr }
+#if _DEBUG
+    , m_upDebugColliderRenderer { nullptr }
+#endif
 {
 }
 
@@ -98,6 +104,12 @@ HRESULT Main::Create()
     m_pDx12 = std::make_shared<DirectX12>();
     m_pDx12->Create(m_hWnd);
     ServiceLocator::Provide<DirectX12>(m_pDx12.get());
+
+#if _DEBUG
+    // 当たり判定コライダーのワイヤーフレーム描画(Debugビルドのみ. Character/Playerが毎フレーム利用する).
+    m_upDebugColliderRenderer = std::make_unique<DebugColliderRenderer>(*m_pDx12);
+    ServiceLocator::Provide<DebugColliderRenderer>(m_upDebugColliderRenderer.get());
+#endif
 
     // ImGuiの構築・登録(DirectX12構築後でないとデバイスが取得できない).
     m_upImGuiManager = std::make_unique<ImGuiManager>();
@@ -220,6 +232,13 @@ void Main::Release()
         ServiceLocator::Provide<CollisionDetector>(nullptr);
         m_upCollisionDetector.reset();
     }
+
+#if _DEBUG
+    if (m_upDebugColliderRenderer) {
+        ServiceLocator::Provide<DebugColliderRenderer>(nullptr);
+        m_upDebugColliderRenderer.reset();
+    }
+#endif
 
     if (m_upCombatCoordinator) {
         m_upCombatCoordinator->Clear();

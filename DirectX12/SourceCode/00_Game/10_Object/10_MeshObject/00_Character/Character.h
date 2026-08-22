@@ -33,8 +33,13 @@ public:
 	void Update() override;
 
 #if _DEBUG
-	// MeshObject::Draw()の後にモデルサイズとコライダーサイズを検査する(Debugビルドのみ).
+	// MeshObject::Draw()の後にモデルサイズを検査する(Debugビルドのみ).
 	void Draw() override;
+
+	// 被弾/攻撃判定コライダーをワイヤーフレームで描画する(Debugビルドのみ).
+	// 描画中にRoot Signature/PSOを切り替えるため、全キャラのDraw()が終わった後に
+	// MainScene側でまとめて呼ぶこと(メッシュ描画と混ぜるとPSO競合でクラッシュする).
+	void DrawDebugColliders() const;
 #endif
 
 public:
@@ -72,6 +77,11 @@ protected:
 	// HitEventを受けてダメージを適用する(publicにはしない. ApplyDamageは必ず
 	// 自分の被弾コライダーが検出したHitEvent経由でのみ呼ばれる想定).
 	void ApplyDamage(const HitEvent& Event) noexcept { m_Health.ApplyDamage(Event.AttackAmount); }
+
+#if _DEBUG
+	// コライダーをワイヤーフレームで描画する(Debugビルドのみ. 派生クラスのDrawDebugColliders()からも呼べる).
+	void DrawColliderDebug(const CapsuleCollider& Collider, const DirectX::XMFLOAT3& Color) const;
+#endif
 
 private:
 	// 自分の被弾コライダーが検出した衝突を1件ずつHitEventへ変換し、ApplyDamageへ渡す.

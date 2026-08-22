@@ -212,6 +212,7 @@ exit /b 0</Command>
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Debug\DebugGrid.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Debug\DebugColliderRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlResource.h" />
@@ -351,6 +352,7 @@ exit /b 0</Command>
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Debug\DebugGrid.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Debug\DebugColliderRenderer.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlResource.cpp" />

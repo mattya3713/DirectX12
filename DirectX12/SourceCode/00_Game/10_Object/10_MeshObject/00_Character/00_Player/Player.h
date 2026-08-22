@@ -31,6 +31,15 @@ public:
 	// 毎フレーム更新(現在ステートのUpdate/LateUpdateを順に呼ぶ).
 	void Update() override;
 
+	// 描画(モデルが180度反転した状態で作られているため、描画時だけ正面を合わせてから戻す).
+	void Draw() override;
+
+#if _DEBUG
+	// 被弾/攻撃判定に加えパリィ判定コライダーもワイヤーフレームで描画する(Debugビルドのみ.
+	// MainScene側で全キャラのDraw()が終わった後にまとめて呼ぶこと).
+	void DrawDebugColliders() const;
+#endif
+
 public: // Getter・Setter.
 
 	// 現フレームの移動ベクトル(ワールド空間、Y成分は常に0).
