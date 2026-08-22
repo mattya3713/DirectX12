@@ -226,21 +226,40 @@ void MainScene::Update()
 	}
 #endif
 
+	// 勝敗判定: Player/Bossのどちらかが死亡した時点で確定させる(Character.h等は変更せずMainScene側でポーリング).
+	if (!m_IsGameOver && m_upPlayer && m_upBoss) {
+		const bool is_player_alive = m_upPlayer->GetHealth().IsAlive();
+		const bool is_boss_alive = m_upBoss->GetHealth().IsAlive();
+		if (!is_player_alive || !is_boss_alive) {
+			m_IsGameOver = true;
+			m_WinnerIsPlayer = is_boss_alive; // Bossが生存していればPlayerの勝ち.
+		}
+	}
+
 	if (m_upBoss && m_upPlayer) {
 		// ロックオン等は無く、Playerの位置をそのままEnemyのターゲットとして毎フレーム渡す.
 		m_upBoss->SetTargetPos(m_upPlayer->GetPosition());
 	}
 
-	// 一時停止中はPlayer/Bossの更新をスキップする(カメラ・ImGui・描画は止めない).
+	// 一時停止中・勝敗確定後はPlayer/Bossの更新をスキップする(カメラ・ImGui・描画は止めない).
 	const bool is_paused = GameTime::IsPaused();
 
-	if (m_upPlayer && !is_paused) {
+	if (m_upPlayer && !is_paused && !m_IsGameOver) {
 		m_upPlayer->Update();
 	}
 
-	if (m_upBoss && !is_paused) {
+	if (m_upBoss && !is_paused && !m_IsGameOver) {
 		m_upBoss->Update();
 	}
+
+#if _DEBUG
+	// 勝敗確定後だと分かる表示(デバッグ用ImGui).
+	if (m_IsGameOver) {
+		ImGui::Begin("Game Result", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::TextUnformatted(m_WinnerIsPlayer ? "WIN" : "LOSE");
+		ImGui::End();
+	}
+#endif
 }
 
 void MainScene::LateUpdate()
