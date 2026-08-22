@@ -31,10 +31,11 @@ public:
 	// 毎フレーム更新(現在ステートのUpdate/LateUpdateを順に呼ぶ).
 	void Update() override;
 
-	// 描画(モデルが180度反転した状態で作られているため、描画時だけ正面を合わせてから戻す).
-	void Draw() override;
-
 #if _DEBUG
+	// モデル正面のYawオフセット(度)を取得・設定する(デバッグパネルからの調整用).
+	float GetModelFrontOffsetDeg() const noexcept { return m_ModelFrontOffsetDeg; }
+	void  SetModelFrontOffsetDeg(float OffsetDeg) noexcept { m_ModelFrontOffsetDeg = OffsetDeg; }
+
 	// 被弾/攻撃判定に加えパリィ判定コライダーもワイヤーフレームで描画する(Debugビルドのみ.
 	// MainScene側で全キャラのDraw()が終わった後にまとめて呼ぶこと).
 	void DrawDebugColliders() const;
@@ -100,6 +101,9 @@ private:
 	DirectX::XMFLOAT3    m_MoveVec        { 0.0f, 0.0f, 0.0f };	// 現フレームの移動ベクトル.
 	float                m_RunMoveSpeed   = 8.0f;				// 走り移動速度(単位/秒).
 	PlayerState::eID     m_CurrentStateID = PlayerState::eID::None;	// 現在ステートID(デバッグ表示用).
+#if _DEBUG
+	float m_ModelFrontOffsetDeg = 180.0f;	// モデル正面軸のズレ補正角(度). player.msknは-Z正面のため既定で180.
+#endif
 
 	int   m_Combo           = 0;		// 現在のコンボ数.
 	float m_CurrentUltValue = 0.0f;	// 必殺ゲージ(現在値).

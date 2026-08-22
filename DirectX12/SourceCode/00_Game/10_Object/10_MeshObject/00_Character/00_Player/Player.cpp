@@ -50,23 +50,15 @@ void Player::Update()
 	m_StateMachine.Update();
 	m_StateMachine.LateUpdate();
 
-	Character::Update(); // Transform確定後にメッシュへ反映しつつ、被弾判定も処理する.
-}
+	Character::Update();
 
-void Player::Draw()
-{
 	if (m_pMesh)
 	{
-		Transform rotated_transform = GetTransform();
-		rotated_transform.Rotation.y += DirectX::XM_PI; // モデルが180度反転した状態で作られているため、描画時だけ正面を合わせる.
-		m_pMesh->SetWorldTransform(rotated_transform);
+		// モデル正面軸のズレをメッシュへの反映時だけ補正する(オーナーのTransform自体は変えないため当たり判定に影響しない).
+		Transform drawn_transform = GetTransform();
+		drawn_transform.Rotation.y += DirectX::XMConvertToRadians(m_ModelFrontOffsetDeg);
+		m_pMesh->SetWorldTransform(drawn_transform);
 	}
-
-	Character::Draw();
-
-	// NOTE: 描画後にTransformを戻してはいけない. MMdlActorのTransformCBは永続マップされており、
-	// GPUはコマンド実行時(フレーム後半)に読むため、ここで戻すと回転が反映される前に上書きされてしまう.
-	// 実Transformへの復帰は、次フレーム冒頭のMeshObject::Update()が行う.
 }
 
 #if _DEBUG

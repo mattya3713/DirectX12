@@ -1,6 +1,7 @@
 ﻿#include "MainScene.h"
 
 #include <cassert>
+#include <cmath>
 #include <filesystem>
 
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
@@ -113,6 +114,21 @@ void MainScene::Update()
 			transform.Scale = { scale, scale, scale };
 			m_upPlayer->SetTransform(transform);
 		}
+
+		// 向きデバッグ: 実際のYawと移動方向の角度を表示する(一致していれば正面を向いている).
+		const DirectX::XMFLOAT3& move_vec = m_upPlayer->GetMoveVec();
+		ImGui::Text("Player Yaw   : %.1f deg", transform.Rotation.y * (180.0f / DirectX::XM_PI));
+		if (std::fabs(move_vec.x) > 1e-4f || std::fabs(move_vec.z) > 1e-4f) {
+			ImGui::Text("Move Dir     : %.1f deg", std::atan2f(move_vec.x, move_vec.z) * (180.0f / DirectX::XM_PI));
+		}
+		else {
+			ImGui::Text("Move Dir     : --");
+		}
+
+		// モデル正面軸のズレ補正角を実行中に調整できるスライダー(確定後、既定値へ焼き込む).
+		float front_offset = m_upPlayer->GetModelFrontOffsetDeg();
+		ImGui::SliderFloat("Model Front Offset", &front_offset, -180.0f, 180.0f, "%.0f deg");
+		m_upPlayer->SetModelFrontOffsetDeg(front_offset);
 	}
 
 	if (m_upBoss) {
