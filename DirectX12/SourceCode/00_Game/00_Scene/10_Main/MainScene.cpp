@@ -15,6 +15,8 @@
 #include "00_Game/30_Camera/40_Third/ThirdPersonCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/50_Input/Input.h"
+#include "00_Game/50_Input/VirtualPad.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
@@ -183,16 +185,35 @@ void MainScene::Update()
 		p_dx12->Update();
 	}
 
+	// Pauseアクション(ESC/コントローラーStart)でGameTimeの一時停止をトグルする.
+	if (VirtualPad* p_pad = ServiceLocator::Get<VirtualPad>()) {
+		if (p_pad->IsActionDown(VirtualPad::eGameAction::Pause)) {
+			GameTime::SetPaused(!GameTime::IsPaused());
+		}
+	}
+
+#if _DEBUG
+	// 一時停止中だと分かる表示(デバッグ用ImGui).
+	if (GameTime::IsPaused()) {
+		ImGui::Begin("Pause", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("PAUSED (Press ESC/Start to resume)");
+		ImGui::End();
+	}
+#endif
+
 	if (m_upBoss && m_upPlayer) {
 		// ロックオン等は無く、Playerの位置をそのままEnemyのターゲットとして毎フレーム渡す.
 		m_upBoss->SetTargetPos(m_upPlayer->GetPosition());
 	}
 
-	if (m_upPlayer) {
+	// 一時停止中はPlayer/Bossの更新をスキップする(カメラ・ImGui・描画は止めない).
+	const bool is_paused = GameTime::IsPaused();
+
+	if (m_upPlayer && !is_paused) {
 		m_upPlayer->Update();
 	}
 
-	if (m_upBoss) {
+	if (m_upBoss && !is_paused) {
 		m_upBoss->Update();
 	}
 }

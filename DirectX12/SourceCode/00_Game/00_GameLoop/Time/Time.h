@@ -22,10 +22,17 @@ public:
 
 	// デルタタイムを取得.
 	static const float GetDeltaTime();
+
+	// 一時停止状態を設定する.
+	static void SetPaused(const bool IsPaused);
+
+	// 一時停止中かを取得する.
+	static const bool IsPaused();
 private:
 	// 前フレームの時間.
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_PreviousTime;
 
 	float m_TargetFrameTime;// 目標フレーム時間(秒).
 	float m_DeltaTime;		// フレーム間の時間差.
+	bool m_IsPaused;		// 一時停止中か.
 };

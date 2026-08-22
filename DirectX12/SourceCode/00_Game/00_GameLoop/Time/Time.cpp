@@ -8,6 +8,7 @@ GameTime::GameTime()
     : m_PreviousTime    {}
     , m_TargetFrameTime {}
     , m_DeltaTime       {}
+    , m_IsPaused        {}
 {
     m_TargetFrameTime   = 1.0f / TAEGET_FPS; // 目標フレームを計算.
     m_PreviousTime      = std::chrono::high_resolution_clock::now();//初期を取得.
@@ -53,4 +54,16 @@ void GameTime::MaintainFPS()
 const float GameTime::GetDeltaTime()
 {
     return ServiceLocator::Get<GameTime>()->m_DeltaTime;
+}
+
+// 一時停止状態を設定する.
+void GameTime::SetPaused(const bool IsPaused)
+{
+    ServiceLocator::Get<GameTime>()->m_IsPaused = IsPaused;
+}
+
+// 一時停止中かを取得する.
+const bool GameTime::IsPaused()
+{
+    return ServiceLocator::Get<GameTime>()->m_IsPaused;
 }
