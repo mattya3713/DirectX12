@@ -157,6 +157,9 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h">
       <Filter>SourceCode\99_Utility\Debug\Log</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.h">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.h" />
@@ -282,6 +285,9 @@
     </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp">
       <Filter>SourceCode\99_Utility\Debug\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.cpp">
+      <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\AnimationEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.cpp" />

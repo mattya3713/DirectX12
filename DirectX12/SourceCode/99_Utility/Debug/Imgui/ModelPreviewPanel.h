@@ -7,6 +7,7 @@
 class MmdlRenderer;
 class MmdlActor;
 class AnimationEditor;
+class ActionTimelineEditor;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -49,6 +50,7 @@ private:
 
 	std::unique_ptr<MmdlActor>          m_upActor; // ランタイムモデル選択中のみ有効.
 	std::unique_ptr<AnimationEditor> m_upAnimationEditor;
+	std::unique_ptr<ActionTimelineEditor> m_upActionTimelineEditor; // 攻撃アクションJSONのタイムライン編集.
 
 	std::vector<ModelEntry>  m_ModelList;
 	std::vector<std::string> m_ModelDisplayNames; // m_ModelListと対応するDisplayNameの一覧(Combo用).

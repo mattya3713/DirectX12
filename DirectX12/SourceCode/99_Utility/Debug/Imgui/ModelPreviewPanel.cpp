@@ -8,6 +8,7 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlActor.h"
 #include "99_Utility/Debug/Imgui/AnimationEditor.h"
+#include "99_Utility/Debug/Imgui/ActionTimelineEditor.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
@@ -32,6 +33,8 @@ ModelPreviewPanel::ModelPreviewPanel(MmdlRenderer& Renderer)
 
 	m_upAnimationEditor = std::make_unique<AnimationEditor>();
 	m_upAnimationEditor->Toggle(); // 常時表示する(トグルではなくデフォルトON扱い).
+
+	m_upActionTimelineEditor = std::make_unique<ActionTimelineEditor>();
 }
 
 ModelPreviewPanel::~ModelPreviewPanel() = default;
@@ -126,6 +129,7 @@ void ModelPreviewPanel::Update()
 	if (m_upActor) {
 		m_upActor->Update();
 		m_upAnimationEditor->Draw(*m_upActor);
+		m_upActionTimelineEditor->Draw(*m_upActor);
 	}
 }
 
