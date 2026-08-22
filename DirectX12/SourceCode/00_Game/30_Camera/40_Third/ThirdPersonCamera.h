@@ -17,6 +17,11 @@ public:
 
 	virtual void Update() override;
 
+	// アクティブ化: カーソルを中央固定・非表示にする.
+	virtual void OnActivated() override;
+	// 非アクティブ化: カーソルの中央固定・非表示を解除する.
+	virtual void OnDeactivated() override;
+
 	// 追従対象の座標を設定(毎フレーム呼び出す想定).
 	void SetTargetPosition(const DirectX::XMFLOAT3& Position) noexcept;
 	// 注視点オフセットの設定.

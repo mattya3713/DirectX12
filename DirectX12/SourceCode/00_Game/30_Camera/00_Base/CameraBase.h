@@ -25,6 +25,11 @@ public:
 	// 毎フレーム更新(派生クラスで実装).
 	virtual void Update() = 0;
 
+	// アクティブカメラに選ばれた際の処理(派生クラスで必要なら実装).
+	virtual void OnActivated() {}
+	// アクティブカメラから外された際の処理(派生クラスで必要なら実装).
+	virtual void OnDeactivated() {}
+
 	// ビュー・プロジェクション行列の更新.
 	void UpdateViewProjection();
 

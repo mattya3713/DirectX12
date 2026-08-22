@@ -23,8 +23,12 @@ void CameraManager::SetActive(std::string_view Name)
 	if (it == m_Cameras.end()) {
 		throw std::runtime_error(std::string(Name) + "という名前のカメラは登録されていません。");
 	}
+	if (m_pActiveCamera && m_pActiveCamera != it->second.get()) {
+		m_pActiveCamera->OnDeactivated();
+	}
 	m_pActiveCamera = it->second.get();
 	m_ActiveName = Name;
+	m_pActiveCamera->OnActivated();
 }
 
 CameraBase* CameraManager::GetActive() const noexcept
