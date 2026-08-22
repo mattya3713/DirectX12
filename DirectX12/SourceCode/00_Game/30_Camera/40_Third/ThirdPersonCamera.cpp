@@ -71,10 +71,26 @@ void ThirdPersonCamera::Update()
 	float pitch = GetPitch();
 
 	// マウス移動量でターゲットを軸に周回する.
-	const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
-	yaw   += cursor_delta.x * MOUSE_ROTATION_SPEED;
-	pitch += cursor_delta.y * MOUSE_ROTATION_SPEED;
-	Input::CenterMouseCursor();
+	// 左Alt押下中はカーソル固定を解除してUI操作できるようにする(回転も停止).
+	const bool is_alt_held = (GetAsyncKeyState(VK_LMENU) & 0x8000) != 0;
+	if (is_alt_held) {
+		if (Input::IsCenterMouseCursor()) {
+			Input::SetCenterMouseCursor(false);
+			Input::SetShowCursor(true);
+		}
+	}
+	else if (Input::IsCenterMouseCursor() == false) {
+		Input::SetShowCursor(false);
+		Input::SetCenterMouseCursor(true);
+		Input::CenterMouseCursor();
+	}
+
+	if (is_alt_held == false) {
+		const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
+		yaw   += cursor_delta.x * MOUSE_ROTATION_SPEED;
+		pitch += cursor_delta.y * MOUSE_ROTATION_SPEED;
+		Input::CenterMouseCursor();
+	}
 
 	// 矢印キーでも周回できる(デバッグ用の予備操作として共存).
 	if (GetAsyncKeyState(VK_LEFT)  & 0x8000) { yaw   -= m_OrbitSpeed * delta_time; }
