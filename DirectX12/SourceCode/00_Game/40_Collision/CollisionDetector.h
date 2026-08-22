@@ -30,6 +30,9 @@ public:
 	void RegisterCollider(ColliderBase& Collider);
 	void UnregisterCollider(ColliderBase* pCollider);
 
+	// 登録済みコライダー一覧の取得(非所有・読み取り専用. 無敵中の至近距離判定など特殊判定用).
+	const std::vector<ColliderBase*>& GetColliders() const noexcept { return m_Colliders; }
+
 private:
 	std::vector<ColliderBase*> m_Colliders; // 登録されたコライダー(非所有).
 };

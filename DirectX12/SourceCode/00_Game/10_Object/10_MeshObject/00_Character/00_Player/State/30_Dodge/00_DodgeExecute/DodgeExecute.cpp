@@ -1,15 +1,24 @@
 ﻿#include "DodgeExecute.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "00_Game/40_Collision/CollisionDetector.h"
+#include "00_Game/40_Collision/00_Core/ColliderBase.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/Math/Easing/Easing.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
 	constexpr float DODGE_DISTANCE   = 25.0f;
 	constexpr float DODGE_DURATION   = 1.7f;
 	constexpr float EASE_BLEND_RATIO = 0.5f; // InOutCubicとLinerを半々でブレンドする.
+
+	// JustDodge成立とみなす敵攻撃判定との最大距離(接触半径1.5+すれ違いの猶予分).
+	// 演出バランスは後で調整する.
+	constexpr float JUST_DODGE_RADIUS = 2.2f;
 
 	// InOutCubicとLinerを半々でブレンドした移動距離(0〜Distance)を求める.
 	float BlendedEasedDistance(float Time, float MaxTime, float Distance)
@@ -36,6 +45,7 @@ void DodgeExecute::Enter()
 	m_Distance         = DODGE_DISTANCE;
 	m_MaxTime          = DODGE_DURATION;
 	m_TraveledDistance = 0.0f;
+	m_IsJustDodgeJudged = false;
 
 	ApplyNamedClip("player_perfect_dodge");
 }
@@ -55,9 +65,43 @@ void DodgeExecute::LateUpdate()
 
 	m_TraveledDistance = current_dist;
 
+	CheckJustDodge();
+
 	if (m_TraveledDistance >= m_Distance)
 	{
 		GetPlayer()->ChangeState(PlayerState::eID::Idle);
+	}
+}
+
+void DodgeExecute::CheckJustDodge()
+{
+	if (m_IsJustDodgeJudged) { return; }
+
+	CollisionDetector* p_detector = ServiceLocator::Get<CollisionDetector>();
+	if (!p_detector) { return; }
+
+	// 被弾カプセルの中心(足元+1.0m)と敵攻撃判定との水平距離で「すれ違い」を判定する
+	// (無敵中は本来の衝突イベントが飛んでこないため、別途の軽量な半径チェックで代用する).
+	const DirectX::XMFLOAT3& player_pos = GetPlayer()->GetPosition();
+
+	for (ColliderBase* p_collider : p_detector->GetColliders())
+	{
+		if (!p_collider || !p_collider->GetActive()) { continue; }
+		if (p_collider->GetMyMask() != eCollisionGroup::EnemyAttack) { continue; }
+
+		const DirectX::XMFLOAT3 attack_pos = p_collider->GetPosition();
+		const float dx = attack_pos.x - player_pos.x;
+		const float dz = attack_pos.z - player_pos.z;
+
+		if (dx * dx + dz * dz <= JUST_DODGE_RADIUS * JUST_DODGE_RADIUS)
+		{
+			m_IsJustDodgeJudged = true;
+
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogInfo("Just Dodge!");
+			}
+			return;
+		}
 	}
 }
 
