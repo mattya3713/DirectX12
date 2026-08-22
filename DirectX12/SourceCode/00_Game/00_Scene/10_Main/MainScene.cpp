@@ -13,6 +13,7 @@
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
 #include "00_Game/30_Camera/40_Third/ThirdPersonCamera.h"
+#include "00_Game/30_Camera/60_LockOn/LockOnCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/50_Input/Input.h"
 #include "00_Game/50_Input/VirtualPad.h"
@@ -52,6 +53,10 @@ void MainScene::Create()
 		auto up_third_person = std::make_unique<ThirdPersonCamera>();
 		m_pThirdPersonCamera = up_third_person.get();
 		p_camera_manager->Register("Third", std::move(up_third_person));
+
+		auto up_lock_on = std::make_unique<LockOnCamera>();
+		m_pLockOnCamera = up_lock_on.get();
+		p_camera_manager->Register("LockOn", std::move(up_lock_on));
 
 		p_camera_manager->SetActive("Third");
 	}
@@ -183,11 +188,23 @@ void MainScene::Update()
 			const bool is_third_active = (p_camera_manager->GetActive() == static_cast<CameraBase*>(m_pThirdPersonCamera));
 			p_camera_manager->SetActive(is_third_active ? "Debug" : "Third");
 		}
+
+		// F3でThird⇔LockOnカメラをトグルする(Bossを常に画面内に収める).
+		if (Input::IsKeyDown(VK_F3)) {
+			const bool is_lock_on_active = (p_camera_manager->GetActive() == static_cast<CameraBase*>(m_pLockOnCamera));
+			p_camera_manager->SetActive(is_lock_on_active ? "Third" : "LockOn");
+		}
 #endif
 
 		// ThirdPersonカメラへPlayerの位置を渡して追従させる(Sceneがカメラとオブジェクトを仲介する設計).
 		if (m_pThirdPersonCamera && m_upPlayer && p_camera_manager->GetActive() == static_cast<CameraBase*>(m_pThirdPersonCamera)) {
 			m_pThirdPersonCamera->SetTargetPosition(m_upPlayer->GetPosition());
+		}
+
+		// LockOnカメラへPlayer/Bossの位置を渡す(注視点をBossに固定するため).
+		if (m_pLockOnCamera && m_upPlayer && m_upBoss && p_camera_manager->GetActive() == static_cast<CameraBase*>(m_pLockOnCamera)) {
+			m_pLockOnCamera->SetPlayerPosition(m_upPlayer->GetPosition());
+			m_pLockOnCamera->SetBossPosition(m_upBoss->GetPosition());
 		}
 
 		p_camera_manager->Update();

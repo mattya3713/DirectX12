@@ -133,6 +133,7 @@
     <ClInclude Include="SourceCode\00_Game\30_Camera\30_Debug\DebugCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\40_Third\ThirdPersonCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\50_Keyframe\KeyframeCamera.h" />
+    <ClInclude Include="SourceCode\00_Game\30_Camera\60_LockOn\LockOnCamera.h" />
     <ClInclude Include="SourceCode\00_Game\30_Camera\99_Manager\CameraManager.h" />
     <ClInclude Include="SourceCode\99_Utility\ServiceLocator\ServiceLocator.h" />
     <ClInclude Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.h" />
@@ -266,6 +267,7 @@
     <ClCompile Include="SourceCode\00_Game\30_Camera\30_Debug\DebugCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\40_Third\ThirdPersonCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\50_Keyframe\KeyframeCamera.cpp" />
+    <ClCompile Include="SourceCode\00_Game\30_Camera\60_LockOn\LockOnCamera.cpp" />
     <ClCompile Include="SourceCode\00_Game\30_Camera\99_Manager\CameraManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\MemoryLeakDetector.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Diagnostics\CrashDumpHandler.cpp" />
