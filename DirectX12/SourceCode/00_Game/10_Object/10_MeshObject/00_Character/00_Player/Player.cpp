@@ -64,10 +64,9 @@ void Player::Draw()
 
 	Character::Draw();
 
-	if (m_pMesh)
-	{
-		m_pMesh->SetWorldTransform(GetTransform()); // 当たり判定計算等に影響しないよう、次フレームのUpdateまでに実際のTransformへ戻す.
-	}
+	// NOTE: 描画後にTransformを戻してはいけない. MMdlActorのTransformCBは永続マップされており、
+	// GPUはコマンド実行時(フレーム後半)に読むため、ここで戻すと回転が反映される前に上書きされてしまう.
+	// 実Transformへの復帰は、次フレーム冒頭のMeshObject::Update()が行う.
 }
 
 #if _DEBUG
