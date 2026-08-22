@@ -4,33 +4,21 @@ namespace MyRand
 {
     inline int GetRandomPercentage(int Min,int Max)
     {
-        static bool isInitialized = false;
-        static std::random_device dev{};
-        static std::mt19937 rnd{ dev() };
-        static std::uniform_int_distribution dis{ Min, Max };
+        // エンジンはプログラム全体で1つを使い回す.
+        static std::mt19937 rnd{ std::random_device{}() };
 
-        if (isInitialized == false)
-        {
-            rnd.seed(static_cast<unsigned>(
-                std::chrono::steady_clock::now().time_since_epoch().count()));
-            isInitialized = true;
-        }
+        // distributionは呼び出しごとにMin/Maxで構築し直す(staticにすると初回の範囲で固定されるため).
+        std::uniform_int_distribution<> dis{ Min, Max };
         return dis(rnd);
     }
 
     inline float GetRandomPercentage(float Min, float Max)
     {
-        static bool isInitialized = false;
-        static std::random_device dev{};
-        static std::mt19937 rnd{ dev() };
-        static std::uniform_real_distribution<float> dis{ Min, Max };
+        // エンジンはプログラム全体で1つを使い回す.
+        static std::mt19937 rnd{ std::random_device{}() };
 
-        if (isInitialized == false)
-        {
-            rnd.seed(static_cast<unsigned>(
-                std::chrono::steady_clock::now().time_since_epoch().count()));
-            isInitialized = true;
-        }
+        // distributionは呼び出しごとにMin/Maxで構築し直す(staticにすると初回の範囲で固定されるため).
+        std::uniform_real_distribution<float> dis{ Min, Max };
         return dis(rnd);
     }
 
