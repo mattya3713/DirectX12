@@ -8,6 +8,7 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlMesh.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/30_Camera/30_Debug/DebugCamera.h"
+#include "00_Game/30_Camera/40_Third/ThirdPersonCamera.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/50_Input/Input.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
@@ -38,10 +39,15 @@ void MainScene::Create()
 {
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 
-	// カメラを登録・有効化.
+	// カメラを登録・有効化(既定はThirdPerson. DebugはF2で切替可能なデバッグ用として維持).
 	if (CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>()) {
 		p_camera_manager->Register("Debug", std::make_unique<DebugCamera>());
-		p_camera_manager->SetActive("Debug");
+
+		auto up_third_person = std::make_unique<ThirdPersonCamera>();
+		m_pThirdPersonCamera = up_third_person.get();
+		p_camera_manager->Register("Third", std::move(up_third_person));
+
+		p_camera_manager->SetActive("Third");
 	}
 
 	try {
@@ -125,6 +131,19 @@ void MainScene::Update()
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 
 	if (CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>()) {
+#if _DEBUG
+		// F2でDebug⇔ThirdPersonカメラをトグルする(実機確認用).
+		if (Input::IsKeyDown(VK_F2)) {
+			const bool is_third_active = (p_camera_manager->GetActive() == static_cast<CameraBase*>(m_pThirdPersonCamera));
+			p_camera_manager->SetActive(is_third_active ? "Debug" : "Third");
+		}
+#endif
+
+		// ThirdPersonカメラへPlayerの位置を渡して追従させる(Sceneがカメラとオブジェクトを仲介する設計).
+		if (m_pThirdPersonCamera && m_upPlayer && p_camera_manager->GetActive() == static_cast<CameraBase*>(m_pThirdPersonCamera)) {
+			m_pThirdPersonCamera->SetTargetPosition(m_upPlayer->GetPosition());
+		}
+
 		p_camera_manager->Update();
 
 		// アクティブカメラの行列をDirectX12側へ反映.

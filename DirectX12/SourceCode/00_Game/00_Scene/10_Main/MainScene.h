@@ -8,6 +8,7 @@ class MmdlRenderer;
 class Player;
 class Boss;
 class ModelPreviewPanel;
+class ThirdPersonCamera;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -32,4 +33,6 @@ private:
 
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Boss>        m_upBoss;
+
+	ThirdPersonCamera* m_pThirdPersonCamera = nullptr; // 追従対象を渡すための非所有ポインタ(所有はCameraManager).
 };
