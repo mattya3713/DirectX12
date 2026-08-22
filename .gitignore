@@ -375,3 +375,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# AI開発ワークフロー(production_loop/local_worker)の状態ディレクトリ. 頻繁に更新されるためgit管理外.
+.ai-project/
