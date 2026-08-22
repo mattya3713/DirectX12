@@ -27,7 +27,7 @@ namespace
 	constexpr int CAPSULE_VERTEX_COUNT =
 		(RING_SEGMENT_COUNT * 2) * 2 +   // 上下2本のリング.
 		(SILHOUETTE_LINE_COUNT * 2) +    // 側面の縦線.
-		(ARC_SEGMENT_COUNT * 2) * 4;     // 上下2半球 x 前後/左右2方向の円弧.
+		(ARC_SEGMENT_COUNT * 2) * 8;     // 上下2半球 x 0/90/180/270度4方向の円弧(2本だけだと半球が半分欠ける).
 
 	// 中心Center・半径Radiusの円周(XZ平面)上、角度Angle(rad)の点を求める.
 	DirectX::XMFLOAT3 RingPoint(const DirectX::XMFLOAT3& Center, float Radius, float Angle) noexcept
@@ -96,8 +96,12 @@ namespace
 
 		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, 0.0f, false, Color);
 		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, DirectX::XM_PIDIV2, false, Color);
+		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, DirectX::XM_PI, false, Color);
+		index = AppendCapArc(OutVertices.data(), index, SegStart, Radius, DirectX::XM_PI * 1.5f, false, Color);
 		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, 0.0f, true, Color);
 		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, DirectX::XM_PIDIV2, true, Color);
+		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, DirectX::XM_PI, true, Color);
+		index = AppendCapArc(OutVertices.data(), index, SegEnd, Radius, DirectX::XM_PI * 1.5f, true, Color);
 	}
 }
 
@@ -191,7 +195,9 @@ void DebugColliderRenderer::CreatePipeline()
 	pipeline_desc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 	pipeline_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pipeline_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	// デプステストを無効化(コライダーはモデル内部にあるため、有効だとメッシュに隠れて大部分が見えなくなる).
 	pipeline_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	pipeline_desc.DepthStencilState.DepthEnable = FALSE;
 	pipeline_desc.InputLayout = { input_layout, _countof(input_layout) };
 	pipeline_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 	pipeline_desc.NumRenderTargets = 1;
