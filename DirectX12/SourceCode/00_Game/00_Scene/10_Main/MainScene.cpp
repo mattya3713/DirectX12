@@ -149,6 +149,31 @@ void MainScene::Update()
 	ImGui::End();
 #endif
 
+#if _DEBUG
+	// 実行中にPlayer/BossのHPを確認できるデバッグパネル(戦闘フィードバック用).
+	ImGui::Begin("HP", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+	if (m_upPlayer) {
+		const HealthSystem& health = m_upPlayer->GetHealth();
+		const float max_hp = health.GetMaxHP();
+		const float hp = health.GetHP();
+		const float ratio = (max_hp > 0.0f) ? (hp / max_hp) : 0.0f;
+		ImGui::Text("Player HP : %.0f / %.0f", hp, max_hp);
+		ImGui::ProgressBar(ratio, ImVec2(-1.0f, 0.0f));
+	}
+
+	if (m_upBoss) {
+		const HealthSystem& health = m_upBoss->GetHealth();
+		const float max_hp = health.GetMaxHP();
+		const float hp = health.GetHP();
+		const float ratio = (max_hp > 0.0f) ? (hp / max_hp) : 0.0f;
+		ImGui::Text("Boss HP   : %.0f / %.0f", hp, max_hp);
+		ImGui::ProgressBar(ratio, ImVec2(-1.0f, 0.0f));
+	}
+
+	ImGui::End();
+#endif
+
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 
 	if (CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>()) {
