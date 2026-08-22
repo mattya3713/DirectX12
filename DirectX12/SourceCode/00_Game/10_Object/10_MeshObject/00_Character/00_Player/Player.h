@@ -31,6 +31,9 @@ public:
 	// 毎フレーム更新(現在ステートのUpdate/LateUpdateを順に呼ぶ).
 	void Update() override;
 
+	// 描画(player.msknは正面が-Zで作られているため、デバッグパネルで調整したオフセット角を描画時に加算する).
+	void Draw() override;
+
 #if _DEBUG
 	// モデル正面のYawオフセット(度)を取得・設定する(デバッグパネルからの調整用).
 	float GetModelFrontOffsetDeg() const noexcept { return m_ModelFrontOffsetDeg; }

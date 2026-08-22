@@ -38,6 +38,8 @@ public:
 	void Draw();
 
 	// ワールド行列を設定する(移動・回転・拡縮の反映用).
+	// NOTE: 描画後にTransformを戻してはいけない. TransformCBは永続マップされており、
+	//       書き込みは即GPUから参照される(戻すと次フレームの描画に一瞬前フレームの行列が残る).
 	void SetWorldMatrix(const DirectX::XMMATRIX& World) noexcept { if (m_pMappedTransformCB) { m_pMappedTransformCB->World = World; } }
 
 	// 名前でアニメーションクリップを再生する(見つからない場合は何もしない).

@@ -54,11 +54,16 @@ void Player::Update()
 
 	if (m_pMesh)
 	{
-		// モデル正面軸のズレをメッシュへの反映時だけ補正する(オーナーのTransform自体は変えないため当たり判定に影響しない).
 		Transform drawn_transform = GetTransform();
 		drawn_transform.Rotation.y += DirectX::XMConvertToRadians(m_ModelFrontOffsetDeg);
 		m_pMesh->SetWorldTransform(drawn_transform);
 	}
+}
+
+void Player::Draw()
+{
+
+	Character::Draw();
 }
 
 #if _DEBUG
