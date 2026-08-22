@@ -4,27 +4,27 @@
 
 void MeshObject::Update()
 {
-	if (!m_pMesh) { return; }
+	if (!m_spMesh) { return; }
 
-	m_pMesh->SetWorldTransform(GetTransform());
-	m_pMesh->Update();
+	m_spMesh->SetWorldTransform(GetTransform());
+	m_spMesh->Update();
 }
 
 void MeshObject::Draw()
 {
-	if (!m_pMesh) { return; }
+	if (!m_spMesh) { return; }
 
-	m_pMesh->Draw();
+	m_spMesh->Draw();
 }
 
 void MeshObject::PlayNamedClip(const std::string& ClipName)
 {
-	if (!m_pMesh) { return; }
+	if (!m_spMesh) { return; }
 
-	m_pMesh->PlayNamedClip(ClipName);
+	m_spMesh->PlayNamedClip(ClipName);
 }
 
 void MeshObject::SetCurrentFrame(float ActionFrame) noexcept
 {
-	if (m_pMesh) { m_pMesh->SetCurrentFrame(ActionFrame); }
+	if (m_spMesh) { m_spMesh->SetCurrentFrame(ActionFrame); }
 }

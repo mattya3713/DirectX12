@@ -2,6 +2,8 @@
 
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlActor.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/Transform/Transform.h"
 
 MMdlMesh::MMdlMesh(const std::string& FilePath, MmdlRenderer& Renderer)
@@ -47,7 +49,11 @@ void MMdlMesh::PlayNamedClip(const std::string& ClipName)
 		}
 	}
 
-	m_upActor->StopAnimation();
+	// クリップが見つからない場合は現在のアニメーション再生を継続する
+	// (StopAnimationするとバインドポーズ固定になり以後一切動かなくなるため).
+	if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+		p_debug_log->LogWarning("PlayNamedClip: clip not found = " + ClipName);
+	}
 }
 
 void MMdlMesh::SetCurrentFrame(float ActionFrame)

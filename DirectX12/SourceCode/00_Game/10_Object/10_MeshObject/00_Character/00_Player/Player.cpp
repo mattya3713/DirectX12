@@ -60,11 +60,11 @@ void Player::Update()
 
 	Character::Update();
 
-	if (m_pMesh)
+	if (m_spMesh)
 	{
 		Transform drawn_transform = GetTransform();
 		drawn_transform.Rotation.y += DirectX::XMConvertToRadians(m_ModelFrontOffsetDeg);
-		m_pMesh->SetWorldTransform(drawn_transform);
+		m_spMesh->SetWorldTransform(drawn_transform);
 	}
 }
 

@@ -25,7 +25,7 @@ public:
 
 public:
 	// メッシュをアタッチする.
-	void AttachMesh(std::shared_ptr<IMesh> pMesh) noexcept { m_pMesh = std::move(pMesh); }
+	void AttachMesh(std::shared_ptr<IMesh> pMesh) noexcept { m_spMesh = std::move(pMesh); }
 
 	// アニメーションの再生範囲・速度をまとめて適用する(メッシュ未アタッチなら何もしない).
 	void PlayNamedClip(const std::string& ClipName);
@@ -34,13 +34,13 @@ public:
 	void SetCurrentFrame(float ActionFrame) noexcept;
 
 	// アタッチ中のメッシュの現在のアニメーション内再生位置を秒で取得する.
-	float GetCurrentAnimationSeconds() const noexcept { return m_pMesh ? m_pMesh->GetCurrentAnimationSeconds() : 0.0f; }
+	float GetCurrentAnimationSeconds() const noexcept { return m_spMesh ? m_spMesh->GetCurrentAnimationSeconds() : 0.0f; }
 
 #if _DEBUG
 	// アタッチ中のメッシュのローカル高さを取得する(Debugビルドのみ).
-	float GetLocalHeight() const noexcept { return m_pMesh ? m_pMesh->GetLocalHeight() : 0.0f; }
+	float GetLocalHeight() const noexcept { return m_spMesh ? m_spMesh->GetLocalHeight() : 0.0f; }
 #endif
 
 protected:
-	std::shared_ptr<IMesh> m_pMesh; // アタッチ中のメッシュ.
+	std::shared_ptr<IMesh> m_spMesh; // アタッチ中のメッシュ.
 };
