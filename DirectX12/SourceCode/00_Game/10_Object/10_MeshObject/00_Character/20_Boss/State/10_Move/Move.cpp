@@ -4,6 +4,7 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "99_Utility/Math/Random/Random.h"
 
 namespace {
 	constexpr float MOVE_ROTATE_SPEED = 360.0f; // 度/秒.
@@ -33,7 +34,9 @@ void Move::Update()
 
 	if (distance <= GetBoss()->GetAttackRange())
 	{
-		GetBoss()->ChangeState(BossState::eID::Attack);
+		// 攻撃範囲内に入ったら2パターンからランダムに選ぶ(50/50の単純な抽選).
+		const int pick = MyRand::GetRandomPercentage(0, 1);
+		GetBoss()->ChangeState(pick == 0 ? BossState::eID::Attack : BossState::eID::Attack2);
 		return;
 	}
 

@@ -3,6 +3,7 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/00_Idle/Idle.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/10_Move/Move.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/20_Attack/Attack.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/21_Attack2/Attack2.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/30_Dead/Dead.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/40_ParryReaction/ParryReaction.h"
 
@@ -49,6 +50,10 @@ void Boss::ChangeState(BossState::eID Id)
 
 	case BossState::eID::Attack:
 		m_StateMachine.ChangeState(std::make_shared<BossState::Attack>(this));
+		break;
+
+	case BossState::eID::Attack2:
+		m_StateMachine.ChangeState(std::make_shared<BossState::Attack2>(this));
 		break;
 
 	case BossState::eID::Dead:
