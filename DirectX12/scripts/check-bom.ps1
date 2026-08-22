@@ -32,9 +32,14 @@ if ($StagedOnly) {
         Where-Object { $_ -match '\.(cpp|h)$' } |
         Where-Object { Test-Path $_ }
 } else {
-    $files = git ls-files -- '*.cpp' '*.h' |
+    # 追跡済み+未追跡の両方を対象にする(新規作成直後のファイルのBOM欠けを見逃さないため).
+    $files = @(
+        git ls-files -- '*.cpp' '*.h'
+        git ls-files --others --exclude-standard -- '*.cpp' '*.h'
+    ) |
         Where-Object { $_ -notmatch '^Data/Library/' } |
-        Where-Object { Test-Path $_ }
+        Where-Object { Test-Path $_ } |
+        Sort-Object -Unique
 }
 
 if (-not $files) {
