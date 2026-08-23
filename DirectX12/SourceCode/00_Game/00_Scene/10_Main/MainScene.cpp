@@ -333,6 +333,12 @@ void MainScene::Update()
 		if (!is_player_alive || !is_boss_alive) {
 			m_IsGameOver = true;
 			m_WinnerIsPlayer = is_boss_alive; // Bossが生存していればPlayerの勝ち.
+
+			// 敗北確定時は巻き戻り逆再生を開始する(保存フレームが無ければ即LOSE表示へ).
+			DirectX12* p_dx12_for_rewind = ServiceLocator::Get<DirectX12>();
+			if (p_dx12_for_rewind && !m_WinnerIsPlayer) {
+				p_dx12_for_rewind->StartRewindPlayback();
+			}
 		}
 	}
 
@@ -381,8 +387,10 @@ void MainScene::Update()
 #endif
 
 #if _DEBUG
-	// 勝敗確定後だと分かる表示(デバッグ用ImGui).
-	if (m_IsGameOver) {
+	// 勝敗確定後だと分かる表示(デバッグ用ImGui. 巻き戻り再生中は演出を見せるため隠す).
+	DirectX12* p_dx12_for_result = ServiceLocator::Get<DirectX12>();
+	const bool is_rewind_playing = p_dx12_for_result && p_dx12_for_result->IsRewindActive();
+	if (m_IsGameOver && !is_rewind_playing) {
 		ImGui::Begin("Game Result", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::TextUnformatted(m_WinnerIsPlayer ? "WIN" : "LOSE");
 		ImGui::End();
@@ -442,6 +450,12 @@ void MainScene::Draw()
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 	if (!p_dx12) { return; }
 
+	// 巻き戻り逆再生中: 通常描画を止め、リングバッファの内容をフルスクリーン表示する.
+	if (p_dx12->IsRewindActive()) {
+		p_dx12->DrawRewindFrame();
+		return;
+	}
+
 	// シャドウ深度パス(光源視点でPlayer/Bossをシャドウマップへ描く. メインパスの前に実施する).
 	m_pMmdlRenderer->BeginShadowPass();
 
@@ -470,6 +484,10 @@ void MainScene::Draw()
 	}
 
 	Profiler::Instance().GpuEnd("GPU:Characters");
+
+	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する
+	// (ImGuiオーバーレイ前・デバッグコライダー描画前のゲーム描画だけを保存する).
+	p_dx12->CaptureForRewind();
 
 	// レベル静的オブジェクト(専用パイプラインへ切替て描画).
 	if (!m_LevelActors.empty() && m_pMstcRenderer) {

@@ -101,6 +101,9 @@ bool DirectX12::Create(HWND hWnd)
 
 		// GPUタイムスタンプクエリ(簡易プロファイラ用).
 		CreateGpuQueryResources();
+
+		// 巻き戻り演出用リングバッファ.
+		CreateRewindResources();
 	}
 	catch(const std::runtime_error& Msg) {
 
@@ -260,6 +263,276 @@ void DirectX12::RestoreMainRenderTargets()
 	}
 }
 
+// ===== 敗北時巻き戻り演出(フレームリングバッファ逆再生) =====
+
+// 巻き戻り演出用のリングバッファ・PSO・ヒープ類を生成する.
+void DirectX12::CreateRewindResources()
+{
+	// ---- リングテクスチャ(R8G8B8A8_UNORM固定の縮小解像度) ----
+	D3D12_HEAP_PROPERTIES default_heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	D3D12_RESOURCE_DESC ring_desc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R8G8B8A8_UNORM, REWIND_WIDTH, REWIND_HEIGHT);
+
+	m_RewindRing.resize(REWIND_FRAME_COUNT);
+	for (UINT i = 0; i < REWIND_FRAME_COUNT; ++i)
+	{
+		MyAssert::IsFailed(
+			_T("巻き戻りリングテクスチャの作成"),
+			&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(),
+			&default_heap, D3D12_HEAP_FLAG_NONE, &ring_desc,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, nullptr,
+			IID_PPV_ARGS(m_RewindRing[i].ReleaseAndGetAddressOf()));
+	}
+
+	// ---- RTVヒープ(リング1枚につき1ビュー) ----
+	D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
+	rtv_heap_desc.NumDescriptors = REWIND_FRAME_COUNT;
+	rtv_heap_desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	MyAssert::IsFailed(
+		_T("巻き戻りRTVヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+		&rtv_heap_desc, IID_PPV_ARGS(m_pRewindRtvHeap.ReleaseAndGetAddressOf()));
+
+	D3D12_RENDER_TARGET_VIEW_DESC rtv_desc = {};
+	rtv_desc.Format         = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rtv_desc.ViewDimension  = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+	auto rtv_cpu = m_pRewindRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	for (UINT i = 0; i < REWIND_FRAME_COUNT; ++i)
+	{
+		m_pDevice12->CreateRenderTargetView(m_RewindRing[i].Get(), &rtv_desc, rtv_cpu);
+		rtv_cpu.ptr += m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	}
+
+	// ---- SRVヒープ(先頭FrameBufferCount個=バックバッファ, 続くN個=リング) ----
+	D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc = {};
+	srv_heap_desc.NumDescriptors = FrameBufferCount + REWIND_FRAME_COUNT;
+	srv_heap_desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srv_heap_desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	MyAssert::IsFailed(
+		_T("巻き戻りSRVヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDevice12.Get(),
+		&srv_heap_desc, IID_PPV_ARGS(m_pRewindSrvHeap.ReleaseAndGetAddressOf()));
+
+	m_RewindSrvDescriptorSize = m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	RefreshRewindBackBufferSRVs();
+
+	auto srv_cpu = m_pRewindSrvHeap->GetCPUDescriptorHandleForHeapStart();
+	srv_cpu.ptr += static_cast<UINT64>(FrameBufferCount) * m_RewindSrvDescriptorSize; // リング領域の先頭へ.
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC ring_srv_desc = {};
+	ring_srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	ring_srv_desc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+	ring_srv_desc.Texture2D.MipLevels     = 1;
+
+	for (UINT i = 0; i < REWIND_FRAME_COUNT; ++i)
+	{
+		m_pDevice12->CreateShaderResourceView(m_RewindRing[i].Get(), &ring_srv_desc, srv_cpu);
+		srv_cpu.ptr += m_RewindSrvDescriptorSize;
+	}
+
+	// ---- ルートシグネチャ(t0+スタティックサンプラーs0のみ) ----
+	CD3DX12_DESCRIPTOR_RANGE srv_range = {};
+	srv_range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+
+	CD3DX12_ROOT_PARAMETER root_param = {};
+	root_param.InitAsDescriptorTable(1, &srv_range, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	CD3DX12_STATIC_SAMPLER_DESC sampler = {};
+	sampler.Init(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootsig_desc = {};
+	rootsig_desc.Init(1, &root_param, 1, &sampler,
+		D3D12_ROOT_SIGNATURE_FLAG_NONE); // 頂点バッファ無しのためIALフラグは不要.
+
+	MyComPtr<ID3DBlob> rootsig_blob(nullptr);
+	MyComPtr<ID3DBlob> rootsig_error(nullptr);
+	MyAssert::IsFailed(
+		_T("巻き戻りルートシグネチャのシリアライズ"),
+		&D3D12SerializeRootSignature,
+		&rootsig_desc, D3D_ROOT_SIGNATURE_VERSION_1,
+		rootsig_blob.GetAddressOf(), rootsig_error.GetAddressOf());
+
+	MyAssert::IsFailed(
+		_T("巻き戻りルートシグネチャの作成"),
+		&ID3D12Device::CreateRootSignature, m_pDevice12.Get(),
+		0, rootsig_blob->GetBufferPointer(), rootsig_blob->GetBufferSize(),
+		IID_PPV_ARGS(m_pRewindRootSignature.ReleaseAndGetAddressOf()));
+
+	// ---- パイプライン(VS/PSともData\Shader\Rewind\Rewind.hlsl) ----
+	MyComPtr<ID3DBlob> vs_blob(nullptr);
+	MyComPtr<ID3DBlob> ps_blob(nullptr);
+#if _DEBUG
+	MyAssert::IsFailed(
+		_T("巻き戻り頂点シェーダーのコンパイル"),
+		&D3DCompileFromFile,
+		L"Data\\Shader\\Rewind\\Rewind.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"VS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0,
+		vs_blob.GetAddressOf(), nullptr);
+	MyAssert::IsFailed(
+		_T("巻き戻りピクセルシェーダーのコンパイル"),
+		&D3DCompileFromFile,
+		L"Data\\Shader\\Rewind\\Rewind.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"PS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0,
+		ps_blob.GetAddressOf(), nullptr);
+#else
+	MyAssert::IsFailed(_T("巻き戻り頂点シェーダー(.cso)の読み込み"), D3DReadFileToBlob, L"Data\\Shader\\Rewind\\Rewind_VS.cso", vs_blob.GetAddressOf());
+	MyAssert::IsFailed(_T("巻き戻りピクセルシェーダー(.cso)の読み込み"), D3DReadFileToBlob, L"Data\\Shader\\Rewind\\Rewind_PS.cso", ps_blob.GetAddressOf());
+#endif
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipe_desc = {};
+	pipe_desc.pRootSignature      = m_pRewindRootSignature.Get();
+	pipe_desc.VS                  = CD3DX12_SHADER_BYTECODE(vs_blob.Get());
+	pipe_desc.PS                  = CD3DX12_SHADER_BYTECODE(ps_blob.Get());
+	pipe_desc.BlendState          = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	pipe_desc.RasterizerState     = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	pipe_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // ワインディングを気にしない1枚三角形.
+	pipe_desc.DepthStencilState.DepthEnable = false;
+	pipe_desc.SampleMask          = D3D12_DEFAULT_SAMPLE_MASK;
+	pipe_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipe_desc.NumRenderTargets    = 1;
+	pipe_desc.RTVFormats[0]       = DXGI_FORMAT_R8G8B8A8_UNORM;
+	pipe_desc.SampleDesc.Count    = 1;
+
+	MyAssert::IsFailed(
+		_T("巻き戻りパイプラインの作成"),
+		&ID3D12Device::CreateGraphicsPipelineState, m_pDevice12.Get(),
+		&pipe_desc, IID_PPV_ARGS(m_pRewindPipelineState.ReleaseAndGetAddressOf()));
+}
+
+// バックバッファSRVを作り直す(スワップチェーン再生成後に呼ぶ).
+void DirectX12::RefreshRewindBackBufferSRVs()
+{
+	if (!m_pRewindSrvHeap || m_pBackBuffer.empty()) { return; }
+
+	auto srv_cpu = m_pRewindSrvHeap->GetCPUDescriptorHandleForHeapStart();
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+	srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srv_desc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+	for (UINT i = 0; i < FrameBufferCount && i < static_cast<UINT>(m_pBackBuffer.size()); ++i)
+	{
+		if (!m_pBackBuffer[i]) { continue; }
+		srv_desc.Format             = m_pBackBuffer[i]->GetDesc().Format;
+		srv_desc.Texture2D.MipLevels = m_pBackBuffer[i]->GetDesc().MipLevels;
+		m_pDevice12->CreateShaderResourceView(m_pBackBuffer[i].Get(), &srv_desc, srv_cpu);
+		srv_cpu.ptr += m_RewindSrvDescriptorSize;
+	}
+}
+
+// 毎フレーム、現在のバックバッファ内容を縮小リングへ1枚保存する.
+void DirectX12::CaptureForRewind()
+{
+	// 逆再生中は保存しない(再生中のフレームが履歴に混入するのを防ぐ).
+	if (m_RewindState != RewindState::Capture || !m_pRewindPipelineState.Get()) { return; }
+
+	// オフスクリーンモード時はバックバッファがPRESENT状態のままで、ここが想定するRENDER_TARGET状態
+	// (BeginDraw(false)時のみ)と食い違う. 現状MainSceneは常にBeginDraw(false)のため実害は無いが、
+	// 将来オフスクリーン経路が使われた場合に誤った内容をキャプチャしないためのガード.
+	if (m_bUseOffscreenScene) { return; }
+
+	ID3D12GraphicsCommandList* cmd_list = m_pCmdList.Get();
+	ID3D12Resource* p_backbuffer = m_pBackBuffer[m_FrameIndex].Get();
+	if (!p_backbuffer) { return; }
+
+	// バックバッファをサンプリング可能状態へ一時遷移させる.
+	auto to_srv = CD3DX12_RESOURCE_BARRIER::Transition(p_backbuffer,
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmd_list->ResourceBarrier(1, &to_srv);
+
+	cmd_list->SetPipelineState(m_pRewindPipelineState.Get());
+	cmd_list->SetGraphicsRootSignature(m_pRewindRootSignature.Get());
+
+	ID3D12DescriptorHeap* pp_heaps[] = { m_pRewindSrvHeap.Get() };
+	cmd_list->SetDescriptorHeaps(_countof(pp_heaps), pp_heaps);
+	cmd_list->SetGraphicsRootDescriptorTable(0, m_pRewindSrvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	D3D12_VIEWPORT viewport{ 0.0f, 0.0f, static_cast<float>(REWIND_WIDTH), static_cast<float>(REWIND_HEIGHT), 0.0f, 1.0f };
+	D3D12_RECT scissor{ 0, 0, static_cast<LONG>(REWIND_WIDTH), static_cast<LONG>(REWIND_HEIGHT) };
+	cmd_list->RSSetViewports(1, &viewport);
+	cmd_list->RSSetScissorRects(1, &scissor);
+
+	// 書き込み先リングテクスチャは常時PIXEL_SHADER_RESOURCE(DrawRewindFrame()がSRVとしてサンプルする
+	// 前提の状態)で保持しているため、RTVとして書き込む直前だけRENDER_TARGETへ遷移し、描画後に戻す.
+	ID3D12Resource* p_ring_texture = m_RewindRing[m_RewindWriteIndex].Get();
+	auto ring_to_rtv = CD3DX12_RESOURCE_BARRIER::Transition(p_ring_texture,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmd_list->ResourceBarrier(1, &ring_to_rtv);
+
+	auto ring_rtv = m_pRewindRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	ring_rtv.ptr += static_cast<UINT64>(m_RewindWriteIndex) *
+		m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	cmd_list->OMSetRenderTargets(1, &ring_rtv, false, nullptr);
+
+	cmd_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmd_list->DrawInstanced(3, 1, 0, 0); // SV_VertexIDによるフルスクリーントライアングル.
+
+	// リングテクスチャをDrawRewindFrame()が期待するPIXEL_SHADER_RESOURCEへ戻す.
+	auto ring_to_srv = CD3DX12_RESOURCE_BARRIER::Transition(p_ring_texture,
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmd_list->ResourceBarrier(1, &ring_to_srv);
+
+	// メインパス続行のためバックバッファをレンダーターゲットへ戻す.
+	auto to_rtv = CD3DX12_RESOURCE_BARRIER::Transition(p_backbuffer,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmd_list->ResourceBarrier(1, &to_rtv);
+
+	// 通常描画用のビューポート・シザー・OMを復帰させる.
+	RestoreMainRenderTargets();
+
+	m_RewindWriteIndex = (m_RewindWriteIndex + 1) % REWIND_FRAME_COUNT;
+	m_RewindValidCount = (m_RewindValidCount < REWIND_FRAME_COUNT) ? (m_RewindValidCount + 1) : REWIND_FRAME_COUNT;
+}
+
+// 巻き戻り逆再生を開始する.
+bool DirectX12::StartRewindPlayback()
+{
+	if (m_RewindValidCount == 0 || !m_pRewindPipelineState.Get()) { return false; }
+
+	m_RewindState        = RewindState::Playing;
+	m_RewindFinished     = false;
+	m_RewindPlayIndex    = (m_RewindWriteIndex + REWIND_FRAME_COUNT - 1) % REWIND_FRAME_COUNT; // 最新フレームから.
+	m_RewindFramesShown  = 0;
+
+	return true;
+}
+
+// 巻き戻り逆再生を1フレーム分描画する.
+void DirectX12::DrawRewindFrame()
+{
+	if (!IsRewindActive() || !m_pRewindPipelineState.Get()) { return; }
+
+	ID3D12GraphicsCommandList* cmd_list = m_pCmdList.Get();
+
+	cmd_list->SetPipelineState(m_pRewindPipelineState.Get());
+	cmd_list->SetGraphicsRootSignature(m_pRewindRootSignature.Get());
+
+	ID3D12DescriptorHeap* pp_heaps[] = { m_pRewindSrvHeap.Get() };
+	cmd_list->SetDescriptorHeaps(_countof(pp_heaps), pp_heaps);
+
+	// SRVスロット = 先頭FrameBufferCount個(バックバッファ)の後ろにあるリング領域.
+	D3D12_GPU_DESCRIPTOR_HANDLE srv_gpu = m_pRewindSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	srv_gpu.ptr += static_cast<UINT64>(FrameBufferCount + m_RewindPlayIndex) * m_RewindSrvDescriptorSize;
+	cmd_list->SetGraphicsRootDescriptorTable(0, srv_gpu);
+
+	// OM/ビューポートはBeginDraw()が設定した現在のレンダーターゲット(バックバッファ)を使う.
+	cmd_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmd_list->DrawInstanced(3, 1, 0, 0);
+
+	// 古い方向へ再生位置を進める(2倍速. カクつきは演出として許容).
+	m_RewindPlayIndex = (m_RewindPlayIndex + REWIND_FRAME_COUNT - REWIND_PLAYBACK_SPEED) % REWIND_FRAME_COUNT;
+	m_RewindFramesShown += REWIND_PLAYBACK_SPEED;
+
+	if (m_RewindFramesShown >= m_RewindValidCount)
+	{
+		// 最古フレームまで到達. 保存を再開し、次フレームから通常フロー(LOSE表示)へ復帰する.
+		m_RewindFinished = true;
+		m_RewindState    = RewindState::Capture;
+	}
+}
+
 void DirectX12::PrepareUIRenderTarget()
 {
 	// オフスクリーンのシーンカラーバッファをRENDER_TARGET→PIXEL_SHADER_RESOURCEへ
@@ -341,6 +614,9 @@ void DirectX12::OnWindowResize(UINT Width, UINT Height)
 
 	CreateRenderTarget(m_pRenderTargetViewHeap, m_pBackBuffer);
 	CreateDepthDesc(m_pDepthBuffer, m_pDepthHeap, m_pDepthSRVHeap);
+
+	// バックバッファが作り直されたため巻き戻り演出用のSRVも張り直す.
+	RefreshRewindBackBufferSRVs();
 }
 
 void DirectX12::ResizeSceneColorTarget(UINT Width, UINT Height)

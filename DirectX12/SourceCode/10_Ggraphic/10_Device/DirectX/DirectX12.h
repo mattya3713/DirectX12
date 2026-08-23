@@ -132,6 +132,22 @@ public:
 	// 実ウィンドウのリサイズ時にスワップチェーンと関連する描画資源を作り直す.
 	void OnWindowResize(UINT Width, UINT Height);
 
+	// ===== 敗北時巻き戻り演出(フレームリングバッファ逆再生) =====
+
+	// 毎フレームの描画結果を縮小リングバッファへ1枚保存する(MainScene::Drawの描画完了位置で呼ぶ).
+	// バックバッファから直接縮小blitするためImGuiオーバーレイ前のゲーム描画が保存される.
+	void CaptureForRewind();
+
+	// 巻き戻り逆再生を開始する(保存フレームが無い場合はfalseで何もしない).
+	bool StartRewindPlayback();
+
+	// 逆再生を1フレーム分描画し、再生位置を古い方向へ進める(完了でIsRewindFinished()==true).
+	// BeginDraw()が設定した現在のレンダーターゲットへフルスクリーン描画する.
+	void DrawRewindFrame();
+
+	// 巻き戻り逆再生中か(呼び出し側は通常のシーン描画を止める).
+	bool IsRewindActive() const noexcept { return m_RewindState == RewindState::Playing && !m_RewindFinished; }
+
 	// スワップチェーン取得.
 	const MyComPtr<IDXGISwapChain4> GetSwapChain();
 
@@ -276,6 +292,39 @@ public:
 private:
 	// GPUタイムスタンプクエリ用のヒープと読み取りバッファを作成する.
 	void CreateGpuQueryResources();
+
+	// ===== 敗北時巻き戻り演出用 =====
+
+	// 巻き戻り演出の内部状態.
+	enum class RewindState
+	{
+		Capture, // 毎フレーム保存中(通常プレイ).
+		Playing  // 逆再生中.
+	};
+
+	// リングバッファ・PSO・ヒープ類を生成する(Create()完了時に1度).
+	void CreateRewindResources();
+	// バックバッファSRVを作り直す(スワップチェーン再生成後に呼ぶ).
+	void RefreshRewindBackBufferSRVs();
+
+	// リングの諸元(縮小解像度でVRAM圧迫を避ける. 総容量は約180MB).
+	static constexpr UINT REWIND_FRAME_COUNT    = 90;  // 保持フレーム数(60FPSで約1.5秒分).
+	static constexpr UINT REWIND_WIDTH          = 960;
+	static constexpr UINT REWIND_HEIGHT         = 540;
+	static constexpr UINT REWIND_PLAYBACK_SPEED = 2;   // 1描画フレームで進める保存フレーム数(2倍速).
+
+	std::vector<MyComPtr<ID3D12Resource>>	m_RewindRing;			// リングバッファ(縮小コピー先テクスチャ配列).
+	MyComPtr<ID3D12DescriptorHeap>			m_pRewindRtvHeap;		// リング用RTVヒープ(REWIND_FRAME_COUNT個).
+	MyComPtr<ID3D12DescriptorHeap>			m_pRewindSrvHeap;		// SRVヒープ(先頭2個=バックバッファ, 続くN個=リング).
+	UINT									m_RewindSrvDescriptorSize = 0;
+	MyComPtr<ID3D12PipelineState>			m_pRewindPipelineState;	// フルスクリーン.blitパイプライン.
+	MyComPtr<ID3D12RootSignature>			m_pRewindRootSignature;
+	UINT	m_RewindWriteIndex   = 0;	// 次に書き込むリング位置.
+	UINT	m_RewindValidCount   = 0;	// 実際に保存済みの枚数(起動直後は未充足).
+	UINT	m_RewindPlayIndex    = 0;	// 逆再生中の再生位置(リングインデックス).
+	UINT	m_RewindFramesShown  = 0;	// 逆再生で表示済みの保存フレーム数.
+	RewindState m_RewindState    = RewindState::Capture;
+	bool	m_RewindFinished     = false; // 最古フレームまで再生し終えたか.
 
 	// SetCamera()で設定される現在のカメラ行列.
 	DirectX::XMMATRIX						m_ViewMatrix;
