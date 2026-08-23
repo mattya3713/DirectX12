@@ -31,9 +31,13 @@ public:
 	// 周回速度の設定(ラジアン/秒).
 	void SetOrbitSpeed(float Speed) noexcept;
 
+	// マウス回転係数の設定(Settings.jsonへ永続化される).
+	void SetMouseRotationSpeed(float Speed) noexcept { m_MouseRotationSpeed = Speed; }
+
 private:
 	DirectX::XMFLOAT3 m_TargetPosition;	// 追従対象の座標.
 	DirectX::XMFLOAT3 m_LookOffset;		// 注視点オフセット.
 	float             m_Distance;			// 追従対象からの距離.
 	float             m_OrbitSpeed;		// 周回速度(ラジアン/秒).
+	float             m_MouseRotationSpeed = 0.0035f; // マウス1pxあたりの回転量(ラジアン). Settings.jsonから復元.
 };

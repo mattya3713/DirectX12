@@ -32,6 +32,9 @@
 #include "99_Utility/Debug/Imgui/CombatDebugHud.h"
 #include "99_Utility/Debug/Imgui/LevelEditor.h"
 #include "99_Utility/Debug/Imgui/CombatTuningEditor.h"
+#include "99_Utility/Debug/Imgui/DebugConsole.h"
+#include "99_Utility/Localization/LocalizationTable.h"
+#include "99_Utility/Settings/Settings.h"
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Imgui/ParticleSystemEditor.h"
 #include "99_Utility/Debug/PlaytestRecorder.h"
@@ -96,6 +99,9 @@ void MainScene::Create()
 {
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 
+	// ユーザー設定の復元(ThirdPersonCameraのctorが参照するため登録前に読む).
+	SettingsManager::Instance().Load();
+
 	// カメラを登録・有効化(既定はThirdPerson. DebugはF2で切替可能なデバッグ用として維持).
 	if (CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>()) {
 		p_camera_manager->Register("Debug", std::make_unique<DebugCamera>());
@@ -109,6 +115,7 @@ void MainScene::Create()
 		p_camera_manager->Register("LockOn", std::move(up_lock_on));
 
 		p_camera_manager->SetActive("Third");
+
 	}
 
 	try {
@@ -431,6 +438,30 @@ void MainScene::Update()
 	// Combat調整ツール(デバッグ用ImGui).
 	if (m_upCombatTuningEditor) {
 		m_upCombatTuningEditor->Draw();
+	}
+
+	// デバッグコンソールへのカスタムコマンド登録(コンソール実体は最初のDrawで生成されるため1度だけ).
+	static bool s_CustomCommandsRegistered = false;
+	if (!s_CustomCommandsRegistered) {
+		if (DebugConsole* p_console = ServiceLocator::Get<DebugConsole>()) {
+			s_CustomCommandsRegistered = true;
+
+			// カメラ感度を変更してSettings.jsonへ永続化する(再起動後も復元される).
+			p_console->RegisterCommand("cam_speed", [this](const DebugConsole::CommandArgs& Args) {
+				if (Args.size() < 2 || !m_pThirdPersonCamera) { return; }
+				const float speed = static_cast<float>(std::atof(Args[1].c_str()));
+				if (speed <= 0.0f) { return; }
+				m_pThirdPersonCamera->SetMouseRotationSpeed(speed);
+				SettingsManager::Instance().Set("camera.mouse_rotation_speed", speed);
+				SettingsManager::Instance().Save();
+			});
+
+			// 言語切替(lang ja / lang en. ダミー翻訳デモ用).
+			p_console->RegisterCommand("lang", [](const DebugConsole::CommandArgs& Args) {
+				if (Args.size() < 2) { return; }
+				LocalizationTable::Instance().SetLanguage(Args[1]);
+			});
+		}
 	}
 #endif
 
