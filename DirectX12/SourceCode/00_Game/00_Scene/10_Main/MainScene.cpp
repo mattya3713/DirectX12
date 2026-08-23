@@ -7,6 +7,8 @@
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlMesh.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcActor.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -24,6 +26,7 @@
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/80_CutScene/CutScenePlayer.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Imgui/LevelEditor.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
@@ -35,6 +38,26 @@
 #if _DEBUG
 #include "99_Utility/Debug/Imgui/CutSceneEditor.h"
 #endif
+
+namespace {
+
+	// レベルオブジェクトの位置・回転(オイラー角・度)・スケールからワールド行列を作る.
+	DirectX::XMMATRIX ComposeLevelObjectWorld(const DirectX::XMFLOAT3& Position,
+		const DirectX::XMFLOAT3& RotationDeg, const DirectX::XMFLOAT3& Scale)
+	{
+		constexpr float deg_to_rad = 3.14159265358979f / 180.0f;
+		const DirectX::XMVECTOR rotation = DirectX::XMQuaternionRotationRollPitchYaw(
+			RotationDeg.x * deg_to_rad, RotationDeg.y * deg_to_rad, RotationDeg.z * deg_to_rad);
+		return DirectX::XMMatrixTransformation(
+			DirectX::g_XMZero,                          // 拡縮基準点(原点).
+			DirectX::XMQuaternionIdentity(),            // 拡縮軸の向き(ワールド軸).
+			DirectX::XMLoadFloat3(&Scale),
+			DirectX::g_XMZero,                          // 回転基準点(原点).
+			rotation,
+			DirectX::XMLoadFloat3(&Position));
+	}
+
+}
 
 MainScene::MainScene() = default;
 
@@ -75,7 +98,7 @@ void MainScene::Create()
 
 	try {
 		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
-		m_upDirectionLight = std::make_unique<DirectionLight>();
+		m_pMstcRenderer = std::make_shared<MstcRenderer>(*p_dx12);
 	}
 	catch (const std::runtime_error& Msg) {
 		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
@@ -112,8 +135,20 @@ void MainScene::Create()
 		m_upCutScenePlayer = std::make_unique<CutScenePlayer>();
 		ServiceLocator::Provide<CutScenePlayer>(m_upCutScenePlayer.get());
 
+		// レベルデータ(Data\Json\Level配下)から静的オブジェクトを構築し、
+		// スポーン地点指定(キーが有る場合のみ)でPlayer/Boss初期位置を上書きする.
+		const std::filesystem::path default_level_path = "Data/Json/Level/main.json";
+		if (std::filesystem::exists(default_level_path)) {
+			LoadLevelFromJson(default_level_path);
+		}
+
 #if _DEBUG
 		m_upCutSceneEditor = std::make_unique<CutSceneEditor>();
+
+		m_upLevelEditor = std::make_unique<LevelEditor>();
+		m_upLevelEditor->SetOnLevelChanged([this](const std::filesystem::path& Path) {
+			LoadLevelFromJson(Path);
+		});
 #endif
 	}
 	catch (const std::runtime_error& Msg) {
@@ -339,6 +374,13 @@ void MainScene::Update()
 #endif
 
 #if _DEBUG
+	// レベルシーン編集ツール(デバッグ用ImGui).
+	if (m_upLevelEditor) {
+		m_upLevelEditor->Draw();
+	}
+#endif
+
+#if _DEBUG
 	// 勝敗確定後だと分かる表示(デバッグ用ImGui).
 	if (m_IsGameOver) {
 		ImGui::Begin("Game Result", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
@@ -352,10 +394,67 @@ void MainScene::LateUpdate()
 {
 }
 
+void MainScene::LoadLevelFromJson(const std::filesystem::path& Path)
+{
+	m_LevelActors.clear();
+	m_LevelPath.clear();
+
+	if (!m_pMstcRenderer) { return; }
+
+	const LevelDesc level = LevelEditor::LoadLevelJson(Path);
+
+	constexpr const char* kMstcDirectory = "Data/Model/mmdl/mstc/";
+	for (const LevelObjectDesc& object : level.Objects)
+	{
+		try {
+			auto actor = std::make_unique<MstcActor>(
+				std::filesystem::path(kMstcDirectory) / object.MstcFile, *m_pMstcRenderer);
+			actor->SetWorldMatrix(ComposeLevelObjectWorld(object.Position, object.RotationDeg, object.Scale));
+			m_LevelActors.push_back(std::move(actor));
+		}
+		catch (const std::runtime_error& Msg) {
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogError(Msg.what());
+			}
+		}
+	}
+
+	// スポーン地点(JSONにキーが有る場合のみ、MainScene::Createの既定値を上書きする).
+	if (level.PlayerSpawn.HasValue && m_upPlayer) {
+		Transform transform = m_upPlayer->GetTransform();
+		transform.Position  = level.PlayerSpawn.Position;
+		transform.Rotation.y = DirectX::XMConvertToRadians(level.PlayerSpawn.YawDeg);
+		m_upPlayer->SetTransform(transform);
+	}
+
+	if (level.BossSpawn.HasValue && m_upBoss) {
+		Transform transform = m_upBoss->GetTransform();
+		transform.Position  = level.BossSpawn.Position;
+		transform.Rotation.y = DirectX::XMConvertToRadians(level.BossSpawn.YawDeg);
+		m_upBoss->SetTransform(transform);
+	}
+
+	m_LevelPath = Path;
+}
+
 void MainScene::Draw()
 {
 	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 	if (!p_dx12) { return; }
+
+	// シャドウ深度パス(光源視点でPlayer/Bossをシャドウマップへ描く. メインパスの前に実施する).
+	m_pMmdlRenderer->BeginShadowPass();
+
+	if (m_upPlayer) {
+		m_upPlayer->Draw();
+	}
+
+	if (m_upBoss) {
+		m_upBoss->Draw();
+	}
+
+	// シャドウマップをSRV状態へ遷移させ、メインパスのレンダーターゲットを復帰させる.
+	m_pMmdlRenderer->EndShadowPass();
 
 	m_pMmdlRenderer->BeforDraw();
 	p_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -371,6 +470,17 @@ void MainScene::Draw()
 	}
 
 	Profiler::Instance().GpuEnd("GPU:Characters");
+
+	// レベル静的オブジェクト(専用パイプラインへ切替て描画).
+	if (!m_LevelActors.empty() && m_pMstcRenderer) {
+		Profiler::Instance().GpuBegin("GPU:StaticLevel");
+		m_pMstcRenderer->BeforDraw();
+		p_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		for (const std::unique_ptr<MstcActor>& actor : m_LevelActors) {
+			actor->Draw();
+		}
+		Profiler::Instance().GpuEnd("GPU:StaticLevel");
+	}
 
 #if _DEBUG
 	// コライダー描画は「各キャラが登録→DebugColliderRendererがまとめて描画」の分離方式.

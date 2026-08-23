@@ -9,6 +9,7 @@
 class MmdlRenderer;
 class MstcRenderer;
 class MstcActor;
+class DirectionLight;
 class Player;
 class Boss;
 class ModelPreviewPanel;

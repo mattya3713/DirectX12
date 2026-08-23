@@ -1,0 +1,18 @@
+{
+  "Objects": [
+    {
+      "Mstc": "Cube.mstc",
+      "Position": [4.0, 1.0, 4.0],
+      "RotationDeg": [0.0, 45.0, 0.0],
+      "Scale": [2.0, 2.0, 2.0]
+    },
+    {
+      "Mstc": "Cube.mstc",
+      "Position": [-4.0, 0.5, -2.0],
+      "RotationDeg": [0.0, 10.0, 0.0],
+      "Scale": [1.5, 1.0, 1.5]
+    }
+  ],
+  "PlayerSpawn": { "Position": [0.0, 0.0, 0.0], "YawDeg": 0.0 },
+  "BossSpawn": { "Position": [0.0, 0.0, 8.0], "YawDeg": 180.0 }
+}
