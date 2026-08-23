@@ -33,6 +33,15 @@ void GameTime::Update()
     // 経過時間を秒単位で保持.
     pI->m_DeltaTime = elapsed.count();
 
+    // 時間スケールの残り時間を実時間で減算し、期限切れなら通常速度へ戻す.
+    if (pI->m_TimeScaleRemaining > 0.0f) {
+        pI->m_TimeScaleRemaining -= pI->m_DeltaTime;
+        if (pI->m_TimeScaleRemaining <= 0.0f) {
+            pI->m_TimeScaleRemaining = 0.0f;
+            pI->m_TimeScale          = 1.0f;
+        }
+    }
+
     // 次のフレームのために更新.
     pI->m_PreviousTime = currentTime;
 }
@@ -53,7 +62,26 @@ void GameTime::MaintainFPS()
 // デルタタイムを取得.
 const float GameTime::GetDeltaTime()
 {
-    return ServiceLocator::Get<GameTime>()->m_DeltaTime;
+    // 時間スケールを乗算して返す(ヒットストップ/スローモーション等の演出用).
+    // MaintainFPSによるフレームペーシングは実時間側で行われるため干渉しない.
+    GameTime* pI = ServiceLocator::Get<GameTime>();
+    return pI->m_DeltaTime * pI->m_TimeScale;
+}
+
+// 一時的な時間スケールを設定する.
+void GameTime::SetTimeScale(const float Scale, const float Duration)
+{
+    GameTime* pI = ServiceLocator::Get<GameTime>();
+
+    if (Scale > 0.0f) { pI->m_TimeScale = Scale; }
+    pI->m_TimeScaleRemaining = (Duration > 0.0f) ? Duration : 0.0f;
+    if (pI->m_TimeScaleRemaining <= 0.0f) { pI->m_TimeScale = 1.0f; }
+}
+
+// 現在の時間スケールを取得する.
+const float GameTime::GetTimeScale()
+{
+    return ServiceLocator::Get<GameTime>()->m_TimeScale;
 }
 
 // 一時停止状態を設定する.

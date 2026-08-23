@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 
+#include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/30_Camera/50_Keyframe/KeyframeCamera.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
@@ -10,6 +11,10 @@
 namespace {
 	constexpr float PARRY_REACTION_DISTANCE = 2.5f;  // パリィ成立後、PlayerがBossの正面に収まる距離.
 	constexpr float PARRY_REACTION_DURATION = 0.35f; // 位置合わせにかける時間(秒).
+
+	// パリィ成立時のスローモーション(ヒットストップより長め・緩やか. 仮値. 後で調整).
+	constexpr float PARRY_SLOWMO_SCALE    = 0.25f;
+	constexpr float PARRY_SLOWMO_DURATION = 0.4f;
 
 	// パリィ演出カメラ(Boss-Player中点を側面から見る構図で、寄りながら再生する).
 	constexpr float PARRY_CAMERA_WIDE_DISTANCE = 3.5f;
@@ -34,6 +39,9 @@ void CombatCoordinator::Clear() noexcept
 void CombatCoordinator::OnParrySuccess() noexcept
 {
 	if (!m_PlayerView || !m_BossView) { return; }
+
+	// パリィ成立スローモーション(グローバル時間スケール. 専用カメラ演出も自動的にスローで進む).
+	GameTime::SetTimeScale(PARRY_SLOWMO_SCALE, PARRY_SLOWMO_DURATION);
 
 	const DirectX::XMFLOAT3 player_pos = m_PlayerView->GetPosition();
 	const DirectX::XMFLOAT3 boss_pos   = m_BossView->GetPosition();

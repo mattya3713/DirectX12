@@ -1,5 +1,6 @@
 ﻿#include "Character.h"
 
+#include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
@@ -136,6 +137,9 @@ void Character::ProcessHits()
 		hit_event.Normal       = info.Normal;
 
 		ApplyDamage(hit_event);
+
+		// ヒットストップ(命中演出. ほぼ停止に近いスケールを一瞬だけ. 仮値. Player/Boss対称).
+		GameTime::SetTimeScale(0.05f, 0.08f);
 	}
 }
 
