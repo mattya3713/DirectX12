@@ -171,6 +171,10 @@ public:
 	}
 	UINT GetFrameIndex() const noexcept { return m_FrameIndex; }
 
+	// バックバッファの解像度を返す(Sprite2D等の画面座標→NDC変換用).
+	UINT GetBackBufferWidth() const noexcept { return m_SwapChainDesc.Width; }
+	UINT GetBackBufferHeight() const noexcept { return m_SwapChainDesc.Height; }
+
 	// GPUの完了待ち(全キューをflushする. 終了処理など、確実に同期したい箇所専用).
 	void WaitForGPU();
 

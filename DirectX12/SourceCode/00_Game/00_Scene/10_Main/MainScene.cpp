@@ -10,6 +10,7 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcActor.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
+#include "10_Ggraphic/20_Render/Sprite/SpriteRenderer.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -107,6 +108,7 @@ void MainScene::Create()
 
 	try {
 		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
+		m_upSpriteRenderer = std::make_unique<SpriteRenderer>(*p_dx12);
 		m_pMstcRenderer = std::make_shared<MstcRenderer>(*p_dx12);
 	}
 	catch (const std::runtime_error& Msg) {
@@ -517,6 +519,18 @@ void MainScene::Draw()
 
 	Profiler::Instance().GpuEnd("GPU:Characters");
 
+	// Sprite2D/Sprite3D描画基盤の動作確認表示(画面端にUIスプライト+Player頭上にビルボード).
+	if (m_upSpriteRenderer) {
+		ID3D12Resource* p_sprite_tex = p_dx12->GetTextureByPath("Data\\Image\\toon01.bmp").Get();
+		if (p_sprite_tex) {
+			m_upSpriteRenderer->DrawSprite2D(p_sprite_tex, 40.0f, 40.0f, 128.0f, 128.0f);
+			if (m_upPlayer) {
+				DirectX::XMFLOAT3 head_pos = m_upPlayer->GetPosition();
+				head_pos.y += 2.6f;
+				m_upSpriteRenderer->DrawSprite3D(p_sprite_tex, head_pos, 0.8f, 0.8f);
+			}
+		}
+	}
 	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する
 	// (ImGuiオーバーレイ前・デバッグコライダー描画前のゲーム描画だけを保存する).
 	p_dx12->CaptureForRewind();

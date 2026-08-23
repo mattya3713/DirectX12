@@ -43,6 +43,7 @@ public:
 private:
 	std::shared_ptr<MmdlRenderer> m_pMmdlRenderer;
 	std::unique_ptr<DirectionLight> m_upDirectionLight; // 平行光源(デバッグパネルで方向・色を調整可能).
+	std::unique_ptr<SpriteRenderer> m_upSpriteRenderer; // Sprite2D/Sprite3D描画基盤.
 
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Boss>        m_upBoss;
