@@ -262,6 +262,8 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
     <ClInclude Include="SourceCode\00_Game\70_Physics\PhysicsBody.h" />
+    <ClInclude Include="SourceCode\00_Game\50_Enemy\Definition\EnemyDefinition.h" />
+    <ClInclude Include="SourceCode\00_Game\50_Enemy\Definition\EnemyDefinitionCatalog.h" />
     <ClInclude Include="SourceCode\00_Game\80_CutScene\CutSceneData.h" />
     <ClInclude Include="SourceCode\00_Game\80_CutScene\CutScenePlayer.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\CutSceneEditor.h" />
