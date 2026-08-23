@@ -14,6 +14,7 @@
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
+#include "99_Utility/Debug/Imgui/SoundEventEditor.h"
 #include "99_Utility/ObjectPool/ObjectPool.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
@@ -169,6 +170,8 @@ void Player::ProcessAttackHits()
 		AddUltValue(kUltGainPerHit, PlayerAccess::ComboEconomyKey{});
 
 		PlayEffectAtWorldPos("hit", info.ContactPoint); // ヒットパーティクル(コンボフローとは独立の演出).
+
+		SoundEventEditor::PlayCombatEvent("attack_hit"); // Sound Eventで定義されていればSE再生.
 
 		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
 			p_debug_log->LogInfo("Attack Hit! Combo=" + std::to_string(GetCombo())
