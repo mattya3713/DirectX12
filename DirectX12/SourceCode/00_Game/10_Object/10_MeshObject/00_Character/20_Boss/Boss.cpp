@@ -6,6 +6,8 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/21_Attack2/Attack2.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "99_Utility/Ragdoll/RagdollDefinition.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlMesh.h"
+#include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlActor.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/22_BeamAttack/BeamAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/23_JumpAttack/JumpAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/24_SpinAttack/SpinAttack.h"
@@ -107,13 +109,23 @@ bool Boss::ActivateDeathRagdoll()
 
 	if (m_Ragdoll.IsActive()) { return true; }
 
-	// TODO(Phase3): 実ボーンワールド位置からの引き継ぎに置き換える.
+	// 実ボーンワールド位置からの引き継ぎ(取得できないボーンはBoss位置で代用).
 	std::vector<DirectX::XMFLOAT3> pose(s_Definition.Bones.size(), GetPosition());
+	MMdlMesh* p_mesh = dynamic_cast<MMdlMesh*>(m_spMesh.get());
+	MmdlActor* p_actor = p_mesh ? p_mesh->GetActor() : nullptr;
 	for (size_t i = 0; i < pose.size(); ++i)
 	{
-		pose[i].y += 1.0f + static_cast<float>(i) * 0.4f;
+		DirectX::XMFLOAT3 bone_pos{};
+		if (p_actor &&
+		    const_cast<MmdlActor*>(p_actor)->TryGetBoneWorldPosition(s_Definition.Bones[i].BoneName, bone_pos))
+		{
+			pose[i] = bone_pos;
+		}
+		else
+		{
+			pose[i].y += 1.0f + static_cast<float>(i) * 0.4f;
+		}
 	}
-
 	return m_Ragdoll.Activate(pose);
 }
 

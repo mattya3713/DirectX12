@@ -32,6 +32,9 @@ public:
 	float GetCurrentAnimationSeconds() const override;
 	void SetPlaybackSpeed(float Speed) override;
 
+	// ラグドール等の外部参照用(所有Actorへの直接アクセス).
+	MmdlActor* GetActor() noexcept { return m_upActor.get(); }
+
 #if _DEBUG
 	float GetLocalHeight() const override;
 #endif
