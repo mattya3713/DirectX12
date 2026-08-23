@@ -141,11 +141,17 @@ void MstcActor::CreateResources()
 	bool use_normal_map = false;
 	if (!mstc.MaterialPath.empty())
 	{
-		const std::filesystem::path material_path = m_FilePath.parent_path() / mstc.MaterialPath;
-		if (RuntimeFormatIO::ReadMmat(material_path, material))
+		// マテリアルはmsknと同じ規約(MSTCの親ディレクトリの兄弟"mmat"ディレクトリ)で
+		// 解決し、見つからない場合はMSTCと同じディレクトリへフォールバックする.
+		const std::filesystem::path shared_material_path =
+			m_FilePath.parent_path().parent_path() / "mmat" / mstc.MaterialPath;
+		const std::filesystem::path local_material_path =
+			m_FilePath.parent_path() / mstc.MaterialPath;
+		if (!RuntimeFormatIO::ReadMmat(shared_material_path, material))
 		{
-			use_normal_map = !material.NormalMapTexturePath.empty();
+			RuntimeFormatIO::ReadMmat(local_material_path, material);
 		}
+		use_normal_map = !material.NormalMapTexturePath.empty();
 	}
 
 	// ===== Transform Constant Buffer (b1. 永続マップで即座に書き換え可能にする) =====
