@@ -2,8 +2,8 @@
 
 float4 PS(Output input) : SV_TARGET
 {
-	float3 light = normalize(float3(1, -1, 1)); //光の向かうベクトル(平行光線)
-    float3 lightColor = float3(1, 1, 1); //ライトのカラー(1,1,1で真っ白)
+	float3 light = normalize(lightDirection.xyz); //光の向かうベクトル(平行光線. DirectionLightからCBuffer経由で受ける)
+    float3 lightCol = lightColor.rgb; //ライトのカラー(DirectionLightからCBuffer経由で受ける)
 
 	//ディフューズ計算
     float diffuseB = saturate(dot(-light, input.normal.xyz));
@@ -28,6 +28,7 @@ float4 PS(Output input) : SV_TARGET
 	float4 color = saturate(toonDif //輝度(トゥーン)
 		* diffuse //ディフューズ色
 		* texColor //テクスチャカラー
+		* float4(lightCol, 1) //ライト色(DirectionLightで調整可能にするため乗算)
 		* sph.Sample(smp, sphereMapUV)) //スフィアマップ(乗算)
 		+ float4(specularB * specular.rgb, 1) //スペキュラー
 		+ float4(texColor.xyz * ambient * 0.5, 1); //アンビエント(明るくなりすぎるので0.5にしてます)

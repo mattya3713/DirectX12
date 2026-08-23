@@ -43,6 +43,10 @@ cbuffer SceneBuffer : register(b0)
     float4x4 proj;
     float3 eye;
     float padding;
+    float4x4 lightView;      // 光源視点ビュー行列(シャドウマッピング用)
+    float4x4 lightProj;      // 光源視点正射影行列(シャドウマッピング用)
+    float4 lightDirection;   // xyz:光の進行方向(正規化済み), w:シャドウバイアス
+    float4 lightColor;       // rgb:ライト色, a:影サンプリング有効フラグ
 };
 
 cbuffer Transform : register(b1)
@@ -65,4 +69,7 @@ Texture2D<float4> tex : register(t0);
 Texture2D<float4> toon : register(t1);
 Texture2D<float4> sph : register(t2);
 
-StructuredBuffer<float4x4> boneTransforms : register(t3);
+StructuredBuffer<float4x4> boneTransforms : register(t3); // 頂点シェーダー用(スキニング).
+Texture2D<float> ShadowMap : register(t3);                // ピクセルシェーダー用(シャドウマップ. ルート署名上ステージが分離されているためt3を再利用).
+
+SamplerComparisonState smpShadow : register(s2); // シャドウマップ比較用サンプラー(SampleCmp用).

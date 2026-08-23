@@ -84,6 +84,11 @@ public:
 		DirectX::XMMATRIX view;//ビュー行列
 		DirectX::XMMATRIX proj;//プロジェクション行列
 		DirectX::XMFLOAT3 eye;//視点座標
+		float padding;//パディング(eyeとのアラインメント維持)
+		DirectX::XMMATRIX lightView;//光源視点ビュー行列(シャドウマッピング用)
+		DirectX::XMMATRIX lightProj;//光源視点正射影行列(シャドウマッピング用)
+		DirectX::XMFLOAT4 lightDirection;//ライト方向(xyz:正規化済み進行方向, w:シャドウバイアス)
+		DirectX::XMFLOAT4 lightColor;//ライト色(rgb:色, a:影適用フラグ(1.0で有効))
 	};
 
 public:
@@ -97,6 +102,13 @@ public:
 
 	// カメラ行列を設定する(呼び出し側でCameraBase派生クラスから取得して渡す).
 	void SetCamera(const DirectX::XMMATRIX& View, const DirectX::XMMATRIX& Proj, const DirectX::XMFLOAT3& Eye);
+
+	// 平行光源を設定する(呼び出し側でDirectionLightから取得して渡す. ShadowEnableは影サンプリングのON/OFF).
+	void SetLight(
+		const DirectX::XMMATRIX& LightView,
+		const DirectX::XMMATRIX& LightProj,
+		const DirectX::XMFLOAT4& Direction,
+		const DirectX::XMFLOAT4& Color);
 
 	// UseOffscreenSceneがtrueならシーンカラーバッファへ、falseならバックバッファへ直接描画する.
 	void BeginDraw(bool UseOffscreenScene);
@@ -264,6 +276,12 @@ private:
 	DirectX::XMMATRIX						m_ViewMatrix;
 	DirectX::XMMATRIX						m_ProjMatrix;
 	DirectX::XMFLOAT3						m_EyePosition;
+
+	// SetLight()で設定される平行光源(UpdateSceneBuffer()でSceneDataへ書き込む).
+	DirectX::XMMATRIX						m_LightViewMatrix;
+	DirectX::XMMATRIX						m_LightProjMatrix;
+	DirectX::XMFLOAT4						m_LightDirection;
+	DirectX::XMFLOAT4						m_LightColor;
 
 	// フェンス類.
 	MyComPtr<ID3D12Fence>					m_pFence;				// 処理待ち柵.

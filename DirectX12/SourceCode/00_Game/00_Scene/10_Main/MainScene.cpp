@@ -7,6 +7,7 @@
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlMesh.h"
+#include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
 #endif
@@ -74,6 +75,7 @@ void MainScene::Create()
 
 	try {
 		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
+		m_upDirectionLight = std::make_unique<DirectionLight>();
 	}
 	catch (const std::runtime_error& Msg) {
 		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
@@ -244,6 +246,29 @@ void MainScene::Update()
 				active_camera->GetProjMatrix(),
 				active_camera->GetPosition());
 		}
+	}
+
+	// 平行光源をDirectX12側へ反映(UpdateSceneBuffer()がシーン定数バッファへ書き込む).
+	if (m_upDirectionLight) {
+#if _DEBUG
+		m_upDirectionLight->DrawDebugPanel();
+#endif
+		const DirectX::XMFLOAT4 light_direction{
+			m_upDirectionLight->GetDirection().x,
+			m_upDirectionLight->GetDirection().y,
+			m_upDirectionLight->GetDirection().z,
+			m_upDirectionLight->GetShadowBias() };
+		// a=1で影サンプリング有効(シャドウパス未実装の間はシェーダー側フラグで影はまだ出ない).
+		const DirectX::XMFLOAT4 light_color{
+			m_upDirectionLight->GetColor().x,
+			m_upDirectionLight->GetColor().y,
+			m_upDirectionLight->GetColor().z,
+			0.0f };
+		p_dx12->SetLight(
+			m_upDirectionLight->GetLightViewMatrix(),
+			m_upDirectionLight->GetLightProjMatrix(),
+			light_direction,
+			light_color);
 	}
 
 	if (p_dx12) {

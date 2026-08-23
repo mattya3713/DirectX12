@@ -36,6 +36,10 @@ DirectX12::DirectX12()
 	, m_ViewMatrix		{ DirectX::XMMatrixIdentity() }
 	, m_ProjMatrix		{ DirectX::XMMatrixIdentity() }
 	, m_EyePosition		{ 0.0f, 0.0f, 0.0f }
+	, m_LightViewMatrix { DirectX::XMMatrixIdentity() }
+	, m_LightProjMatrix { DirectX::XMMatrixIdentity() }
+	, m_LightDirection  { 0.0f, -1.0f, 0.0f, 0.003f }
+	, m_LightColor      { 1.0f, 1.0f, 1.0f, 0.0f } // a=0: SetLight()未呼び出しの間は影サンプリングを無効化.
 {
 }
 
@@ -118,6 +122,19 @@ void DirectX12::SetCamera(const DirectX::XMMATRIX& View, const DirectX::XMMATRIX
 	m_EyePosition = Eye;
 }
 
+// 平行光源を設定する(実際のライト状態はDirectionLightクラス側が担当する).
+void DirectX12::SetLight(
+	const DirectX::XMMATRIX& LightView,
+	const DirectX::XMMATRIX& LightProj,
+	const DirectX::XMFLOAT4& Direction,
+	const DirectX::XMFLOAT4& Color)
+{
+	m_LightViewMatrix = LightView;
+	m_LightProjMatrix = LightProj;
+	m_LightDirection  = Direction;
+	m_LightColor      = Color;
+}
+
 // 更新
 void DirectX12::Update()
 {
@@ -132,6 +149,12 @@ void DirectX12::UpdateSceneBuffer()
 		m_pMappedSceneData->view = m_ViewMatrix;
 		m_pMappedSceneData->proj = m_ProjMatrix;
 		m_pMappedSceneData->eye  = m_EyePosition;
+
+		// 平行光源はSetLight()で設定済みのものをそのまま使う(SetLight()未呼び出し時は影無しで動かす).
+		m_pMappedSceneData->lightView      = m_LightViewMatrix;
+		m_pMappedSceneData->lightProj      = m_LightProjMatrix;
+		m_pMappedSceneData->lightDirection = m_LightDirection;
+		m_pMappedSceneData->lightColor     = m_LightColor;
 	}
 	else
 	{
