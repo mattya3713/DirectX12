@@ -88,6 +88,11 @@ public: // Getter・Setter.
 	// パリィ判定の結果(PlayerState::Parryが毎フレーム確認する. EnemyAttackを検出したら成立とみなす).
 	const std::vector<CollisionInfo>& GetParryCollisionEvents() const noexcept { return m_ParryCollider.GetCollisionEvents(); }
 
+#if _DEBUG
+	// Combat Debug HUD用の有効状態取得(表示専用. ロジックは変更しない).
+	bool IsParryColliderActive() const noexcept { return m_ParryCollider.GetActive(); }
+#endif
+
 	// パリィ成立した攻撃の有効化IDを記録する(ProcessHitsがダメージ二重適用を防ぐために参照する).
 	void NotifyParriedAttack(std::uint32_t AttackActivationId) noexcept { m_LastParriedActivationId = AttackActivationId; }
 
