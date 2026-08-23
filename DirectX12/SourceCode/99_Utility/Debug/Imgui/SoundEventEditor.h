@@ -50,6 +50,9 @@ public:
 	// イベント名を指定して再生する(Cooldown中なら無視. Combat等から呼ぶ想定).
 	static void PlayCombatEvent(const char* Name);
 
+	// イベント名を指定して再生中の音を停止する.
+	static void StopCombatEvent(const char* Name);
+
 private:
 	// 試聴/Combatからの再生(Cooldown判定込み).
 	void PlayEvent(SoundEventData& Event);

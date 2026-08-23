@@ -109,6 +109,11 @@ bool SoundManager::LoadWavFile(const std::wstring& FilePath, SoundClip& OutClip)
 
 void SoundManager::Play(const std::string& Name, bool IsLoop, float Volume)
 {
+	PlayEx(Name, Volume, 1.0f, IsLoop);
+}
+
+void SoundManager::PlayEx(const std::string& Name, float Volume, float Pitch, bool IsLoop)
+{
 	if (!m_cpXAudio2) { return; }
 
 	const auto it = m_Clips.find(Name);
@@ -127,21 +132,50 @@ void SoundManager::Play(const std::string& Name, bool IsLoop, float Volume)
 
 	p_voice->SetVolume(Volume);
 
+	if (Pitch != 1.0f) { p_voice->SetFrequencyRatio(Pitch); }
+
 	if (FAILED(p_voice->SubmitSourceBuffer(&buffer)) || FAILED(p_voice->Start()))
 	{
 		p_voice->DestroyVoice();
 		return;
 	}
 
-	m_ActiveVoices.push_back(p_voice);
+	m_ActiveVoices.push_back({ p_voice, Name });
+}
+
+void SoundManager::Stop(const std::string& Name)
+{
+	for (auto it = m_ActiveVoices.begin(); it != m_ActiveVoices.end(); )
+	{
+		if (it->Name == Name)
+		{
+			it->pVoice->Stop();
+			it->pVoice->DestroyVoice();
+			it = m_ActiveVoices.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
+int SoundManager::GetActiveVoiceCount(const std::string& Name) const
+{
+	int count = 0;
+	for (const ActiveVoice& voice : m_ActiveVoices)
+	{
+		if (voice.Name == Name) { ++count; }
+	}
+	return count;
 }
 
 void SoundManager::StopAll()
 {
-	for (IXAudio2SourceVoice* p_voice : m_ActiveVoices)
+	for (ActiveVoice& voice : m_ActiveVoices)
 	{
-		p_voice->Stop();
-		p_voice->DestroyVoice();
+		voice.pVoice->Stop();
+		voice.pVoice->DestroyVoice();
 	}
 	m_ActiveVoices.clear();
 }
@@ -151,11 +185,11 @@ void SoundManager::Update()
 	for (auto it = m_ActiveVoices.begin(); it != m_ActiveVoices.end(); )
 	{
 		XAUDIO2_VOICE_STATE state{};
-		(*it)->GetState(&state);
+		it->pVoice->GetState(&state);
 
 		if (state.BuffersQueued == 0)
 		{
-			(*it)->DestroyVoice();
+			it->pVoice->DestroyVoice();
 			it = m_ActiveVoices.erase(it);
 		}
 		else

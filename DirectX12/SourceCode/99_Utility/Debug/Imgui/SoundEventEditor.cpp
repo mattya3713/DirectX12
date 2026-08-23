@@ -123,6 +123,13 @@ void SoundEventEditor::Draw()
 				p_sound_manager->Play(event.FileName, event.IsLoop, event.Volume);
 			}
 		}
+		ImGui::SameLine();
+		if (ImGui::Button(IMGUI_JP("停止")) && !event.FileName.empty())
+		{
+			if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
+				p_sound_manager->Stop(event.FileName);
+			}
+		}
 	}
 
 	ImGui::Separator();
@@ -145,7 +152,25 @@ void SoundEventEditor::Draw()
 	ImGui::End();
 }
 
-// 試聴/Combatからの再生(Cooldown判定込み).
+// イベント名を指定して再生中の音を停止する.
+void SoundEventEditor::StopCombatEvent(const char* Name)
+{
+	SoundEventEditor* p_editor = ServiceLocator::Get<SoundEventEditor>();
+	if (!p_editor) { return; }
+
+	for (const SoundEventData& event : p_editor->m_Events)
+	{
+		if (event.Name == Name)
+		{
+			if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
+				p_sound_manager->Stop(event.FileName);
+			}
+			return;
+		}
+	}
+}
+
+// 試聴/Combatからの再生(Cooldown・同時再生数上限判定込み).
 void SoundEventEditor::PlayEvent(SoundEventData& Event)
 {
 	const auto now = std::chrono::steady_clock::now();
@@ -163,11 +188,19 @@ void SoundEventEditor::PlayEvent(SoundEventData& Event)
 		}
 	}
 
-	if (!Event.FileName.empty())
+	SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>();
+
+	if (!Event.FileName.empty() && p_sound_manager)
 	{
-		if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
-			p_sound_manager->Play(Event.FileName, Event.IsLoop, Event.Volume);
+		// 同時再生数上限(SoundManagerのアクティブボイスカウントで判定).
+		if (p_sound_manager->GetActiveVoiceCount(Event.FileName) >= Event.MaxVoices)
+		{
+			LogToConsole("SoundEvent: max voices reached: " + Event.Name);
+			m_LastPlayed[cooldown_key] = now;
+			return;
 		}
+
+		p_sound_manager->PlayEx(Event.FileName, Event.Volume, Event.Pitch, Event.IsLoop);
 	}
 
 	m_LastPlayed[cooldown_key] = now;

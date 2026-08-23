@@ -33,6 +33,7 @@
 #include "99_Utility/Debug/Imgui/CombatTuningEditor.h"
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Imgui/ParticleSystemEditor.h"
+#include "99_Utility/Debug/Imgui/SoundEventEditor.h"
 #include "99_Utility/Debug/PlaytestRecorder.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
@@ -74,6 +75,7 @@ MainScene::~MainScene()
 	// カットシーンシステム・キャラクターの非所有参照を破棄前に解除する.
 	ServiceLocator::Provide<CutScenePlayer>(nullptr);
 	ServiceLocator::Provide<ParticleSystem>(nullptr);
+	ServiceLocator::Provide<SoundEventEditor>(nullptr);
 	ServiceLocator::Provide<Player>(nullptr);
 	ServiceLocator::Provide<Boss>(nullptr);
 
@@ -181,6 +183,10 @@ void MainScene::Create()
 		});
 
 		m_upParticleEditor = std::make_unique<ParticleSystemEditor>();
+
+		// Sound Event EditorをServiceLocatorへ登録(Combat等からPlayCombatEventで呼べるように).
+		m_upSoundEventEditor = std::make_unique<SoundEventEditor>();
+		ServiceLocator::Provide<SoundEventEditor>(m_upSoundEventEditor.get());
 
 		// Combat調整値のプリセット(Data\Json\Combat\tuning.json)があれば自動読込.
 		m_upCombatTuningEditor = std::make_unique<CombatTuningEditor>();
@@ -436,6 +442,11 @@ void MainScene::Update()
 	// パーティクル編集ツール(デバッグ用ImGui).
 	if (m_upParticleEditor) {
 		m_upParticleEditor->Draw();
+	}
+
+	// Sound Event編集ツール(デバッグ用ImGui).
+	if (m_upSoundEventEditor) {
+		m_upSoundEventEditor->Draw();
 	}
 #endif
 
