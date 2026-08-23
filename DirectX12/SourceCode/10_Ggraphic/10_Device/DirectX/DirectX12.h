@@ -6,7 +6,7 @@
 //ヘッダ読込.
 #include <cstdint>
 #include <d3d12.h>
-#include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
+#include "d3dx12.h" // /IのData\Library\DirectXTex\Commonを参照(worktree等どんなチェックアウトでも解決する形式).
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\DirectXTex\\DirectXTex.h"
@@ -102,6 +102,12 @@ public:
 
 	// カメラ行列を設定する(呼び出し側でCameraBase派生クラスから取得して渡す).
 	void SetCamera(const DirectX::XMMATRIX& View, const DirectX::XMMATRIX& Proj, const DirectX::XMFLOAT3& Eye);
+
+	// 非同期コンピュートキュー関連(Async Compute).
+	ID3D12CommandQueue* GetComputeQueue() const noexcept { return m_cpComputeQueue.Get(); }
+	ID3D12Fence*        GetComputeFence() const noexcept { return m_pComputeFence.Get(); }
+	UINT64 SignalComputeFence();                    // コンピュートキューからフェンスをシグナルする.
+	void   GraphicsWaitComputeFence(UINT64 Value);  // グラフィックスキューへコンピュート完了待ちを挿入する.
 
 	// 平行光源を設定する(呼び出し側でDirectionLightから取得して渡す. ShadowEnableは影サンプリングのON/OFF).
 	void SetLight(
@@ -292,6 +298,9 @@ private:
 	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocators[FrameBufferCount]; // コマンドアロケータ(バックバッファごとに1つ. 命令をためておくメモリ領域).
 	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
 	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// コマンドキュー.
+	MyComPtr<ID3D12CommandQueue>			m_cpComputeQueue;		// 非同期コンピュートキュー(Async Compute).
+	MyComPtr<ID3D12Fence>					m_pComputeFence;		// グラフィックス⇔コンピュート同期フェンス.
+	UINT64									m_ComputeFenceValue = 0; // コンピュートフェンスの現在値.
 	UINT									m_FrameIndex;			// 現在描画中のバックバッファのインデックス(BeginDraw()で設定).
 	bool									m_bUseOffscreenScene = false; // BeginDraw()に渡された描画先モード(RestoreMainRenderTargets()用).
 

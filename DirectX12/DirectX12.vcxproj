@@ -322,7 +322,10 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\50_Enemy\Definition\EnemyDefinition.h" />
     <ClInclude Include="SourceCode\00_Game\50_Enemy\Definition\EnemyDefinitionCatalog.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\PlaytestRecorder.h" />
+    <ClInclude Include="SourceCode\99_Utility\Async\AsyncModelLoader.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Compute\AsyncComputeDemo.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ParticleSystemEditor.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\SoundEventEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\CombatTuningEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\BTEditorModel.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
@@ -477,7 +480,10 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\CombatTuning.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\PlaytestRecorder.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Async\AsyncModelLoader.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Compute\AsyncComputeDemo.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ParticleSystemEditor.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\SoundEventEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\CombatTuningEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTEditorModel.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />

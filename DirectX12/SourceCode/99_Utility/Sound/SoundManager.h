@@ -34,6 +34,15 @@ public:
 	// 名前を指定して再生する(IsLoop=trueでループ再生. Volumeは0.0〜1.0).
 	void Play(const std::string& Name, bool IsLoop = false, float Volume = 1.0f);
 
+	// ピッチ・音量を指定して再生する(Sound Event等の拡張用. Pitchは0.5〜2.0程度を推奨).
+	void PlayEx(const std::string& Name, float Volume = 1.0f, float Pitch = 1.0f, bool IsLoop = false);
+
+	// 名前を指定して再生中の音だけ停止する(Sound Eventの個別停止用).
+	void Stop(const std::string& Name);
+
+	// 指定した名前で現在实际に再生中のボイス数を取得する(同時再生数上限判定用).
+	int GetActiveVoiceCount(const std::string& Name) const;
+
 	// 再生中の音を全て停止する.
 	void StopAll();
 
@@ -56,7 +65,9 @@ private:
 	bool LoadWavFile(const std::wstring& FilePath, SoundClip& OutClip) const;
 
 private:
-	// 再生中のボイス1つ分の管理情報(StopLooping()が名前・ループ有無で絞り込むために保持する).
+	// 再生中のボイス1つ分の管理情報.
+	// Nameはイベント単位の停止(Stop)・同時再生数カウント(GetActiveVoiceCount)に、
+	// IsLoopはループ音だけを止めるStopLooping()の絞り込みに使う.
 	struct ActiveVoice
 	{
 		IXAudio2SourceVoice* Voice  = nullptr;

@@ -1,4 +1,6 @@
 ﻿#include "DirectX12.h"
+
+#include "10_Ggraphic/20_Render/Compute/AsyncComputeDemo.h"
 #include "99_Utility/String/FilePath/FilePath.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "10_Ggraphic/20_Render/Rewind/FrameRewind.h"
@@ -144,6 +146,16 @@ void DirectX12::SetLight(
 void DirectX12::Update()
 {
 	UpdateSceneBuffer(); // 更新
+
+	// Async Computeデモ(180フレームごとにコンピュートキューで検証計算を実行し、
+	// フェンス同期後にCPUで結果を読み戻して検証する).
+	static AsyncComputeDemo s_async_compute_demo;
+	static bool s_demo_initialized = false;
+	if (!s_demo_initialized)
+	{
+		s_demo_initialized = s_async_compute_demo.Initialize(m_pDevice12.Get(), *this);
+	}
+	if (s_demo_initialized) { s_async_compute_demo.Tick(*this); }
 }
 
 void DirectX12::UpdateSceneBuffer()
@@ -587,6 +599,27 @@ MyComPtr<ID3D12Resource> DirectX12::GetTextureByPath(const char* texpath)
 }
 
 // GPUの完了待ち.
+// コンピュートキューからフェンスをシグナルする(Async Compute).
+UINT64 DirectX12::SignalComputeFence()
+{
+	++m_ComputeFenceValue;
+
+	// NOTE: MyAssert::IsFailedのテンプレート制約がメンバ関数ポインタ+複数引数の
+	//       組み合わせで解決しないため、ここでは直接HRESULTを判定する.
+	if (FAILED(m_cpComputeQueue->Signal(m_pComputeFence.Get(), m_ComputeFenceValue)))
+	{
+		return m_ComputeFenceValue;
+	}
+
+	return m_ComputeFenceValue;
+}
+
+// グラフィックスキューへコンピュート完了待ちを挿入する(キュー間同期).
+void DirectX12::GraphicsWaitComputeFence(UINT64 Value)
+{
+	if (Value == 0) { return; }
+	m_pCmdQueue->Wait(m_pComputeFence.Get(), Value);
+}
 void DirectX12::WaitForGPU()
 {
 	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);
@@ -693,6 +726,18 @@ void DirectX12::CreateCommandObject(
 		&ID3D12Device::CreateCommandQueue, m_pDevice12.Get(),
 		&CmdQueueDesc,
 		IID_PPV_ARGS(CmdQueue.ReleaseAndGetAddressOf()));
+
+	// 非同期コンピュートキュー(グラフィックスキューと並行実行用. Async Compute).
+	D3D12_COMMAND_QUEUE_DESC ComputeQueueDesc = CmdQueueDesc;
+	ComputeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+
+	MyAssert::IsFailed(
+		_T("コンピュートキューの作成"),
+		&ID3D12Device::CreateCommandQueue, m_pDevice12.Get(),
+		&ComputeQueueDesc,
+		IID_PPV_ARGS(m_cpComputeQueue.ReleaseAndGetAddressOf()));
+
+	CreateFance(m_pComputeFence); // グラフィックス⇔コンピュート間の同期フェンス.
 }
 
 // スワップチェーンの作成.

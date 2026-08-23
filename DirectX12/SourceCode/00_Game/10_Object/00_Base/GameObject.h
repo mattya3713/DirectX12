@@ -2,12 +2,15 @@
 
 #include <DirectXMath.h>
 
+#include "99_Utility/ECS/EntityTypes.h"
 #include "99_Utility/Transform/Transform.h"
 
 /**********************************************************************************
-* @author    : mattya3713.
-* @date      : 2026/08/10.
-* @brief     : ゲーム内オブジェクトの具象基底クラス. 
+* @author    : mattya3713 / Coder 青龍(せいりゅう).
+* @date      : 2026/08/10 / 2026-08-23 ECSブリッジ追加.
+* @brief     : ゲーム内オブジェクトの具象基底クラス.
+*            : ECS WorldのEntityへの非所有参照(Handle)を持てる.
+*            : Entityの実体・寿命はWorldが所有するため二重管理しないこと.
 **********************************************************************************/
 
 class GameObject
@@ -45,6 +48,11 @@ public: // Getter・Setter.
 	// 目標Yaw角(度)へ最短経路でラープ回転する(Player/Enemy共通で使うため本クラスに置く).
 	void RotateToTarget(float TargetAngleDeg, float SpeedDegPerSec) noexcept;
 
+	// ECS Entityハンドル(非所有参照. 実体はWorldが所有する).
+	void SetEntityHandle(const ECS::Entity& Entity) noexcept { m_Entity = Entity; }
+	const ECS::Entity& GetEntityHandle() const noexcept { return m_Entity; }
+
 protected:
-	Transform m_Transform; // 位置・回転・スケール.
+	Transform    m_Transform;              // 位置・回転・スケール.
+	ECS::Entity  m_Entity{};               // ECS Entityハンドル(EntityTypes.hの既定値=無効).
 };

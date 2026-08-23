@@ -20,6 +20,9 @@ class MmdlResource final
 public:
 	explicit MmdlResource(const std::filesystem::path& FilePath);
 
+	// MSKN/MCLPファイルからCPUデータ(頂点/ボーン/クリップ)を読み込む(非同期ロードのワーカーからも呼ばれる).
+	void LoadFromFiles();
+
 	MmdlResource(const MmdlResource&) = delete;
 	MmdlResource& operator=(const MmdlResource&) = delete;
 

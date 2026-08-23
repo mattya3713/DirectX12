@@ -87,6 +87,10 @@ public:
 	// 既定値へ戻す.
 	static void ResetToDefaults() noexcept;
 
+	// 各フィールドを妥当範囲へクランプする(JSON読込値の不正値・極端値防止用.
+	// 範囲はEditorのスライダー範囲と一致させる).
+	static void ClampToValidRange(CombatTuningData& Tuning) noexcept;
+
 	// プリセットとしてJSONへ保存/から読込(既定値との差分ではなく全値を書き出す).
 	static bool Save(const std::filesystem::path& Path);
 	static bool Load(const std::filesystem::path& Path);

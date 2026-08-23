@@ -91,7 +91,6 @@ private:
 
 	// FinalMatrix全ボーン分書き込む.
 	void UpdateBoneMatrices();
-	void LoadRuntimeModel(const std::filesystem::path& FilePath);
 
 private:
 	MmdlRenderer& m_Renderer;
