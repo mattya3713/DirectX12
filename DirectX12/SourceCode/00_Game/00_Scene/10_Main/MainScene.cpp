@@ -34,6 +34,8 @@
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Imgui/ParticleSystemEditor.h"
 #include "99_Utility/Debug/Imgui/SoundEventEditor.h"
+#include "99_Utility/ECS/World.h"
+#include "99_Utility/ECS/SampleComponents.h"
 #include "99_Utility/Debug/PlaytestRecorder.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
@@ -409,6 +411,46 @@ void MainScene::Update()
 	if (m_upParticleSystem && !is_paused && !m_IsGameOver) {
 		m_upParticleSystem->Update(GameTime::GetDeltaTime());
 	}
+
+#if _DEBUG
+	// ECS動作確認サンプル(雑魚敵/Ragdoll移行前の最小構成. 本格移行は別タスク).
+	static ECS::World s_EcsSampleWorld;
+	static bool s_EcsInitialized = false;
+	if (!s_EcsInitialized)
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			const ECS::Entity entity = s_EcsSampleWorld.CreateEntity();
+			auto& transform = s_EcsSampleWorld.AddComponent<ECS::TransformComponent>(entity);
+			transform.Position = { static_cast<float>(i), 0.0f, 0.0f };
+			s_EcsSampleWorld.AddComponent<ECS::HealthComponent>(entity);
+		}
+
+		// 既存GameObjectからEntityを参照するブリッジサンプル.
+		if (m_upPlayer) {
+			m_upPlayer->SetEntityHandle(s_EcsSampleWorld.CreateEntity());
+		}
+
+		s_EcsSampleWorld.AddSystem("sample_move", [](ECS::World& world, float delta_time) {
+			world.ForEach<ECS::TransformComponent>([delta_time](const ECS::Entity&, ECS::TransformComponent& transform) {
+				transform.Position.x += 0.5f * delta_time;
+			});
+		});
+
+		s_EcsInitialized = true;
+
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogInfo("ECS sample: entities=" + std::to_string(s_EcsSampleWorld.GetAliveEntityCount())
+				+ " componentTypes=" + std::to_string(s_EcsSampleWorld.GetComponentTypeCount())
+				+ " systems=" + std::to_string(s_EcsSampleWorld.GetSystemCount()));
+		}
+	}
+
+	if (!is_paused && !m_IsGameOver) {
+		s_EcsSampleWorld.RunSystems(GameTime::GetDeltaTime());
+		s_EcsSampleWorld.FlushDestroyed();
+	}
+#endif
 
 #if _DEBUG
 	// カットシーン編集ツールとテスト再生(デバッグ用ImGui).
