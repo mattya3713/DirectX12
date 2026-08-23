@@ -1,0 +1,62 @@
+{
+  "Name": "test_cutscene",
+  "TotalDuration": 3.0,
+  "Tracks": [
+    {
+      "Type": 0,
+      "TrackName": "Camera",
+      "TargetMode": 1,
+      "TargetKey": "",
+      "AnimClipName": "",
+      "IsLoopAnim": false,
+      "SoundName": "",
+      "IsLoopSound": false,
+      "Keyframes": [
+        {
+          "Time": 0.0,
+          "Position": [0.0, 5.0, -6.0],
+          "RotationDeg": [0.0, 0.0, 0.0],
+          "LookAt": [0.0, 1.0, 4.0],
+          "Scale": 1.0,
+          "Easing": 8
+        },
+        {
+          "Time": 3.0,
+          "Position": [2.0, 3.5, -7.0],
+          "RotationDeg": [0.0, 0.0, 0.0],
+          "LookAt": [0.0, 1.0, 6.0],
+          "Scale": 1.0,
+          "Easing": 9
+        }
+      ]
+    },
+    {
+      "Type": 1,
+      "TrackName": "SkinMesh_Boss",
+      "TargetMode": 1,
+      "TargetKey": "Boss",
+      "AnimClipName": "boss_walk1",
+      "IsLoopAnim": false,
+      "SoundName": "",
+      "IsLoopSound": false,
+      "Keyframes": [
+        {
+          "Time": 0.0,
+          "Position": [0.0, 0.0, 8.0],
+          "RotationDeg": [0.0, 180.0, 0.0],
+          "LookAt": [0.0, 0.0, 0.0],
+          "Scale": 1.05,
+          "Easing": 8
+        },
+        {
+          "Time": 3.0,
+          "Position": [0.0, 0.0, 5.0],
+          "RotationDeg": [0.0, 180.0, 0.0],
+          "LookAt": [0.0, 0.0, 0.0],
+          "Scale": 1.05,
+          "Easing": 9
+        }
+      ]
+    }
+  ]
+}

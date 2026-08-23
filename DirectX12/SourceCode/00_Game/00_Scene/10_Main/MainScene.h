@@ -10,6 +10,10 @@ class Boss;
 class ModelPreviewPanel;
 class ThirdPersonCamera;
 class LockOnCamera;
+class CutScenePlayer;
+#if _DEBUG
+class CutSceneEditor;
+#endif
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -34,6 +38,11 @@ private:
 
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Boss>        m_upBoss;
+
+	std::unique_ptr<CutScenePlayer> m_upCutScenePlayer; // カットシーンランタイム再生.
+#if _DEBUG
+	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
+#endif
 
 	ThirdPersonCamera* m_pThirdPersonCamera = nullptr; // 追従対象を渡すための非所有ポインタ(所有はCameraManager).
 	LockOnCamera*      m_pLockOnCamera      = nullptr; // Player/Boss位置を渡すための非所有ポインタ(所有はCameraManager).

@@ -21,6 +21,7 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
+#include "00_Game/80_CutScene/CutScenePlayer.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
@@ -30,10 +31,19 @@
 #include "99_Utility/String/String.h"
 #include "00_Game/00_Scene/SceneManager.h"
 
+#if _DEBUG
+#include "99_Utility/Debug/Imgui/CutSceneEditor.h"
+#endif
+
 MainScene::MainScene() = default;
 
 MainScene::~MainScene()
 {
+	// カットシーンシステム・キャラクターの非所有参照を破棄前に解除する.
+	ServiceLocator::Provide<CutScenePlayer>(nullptr);
+	ServiceLocator::Provide<Player>(nullptr);
+	ServiceLocator::Provide<Boss>(nullptr);
+
 	if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 		p_combat_coordinator->Clear();
 	}
@@ -91,6 +101,18 @@ void MainScene::Create()
 		if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 			p_combat_coordinator->Initialize(PlayerCombatView{ *m_upPlayer }, BossCombatView{ *m_upBoss });
 		}
+
+		// カットシーンシステム用に実インスタンスを非所有参照として登録する
+		// (CutScenePlayerのExistingInstanceトラックがServiceLocator経由で解決する).
+		ServiceLocator::Provide<Player>(m_upPlayer.get());
+		ServiceLocator::Provide<Boss>(m_upBoss.get());
+
+		m_upCutScenePlayer = std::make_unique<CutScenePlayer>();
+		ServiceLocator::Provide<CutScenePlayer>(m_upCutScenePlayer.get());
+
+#if _DEBUG
+		m_upCutSceneEditor = std::make_unique<CutSceneEditor>();
+#endif
 	}
 	catch (const std::runtime_error& Msg) {
 		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
@@ -269,6 +291,27 @@ void MainScene::Update()
 	if (m_upBoss && !is_paused && !m_IsGameOver) {
 		m_upBoss->Update();
 	}
+
+	// カットシーン再生(Player/Boss更新後に呼び、カットシーン側のTransformを優先させる).
+	if (m_upCutScenePlayer && !is_paused && !m_IsGameOver) {
+		m_upCutScenePlayer->Update(GameTime::GetDeltaTime());
+	}
+
+#if _DEBUG
+	// カットシーン編集ツールとテスト再生(デバッグ用ImGui).
+	if (m_upCutSceneEditor) {
+		m_upCutSceneEditor->Draw();
+
+		if (m_upCutScenePlayer && m_upCutScenePlayer->IsPlaying()) {
+			ImGui::Begin("Cut Scene Player", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text(IMGUI_JP("再生中: %.2f秒"), m_upCutScenePlayer->GetElapsedTime());
+			if (ImGui::Button(IMGUI_JP("強制停止"))) {
+				m_upCutScenePlayer->Stop();
+			}
+			ImGui::End();
+		}
+	}
+#endif
 
 #if _DEBUG
 	// 勝敗確定後だと分かる表示(デバッグ用ImGui).

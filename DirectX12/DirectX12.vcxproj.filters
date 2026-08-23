@@ -218,6 +218,9 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
     <ClInclude Include="SourceCode\00_Game\70_Physics\PhysicsBody.h" />
+    <ClInclude Include="SourceCode\00_Game\80_CutScene\CutSceneData.h" />
+    <ClInclude Include="SourceCode\00_Game\80_CutScene\CutScenePlayer.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\CutSceneEditor.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\BossCombatView.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\PlayerCombatView.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
@@ -340,6 +343,9 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\CombatCoordinator.cpp" />
     <ClCompile Include="SourceCode\00_Game\70_Physics\PhysicsBody.cpp" />
+    <ClCompile Include="SourceCode\00_Game\80_CutScene\CutSceneData.cpp" />
+    <ClCompile Include="SourceCode\00_Game\80_CutScene\CutScenePlayer.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\CutSceneEditor.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\BossCombatView.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\PlayerCombatView.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
