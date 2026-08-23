@@ -13,6 +13,8 @@ class DirectionLight;
 class SpriteRenderer;
 class Player;
 class Boss;
+class Enemy;
+class EnemyDefinitionCatalog;
 class ModelPreviewPanel;
 class ThirdPersonCamera;
 class LockOnCamera;
@@ -51,6 +53,16 @@ private:
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Boss>        m_upBoss;
 
+	// レベルJSONのEnemySpawnsから生成した雑魚敵(所有はこのシーン).
+	std::unique_ptr<EnemyDefinitionCatalog> m_upEnemyCatalog; // 遅延ロード(初回スポーン時にJSONから読む).
+	std::vector<std::unique_ptr<Enemy>>     m_upEnemies;
+#if _DEBUG
+	// 敵スポーン結果のDEBUG表示用(生成数/除外理由).
+	size_t m_EnemySpawnPlanned = 0;
+	size_t m_EnemySpawnedCount = 0;
+	std::vector<std::pair<std::string, std::string>> m_EnemySpawnIssues; // (DefinitionId, 理由).
+#endif
+
 	std::unique_ptr<CutScenePlayer> m_upCutScenePlayer; // カットシーンランタイム再生.
 	std::unique_ptr<ParticleSystem> m_upParticleSystem; // パーティクルシステム(VFX基盤).
 #if _DEBUG
@@ -66,6 +78,7 @@ private:
 	std::filesystem::path                       m_LevelPath; // 現在読み込んでいるレベルJSON.
 
 	void LoadLevelFromJson(const std::filesystem::path& Path); // レベルJSONから静的オブジェクト・スポーンを再構築する.
+	void SpawnEnemiesFromLevel(const struct LevelDesc& Level); // 敵スポーン計画をEnemy実体へ変換する(失敗個体はログしてスキップ).
 
 	ThirdPersonCamera* m_pThirdPersonCamera = nullptr; // 追従対象を渡すための非所有ポインタ(所有はCameraManager).
 	LockOnCamera*      m_pLockOnCamera      = nullptr; // Player/Boss位置を渡すための非所有ポインタ(所有はCameraManager).

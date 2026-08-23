@@ -25,6 +25,10 @@
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
+#include "00_Game/50_Enemy/Definition/EnemyDefinitionCatalog.h"
+#include "00_Game/50_Enemy/Factory/EnemyFactory.h"
+#include "00_Game/50_Enemy/Planner/EnemySpawnPlanner.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/80_CutScene/CutScenePlayer.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
@@ -401,6 +405,15 @@ void MainScene::Update()
 		m_upBoss->Update();
 	}
 
+	// 雑魚敵AI更新(Playerをターゲットとして毎フレーム渡す).
+	if (!is_paused && !m_IsGameOver && !m_upEnemies.empty()) {
+		const DirectX::XMFLOAT3 player_pos = m_upPlayer ? m_upPlayer->GetPosition() : DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+		for (std::unique_ptr<Enemy>& enemy : m_upEnemies) {
+			enemy->SetTargetPos(player_pos);
+			enemy->Update();
+		}
+	}
+
 	// カットシーン再生(Player/Boss更新後に呼び、カットシーン側のTransformを優先させる).
 	if (m_upCutScenePlayer && !is_paused && !m_IsGameOver) {
 		m_upCutScenePlayer->Update(GameTime::GetDeltaTime());
@@ -491,6 +504,17 @@ void MainScene::Update()
 
 	// 戦闘状態一括表示(HP/State/コンボ/必殺ゲージ/TimeScale/コライダー有効状態).
 	CombatDebugHud::Draw(m_upPlayer.get(), m_upBoss.get());
+
+	// 敵スポーン結果(生成数/除外数/失敗理由).
+	ImGui::Begin("Enemy Spawns", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Text("Alive   : %d", static_cast<int>(m_upEnemies.size()));
+	ImGui::Text("Planned : %d", static_cast<int>(m_EnemySpawnPlanned));
+	ImGui::Text("Spawned : %d", static_cast<int>(m_EnemySpawnedCount));
+	ImGui::Text("Excluded: %d", static_cast<int>(m_EnemySpawnIssues.size()));
+	for (const auto& [id, reason] : m_EnemySpawnIssues) {
+		ImGui::Text("  - %s (%s)", id.c_str(), reason.c_str());
+	}
+	ImGui::End();
 #endif
 }
 
@@ -538,7 +562,88 @@ void MainScene::LoadLevelFromJson(const std::filesystem::path& Path)
 		m_upBoss->SetTransform(transform);
 	}
 
+	// 敵実体の再構築(シーン再入・レベル再ロードでコライダーが二重登録されないよう既存を先に破棄).
+	m_upEnemies.clear();
+	if (!level.EnemySpawns.empty() && m_pMmdlRenderer) {
+		SpawnEnemiesFromLevel(level);
+	}
+
 	m_LevelPath = Path;
+}
+
+void MainScene::SpawnEnemiesFromLevel(const LevelDesc& Level)
+{
+	// カタログは初回スポーン時に1度だけJSONから読む(再ロードでは流用する).
+	if (!m_upEnemyCatalog) {
+		auto catalog = std::make_unique<EnemyDefinitionCatalog>();
+		if (!catalog->Load("Data/Json/Enemy/Definitions.json")) {
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogError("EnemyDefinitionCatalog: failed to load Data/Json/Enemy/Definitions.json");
+			}
+			return;
+		}
+		m_upEnemyCatalog = std::move(catalog);
+	}
+
+#if _DEBUG
+	m_EnemySpawnIssues.clear();
+#endif
+
+	const EnemySpawnPlanner planner(*m_upEnemyCatalog);
+	const EnemySpawnPlan plan = planner.Plan(Level.EnemySpawns);
+	const EnemyFactory factory(*m_upEnemyCatalog);
+
+#if _DEBUG
+	m_EnemySpawnPlanned = plan.Count();
+#endif
+
+	for (const EnemySpawnPlanEntry& entry : plan.Entries) {
+		EnemySpawnRequest request{};
+		request.Definition        = entry.Definition;
+		request.InitialTransform  = entry.Transform;
+
+		std::unique_ptr<Enemy> enemy = factory.Create(request);
+		if (!enemy) {
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogError("EnemyFactory: create failed (Id=" + entry.InstanceName + ")");
+			}
+#if _DEBUG
+			m_EnemySpawnIssues.emplace_back(entry.Definition->Id, "create_failed");
+#endif
+			continue;
+		}
+
+		// モデル割当は呼び出し側の責務. ModelIdは未整備(ResourceCatalog将来導入)のため
+		// 暫定で全敵にCubeを割当てる(生成失敗時もゲーム全体は止めない).
+		try {
+			enemy->AttachMesh(std::make_shared<MMdlMesh>(
+				std::filesystem::path{"Data/Model/mmdl/mskin/Cube.mskn"}, *m_pMmdlRenderer));
+		}
+		catch (const std::runtime_error& Msg) {
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogError(Msg.what());
+			}
+#if _DEBUG
+			m_EnemySpawnIssues.emplace_back(entry.Definition->Id, "attach_mesh_failed");
+#endif
+			continue;
+		}
+
+		m_upEnemies.push_back(std::move(enemy));
+	}
+
+#if _DEBUG
+	m_EnemySpawnedCount = m_upEnemies.size();
+	for (const EnemySpawnIssue& issue : plan.Issues) {
+		m_EnemySpawnIssues.emplace_back(issue.DefinitionId, issue.Reason);
+	}
+
+	if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+		p_debug_log->LogInfo("EnemySpawns: planned=" + std::to_string(m_EnemySpawnPlanned)
+			+ " spawned=" + std::to_string(m_EnemySpawnedCount)
+			+ " excluded=" + std::to_string(m_EnemySpawnIssues.size()));
+	}
+#endif
 }
 
 void MainScene::Draw()
@@ -563,6 +668,10 @@ void MainScene::Draw()
 		m_upBoss->Draw();
 	}
 
+	for (std::unique_ptr<Enemy>& enemy : m_upEnemies) {
+		enemy->Draw();
+	}
+
 	// シャドウマップをSRV状態へ遷移させ、メインパスのレンダーターゲットを復帰させる.
 	m_pMmdlRenderer->EndShadowPass();
 
@@ -577,6 +686,10 @@ void MainScene::Draw()
 
 	if (m_upBoss) {
 		m_upBoss->Draw();
+	}
+
+	for (std::unique_ptr<Enemy>& enemy : m_upEnemies) {
+		enemy->Draw();
 	}
 
 	Profiler::Instance().GpuEnd("GPU:Characters");
@@ -623,6 +736,10 @@ void MainScene::Draw()
 
 	if (m_upBoss) {
 		m_upBoss->DrawDebugColliders();
+	}
+
+	for (std::unique_ptr<Enemy>& enemy : m_upEnemies) {
+		enemy->DrawDebugColliders();
 	}
 
 	if (DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>()) {
