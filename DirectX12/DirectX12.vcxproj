@@ -223,8 +223,6 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Serialization\SaveLoadManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\IEditorCommand.h" />
-    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.h" />
-    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\IEditorCommand.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlResource.h" />
@@ -396,7 +394,6 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Light\DirectionLight.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Serialization\SaveLoadManager.cpp" />
-    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.cpp" />
