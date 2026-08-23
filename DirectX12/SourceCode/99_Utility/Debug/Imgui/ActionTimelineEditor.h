@@ -70,7 +70,11 @@ private:
 	void LoadSelected(MmdlActor* pActor);
 
 	// 選択中のJSONへ編集結果を書き戻す.
-	bool SaveSelected() const;
+	bool SaveSelected();
+
+	// 数値直接入力等でドラッグ編集と異なる範囲外の値になった場合、同じ制約へ
+	// クランプする(戻り値=補正が発生したか. UIへ警告表示するために使う).
+	bool ClampSettings();
 
 	// 選択中ファイル名に対応するアニメーションクリップ名(未知は空文字).
 	const char* FindClipName() const;

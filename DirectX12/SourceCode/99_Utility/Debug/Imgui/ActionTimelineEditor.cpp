@@ -120,8 +120,11 @@ void ActionTimelineEditor::LoadSelected(MmdlActor* pActor)
 	}
 }
 
-bool ActionTimelineEditor::SaveSelected() const
+bool ActionTimelineEditor::SaveSelected()
 {
+	// 保存前に全項目を再検証し、範囲外の値をドラッグ編集と同じ制約へクランプする.
+	ClampSettings();
+
 	nlohmann::json windows = nlohmann::json::array();
 	for (const WindowParam& window : m_Data.Windows)
 	{
@@ -172,6 +175,37 @@ void ActionTimelineEditor::ApplySettings(const SettingsData& Data)
 	m_Data = Data;
 }
 
+// 数値直接入力でもドラッグ編集と同じ範囲制約を保証するためのクランプ.
+// 制約: Start>=0 / Duration>0 / Start+Duration<=ComboEndTime /
+//       0<=ComboStartTime<=MinComboTransTime<=ComboEndTime.
+bool ActionTimelineEditor::ClampSettings()
+{
+	bool was_clamped = false;
+
+	const auto clamp_check = [&was_clamped](float Value, float Min, float Max) {
+		const float clamped = std::clamp(Value, Min, Max);
+		if (clamped != Value) { was_clamped = true; }
+		return clamped;
+	};
+
+	// 終了時刻が最上位の上限(下限0.1秒).
+	m_Data.ComboEndTime = clamp_check(m_Data.ComboEndTime, 0.1f, 3600.0f);
+
+	// 判定区間: 開始>=0、長さ>0、開始+長さ<=終了時刻.
+	for (WindowParam& window : m_Data.Windows)
+	{
+		window.Start    = clamp_check(window.Start, 0.0f, m_Data.ComboEndTime);
+		window.Duration = clamp_check(window.Duration, 0.01f,
+			std::max(0.01f, m_Data.ComboEndTime - window.Start));
+	}
+
+	// コンボ時間: 受付開始 <= 最低遷移 <= 終了(順序制約のためこの順でクランプする).
+	m_Data.ComboStartTime    = clamp_check(m_Data.ComboStartTime, 0.0f, m_Data.ComboEndTime);
+	m_Data.MinComboTransTime = clamp_check(m_Data.MinComboTransTime, m_Data.ComboStartTime, m_Data.ComboEndTime);
+
+	return was_clamped;
+}
+
 void ActionTimelineEditor::Draw(MmdlActor& Actor)
 {
 	ImGui::SetNextWindowPos(ImVec2(500.0f, 430.0f), ImGuiCond_FirstUseEver);
@@ -179,6 +213,12 @@ void ActionTimelineEditor::Draw(MmdlActor& Actor)
 
 	// Ctrl+Z / Ctrl+Y(Ctrl+Shift+Z)での取り消し・やり直し(共通Editorフレームワーク).
 	m_Commands.HandleShortcuts();
+
+	// 数値直接入力等で範囲外になった値はドラッグ編集と同じ制約へ常時クランプする.
+	if (ClampSettings()) {
+		ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.2f, 1.0f),
+			IMGUI_JP("範囲外の入力を補正しました(詳細はタイムライン/一覧を参照)"));
+	}
 
 	if (!m_SelectedPath.empty() && ImGui::Button(IMGUI_JP("保存")))
 	{
