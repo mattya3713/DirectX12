@@ -15,10 +15,6 @@
 namespace {
 	constexpr float EASE_BLEND_RATIO = 0.5f; // InOutCubicとLinerを半々でブレンドする.
 
-	// JustDodge成立とみなす敵攻撃判定との最大距離(接触半径1.5+すれ違いの猶予分).
-	// 演出バランスは後で調整する.
-	constexpr float JUST_DODGE_RADIUS = 2.2f;
-
 	// InOutCubicとLinerを半々でブレンドした移動距離(0〜Distance)を求める.
 	float BlendedEasedDistance(float Time, float MaxTime, float Distance)
 	{
@@ -92,7 +88,9 @@ void DodgeExecute::CheckJustDodge()
 		const float dx = attack_pos.x - player_pos.x;
 		const float dz = attack_pos.z - player_pos.z;
 
-		if (dx * dx + dz * dz <= JUST_DODGE_RADIUS * JUST_DODGE_RADIUS)
+		// 成立距離はCombatTuningのJustDodgeRadius(エディタで調整可能).
+		const float radius = CombatTuning::Get().JustDodgeRadius;
+		if (dx * dx + dz * dz <= radius * radius)
 		{
 			m_IsJustDodgeJudged = true;
 

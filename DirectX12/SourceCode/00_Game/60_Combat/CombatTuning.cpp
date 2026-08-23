@@ -41,6 +41,7 @@ void from_json(const nlohmann::json& Data, CombatTuningData& Tuning)
 	Tuning.HitStopDuration    = Data.value("HitStopDuration",    Defaults().HitStopDuration);
 	Tuning.ParrySlowScale     = Data.value("ParrySlowScale",     Defaults().ParrySlowScale);
 	Tuning.ParrySlowDuration  = Data.value("ParrySlowDuration",  Defaults().ParrySlowDuration);
+	Tuning.JustDodgeRadius    = Data.value("JustDodgeRadius",    Defaults().JustDodgeRadius);
 	Tuning.Boss1Windup        = Data.value("Boss1Windup",        Defaults().Boss1Windup);
 	Tuning.Boss1Active        = Data.value("Boss1Active",        Defaults().Boss1Active);
 	Tuning.Boss1Recovery      = Data.value("Boss1Recovery",      Defaults().Boss1Recovery);
@@ -81,6 +82,7 @@ void to_json(nlohmann::json& Data, const CombatTuningData& Tuning)
 	Data["HitStopDuration"]    = Tuning.HitStopDuration;
 	Data["ParrySlowScale"]     = Tuning.ParrySlowScale;
 	Data["ParrySlowDuration"]  = Tuning.ParrySlowDuration;
+	Data["JustDodgeRadius"]    = Tuning.JustDodgeRadius;
 	Data["Boss1Windup"]        = Tuning.Boss1Windup;
 	Data["Boss1Active"]        = Tuning.Boss1Active;
 	Data["Boss1Recovery"]      = Tuning.Boss1Recovery;
