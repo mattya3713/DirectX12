@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="SourceCode">
@@ -193,6 +193,7 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneBase.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\Level\LevelLint.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\00_Base\GameObject.h" />

@@ -208,7 +208,50 @@ void LevelEditor::Draw()
 	ImGuiManager::Input("B Spawn Z", m_BossSpawn.Position.z);
 	ImGuiManager::Input("B Spawn Yaw(deg)", m_BossSpawn.YawDeg);
 
+	ImGui::Separator();
+
+	// ----- JSON検証(lint) -----
+	if (ImGui::Button(IMGUI_JP("JSON検証")) && !m_SelectedFile.empty()) {
+		RunLint();
+	}
+	ImGui::SameLine();
+	if (m_SelectedFile.empty()) {
+		ImGuiManager::Text("検証対象のJSONがありません.");
+	}
+	else if (!m_LintRan) {
+		ImGuiManager::Text("未検証(「JSON検証」で実行).");
+	}
+	else if (m_LintReport.IsClean()) {
+		ImGuiManager::Text("問題なし(エラー0件・警告0件).");
+	}
+	else {
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f),
+			IMGUI_JP("Error %d件 / Warning %d件"),
+			static_cast<int>(m_LintReport.ErrorCount()), static_cast<int>(m_LintReport.WarningCount()));
+
+		for (const LevelLintIssue& issue : m_LintReport.Issues) {
+			ImGui::TextColored(issue.IsError ? ImVec4(1.0f, 0.45f, 0.35f, 1.0f) : ImVec4(1.0f, 0.85f, 0.35f, 1.0f),
+				"%s[%s] %s", issue.IsError ? "E" : "W", issue.Path.c_str(), issue.Message.c_str());
+		}
+	}
+
 	ImGui::End();
+}
+
+void LevelEditor::RunLint()
+{
+	LevelLint::Options options{};
+	options.Catalog = &m_Catalog;
+
+	m_LintReport = LevelLint::RunFile(m_SelectedPath, options);
+	m_LintRan   = true;
+
+	if (const size_t errors = m_LintReport.ErrorCount(); errors > 0) {
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogWarning("LevelLint: " + std::to_string(errors) + "件のエラー("
+				+ std::to_string(m_LintReport.WarningCount()) + "件の警告): " + m_SelectedPath.string());
+		}
+	}
 }
 
 void LevelEditor::ScanFiles()
@@ -286,6 +329,8 @@ void LevelEditor::LoadSelected()
 	{
 		m_Objects.push_back({ m_MstcFileNames.front(), { 0.0f, 0.0f, 3.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } });
 	}
+
+	RunLint();
 }
 
 bool LevelEditor::SaveSelected()
@@ -309,7 +354,9 @@ bool LevelEditor::SaveSelected()
 	desc.PlayerSpawn = m_PlayerSpawn;
 	desc.BossSpawn   = m_BossSpawn;
 
-	return LevelData::WriteToFile(m_SelectedPath, desc);
+	const bool saved = LevelData::WriteToFile(m_SelectedPath, desc);
+	if (saved) { RunLint(); }
+	return saved;
 }
 
 LevelDesc LevelEditor::LoadLevelJson(const std::filesystem::path& Path)

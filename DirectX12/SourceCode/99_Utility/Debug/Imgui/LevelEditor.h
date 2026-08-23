@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "00_Game/00_Scene/Level/LevelData.h"
+#include "00_Game/00_Scene/Level/LevelLint.h"
 #include "00_Game/50_Enemy/Definition/EnemyDefinitionCatalog.h"
 
 /**********************************************************************************
@@ -54,6 +55,9 @@ private:
 	// 敵定義カタログ(JSON)を読み込み、選択肢のID一覧を更新する.
 	void ScanEnemyDefinitions();
 
+	// 現在のレベルJSONを検証し、結果パネル用のレポートを更新する.
+	void RunLint();
+
 private:
 	static constexpr const char* kJsonDir  = "Data\\Json\\Level";
 	static constexpr const char* kMstcDir  = "Data\\Model\\mmdl\\mstc";
@@ -73,6 +77,9 @@ private:
 	EnemyDefinitionCatalog            m_Catalog;          // 敵IDのコンボ候補・未知ID検証用.
 
 	char m_NewFileName[128] = {};                    // 新規保存用のファイル名入力バッファ.
+
+	bool             m_LintRan   = false; // 検証を1度でも実行したか(未実行時は「問題なし」を出さない).
+	LevelLintReport  m_LintReport;        // 最新の検証結果(検証ボタン・保存/読込時に更新).
 
 	std::function<void(const std::filesystem::path&)> m_OnLevelChanged; // レベル確定時のコールバック.
 };

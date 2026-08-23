@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -296,6 +296,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\00_Scene\SceneManager.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneBase.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\Level\LevelLint.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\00_Base\GameObject.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.h" />
