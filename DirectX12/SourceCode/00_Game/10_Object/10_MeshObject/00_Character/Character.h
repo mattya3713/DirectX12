@@ -53,6 +53,10 @@ public:
 	// デバッグ用: 現在HPを全て削って通常の死亡フローを通す(デバッグコンソールのkill_boss等から使用).
 	void ApplyDebugKill() { m_Health.ApplyDamage(m_Health.GetHP()); }
 
+	// 同一スイング重複ヒット防止の履歴を消去する(PooledEnemyFactoryの再利用リセット用.
+	// ReuseKeyを持つクラスのみ呼べる. 無制限に消せると重複ヒット抑止が壊れる).
+	void ClearHitHistory(CharacterAccess::ReuseKey) noexcept { m_ProcessedAttackIds.clear(); }
+
 public: // 攻撃判定の制御(攻撃系Stateから呼ぶ想定).
 	void SetAttackColliderActive(bool IsActive) noexcept { m_AttackCollider.SetActive(IsActive); }
 	void SetAttackAmount(float AttackAmount) noexcept { m_AttackCollider.SetAttackAmount(AttackAmount); }
@@ -66,6 +70,9 @@ public: // 攻撃判定の制御(攻撃系Stateから呼ぶ想定).
 
 public: // 被弾判定の制御(パリィ等、一時的に無敵にしたいStateから呼ぶ想定).
 	void SetDamageColliderActive(bool IsActive) noexcept { m_DamageCollider.SetActive(IsActive); }
+
+	// 実体判定の制御(押し出し専用. PooledEnemyFactoryが返却時に無効化し再利用時に再有効化する).
+	void SetBodyColliderActive(bool IsActive) noexcept { m_BodyCollider.SetActive(IsActive); }
 
 public: // エフェクト再生(フックのみ. 中身は未実装 — Effekseer/自作パーティクル等、方式決定後に実装する).
 
@@ -100,9 +107,6 @@ protected:
 
 	// 特定のヒットを無視するか(派生クラスで上書き. パリィ済み攻撃のダメージ二重適用防止等に使う).
 	virtual bool ShouldIgnoreHit(const CollisionInfo& Info) const noexcept { (void)Info; return false; }
-
-	// 同一スイング重複ヒット防止の履歴を消去する(プール再利用時の状態リセット用).
-	void ClearHitHistory() noexcept { m_ProcessedAttackIds.clear(); }
 
 	// HitEventを受けてダメージを適用する(publicにはしない. ApplyDamageは必ず
 	// 自分の被弾コライダーが検出したHitEvent経由でのみ呼ばれる想定).

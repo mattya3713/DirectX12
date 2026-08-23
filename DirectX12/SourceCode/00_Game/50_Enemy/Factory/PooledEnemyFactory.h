@@ -13,10 +13,11 @@
 * @date      : 2026/08/23.
 * @brief     : Enemyをnew/deleteせず再利用するプール付きFactory.
 *            : Spawn時にHP/速度/Transform/State/Collider/ヒット履歴を完全リセットし、
-*            : 別定義の個体として再初期化できる。返却はReturn()で行い、
-*            : 二重返却・所有権外ポインタ・容量超過はnullptr/falseで安全に検出する.
-*            : 統計(Created/Reused/Active/Returned)をDEBUG確認できる.
-*            : スレッドセーフではない. MainScene接続は別タスク.
+ *            : 別定義の個体として再初期化できる。返却はReturn()で行い、
+ *            : 返却側で全コライダーを無効化する(プール滞在中の個体が当たらないため).
+ *            : 二重返却・所有権外ポインタ・容量超過はnullptr/falseで安全に検出する.
+ *            : 統計(Created/Reused/Active/Returned)をDEBUG確認できる.
+ *            : スレッドセーフではない.
 **********************************************************************************/
 
 class PooledEnemyFactory final
@@ -56,11 +57,18 @@ public:
 		return p_enemy;
 	}
 
-	// 使用済みEnemyを返却する(false=二重返却または所有権外ポインタ. 状態は変更しない).
+	// 使用済みEnemyを返却する(返却側で全コライダーを無効化して当たり判定を解除する.
+	// false=二重返却または所有権外ポインタ. その場合は状態を変更しない).
 	bool Return(Enemy*& pEnemy)
 	{
 		if (!pEnemy || !m_Pool.Owns(pEnemy)) { return false; }
 		if (!m_Pool.Return(pEnemy)) { return false; }
+
+		// コライダー解除は返却側で完結させる(プール滞在中・再利用待ちの個体が
+		// Player等に当たり続けないため. 再有効化はSpawn時のReinitializeが行う).
+		pEnemy->SetAttackColliderActive(false);
+		pEnemy->SetDamageColliderActive(false);
+		pEnemy->SetBodyColliderActive(false);
 
 		pEnemy = nullptr;
 		return true;
@@ -78,12 +86,14 @@ private:
 		// 定義適用(移動速度・最大HP+現在HPリセット).
 		Target.ApplyTuning(Definition.MoveSpeed, Definition.MaxHP);
 
-		// Collider状態を構築直後へ戻す(攻撃無効・被弾有効).
+		// Collider状態を構築直後へ戻す(攻撃無効・被弾有効・実体有効.
+		// 返却時に全無効化されるため、再利用時にここで復帰させる).
 		Target.SetAttackColliderActive(false);
 		Target.SetDamageColliderActive(true);
+		Target.SetBodyColliderActive(true);
 
 		// 同一スイング重複ヒット履歴の消去(前個体の攻撃判定を引き継がない).
-		Target.ClearHitHistory();
+		Target.ClearHitHistory(CharacterAccess::ReuseKey{});
 
 		// State初期化(Idleへ戻す. Enter内でクリップ/ポーズが設定される).
 		Target.ChangeState(EnemyState::eID::Idle);

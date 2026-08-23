@@ -380,3 +380,7 @@ FodyWeavers.xsd
 
 # Playtest Recorder‚Ì‹L˜^CSV(Às¶¬•¨. Œº•)
 PlaytestLogs/
+
+# Standalone unit-test artifacts (tests/*.cpp built directly by cl). Not part of the game build.
+DirectX12/tests/*.exe
+DirectX12/tests/*.json
