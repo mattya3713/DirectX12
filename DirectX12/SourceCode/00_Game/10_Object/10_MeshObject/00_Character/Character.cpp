@@ -23,6 +23,7 @@ Character::Character()
 	: m_Health         { 100.0f }
 	, m_DamageCollider { &GetTransform() }
 	, m_AttackCollider { &GetTransform() }
+	, m_BodyCollider   { &GetTransform() }
 {
 	m_DamageCollider.SetRadius(0.5f);
 	m_DamageCollider.SetHeight(2.0f);
@@ -33,10 +34,17 @@ Character::Character()
 	m_AttackCollider.SetPositionOffset({ 0.0f, 1.0f, 1.5f }); // 正面側に配置.
 	m_AttackCollider.SetActive(false); // 攻撃系Stateが有効化するまで無効.
 
+	// 実体判定(押し出し専用). グループは派生クラスがSetBodyCollisionMasks()で設定する.
+	m_BodyCollider.SetRadius(0.5f);
+	m_BodyCollider.SetHeight(2.0f);
+	m_BodyCollider.SetPositionOffset({ 0.0f, 1.0f, 0.0f });
+	m_BodyCollider.SetActive(true); // 常時アクティブ(すり抜け防止用).
+
 	if (CollisionDetector* p_detector = ServiceLocator::Get<CollisionDetector>())
 	{
 		p_detector->RegisterCollider(m_DamageCollider);
 		p_detector->RegisterCollider(m_AttackCollider);
+		p_detector->RegisterCollider(m_BodyCollider);
 	}
 }
 
@@ -46,6 +54,7 @@ Character::~Character()
 	{
 		p_detector->UnregisterCollider(&m_DamageCollider);
 		p_detector->UnregisterCollider(&m_AttackCollider);
+		p_detector->UnregisterCollider(&m_BodyCollider);
 	}
 }
 
@@ -53,6 +62,7 @@ void Character::Update()
 {
 	MeshObject::Update();
 	ProcessHits();
+	ProcessBodyCollisions();
 }
 
 #if _DEBUG
@@ -122,5 +132,20 @@ void Character::ProcessHits()
 		hit_event.Normal       = info.Normal;
 
 		ApplyDamage(hit_event);
+	}
+}
+
+void Character::ProcessBodyCollisions()
+{
+	// 押し出し専用の実体判定. 重なった相手とめり込み深さを半分ずつ分担して離れる.
+	// (NormalはSelfCollider→OtherCollider方向のため、自分は法線の逆方向へ移動する).
+	for (const CollisionInfo& info : m_BodyCollider.GetCollisionEvents())
+	{
+		if (!info.IsHit) { continue; }
+
+		const float push = info.PenetrationDepth * 0.5f;
+
+		// 水平成分のみ押し出す(Y押し出しは地面コライダーが無い現状では沈み込み・浮きの原因になるため).
+		AddPosition({ -info.Normal.x * push, 0.0f, -info.Normal.z * push });
 	}
 }

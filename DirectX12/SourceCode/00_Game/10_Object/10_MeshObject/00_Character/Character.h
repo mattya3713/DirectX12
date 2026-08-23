@@ -30,7 +30,8 @@ public:
 	Character(Character&&)                 = delete;
 	Character& operator=(Character&&)      = delete;
 
-	// MeshObject::Update()の後、自分の被弾コライダーが検出したヒットを処理する.
+	// MeshObject::Update()の後、自分の被弾コライダーが検出したヒットと、
+	// 実体(Body)コライダーの押し出しを処理する.
 	void Update() override;
 
 #if _DEBUG
@@ -75,6 +76,13 @@ protected:
 	// HP減算はApplyDamage()側で済むため、ここでは見た目・挙動の反応だけを扱う).
 	virtual void OnDamaged(const HitEvent& Event) {}
 
+	// 実体(Body)コライダーのグループ設定(派生クラスが自分/相手の陣営を指定する).
+	void SetBodyCollisionMasks(eCollisionGroup MyGroup, eCollisionGroup TargetGroup) noexcept
+	{
+		m_BodyCollider.SetMyMask(MyGroup);
+		m_BodyCollider.SetTargetMask(TargetGroup);
+	}
+
 	// ダメージ/死亡コールバックの登録
 	void SetOnDamage(HealthSystem::DamageCallback Callback) { m_Health.SetOnDamage(std::move(Callback)); }
 	void SetOnDeath(HealthSystem::DeathCallback Callback) { m_Health.SetOnDeath(std::move(Callback)); }
@@ -96,11 +104,15 @@ private:
 	// 自分の被弾コライダーが検出した衝突を1件ずつHitEventへ変換し、ApplyDamageへ渡す.
 	void ProcessHits();
 
+	// 自分の実体(Body)コライダーが検出した重なりを解消する押し出し(めり込み深さの半分を法線逆方向へ移動).
+	void ProcessBodyCollisions();
+
 protected:
 	HealthSystem m_Health; // HP・ダメージ処理・コールバック.
 
 	CapsuleCollider m_DamageCollider; // 被弾判定(常時CollisionDetectorに登録される).
 	CapsuleCollider m_AttackCollider; // 攻撃判定(既定で非アクティブ. 攻撃系Stateが有効/無効を切り替える).
+	CapsuleCollider m_BodyCollider;   // 実体判定(押し出し専用. ダメージ判定とは無関係. 常時アクティブ).
 
 	// 相手コライダーごとに最後にダメージを適用した攻撃の有効化ID
 	// (同一スイング中は重なっても1回しかヒットさせないための記録).

@@ -25,6 +25,9 @@ Enemy::Enemy(float MoveSpeed, float AggroRange, float AttackRange, float LoseRan
 	// これが無いとパリィ中の攻撃が誰にも衝突しなくなってしまう).
 	m_AttackCollider.SetTargetMask(eCollisionGroup::PlayerDamage | eCollisionGroup::PlayerParry);
 
+	// 実体判定(Player実体との押し出し専用).
+	SetBodyCollisionMasks(eCollisionGroup::EnemyBody, eCollisionGroup::PlayerBody);
+
 	// HPが0になった瞬間にDeadへ遷移する(HealthSystem側で生存→死亡の1回だけ発火する).
 	SetOnDeath([this]() { ChangeState(EnemyState::eID::Dead); });
 

@@ -214,6 +214,7 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
+    <ClInclude Include="SourceCode\00_Game\70_Physics\PhysicsBody.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\BossCombatView.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\PlayerCombatView.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
@@ -257,7 +258,7 @@
     <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\X\XActor.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\X\XMesh.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.cpp" />
-	<ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.cpp" />
 	<ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlResource.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeFormatIO.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeFormat\RuntimeConverter.cpp" />
@@ -335,6 +336,7 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\CombatCoordinator.cpp" />
+    <ClCompile Include="SourceCode\00_Game\70_Physics\PhysicsBody.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\BossCombatView.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\PlayerCombatView.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />

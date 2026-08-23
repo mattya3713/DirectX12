@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include <DirectXMath.h>
-
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/PlayerStateBase.h"
+#include "00_Game/70_Physics/PhysicsBody.h"
 
 namespace PlayerState {
 
@@ -30,7 +29,7 @@ namespace PlayerState {
 		void LateUpdate() override;
 
 	private:
-		DirectX::XMFLOAT3 m_Velocity{ 0.0f, 0.0f, 0.0f }; // 現在の速度(Playerが保持する初速をEnterで受け取る).
+		PhysicsBody m_Physics; // 重力・減衰・積分はPhysicsBodyへ委譲(共通化).
 	};
 
 } // namespace PlayerState

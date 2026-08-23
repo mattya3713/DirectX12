@@ -37,6 +37,9 @@ Player::Player()
 	m_ParryCollider.SetPositionOffset({ 0.0f, 1.0f, 0.0f });
 	m_ParryCollider.SetActive(false);
 
+	// 実体判定(Boss/Enemy実体との押し出し専用).
+	SetBodyCollisionMasks(eCollisionGroup::PlayerBody, eCollisionGroup::EnemyBody);
+
 	if (CollisionDetector* p_detector = ServiceLocator::Get<CollisionDetector>())
 	{
 		p_detector->RegisterCollider(m_ParryCollider);

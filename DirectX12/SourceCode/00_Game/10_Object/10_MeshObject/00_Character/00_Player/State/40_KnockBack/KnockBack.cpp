@@ -23,10 +23,10 @@ KnockBack::KnockBack(Player* pOwner) noexcept
 void KnockBack::Enter()
 {
 	// 吹き飛び初速はPlayer::OnDamaged()が被弾時に計算して保持しているものを受け取る.
-	m_Velocity = GetPlayer()->GetKnockBackVelocity();
+	m_Physics.SetVelocity(GetPlayer()->GetKnockBackVelocity());
 
 	// 吹き飛び方向を向かせる(向き補正はMoveVec基準のため、水平方向をMoveVecへ設定する).
-	GetPlayer()->SetMoveVec({ m_Velocity.x, 0.0f, m_Velocity.z }, PlayerAccess::MovementKey{});
+	GetPlayer()->SetMoveVec({ m_Physics.GetVelocity().x, 0.0f, m_Physics.GetVelocity().z }, PlayerAccess::MovementKey{});
 }
 
 void KnockBack::LateUpdate()
@@ -36,15 +36,12 @@ void KnockBack::LateUpdate()
 	// 吹き飛び方向へ向きを補正する(MoveVec基準のラープ回転を流用する).
 	PlayerStateBase::LateUpdate();
 
-	// 重力による落下.
-	m_Velocity.y -= GRAVITY * delta_time;
+	// 重力・水平減衰・積分はPhysicsBodyへ委譲する.
+	m_Physics.ApplyGravity(delta_time, GRAVITY);
+	m_Physics.ApplyDamping(delta_time, HORIZONTAL_DAMPING_RATE);
 
-	// 水平速度の減衰(指数減衰. フレームレート非依存のためdtベース).
-	const float damping = std::exp(-HORIZONTAL_DAMPING_RATE * delta_time);
-	m_Velocity.x *= damping;
-	m_Velocity.z *= damping;
-
-	GetPlayer()->AddPosition({ m_Velocity.x * delta_time, m_Velocity.y * delta_time, m_Velocity.z * delta_time });
+	const DirectX::XMFLOAT3 delta = m_Physics.Integrate(delta_time);
+	GetPlayer()->AddPosition(delta);
 
 	// 地面に着地したらIdleへ戻る(めり込んだ分は地面へ戻す).
 	if (GetPlayer()->GetPosition().y <= GROUND_Y)

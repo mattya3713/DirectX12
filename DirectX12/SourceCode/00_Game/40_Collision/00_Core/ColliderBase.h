@@ -23,6 +23,8 @@ enum class eCollisionGroup : uint32_t
 	EnemyAttack  = 1 << 3, // Enemy/Bossの攻撃判定.
 	EnemyDamage  = 1 << 4, // Enemy/Bossの被弾判定.
 	PlayerParry  = 1 << 5, // Playerのパリィ判定(PlayerState::Parry中のみ有効化. EnemyAttackを検出したら成立).
+	PlayerBody   = 1 << 6, // Playerの実体判定(押し出し専用. ダメージ判定とは無関係).
+	EnemyBody    = 1 << 7, // Enemy/Bossの実体判定(押し出し専用. ダメージ判定とは無関係).
 
 	_Max = 0xFFFFFFFF,
 };
