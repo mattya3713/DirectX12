@@ -101,6 +101,9 @@ protected:
 	// 特定のヒットを無視するか(派生クラスで上書き. パリィ済み攻撃のダメージ二重適用防止等に使う).
 	virtual bool ShouldIgnoreHit(const CollisionInfo& Info) const noexcept { (void)Info; return false; }
 
+	// 同一スイング重複ヒット防止の履歴を消去する(プール再利用時の状態リセット用).
+	void ClearHitHistory() noexcept { m_ProcessedAttackIds.clear(); }
+
 	// HitEventを受けてダメージを適用する(publicにはしない. ApplyDamageは必ず
 	// 自分の被弾コライダーが検出したHitEvent経由でのみ呼ばれる想定).
 	void ApplyDamage(const HitEvent& Event) noexcept
