@@ -185,6 +185,9 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h">
       <Filter>SourceCode\99_Utility\Debug\Log</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\DebugBridge\DebugBridgeServer.h">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.h">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>
@@ -366,6 +369,9 @@
     </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp">
       <Filter>SourceCode\99_Utility\Debug\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\DebugBridge\DebugBridgeServer.cpp">
+      <Filter>SourceCode\99_Utility</Filter>
     </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.cpp">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
