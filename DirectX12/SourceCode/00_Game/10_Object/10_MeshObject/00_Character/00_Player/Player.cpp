@@ -12,7 +12,27 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/40_KnockBack/KnockBack.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "99_Utility/ObjectPool/ObjectPool.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
+
+namespace {
+	// 状態切替が最も頻発するIdle/Runだけプーリングする(ObjectPoolの組込み動作確認兼.
+	// 本格導入(全State/パーティクル等)は別タスク). プール返却デリータ付きshared_ptrで
+	// StateMachine側の所有権インターフェイスは変更しない.
+	// NOTE: Idle/RunはChangeState呼び出し直後にreturnするため、自身がプールへ返却された
+	//       直後にメンバへ触れることがない(StateMachineの破棄タイミングと整合).
+	ObjectPool<PlayerState::Idle>& GetIdleStatePool()
+	{
+		static ObjectPool<PlayerState::Idle> pool;
+		return pool;
+	}
+
+	ObjectPool<PlayerState::Run>& GetRunStatePool()
+	{
+		static ObjectPool<PlayerState::Run> pool;
+		return pool;
+	}
+}
 
 namespace {
 	constexpr float KNOCKBACK_HORIZONTAL_SPEED = 6.0f; // ノックバックの水平初速(KnockBack State側の定数と合わせる).
@@ -124,11 +144,11 @@ void Player::ChangeState(PlayerState::eID Id)
 	switch (Id)
 	{
 	case PlayerState::eID::Idle:
-		m_StateMachine.ChangeState(std::make_shared<PlayerState::Idle>(this));
+		m_StateMachine.ChangeState(GetIdleStatePool().AcquireShared(this));
 		break;
 
 	case PlayerState::eID::Run:
-		m_StateMachine.ChangeState(std::make_shared<PlayerState::Run>(this));
+		m_StateMachine.ChangeState(GetRunStatePool().AcquireShared(this));
 		break;
 
 	case PlayerState::eID::AttackCombo_0:

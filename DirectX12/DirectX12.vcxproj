@@ -198,6 +198,9 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\AnimationClipTable.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MmdlRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\Mstc\MstcRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\Mstc\MstcActor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\Mstc\MstcMesh.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\VMD\VMDLoader.h" />
@@ -353,6 +356,9 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXMesh.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\AnimationClipTable.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MmdlRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\Mstc\MstcRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\Mstc\MstcActor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\Mstc\MstcMesh.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXRenderer.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
