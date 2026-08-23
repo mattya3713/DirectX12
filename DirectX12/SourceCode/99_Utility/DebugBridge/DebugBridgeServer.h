@@ -11,6 +11,7 @@
 #include <thread>
 #include <vector>
 
+#include "DebugBridgeRegistry.h"
 #include "json/json.hpp"
 
 /**********************************************************************************
@@ -47,6 +48,9 @@ public:
 	// 受信済み要求を実行し応答を積む(毎フレーム、メインスレッドから呼ぶ).
 	void Pump();
 
+	// コマンド/クエリの明示登録窓口(後続Editorはここへ登録する).
+	DebugBridgeRegistry& GetRegistry() noexcept { return m_Registry; }
+
 private:
 	// 通信スレ本体(接続待ち→読み書きループ→切断→再接続待ち).
 	void ThreadMain(std::wstring PipeName);
@@ -65,10 +69,13 @@ private:
 	{
 		std::string Id;
 		std::string Command;
+		nlohmann::json Payload;
 	};
 	std::deque<PendingRequest> m_RequestQueue; // 通信スレッド→メインスレッド.
 	std::deque<std::string>    m_ResponseQueue; // メインスレッド→通信スレッド(送信待ち行).
 	RuntimeInfoResolver m_RuntimeInfoResolver;
+	DebugBridgeRegistry m_Registry; // 登録済みコマンド/クエリ.
+	void RegisterDefaultCommands();
 };
 
 #endif // _DEBUG

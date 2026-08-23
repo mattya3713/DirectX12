@@ -4,6 +4,8 @@
 
 #include <windows.h>
 
+#include <iostream>
+
 #include <algorithm>
 
 DebugBridgeServer::~DebugBridgeServer()
@@ -23,6 +25,8 @@ bool DebugBridgeServer::Start(const std::wstring& PipeName)
 		m_ResponseQueue.clear();
 	}
 
+	RegisterDefaultCommands();
+
 	// パイプ名はスレッドへ値渡しする(lifetimeを共有しないため).
 	m_Thread = std::thread(&DebugBridgeServer::ThreadMain, this, PipeName);
 	m_Running = true;
@@ -36,6 +40,34 @@ void DebugBridgeServer::Stop()
 	m_Shutdown = true;
 	if (m_Thread.joinable()) { m_Thread.join(); }
 	m_Running = false;
+}
+
+// 既定コマンド群を登録する.
+void DebugBridgeServer::RegisterDefaultCommands()
+{
+	m_Registry.Register("handshake", "接続初期化. Server情報と登録コマンド一覧を返す",
+		[this](const nlohmann::json&) -> nlohmann::json {
+			nlohmann::json commands = nlohmann::json::array();
+			for (const auto& entry : m_Registry.GetEntries()) { commands.push_back(entry.Name); }
+			return { { "server", "SenzanGame" }, { "commands", commands } };
+		});
+
+	m_Registry.Register("ping", "疎通確認. pongを返す",
+		[](const nlohmann::json&) -> nlohmann::json {
+			return { { "pong", true } };
+		});
+
+	m_Registry.Register("bridge.get_runtime_info", "Player/Boss/TimeScale等のランタイム状態を取得する",
+		[this](const nlohmann::json&) -> nlohmann::json {
+			return m_RuntimeInfoResolver ? m_RuntimeInfoResolver() : nlohmann::json{};
+		});
+
+	m_Registry.Register("debugbridge.get_snapshot", "runtime_infoにsnapshotフラグを付けたもの",
+		[this](const nlohmann::json&) -> nlohmann::json {
+			nlohmann::json payload = m_RuntimeInfoResolver ? m_RuntimeInfoResolver() : nlohmann::json{};
+			payload["snapshot"] = true;
+			return payload;
+		});
 }
 
 // 受信済み要求を実行して応答を積む(必ずメインスレッドから呼ぶ).
@@ -64,30 +96,22 @@ void DebugBridgeServer::Pump()
 
 		try
 		{
-			if (request.Command == "ping")
+			if (request.Command == "protocol.list_commands")
 			{
+				std::cerr << "[DBG] list_commands branch entered" << std::endl;
+				nlohmann::json commands = nlohmann::json::array();
+				for (const auto& entry : m_Registry.GetEntries())
+				{
+					commands.push_back({ { "name", entry.Name }, { "description", entry.Description } });
+				}
 				response["ok"] = true;
-				response["payload"] = { { "pong", true } };
+				response["payload"] = { { "commands", commands } };
 			}
-			else if (request.Command == "handshake")
+			else if (m_Registry.Contains(request.Command))
 			{
+				const nlohmann::json payload = request.Payload.is_object() ? request.Payload : nlohmann::json{};
 				response["ok"] = true;
-				response["payload"] = {
-					{ "server", "SenzanGame" },
-					{ "commands", { "handshake", "ping", "bridge.get_runtime_info", "debugbridge.get_snapshot" } },
-				};
-			}
-			else if (request.Command == "bridge.get_runtime_info")
-			{
-				response["ok"] = true;
-				response["payload"] = m_RuntimeInfoResolver ? m_RuntimeInfoResolver() : nlohmann::json{};
-			}
-			else if (request.Command == "debugbridge.get_snapshot")
-			{
-				nlohmann::json payload = m_RuntimeInfoResolver ? m_RuntimeInfoResolver() : nlohmann::json{};
-				payload["snapshot"] = true;
-				response["ok"] = true;
-				response["payload"] = payload;
+				response["payload"] = m_Registry.Execute(request.Command, payload);
 			}
 			else
 			{
@@ -136,6 +160,7 @@ void DebugBridgeServer::EnqueueParsedLine(const std::string& Line)
 	request.Command = parsed.contains("command") && parsed["command"].is_string() ? parsed["command"].get<std::string>() : "";
 
 	std::lock_guard<std::mutex> lock(m_Mutex);
+	std::cerr << "[DBG] enqueue id=" << request.Id << " cmd=" << request.Command << std::endl;
 	m_RequestQueue.push_back(std::move(request));
 }
 
