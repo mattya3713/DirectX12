@@ -69,6 +69,14 @@ public:
 	// 存在確認.
 	bool Contains(const std::string& Id) const noexcept { return m_Table.Contains(Id); }
 
+	// 登録済みIDの一覧を取得する(エディタのコンボ候補等).
+	std::vector<std::string> GetIds() const
+	{
+		std::vector<std::string> ids;
+		for (const auto& [key, value] : m_Table) { ids.push_back(key); }
+		return ids;
+	}
+
 	size_t Size() const noexcept { return m_Table.Size(); }
 
 private:

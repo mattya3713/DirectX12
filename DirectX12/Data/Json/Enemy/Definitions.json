@@ -1,0 +1,4 @@
+﻿[
+  {"Id": "goblin",      "DisplayName": "ゴブリン",    "MaxHP": 40, "MoveSpeed": 3.0},
+  {"Id": "goblin_fast", "DisplayName": "速いゴブリン", "MaxHP": 20, "MoveSpeed": 6.5}
+]
