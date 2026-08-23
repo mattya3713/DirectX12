@@ -5,6 +5,7 @@
 
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Localization/LocalizationTable.h"
 
 namespace {
 	constexpr const char* kPresetDir = "Data\\Json\\Combat";
@@ -24,7 +25,8 @@ void CombatTuningEditor::Draw()
 {
 	ImGui::SetNextWindowPos(ImVec2(520.0f, 20.0f), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(420.0f, 640.0f), ImGuiCond_FirstUseEver);
-	if (!ImGui::Begin(IMGUI_JP("Combat Tuning Editor"))) { ImGui::End(); return; }
+	// ウィンドウタイトルはローカライゼーション経由(lang ja/enで切替デモ).
+	if (!ImGui::Begin(LocalizationTable::Instance().GetText("combat_tuning.title").c_str())) { ImGui::End(); return; }
 
 	// ----- プリセット操作 -----
 	if (ImGui::Button(IMGUI_JP("既定値へリセット"))) {
