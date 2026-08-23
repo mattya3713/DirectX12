@@ -37,6 +37,10 @@ public:
 	// 再生中の音を全て停止する.
 	void StopAll();
 
+	// 指定した名前でループ再生中のボイスのみを停止する(非ループ音は対象外.
+	// カットシーン等、ループSEを明示的に止めたい呼び出し元向け).
+	void StopLooping(const std::string& Name);
+
 	// 毎フレーム呼び出し、再生終了したボイスを片付ける.
 	void Update();
 
@@ -52,10 +56,19 @@ private:
 	bool LoadWavFile(const std::wstring& FilePath, SoundClip& OutClip) const;
 
 private:
+	// 再生中のボイス1つ分の管理情報(StopLooping()が名前・ループ有無で絞り込むために保持する).
+	struct ActiveVoice
+	{
+		IXAudio2SourceVoice* Voice  = nullptr;
+		std::string          Name;
+		bool                 IsLoop = false;
+	};
+
+private:
 	MyComPtr<IXAudio2>      m_cpXAudio2;
 	IXAudio2MasteringVoice* m_pMasteringVoice = nullptr; // DestroyVoice()で解放する(Release()ではない).
 
 	std::unordered_map<std::string, SoundClip> m_Clips; // 読み込み済みサウンド(名前がキー).
 
-	std::vector<IXAudio2SourceVoice*> m_ActiveVoices; // 再生中のボイス(Update()で終了したものを破棄する).
+	std::vector<ActiveVoice> m_ActiveVoices; // 再生中のボイス(Update()で終了したものを破棄する).
 };

@@ -28,8 +28,6 @@ DirectX12::DirectX12()
 	, m_SceneColorResizeRequested { false }
 	, m_SceneColorRequestedWidth { 0 }
 	, m_SceneColorRequestedHeight { 0 }
-	, m_pSceneConstBuff	{ nullptr }
-	, m_pMappedSceneData{ nullptr }
 	, m_pFence			{ nullptr }
 	, m_FenceValue		{ 0 }
 	, m_pPipelineState	{ nullptr }
@@ -150,22 +148,31 @@ void DirectX12::Update()
 
 void DirectX12::UpdateSceneBuffer()
 {
-	if (m_pMappedSceneData)
+	// この時点ではまだ今フレームのBeginDraw()が呼ばれておらずm_FrameIndexは前フレームの値のままなので、
+	// ここではm_FrameIndexを使わずGetCurrentBackBufferIndex()を直接問い合わせて今フレーム用のスロットを
+	// 求める(Present()を挟まない限りBeginDraw()が求める値と一致する. m_FrameIndex経由だと1フレーム分
+	// 古いスロットへ書き込んでしまい、GPUがまだ読んでいる前フレーム分のバッファを壊す競合になる).
+	if (!m_pSwapChain) { return; }
+
+	const UINT frame_index = m_pSwapChain->GetCurrentBackBufferIndex();
+	SceneData* p_scene_data = m_pMappedSceneData[frame_index];
+
+	if (p_scene_data)
 	{
 		// カメラ行列はSetCamera()で設定済みのものをそのまま使う.
-		m_pMappedSceneData->view = m_ViewMatrix;
-		m_pMappedSceneData->proj = m_ProjMatrix;
-		m_pMappedSceneData->eye  = m_EyePosition;
+		p_scene_data->view = m_ViewMatrix;
+		p_scene_data->proj = m_ProjMatrix;
+		p_scene_data->eye  = m_EyePosition;
 
 		// 平行光源はSetLight()で設定済みのものをそのまま使う(SetLight()未呼び出し時は影無しで動かす).
-		m_pMappedSceneData->lightView      = m_LightViewMatrix;
-		m_pMappedSceneData->lightProj      = m_LightProjMatrix;
-		m_pMappedSceneData->lightDirection = m_LightDirection;
-		m_pMappedSceneData->lightColor     = m_LightColor;
+		p_scene_data->lightView      = m_LightViewMatrix;
+		p_scene_data->lightProj      = m_LightProjMatrix;
+		p_scene_data->lightDirection = m_LightDirection;
+		p_scene_data->lightColor     = m_LightColor;
 	}
 	else
 	{
-		std::cerr << "Warning: m_pMappedSceneData is null in UpdateSceneBuffer()." << std::endl;
+		std::cerr << "Warning: m_pMappedSceneData[" << frame_index << "] is null in UpdateSceneBuffer()." << std::endl;
 	}
 }
 
@@ -288,7 +295,7 @@ void DirectX12::DrawRewindFrame()
 }
 
 // 巻き戻り逆再生中か.
-bool DirectX12::IsRewindActive() const
+bool DirectX12::IsRewindActive() const noexcept
 {
 	return m_upFrameRewind && m_upFrameRewind->IsActive();
 }
@@ -886,53 +893,56 @@ void DirectX12::CreateSceneDesc()
 	// sizeof(SceneData) を256バイトの倍数に切り上げ
 	auto resDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneData) + 0xff) & ~0xff);
 
-	MyAssert::IsFailed(
-		_T("定数バッファ作成 (Scene)"),
-		&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(), // クラスメンバーのデバイスを使用
-		&heapProp,
-		D3D12_HEAP_FLAG_NONE,
-		&resDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(m_pSceneConstBuff.ReleaseAndGetAddressOf())); // クラスメンバー変数に代入
+	DirectX::XMFLOAT3 eye_pos(0, 0, -50);
+	DirectX::XMFLOAT3 target_pos(0, 0, 0);
+	DirectX::XMFLOAT3 up_vec(0, 1, 0);
+	const DirectX::XMMATRIX initial_view =
+		DirectX::XMMatrixLookAtLH(
+		DirectX::XMLoadFloat3(&eye_pos),
+		DirectX::XMLoadFloat3(&target_pos),
+		DirectX::XMLoadFloat3(&up_vec));
 
-	// ---- バッファをマップ ----
-	// m_pRawMappedSceneData は生ポインタ
-	MyAssert::IsFailed(
-		_T("シーン情報のマップ"),
-		&ID3D12Resource::Map, m_pSceneConstBuff.Get(),
-		0, nullptr,
-		(void**)&m_pMappedSceneData); // クラスメンバー変数に代入 (生ポインタ)
+	// アスペクト比はレンダリングループ内で更新するか、Dx12::Initialize()で一度設定
+	// ここでは、既に m_pSwapChain が初期化されていると仮定し、その幅と高さを使用
+	float aspectRatio = static_cast<float>(m_SwapChainDesc.Width) / static_cast<float>(m_SwapChainDesc.Height);
+	const DirectX::XMMATRIX initial_proj =
+		DirectX::XMMatrixPerspectiveFovLH
+		(DirectX::XM_PIDIV4, // 画角は45°
+		aspectRatio,         // アス比
+		0.1f,                // 近い方
+		1000.0f              // 遠い方
+		);
 
-	// ---- 初期値設定 ----
-	
-	// シーンデータの初期値を設定 (m_pRawMappedSceneData を通して書き込む)
-	if (m_pMappedSceneData) {
-		DirectX::XMFLOAT3 eye_pos(0, 0, -50);
-		DirectX::XMFLOAT3 target_pos(0, 0, 0);
-		DirectX::XMFLOAT3 up_vec(0, 1, 0);
+	// FrameBufferCount分スロットを作る(CPUが次フレーム分をUpdateSceneBuffer()で書き込む間、
+	// GPUが前フレーム分を読み終えていない、という競合を単一バッファでは防げないため).
+	for (UINT i = 0; i < FrameBufferCount; ++i)
+	{
+		MyAssert::IsFailed(
+			_T("定数バッファ作成 (Scene)"),
+			&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(), // クラスメンバーのデバイスを使用
+			&heapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(m_pSceneConstBuff[i].ReleaseAndGetAddressOf()));
 
-		m_pMappedSceneData->view =
-			DirectX::XMMatrixLookAtLH(
-			DirectX::XMLoadFloat3(&eye_pos),
-			DirectX::XMLoadFloat3(&target_pos),
-			DirectX::XMLoadFloat3(&up_vec));
+		// ---- バッファをマップ ----
+		MyAssert::IsFailed(
+			_T("シーン情報のマップ"),
+			&ID3D12Resource::Map, m_pSceneConstBuff[i].Get(),
+			0, nullptr,
+			reinterpret_cast<void**>(&m_pMappedSceneData[i]));
 
-		// アスペクト比はレンダリングループ内で更新するか、Dx12::Initialize()で一度設定
-		// ここでは、既に m_pSwapChain が初期化されていると仮定し、その幅と高さを使用
-		float aspectRatio = static_cast<float>(m_SwapChainDesc.Width) / static_cast<float>(m_SwapChainDesc.Height);
-		m_pMappedSceneData->proj =
-			DirectX::XMMatrixPerspectiveFovLH
-			(DirectX::XM_PIDIV4, // 画角は45°
-			aspectRatio,         // アス比
-			0.1f,                // 近い方
-			1000.0f              // 遠い方
-			);
-
-		m_pMappedSceneData->eye = eye_pos;
-	}
-	else {
-		std::cerr << "Error: m_pRawMappedSceneData is null after mapping Scene Constant Buffer." << std::endl;
+		// ---- 初期値設定 ----
+		if (m_pMappedSceneData[i]) {
+			m_pMappedSceneData[i]->view = initial_view;
+			m_pMappedSceneData[i]->proj = initial_proj;
+			m_pMappedSceneData[i]->eye  = eye_pos;
+		}
+		else {
+			std::cerr << "Error: m_pMappedSceneData[" << i << "] is null after mapping Scene Constant Buffer." << std::endl;
+		}
 	}
 }
 
@@ -967,6 +977,73 @@ void DirectX12::CreateTextureLoadTable()
 		return LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, meta, img);
 		};
 
+}
+
+// CPUデータをDestResourceへ同期的にアップロードする(一時コマンドリスト+フェンス待機).
+void DirectX12::UploadBufferSync(ID3D12Resource* DestResource, const void* SrcData, UINT64 Size, D3D12_RESOURCE_STATES StateAfter)
+{
+	if (DestResource == nullptr || SrcData == nullptr || Size == 0) { return; }
+
+	// --- 中間アップロードリソースを作成し、CPUデータをコピーする ---
+	MyComPtr<ID3D12Resource> upload_buffer;
+	const auto upload_heap_prop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	const auto upload_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(Size);
+	MyAssert::IsFailed(_T("UploadBufferSync: アップロードバッファの作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDevice12.Get(),
+		&upload_heap_prop, D3D12_HEAP_FLAG_NONE, &upload_buffer_desc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(upload_buffer.ReleaseAndGetAddressOf()));
+
+	void* p_mapped = nullptr;
+	MyAssert::IsFailed(_T("UploadBufferSync: アップロードバッファをマップ"),
+		&ID3D12Resource::Map, upload_buffer.Get(), 0, nullptr, &p_mapped);
+	std::memcpy(p_mapped, SrcData, static_cast<size_t>(Size));
+	upload_buffer->Unmap(0, nullptr);
+
+	// --- ロード専用の一時コマンドリストでコピー+バリアを記録する ---
+	// (毎フレームの共有コマンドリストm_pCmdListとは独立させる. フレーム描画中に呼ばれても
+	// そちらの記録状態へ影響しないようにするため).
+	MyComPtr<ID3D12CommandAllocator> temp_allocator;
+	MyComPtr<ID3D12GraphicsCommandList> temp_cmd_list;
+	MyAssert::IsFailed(_T("UploadBufferSync: 一時コマンドアロケータの生成"),
+		&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
+		D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(temp_allocator.ReleaseAndGetAddressOf()));
+	MyAssert::IsFailed(_T("UploadBufferSync: 一時コマンドリストの生成"),
+		&ID3D12Device::CreateCommandList, m_pDevice12.Get(),
+		0, D3D12_COMMAND_LIST_TYPE_DIRECT, temp_allocator.Get(), nullptr,
+		IID_PPV_ARGS(temp_cmd_list.ReleaseAndGetAddressOf()));
+
+	temp_cmd_list->CopyBufferRegion(DestResource, 0, upload_buffer.Get(), 0, Size);
+
+	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		DestResource, D3D12_RESOURCE_STATE_COPY_DEST, StateAfter);
+	temp_cmd_list->ResourceBarrier(1, &barrier);
+
+	temp_cmd_list->Close();
+
+	// --- 実行してGPU完了を同期的に待つ(完了後はupload_buffer/temp_*が安全に破棄される) ---
+	ID3D12CommandList* pp_command_lists[] = { temp_cmd_list.Get() };
+	m_pCmdQueue->ExecuteCommandLists(_countof(pp_command_lists), pp_command_lists);
+
+	MyComPtr<ID3D12Fence> upload_fence;
+	HANDLE upload_fence_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	UINT64 fence_value_for_upload = 0;
+	MyAssert::IsFailed(_T("UploadBufferSync: フェンスの生成"),
+		&ID3D12Device::CreateFence, m_pDevice12.Get(),
+		fence_value_for_upload, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(upload_fence.ReleaseAndGetAddressOf()));
+
+	m_pCmdQueue->Signal(upload_fence.Get(), ++fence_value_for_upload);
+
+	if (upload_fence->GetCompletedValue() < fence_value_for_upload)
+	{
+		if (upload_fence_event != nullptr)
+		{
+			MyAssert::IsFailed(_T("UploadBufferSync: フェンスイベント設定"),
+				&ID3D12Fence::SetEventOnCompletion, upload_fence.Get(), fence_value_for_upload, upload_fence_event);
+			WaitForSingleObject(upload_fence_event, INFINITE);
+		}
+	}
+	if (upload_fence_event != nullptr) { CloseHandle(upload_fence_event); }
 }
 
 // テクスチャ名からテクスチャバッファ作成、中身をコピーする.
