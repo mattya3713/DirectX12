@@ -4,8 +4,51 @@
 
 #include "SpriteRenderer.h"
 #include "20_Resource/Font/FontLoader.h"
+#include "20_Resource/Font/FontRegistry.h"
 #include "99_Utility/Localization/LocalizationTable.h"
 #include "99_Utility/String/String.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
+#include "99_Utility/Debug/Imgui/DebugConsole.h"
+
+#if _DEBUG
+// デバッグコンソールへフォント切替・情報表示コマンドを登録する(初回Draw時に1度).
+static void RegisterFontDebugCommands()
+{
+	static bool s_registered = false;
+	if (s_registered) { return; }
+
+	DebugConsole* p_console = ServiceLocator::Get<DebugConsole>();
+	if (!p_console) { return; }
+
+	s_registered = true;
+
+	// font <id> : アクティブフォントを切り替える(FontRegistry未登録なら既定へ戻す).
+	p_console->RegisterCommand("font", [](const DebugConsole::CommandArgs& Args) {
+		if (Args.empty()) { return; }
+		const int id = FontRegistry::Resolve(Args[0]);
+		TextRenderer::SetActiveFont(id);
+	});
+
+	// fontinfo : 登録フォントの状態(ID/File/Fallback/LoaderID)をログへ出力.
+	p_console->RegisterCommand("fontinfo", [](const DebugConsole::CommandArgs&) {
+		DebugLog* p_log = ServiceLocator::Get<DebugLog>();
+		for (const auto& entry : FontRegistry::Entries())
+		{
+			const std::string line = "[font] " + entry.Id + " : " + entry.File +
+				(entry.Fallback ? " [fallback]" : "") +
+				" loader=" + std::to_string(entry.LoaderFontId);
+			if (p_log) { p_log->LogInfo(line); }
+			OutputDebugStringA((line + "\n").c_str());
+		}
+	});
+}
+#endif
+#include "99_Utility/Localization/LocalizationTable.h"
+#include "99_Utility/String/String.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
+#include "99_Utility/Debug/Imgui/DebugConsole.h"
 
 // コンストラクタ.
 TextRenderer::TextRenderer(SpriteRenderer& Sprites)
@@ -18,6 +61,7 @@ void TextRenderer::DrawText2D(const std::string& Utf8Text,
 	float PosX, float PosY, float Scale,
 	const DirectX::XMFLOAT4& Color)
 {
+	RegisterFontDebugCommands();
 	DrawText2D((s_ActiveFontId >= 0) ? s_ActiveFontId : FontLoader::GetDefaultFont(), Utf8Text, PosX, PosY, Scale, Color);
 }
 
