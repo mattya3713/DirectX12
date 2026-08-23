@@ -7,6 +7,12 @@
 #include "99_Utility/Localization/LocalizationTable.h"
 #include "99_Utility/String/String.h"
 
+// コンストラクタ.
+TextRenderer::TextRenderer(SpriteRenderer& Sprites)
+	: m_Sprites(Sprites)
+{
+}
+
 // 直接文字列(UTF-8)を画面座標へ描画する.
 void TextRenderer::DrawText2D(int FontId, const std::string& Utf8Text,
 	float PosX, float PosY, float Scale,

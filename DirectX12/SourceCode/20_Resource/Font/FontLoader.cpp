@@ -90,10 +90,10 @@ int FontLoader::CreateCache(const std::wstring& FaceName, int PixelHeight)
 	D3D12_HEAP_PROPERTIES upload_heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	MyAssert::IsFailed(
 		_T("フォントアトラステクスチャの作成"),
-		&ID3D12Device::CreateCommittedResource, p_dx12.GetDevice(),
+		&ID3D12Device::CreateCommittedResource, p_dx12->GetDevice(),
 		&upload_heap, D3D12_HEAP_FLAG_NONE, &atlas_desc,
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(cache.pAtlas.ReleaseAndGetAddressOf()));
+		IID_PPV_ARGS(&cache.pAtlas));
 
 	const int new_id = g_NextId++;
 	Caches()[new_id] = std::move(cache);
@@ -171,7 +171,7 @@ const FontLoader::Glyph* FontLoader::GetGlyph(int FontId, wchar_t Char)
 				D3D12_BOX dst_box{ p_cache->CursorX, p_cache->CursorY, 0,
 					p_cache->CursorX + w, p_cache->CursorY + h, 1 };
 				p_cache->pAtlas->WriteToSubresource(0, &dst_box,
-					rgba.data(), w * sizeof(UINT32), rgba.size() * sizeof(UINT32));
+					rgba.data(), w * sizeof(UINT32), static_cast<UINT>(rgba.size() * sizeof(UINT32)));
 
 				glyph.U0 = static_cast<float>(p_cache->CursorX) / ATLAS_W;
 				glyph.V0 = static_cast<float>(p_cache->CursorY) / ATLAS_H;

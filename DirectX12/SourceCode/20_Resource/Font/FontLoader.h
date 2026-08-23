@@ -45,8 +45,8 @@ public:
 	// 行の高さ(ピクセル. 改行送りに使用).
 	static float GetLineHeight(int FontId);
 
-private:
-	// 1フォント分のキャッシュデータ.
+public:
+	// 1フォント分のキャッシュデータ(実装.cppが直接操作する).
 	struct FontCache
 	{
 		ID3D12Resource*                pAtlas      = nullptr; // RGBA8アップロードヒープ.
@@ -59,6 +59,7 @@ private:
 		UINT                           CursorY     = 0;
 	};
 
+private:
 	static FontCache* FindCache(int FontId);
 	static int CreateCache(const std::wstring& FaceName, int PixelHeight);
 	static const Glyph* RasterizeGlyph(FontCache& Cache, HDC Dc, HFONT Font, wchar_t Char);

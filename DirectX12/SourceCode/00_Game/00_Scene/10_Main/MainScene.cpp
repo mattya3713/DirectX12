@@ -12,6 +12,7 @@
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #include "10_Ggraphic/20_Render/Sprite/SpriteRenderer.h"
 #include "10_Ggraphic/20_Render/Sprite/TextRenderer.h"
+#include "20_Resource/Font/FontLoader.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -592,6 +593,7 @@ void MainScene::Draw()
 				DirectX::XMFLOAT3 head_pos = m_upPlayer->GetPosition();
 				head_pos.y += 2.6f;
 				m_upSpriteRenderer->DrawSprite3D(p_sprite_tex, head_pos, 0.8f, 0.8f);
+			}
 		}
 	}
 
