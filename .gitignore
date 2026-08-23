@@ -380,3 +380,13 @@ FodyWeavers.xsd
 
 # Playtest Recorder‚Ì‹L˜^CSV(Às¶¬•¨. Œº•)
 PlaytestLogs/
+
+# ç”Ÿæˆç‰©ãƒ»ä»–ãƒ©ã‚¤ãƒ³worktreeãƒ»è¨ºæ–­ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é™¤å¤–
+worktrees/
+Dumps/
+Dumps/*.dmp
+DirectX12/Dumps/
+DirectX12/tests/*.exe
+DirectX12/_d_*.txt
+DirectX12/_diag_*.txt
+DirectX12/DirectX12/

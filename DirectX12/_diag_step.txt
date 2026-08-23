@@ -1,7 +1,0 @@
-S1 before BeginShadowPass
-S2 after BeginShadowPass
-S3 after player shadow draw
-S4 after boss shadow draw
-S5 after EndShadowPass
-S6 after BeforDraw
-S7 after main characters
