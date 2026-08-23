@@ -20,7 +20,9 @@ void Idle::Enter()
 	// 待機状態では移動ベクトルをクリアする(攻撃後などに向きが残らないように).
 	GetPlayer()->SetMoveVec({}, PlayerAccess::MovementKey{});
 
-	ApplyNamedClip("Idle");
+	// アイドル用クリップがモデルに存在しないため、現在フレームでポーズを固定する
+	// (SetCurrentFrame経由で外部駆動状態にし、次のState遷移時にクリップ再指定で復帰する).
+	GetPlayer()->SetCurrentFrame(GetPlayer()->GetCurrentAnimationSeconds() * 30.0f);
 }
 
 void Idle::Update()
