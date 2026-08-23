@@ -86,6 +86,7 @@ void CombatTuningEditor::Draw()
 		ImGuiManager::Tweak("ヒットストップ長(s)", t.HitStopDuration, 0.0f, 0.5f);
 		ImGuiManager::Tweak("パリィスロー倍率",   t.ParrySlowScale, 0.0f, 1.0f);
 		ImGuiManager::Tweak("パリィスロー長(s)",  t.ParrySlowDuration, 0.0f, 2.0f);
+		ImGuiManager::Tweak("JustDodge距離",      t.JustDodgeRadius, 0.0f, 5.0f);
 	}
 
 	// ----- Boss攻撃 -----

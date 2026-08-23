@@ -71,6 +71,7 @@ DirectX::XMMATRIX CameraBase::GetViewProjMatrix() const noexcept
 }
 
 // Forward/Rightを1回の行列生成で両方出す(呼び出し側が2回Getすると行列が2回作っていた).
+// ※TransformのEuler角由来. LookAtで視点を作るカメラはGetForward/GetRightを使うこと.
 void CameraBase::GetBasis(DirectX::XMFLOAT3& Forward, DirectX::XMFLOAT3& Right) const noexcept
 {
 	using namespace DirectX;
@@ -82,18 +83,41 @@ void CameraBase::GetBasis(DirectX::XMFLOAT3& Forward, DirectX::XMFLOAT3& Right) 
 	XMStoreFloat3(&Right,   XMVector3Normalize(rotation_matrix.r[0]));
 }
 
+// カメラの前・右方向はTransformのEuler角ではなく「実際のビュー行列」由来で返す.
+// (ThirdPerson/LockOn等はLookAtで視点を作るためRotationを持たない.
+//  Euler由来だと常にワールド固定方向になり、カメラ相対移動が破綻する).
+// ViewUpdate()未呼び出し等でビュー行列が空の場合は既定の+Z前方/+X右へフォールバックする.
+
 DirectX::XMFLOAT3 CameraBase::GetForward() const noexcept
 {
-	DirectX::XMFLOAT3 forward, right;
-	GetBasis(forward, right);
-	return forward;
+	// LookAtLHの第3行(z軸)=画面奥方向.
+	const DirectX::XMVECTOR v_length_sq = DirectX::XMVector3LengthSq(m_View.r[2]);
+	if (DirectX::XMVectorGetX(v_length_sq) > 1e-8f)
+	{
+		const DirectX::XMVECTOR v_forward = DirectX::XMVector3Normalize(m_View.r[2]);
+
+		DirectX::XMFLOAT3 forward = {};
+		DirectX::XMStoreFloat3(&forward, v_forward);
+		return forward;
+	}
+
+	return { 0.0f, 0.0f, 1.0f };
 }
 
 DirectX::XMFLOAT3 CameraBase::GetRight() const noexcept
 {
-	DirectX::XMFLOAT3 forward, right;
-	GetBasis(forward, right);
-	return right;
+	// LookAtLHの第1行(x軸)=画面右方向.
+	const DirectX::XMVECTOR v_length_sq = DirectX::XMVector3LengthSq(m_View.r[0]);
+	if (DirectX::XMVectorGetX(v_length_sq) > 1e-8f)
+	{
+		const DirectX::XMVECTOR v_right = DirectX::XMVector3Normalize(m_View.r[0]);
+
+		DirectX::XMFLOAT3 right = {};
+		DirectX::XMStoreFloat3(&right, v_right);
+		return right;
+	}
+
+	return { 1.0f, 0.0f, 0.0f };
 }
 
 float CameraBase::GetYaw() const noexcept

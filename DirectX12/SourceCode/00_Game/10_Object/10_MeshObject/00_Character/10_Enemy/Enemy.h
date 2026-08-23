@@ -40,6 +40,14 @@ public: // Getter・Setter.
 	float GetAttackRange() const noexcept { return m_AttackRange; }
 	float GetLoseRange() const noexcept { return m_LoseRange; }
 
+	// 敵定義カタログ(EnemyDefinition)由来のチューニングを適用する(EnemyFactory用.
+	// 構築直後に1度呼ぶことを想定. Aggro/Attack/Lose範囲は既定値を維持する).
+	void ApplyTuning(float MoveSpeed, float MaxHP) noexcept
+	{
+		m_MoveSpeed = MoveSpeed;
+		SetHealth(MaxHP, MaxHP);
+	}
+
 	// 現在ステートIDの取得(デバッグ表示等、外部からの参照用).
 	EnemyState::eID GetCurrentStateID() const noexcept { return m_CurrentStateID; }
 

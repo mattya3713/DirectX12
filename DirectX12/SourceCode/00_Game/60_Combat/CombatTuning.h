@@ -35,6 +35,9 @@ struct CombatTuningData
 	float ParrySlowScale   = 0.25f;    // パリィ成立スローモーションのスケール.
 	float ParrySlowDuration = 0.4f;    // パリィ成立スローモーションの長さ(秒).
 
+	// ----- JustDodge -----
+	float JustDodgeRadius = 2.2f;      // 回避中に敵攻撃判定がこの距離内を通るとJust成立(接触半径1.5+猶予分).
+
 	// ----- Boss攻撃1(boss_attack1) -----
 	float Boss1Windup   = 0.6f;
 	float Boss1Active   = 0.3f;

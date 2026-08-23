@@ -104,6 +104,12 @@ public:
 		m_Entries[Key] = Value;
 	}
 
+	// 指定キーのエントリを削除する(存在しなければ何もしない).
+	void Remove(const std::string& Key)
+	{
+		m_Entries.erase(Key);
+	}
+
 	size_t Size() const noexcept { return m_Entries.size(); }
 	void Clear() noexcept { m_Entries.clear(); }
 

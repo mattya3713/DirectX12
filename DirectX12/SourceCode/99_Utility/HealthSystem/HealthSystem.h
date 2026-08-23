@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <algorithm>
+
 #include "99_Utility/HealthSystem/IHealthSystem.h"
 
 /**********************************************************************************
@@ -29,6 +31,10 @@ public:
 	void SetOnDamage(DamageCallback Callback) override { m_OnDamage = std::move(Callback); }
 	// 死亡した瞬間のコールバックを設定する.
 	void SetOnDeath(DeathCallback Callback) override { m_OnDeath = std::move(Callback); }
+
+	// 最大HPと現在HPを設定する(EnemyFactory等の生成時初期化用).
+	void SetMaxHP(float MaxHP) noexcept { m_MaxHP = MaxHP; m_HP = (std::min)(m_HP, MaxHP); }
+	void SetHP(float HP) noexcept { m_HP = HP; }
 
 private:
 	float m_MaxHP;	// 最大HP.

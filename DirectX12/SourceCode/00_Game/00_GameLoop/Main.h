@@ -13,6 +13,7 @@ class Input;
 class VirtualPad;
 class ImGuiManager;
 class SceneManager;
+class PostProcessPipeline;
 class SoundManager;
 class CollisionDetector;
 class CombatCoordinator;
@@ -69,6 +70,7 @@ private:
 	std::unique_ptr<ImGuiManager>	m_upImGuiManager;	// ImGui統合ラッパー.
 	std::unique_ptr<DebugLog>		m_upDebugLog;		// 実行時ログ管理.
 	std::unique_ptr<SceneManager>	m_upSceneManager;	// シーンマネージャー.
+	std::unique_ptr<PostProcessPipeline> m_upPostProcess;	// ポストプロセス(Bloom等. MainSceneの描画結果へ適用).
 	std::unique_ptr<SoundManager>	m_upSoundManager;	// SE再生マネージャー.
 	std::unique_ptr<CollisionDetector> m_upCollisionDetector; // 当たり判定検出器.
 	std::unique_ptr<CombatCoordinator> m_upCombatCoordinator; // 戦闘演出の仲介役(Player/Bossの実体はシーン側がInitialize()で渡す).

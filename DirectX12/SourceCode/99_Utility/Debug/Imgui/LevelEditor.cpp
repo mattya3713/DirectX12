@@ -5,29 +5,33 @@
 #include <cstring>
 
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
-#include "99_Utility/FileManager/FileManager.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
 
-	// XMFLOAT3をJSON配列へ変換する.
-	nlohmann::json Float3ToJson(const DirectX::XMFLOAT3& Value)
+	constexpr const char* kEnemyDefinitionJson = "Data\\Json\\Enemy\\Definitions.json";
+
+	// カタログに存在しない敵IDの数を数える(保存時の警告用).
+	int CountUnknownEnemyIds(const std::vector<LevelEnemySpawnDesc>& Spawns, const EnemyDefinitionCatalog& Catalog)
 	{
-		return { Value.x, Value.y, Value.z };
+		int unknown = 0;
+		for (const LevelEnemySpawnDesc& spawn : Spawns)
+		{
+			if (!Catalog.Contains(spawn.DefinitionId)) { ++unknown; }
+		}
+		return unknown;
 	}
 
-	DirectX::XMFLOAT3 JsonToFloat3(const nlohmann::json& Data, const char* Key, const DirectX::XMFLOAT3& DefaultValue)
-	{
-		const auto values = Data.value(Key, std::vector<float>{ DefaultValue.x, DefaultValue.y, DefaultValue.z });
-		if (values.size() < 3) { return DefaultValue; }
-		return { values[0], values[1], values[2] };
-	}
-
-} // namespace
+}
 
 LevelEditor::LevelEditor()
 {
+	m_Catalog.Load(kEnemyDefinitionJson); // 失敗しても空カタログとして動作する.
+
 	ScanFiles();
 	ScanMstcFiles();
+	ScanEnemyDefinitions();
 
 	if (!m_MstcFileNames.empty())
 	{
@@ -68,6 +72,7 @@ void LevelEditor::Draw()
 	if (ImGui::Button(IMGUI_JP("再読込"))) {
 		ScanFiles();
 		ScanMstcFiles();
+		ScanEnemyDefinitions();
 	}
 
 	ImGui::SameLine();
@@ -140,6 +145,54 @@ void LevelEditor::Draw()
 
 	ImGui::Separator();
 
+	// ----- 敵スポーン一覧 -----
+	ImGui::TextUnformatted(IMGUI_JP("Enemy Spawns"));
+	int removed_enemy_index = -1;
+	for (size_t i = 0; i < m_EnemySpawns.size(); ++i) {
+		LevelEnemySpawnDesc& spawn = m_EnemySpawns[i];
+
+		char header[96];
+		std::snprintf(header, sizeof(header), IMGUI_JP("Enemy %zu: %s"), i, spawn.DefinitionId.c_str());
+
+		ImGui::PushID(static_cast<int>(1000 + i));
+		if (ImGui::CollapsingHeader(header)) {
+			ImGuiManager::Combo("定義ID", spawn.DefinitionId, m_CatalogIds);
+			ImGuiManager::Input("InstanceName", spawn.InstanceName);
+			ImGuiManager::Input("Pos X", spawn.Position.x);
+			ImGuiManager::Input("Pos Y", spawn.Position.y);
+			ImGuiManager::Input("Pos Z", spawn.Position.z);
+			ImGuiManager::Input("Rot Y(deg)", spawn.RotationDeg.y);
+			ImGuiManager::Tweak("Scale X", spawn.Scale.x, 0.01f, 10.0f);
+			ImGuiManager::Tweak("Scale Y", spawn.Scale.y, 0.01f, 10.0f);
+			ImGuiManager::Tweak("Scale Z", spawn.Scale.z, 0.01f, 10.0f);
+
+			if (ImGui::SmallButton(IMGUI_JP("複製"))) {
+				m_EnemySpawns.insert(m_EnemySpawns.begin() + static_cast<std::ptrdiff_t>(i) + 1, spawn);
+			}
+			ImGui::SameLine();
+			if (ImGui::SmallButton(IMGUI_JP("削除"))) {
+				removed_enemy_index = static_cast<int>(i);
+			}
+		}
+		ImGui::PopID();
+	}
+
+	if (removed_enemy_index >= 0) {
+		m_EnemySpawns.erase(m_EnemySpawns.begin() + removed_enemy_index);
+	}
+
+	if (ImGui::Button(IMGUI_JP("敵スポーン追加")) && !m_CatalogIds.empty()) {
+		LevelEnemySpawnDesc added{};
+		added.DefinitionId = m_CatalogIds.front();
+		m_EnemySpawns.push_back(added);
+	}
+	if (m_CatalogIds.empty()) {
+		ImGui::SameLine();
+		ImGuiManager::Text("Definitions.jsonが見つかりません.");
+	}
+
+	ImGui::Separator();
+
 	// ----- スポーン地点 -----
 	ImGui::TextUnformatted(IMGUI_JP("Player Spawn"));
 	ImGuiManager::CheckBox("Player Spawn有効", m_PlayerSpawn.HasValue);
@@ -208,6 +261,14 @@ void LevelEditor::ScanMstcFiles()
 	std::sort(m_MstcFileNames.begin(), m_MstcFileNames.end());
 }
 
+void LevelEditor::ScanEnemyDefinitions()
+{
+	// カタログをJSONから再読込し、コンボ候補のID一覧を更新する.
+	m_Catalog.Load(kEnemyDefinitionJson);
+	m_CatalogIds = m_Catalog.GetIds();
+	std::sort(m_CatalogIds.begin(), m_CatalogIds.end());
+}
+
 void LevelEditor::LoadSelected()
 {
 	if (m_SelectedFile.empty()) { return; }
@@ -217,6 +278,7 @@ void LevelEditor::LoadSelected()
 	const LevelDesc desc = LoadLevelJson(m_SelectedPath);
 
 	m_Objects     = desc.Objects;
+	m_EnemySpawns = desc.EnemySpawns;
 	m_PlayerSpawn = desc.PlayerSpawn;
 	m_BossSpawn   = desc.BossSpawn;
 
@@ -232,68 +294,25 @@ bool LevelEditor::SaveSelected()
 
 	m_SelectedPath = std::filesystem::path(kJsonDir) / m_SelectedFile;
 
-	nlohmann::json objects = nlohmann::json::array();
-	for (const LevelObjectDesc& object : m_Objects)
+	// 未知の敵IDは警告の上そのまま保存する(Editor単体では判定を潰さないため.
+	// 読込側はカタログと照合して安全に扱う).
+	if (const int unknown = CountUnknownEnemyIds(m_EnemySpawns, m_Catalog); unknown > 0)
 	{
-		nlohmann::json entry;
-		entry["Mstc"]       = object.MstcFile;
-		entry["Position"]   = Float3ToJson(object.Position);
-		entry["RotationDeg"] = Float3ToJson(object.RotationDeg);
-		entry["Scale"]      = Float3ToJson(object.Scale);
-		objects.push_back(entry);
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogWarning("LevelEditor: " + std::to_string(unknown) + "個の未登録敵IDを含んだまま保存しました");
+		}
 	}
 
-	nlohmann::json out;
-	out["Objects"] = objects;
+	LevelDesc desc{};
+	desc.Objects     = m_Objects;
+	desc.EnemySpawns = m_EnemySpawns;
+	desc.PlayerSpawn = m_PlayerSpawn;
+	desc.BossSpawn   = m_BossSpawn;
 
-	if (m_PlayerSpawn.HasValue)
-	{
-		out["PlayerSpawn"] = { { "Position", Float3ToJson(m_PlayerSpawn.Position) }, { "YawDeg", m_PlayerSpawn.YawDeg } };
-	}
-	if (m_BossSpawn.HasValue)
-	{
-		out["BossSpawn"] = { { "Position", Float3ToJson(m_BossSpawn.Position) }, { "YawDeg", m_BossSpawn.YawDeg } };
-	}
-
-	return FileManager::JsonSave(m_SelectedPath, out);
+	return LevelData::WriteToFile(m_SelectedPath, desc);
 }
 
 LevelDesc LevelEditor::LoadLevelJson(const std::filesystem::path& Path)
 {
-	LevelDesc desc{};
-
-	const nlohmann::json data = FileManager::JsonLoad(Path);
-	if (data.empty()) { return desc; }
-
-	if (data.contains("Objects"))
-	{
-		for (const nlohmann::json& entry : data["Objects"])
-		{
-			LevelObjectDesc object{};
-			object.MstcFile    = entry.value("Mstc", std::string());
-			if (object.MstcFile.empty()) { continue; }
-			object.Position    = JsonToFloat3(entry, "Position", { 0.0f, 0.0f, 0.0f });
-			object.RotationDeg = JsonToFloat3(entry, "RotationDeg", { 0.0f, 0.0f, 0.0f });
-			object.Scale       = JsonToFloat3(entry, "Scale", { 1.0f, 1.0f, 1.0f });
-			desc.Objects.push_back(std::move(object));
-		}
-	}
-
-	if (data.contains("PlayerSpawn"))
-	{
-		const nlohmann::json& spawn = data["PlayerSpawn"];
-		desc.PlayerSpawn.HasValue = true;
-		desc.PlayerSpawn.Position = JsonToFloat3(spawn, "Position", { 0.0f, 0.0f, 0.0f });
-		desc.PlayerSpawn.YawDeg   = spawn.value("YawDeg", 0.0f);
-	}
-
-	if (data.contains("BossSpawn"))
-	{
-		const nlohmann::json& spawn = data["BossSpawn"];
-		desc.BossSpawn.HasValue = true;
-		desc.BossSpawn.Position = JsonToFloat3(spawn, "Position", { 0.0f, 0.0f, 8.0f });
-		desc.BossSpawn.YawDeg   = spawn.value("YawDeg", 180.0f);
-	}
-
-	return desc;
+	return LevelData::LoadFromFile(Path);
 }

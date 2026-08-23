@@ -190,7 +190,8 @@ void FrameRewind::Capture()
 	if (m_State != RewindState::Capture || !m_pPipelineState.Get()) { return; }
 
 	ID3D12GraphicsCommandList* cmd_list = m_Dx12.GetCommandList().Get();
-	ID3D12Resource* p_backbuffer = m_Dx12.GetBackBuffer(m_Dx12.GetFrameIndex());
+	// キャプチャ対象は「現在のシーン描画先」(ポストプロセス有効時はオフスクリーンのシーンカラー).
+	ID3D12Resource* p_backbuffer = m_Dx12.GetCurrentSceneTarget();
 	if (!p_backbuffer) { return; }
 
 	// バックバッファをサンプリング可能状態へ一時遷移させる.
