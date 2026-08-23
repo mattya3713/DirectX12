@@ -267,6 +267,8 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\LevelEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ParticleSystemEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\SoundEventEditor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Compute\AsyncComputeDemo.h" />
+    <ClInclude Include="SourceCode\99_Utility\Async\AsyncModelLoader.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\BossCombatView.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\PlayerCombatView.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
@@ -421,6 +423,8 @@
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\LevelEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ParticleSystemEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\SoundEventEditor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Compute\AsyncComputeDemo.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Async\AsyncModelLoader.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\BossCombatView.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\PlayerCombatView.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />
