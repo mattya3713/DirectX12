@@ -182,6 +182,12 @@
     <ClInclude Include="SourceCode\99_Utility\Data\DataTable.h">
       <Filter>SourceCode\99_Utility</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\ObjectPool\ReusableSlotPool.h">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\ObjectPool\OwnershipTracker.h">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>
@@ -283,6 +289,7 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
+    <ClInclude Include="SourceCode\00_Game\50_Enemy\Factory\PooledEnemyFactory.h" />
     <ClInclude Include="SourceCode\00_Game\70_Physics\PhysicsBody.h" />
     <ClInclude Include="SourceCode\00_Game\50_Enemy\Definition\EnemyDefinition.h" />
     <ClInclude Include="SourceCode\00_Game\50_Enemy\Definition\EnemyDefinitionCatalog.h" />

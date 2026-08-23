@@ -4,6 +4,7 @@
 class Player;
 class Enemy;
 class Boss;
+class PooledEnemyFactory;
 
 /**********************************************************************************
 * @author    : mattya3713.
@@ -27,6 +28,14 @@ namespace CharacterAccess {
 		friend class Enemy;
 		friend class Boss;
 		DamageKey() {}
+	};
+
+	// Character::ClearHitHistory()を呼んでよいクラス(PooledEnemyFactoryの再利用リセットのみ.
+	// 誰でも消せると同一スイング重複ヒット抑止が壊れるため鍵付きにしている).
+	class ReuseKey
+	{
+		friend class PooledEnemyFactory;
+		ReuseKey() {}
 	};
 
 } // namespace CharacterAccess

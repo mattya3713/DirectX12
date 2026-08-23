@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <cstring>
 
+#include "00_Game/00_Scene/Level/LevelLint.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
