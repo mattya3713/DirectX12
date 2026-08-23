@@ -160,6 +160,9 @@
     <ClInclude Include="SourceCode\99_Utility\ObjectPool\ObjectPool.h">
       <Filter>SourceCode\99_Utility</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\Data\DataTable.h">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>
@@ -183,6 +186,14 @@
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\IHealthSystem.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateBase.h" />
     <ClInclude Include="SourceCode\99_Utility\StateMachine\StateMachine.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\NodeStatus.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\NodeBase.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\CompositeNodeBase.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\SelectorNode.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\SequenceNode.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\ActionNode.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\DecoratorNode.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\RootNode.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\CollisionInfo.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\HitEvent.h" />
@@ -405,3 +416,4 @@
     <None Include="Directory.Build.props" />
   </ItemGroup>
 </Project>
+
