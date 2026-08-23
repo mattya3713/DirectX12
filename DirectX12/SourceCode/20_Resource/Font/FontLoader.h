@@ -23,11 +23,21 @@ public:
 	{
 		float U0 = 0.0f; float V0 = 0.0f;
 		float U1 = 0.0f; float V1 = 0.0f;
+		int   AtlasIndex = -1;             // 所属アトラスページ(-1=描画不可).
 		float Width    = 0.0f; // ビットマップの幅.
 		float Height   = 0.0f; // ビットマップの高さ.
 		float OffsetX  = 0.0f; // 描画原点からグリフ左までのオフセット.
 		float OffsetY  = 0.0f; // 描画原点(ベースライン)からグリフ上までのオフセット.
 		float AdvanceX = 0.0f; // 次の文字への送り幅.
+	};
+
+	// DEBUG用キャッシュ統計.
+	struct DebugStats
+	{
+		int CacheHits    = 0; // 既存グリフの再参照回数.
+		int Rasterized   = 0; // 新規ラスタライズ回数.
+		int Missing      = 0; // 欠字(GDIエラー・アトラス満杯)回数.
+		int AtlasPages   = 0; // アトラスページ数.
 	};
 
 	// フォントを読み込み、フォントIDを返す(同一指定はキャッシュを返す. 失敗時は-1).
@@ -42,6 +52,12 @@ public:
 	// アトラステクスチャ(TextRendererがこれをサンプリングする).
 	static ID3D12Resource* GetAtlas(int FontId);
 
+	// 指定ページのアトラステクスチャ(容量超過時に複数ページへ拡張する).
+	static ID3D12Resource* GetAtlasPage(int FontId, int PageIndex);
+
+	// DEBUG用統計の取得.
+	static DebugStats GetDebugStats(int FontId);
+
 	// 行の高さ(ピクセル. 改行送りに使用).
 	static float GetLineHeight(int FontId);
 
@@ -49,7 +65,7 @@ public:
 	// 1フォント分のキャッシュデータ(実装.cppが直接操作する).
 	struct FontCache
 	{
-		ID3D12Resource*                pAtlas      = nullptr; // RGBA8アップロードヒープ.
+		std::vector<MyComPtr<ID3D12Resource>> AtlasPages; // RGBA8アップロードヒープ(満杯で追加).
 		std::wstring                   FaceName;              // ラスタライズに使うフェイス名.
 		std::vector<Glyph>             Glyphs;
 		std::vector<wchar_t>           Chars;
@@ -57,6 +73,7 @@ public:
 		float                          Ascent      = 0.0f;
 		UINT                           CursorX     = 0;       // アトラス内の書き込み位置(shelf packing).
 		UINT                           CursorY     = 0;
+		DebugStats                     Stats       = {};
 	};
 
 private:

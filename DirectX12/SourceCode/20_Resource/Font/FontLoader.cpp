@@ -11,9 +11,26 @@ namespace {
 	constexpr UINT ATLAS_W = 512;
 	constexpr UINT ATLAS_H = 512;
 	constexpr UINT GLYPH_PAD = 2;
+	constexpr UINT kMaxAtlasPages = 4; // アトラスページ上限(512x512x4=1MB/フォント).
 	constexpr float GRAY_LEVELS = 64.0f; // GGO_GRAY8_BITMAPの濃淡値(1..64).
 
 	struct GlyphKeyHash; // 未使用(将来の高速化用プレースホルダ).
+
+	// アトラスページ1枚を生成する.
+	MyComPtr<ID3D12Resource> CreateAtlasPage(DirectX12* pDx12)
+	{
+		D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(
+			DXGI_FORMAT_R8G8B8A8_UNORM, ATLAS_W, ATLAS_H);
+		D3D12_HEAP_PROPERTIES heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		ID3D12Resource* p_page = nullptr;
+		MyAssert::IsFailed(
+			_T("フォントアトラステクスチャの作成"),
+			&ID3D12Device::CreateCommittedResource, pDx12->GetDevice(),
+			&heap, D3D12_HEAP_FLAG_NONE, &desc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+			IID_PPV_ARGS(&p_page));
+		return MyComPtr<ID3D12Resource>(p_page);
+	}
 
 	std::map<int, FontLoader::FontCache>& Caches()
 	{
@@ -88,12 +105,7 @@ int FontLoader::CreateCache(const std::wstring& FaceName, int PixelHeight)
 	D3D12_RESOURCE_DESC atlas_desc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R8G8B8A8_UNORM, ATLAS_W, ATLAS_H);
 	D3D12_HEAP_PROPERTIES upload_heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	MyAssert::IsFailed(
-		_T("フォントアトラステクスチャの作成"),
-		&ID3D12Device::CreateCommittedResource, p_dx12->GetDevice(),
-		&upload_heap, D3D12_HEAP_FLAG_NONE, &atlas_desc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&cache.pAtlas));
+	cache.AtlasPages.push_back(CreateAtlasPage(p_dx12));
 
 	const int new_id = g_NextId++;
 	Caches()[new_id] = std::move(cache);
@@ -108,12 +120,17 @@ int FontLoader::CreateCache(const std::wstring& FaceName, int PixelHeight)
 // 指定文字のグリフを取得する(未展開ならラスタライズしてアトラスへ書き込む).
 const FontLoader::Glyph* FontLoader::GetGlyph(int FontId, wchar_t Char)
 {
+	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 	FontCache* p_cache = FindCache(FontId);
-	if (!p_cache || !p_cache->pAtlas) { return nullptr; }
+	if (!p_cache || p_cache->AtlasPages.empty()) { return nullptr; }
 
 	for (size_t i = 0; i < p_cache->Chars.size(); ++i)
 	{
-		if (p_cache->Chars[i] == Char) { return &p_cache->Glyphs[i]; }
+		if (p_cache->Chars[i] == Char)
+		{
+			++p_cache->Stats.CacheHits;
+			return &p_cache->Glyphs[i];
+		}
 	}
 
 	// 空白類はグリフを持たない(送り幅だけ進めて見えない仮グリフを返す).
@@ -143,7 +160,7 @@ const FontLoader::Glyph* FontLoader::GetGlyph(int FontId, wchar_t Char)
 		std::vector<BYTE> buffer(size);
 		if (GetGlyphOutlineW(dc, Char, GGO_GRAY8_BITMAP, &gm, size, buffer.data(), &mat) != GDI_ERROR)
 		{
-			// アトラス上の配置位置(shelf packing).
+			// アトラス上の配置位置(shelf packing). 現ページに収まらなければ次ページ(上限まで).
 			const UINT w = gm.gmBlackBoxX;
 			const UINT h = gm.gmBlackBoxY;
 			if (p_cache->CursorX + w + GLYPH_PAD > ATLAS_W)
@@ -152,7 +169,17 @@ const FontLoader::Glyph* FontLoader::GetGlyph(int FontId, wchar_t Char)
 				p_cache->CursorY += p_cache->Ascent > 0 ? static_cast<UINT>(p_cache->Ascent) : h;
 				p_cache->CursorY += GLYPH_PAD;
 			}
-			if (p_cache->CursorY + h <= ATLAS_H && p_cache->CursorX + w <= ATLAS_W)
+			if (p_cache->CursorY + h > ATLAS_H &&
+			    p_cache->AtlasPages.size() < kMaxAtlasPages)
+			{
+				p_cache->AtlasPages.push_back(CreateAtlasPage(p_dx12));
+				p_cache->CursorX = 0;
+				p_cache->CursorY = 0;
+			}
+
+			const int page_index = static_cast<int>(p_cache->AtlasPages.size()) - 1;
+			if (page_index >= 0 &&
+			    p_cache->CursorY + h <= ATLAS_H && p_cache->CursorX + w <= ATLAS_W)
 			{
 				// GDIのグレイ(1..64)を白×アルファへ展開してアトラスへ書き込む.
 				std::vector<UINT32> rgba(static_cast<size_t>(w) * h, 0);
@@ -170,17 +197,31 @@ const FontLoader::Glyph* FontLoader::GetGlyph(int FontId, wchar_t Char)
 
 				D3D12_BOX dst_box{ p_cache->CursorX, p_cache->CursorY, 0,
 					p_cache->CursorX + w, p_cache->CursorY + h, 1 };
-				p_cache->pAtlas->WriteToSubresource(0, &dst_box,
+				p_cache->AtlasPages[static_cast<size_t>(page_index)]->WriteToSubresource(0, &dst_box,
 					rgba.data(), w * sizeof(UINT32), static_cast<UINT>(rgba.size() * sizeof(UINT32)));
 
 				glyph.U0 = static_cast<float>(p_cache->CursorX) / ATLAS_W;
 				glyph.V0 = static_cast<float>(p_cache->CursorY) / ATLAS_H;
 				glyph.U1 = static_cast<float>(p_cache->CursorX + w) / ATLAS_W;
 				glyph.V1 = static_cast<float>(p_cache->CursorY + h) / ATLAS_H;
+				glyph.AtlasIndex = page_index;
 
 				p_cache->CursorX += w + GLYPH_PAD;
+				++p_cache->Stats.Rasterized;
+			}
+			else
+			{
+				++p_cache->Stats.Missing; // アトラス満杯.
 			}
 		}
+		else
+		{
+			++p_cache->Stats.Missing; // 欠字(GDIエラー).
+		}
+	}
+	else
+	{
+		++p_cache->Stats.Missing;
 	}
 
 	SelectObject(dc, old_font);
@@ -193,15 +234,38 @@ const FontLoader::Glyph* FontLoader::GetGlyph(int FontId, wchar_t Char)
 }
 
 // アトラステクスチャを返す.
-ID3D12Resource* FontLoader::GetAtlas(int FontId)
-{
-	FontCache* p_cache = FindCache(FontId);
-	return p_cache ? p_cache->pAtlas : nullptr;
-}
 
 // 行の高さを返す.
 float FontLoader::GetLineHeight(int FontId)
 {
+	DirectX12* p_dx12 = ServiceLocator::Get<DirectX12>();
 	FontCache* p_cache = FindCache(FontId);
 	return p_cache ? p_cache->LineHeight : 0.0f;
+}
+
+// アトラスの先頭ページを返す.
+ID3D12Resource* FontLoader::GetAtlas(int FontId)
+{
+	return GetAtlasPage(FontId, 0);
+}
+
+// 指定ページのアトラステクスチャを返す.
+ID3D12Resource* FontLoader::GetAtlasPage(int FontId, int PageIndex)
+{
+	FontCache* p_cache = FindCache(FontId);
+	if (!p_cache || PageIndex < 0 || PageIndex >= static_cast<int>(p_cache->AtlasPages.size())) { return nullptr; }
+	return p_cache->AtlasPages[static_cast<size_t>(PageIndex)].Get();
+}
+
+// DEBUG用統計を返す.
+FontLoader::DebugStats FontLoader::GetDebugStats(int FontId)
+{
+	FontCache* p_cache = FindCache(FontId);
+	DebugStats stats{};
+	if (p_cache)
+	{
+		stats = p_cache->Stats;
+		stats.AtlasPages = static_cast<int>(p_cache->AtlasPages.size());
+	}
+	return stats;
 }

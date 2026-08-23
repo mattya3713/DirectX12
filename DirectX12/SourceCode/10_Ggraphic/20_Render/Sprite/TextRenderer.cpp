@@ -45,14 +45,20 @@ void TextRenderer::DrawText2D(int FontId, const std::string& Utf8Text,
 		}
 
 		const FontLoader::Glyph* p_glyph = FontLoader::GetGlyph(FontId, ch);
-		if (!p_glyph || p_glyph->Width <= 0.0f)
+		if (!p_glyph)
 		{
-			// グリフ無し(空白等)は送り幅だけ進める.
-			cursor_x += Scale;
+			cursor_x += Scale; // 欠字は既定幅で送る.
 			continue;
 		}
 
-		ID3D12Resource* p_atlas = FontLoader::GetAtlas(FontId);
+		if (p_glyph->Width <= 0.0f || p_glyph->AtlasIndex < 0)
+		{
+			// 空白・アトラス満杯等は描画せず送りだけ進める.
+			cursor_x += (p_glyph->AdvanceX > 0.0f) ? p_glyph->AdvanceX * Scale : Scale;
+			continue;
+		}
+
+		ID3D12Resource* p_atlas = FontLoader::GetAtlasPage(FontId, p_glyph->AtlasIndex);
 		if (p_atlas)
 		{
 			m_Sprites.DrawSprite2DUV(p_atlas,
@@ -64,7 +70,7 @@ void TextRenderer::DrawText2D(int FontId, const std::string& Utf8Text,
 				Color);
 		}
 
-		cursor_x += p_glyph->AdvanceX * Scale;
+		cursor_x += ((p_glyph->AdvanceX > 0.0f) ? p_glyph->AdvanceX : Scale) * Scale;
 	}
 }
 
