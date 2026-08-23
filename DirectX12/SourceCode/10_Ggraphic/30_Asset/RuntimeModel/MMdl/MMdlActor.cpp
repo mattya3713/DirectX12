@@ -378,6 +378,13 @@ void MmdlActor::Draw()
 	bone_srv_handle.ptr += static_cast<UINT64>(m_ModelData.Materials.size()) * 4 * descriptor_size; // 全マテリアルセット分.
 	command_list->SetGraphicsRootDescriptorTable(RP_BONE_SRV, bone_srv_handle);
 
+	D3D12_GPU_DESCRIPTOR_HANDLE shadow_srv_handle = m_pCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart();
+	shadow_srv_handle.ptr += descriptor_size;                                                        // Scene CBV分.
+	shadow_srv_handle.ptr += descriptor_size;                                                        // Transform CBV分.
+	shadow_srv_handle.ptr += static_cast<UINT64>(m_ModelData.Materials.size()) * 4 * descriptor_size; // 全マテリアルセット分.
+	shadow_srv_handle.ptr += descriptor_size;                                                        // Bone SRV分.
+	command_list->SetGraphicsRootDescriptorTable(RP_SHADOW_SRV, shadow_srv_handle);
+
 	unsigned int index_offset = 0;
 	for (size_t i = 0; i < m_ModelData.Materials.size(); ++i)
 	{
@@ -483,6 +490,7 @@ void MmdlActor::CreateResources()
 	total_descriptors += 1; // RP_TRANSFORM_CBV (b1)
 	total_descriptors += (1 + 3) * static_cast<UINT>(m_ModelData.Materials.size()); // マテリアルごとの (CBV + BaseTex + ToonTex + SphTex)
 	total_descriptors += 1; // RP_BONE_SRV (t3)
+	total_descriptors += 1; // RP_SHADOW_SRV (ピクセルシェーダーt3. MmdlRenderer共有のシャドウマップ).
 
 	D3D12_DESCRIPTOR_HEAP_DESC heap_desc = {};
 	heap_desc.NumDescriptors = total_descriptors;
@@ -626,6 +634,19 @@ void MmdlActor::CreateResources()
 	bone_srv_desc.Buffer.StructureByteStride = sizeof(DirectX::XMMATRIX);
 	bone_srv_desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
 	m_Dx12.GetDevice()->CreateShaderResourceView(m_pBoneTransformBuffer.Get(), &bone_srv_desc, current_cpu_handle);
+	current_cpu_handle.ptr += m_CbvSrvUavDescriptorSize;
+	current_gpu_handle.ptr += m_CbvSrvUavDescriptorSize;
+
+	// --- RP_SHADOW_SRV (ピクセルシェーダーt3. MmdlRenderer共有のシャドウ深度バッファを参照するだけ) ---
+	if (ID3D12Resource* p_shadow_map = m_Renderer.GetShadowMapResource())
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC shadow_srv_desc = {};
+		shadow_srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		shadow_srv_desc.Format                  = DXGI_FORMAT_R32_FLOAT; // 深度リソース(D32_FLOAT)をSRVとして読む際の形式.
+		shadow_srv_desc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+		shadow_srv_desc.Texture2D.MipLevels     = 1;
+		m_Dx12.GetDevice()->CreateShaderResourceView(p_shadow_map, &shadow_srv_desc, current_cpu_handle);
+	}
 
 	// 静的な頂点・インデックス・ベーステクスチャはResourceが所有し、同じResourceを
 	// 渡された次のActorでは再生成せず参照カウントだけを共有する.

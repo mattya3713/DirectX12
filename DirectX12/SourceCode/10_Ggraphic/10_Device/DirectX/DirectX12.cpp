@@ -173,6 +173,7 @@ void DirectX12::BeginDraw(bool UseOffscreenScene)
 
 	// このフレームで使うバックバッファのインデックス(EndDraw()まで使い回す).
 	m_FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+	m_bUseOffscreenScene = UseOffscreenScene;
 
 	// このバックバッファ用のアロケータをGPUがまだ使用中でないか確認してからReset()する.
 	// (Reset()は「そのアロケータから確保したコマンドの実行がGPU側で全て終わっている」場合のみ有効.
@@ -230,6 +231,30 @@ void DirectX12::BeginDraw(bool UseOffscreenScene)
 		float ClearColor[] = { 0.f,0.f,0.f,1.0f };
 		m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
+		m_pCmdList->RSSetViewports(1, m_pViewport.get());
+		m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+	}
+}
+
+void DirectX12::RestoreMainRenderTargets()
+{
+	if (m_bUseOffscreenScene)
+	{
+		// オフスクリーンのシーンカラーバッファへ復帰.
+		auto rtvH = m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart();
+		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
+		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		m_pCmdList->RSSetViewports(1, m_pSceneColorViewport.get());
+		m_pCmdList->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
+	}
+	else
+	{
+		// バックバッファへ復帰.
+		auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
+		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
 		m_pCmdList->RSSetViewports(1, m_pViewport.get());
 		m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
 	}

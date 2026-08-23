@@ -75,6 +75,7 @@ private:
 		RP_TRANSFORM_CBV,
 		RP_MATERIAL_TABLE_CBV_SRV,
 		RP_BONE_SRV,
+		RP_SHADOW_SRV, // シャドウマップ(ピクセルシェーダーt3. MmdlRendererが管理する共有深度バッファ).
 		RP_COUNT
 	};
 

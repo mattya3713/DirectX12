@@ -5,8 +5,12 @@ float4 PS(Output input) : SV_TARGET
 	float3 light = normalize(lightDirection.xyz); //光の向かうベクトル(平行光線. DirectionLightからCBuffer経由で受ける)
     float3 lightCol = lightColor.rgb; //ライトのカラー(DirectionLightからCBuffer経由で受ける)
 
-	//ディフューズ計算
+	//ディフューズ計算(シャドウ有効時はPCF係数でトゥーン輝度を落とす)
     float diffuseB = saturate(dot(-light, input.normal.xyz));
+    if (lightColor.a > 0.5f)
+    {
+        diffuseB *= lerp(0.35f, 1.0f, CalcShadowFactor(input.pos)); // 影側も完全な黒にせずトゥーンの階調を残す.
+    }
     float4 toonDif = UseToonMap > 0.5 ? toon.Sample(smpToon, float2(0, 1.0 - diffuseB)) : float4(1, 1, 1, 1);
 
 	//光の反射ベクトル

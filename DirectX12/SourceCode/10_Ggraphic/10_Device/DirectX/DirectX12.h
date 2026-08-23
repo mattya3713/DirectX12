@@ -114,6 +114,10 @@ public:
 	void BeginDraw(bool UseOffscreenScene);
 	void EndDraw();
 
+	// BeginDraw()で設定したレンダーターゲット・ビューポート・シザーを再設定する
+	// (シャドウ深度パス等でOM/RS設定を上書きした後にメインパスへ復帰させる用途).
+	void RestoreMainRenderTargets();
+
 	// 3Dシーンをオフスクリーンへ描き終えた後、ImGui(Scene Viewパネル含む)を実際の
 	// バックバッファへ描くための準備をする(SceneManager::Draw()の後、ImGuiManager::Render()の前に呼ぶ).
 	void PrepareUIRenderTarget();
@@ -227,6 +231,7 @@ private:
 	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
 	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// コマンドキュー.
 	UINT									m_FrameIndex;			// 現在描画中のバックバッファのインデックス(BeginDraw()で設定).
+	bool									m_bUseOffscreenScene = false; // BeginDraw()に渡された描画先モード(RestoreMainRenderTargets()用).
 
 	// レンダーターゲット.
 	MyComPtr<ID3D12DescriptorHeap>			m_pRenderTargetViewHeap;// レンダーターゲットビュー.

@@ -29,6 +29,13 @@ public:
 
 	// PMD用のルート署名を取得.
 	ID3D12RootSignature* GetRootSignature();
+
+	// シャドウ深度パスを開始する(光源視点への描画設定+シャドウマップのクリア).
+	void BeginShadowPass();
+	// シャドウ深度パスを終了する(シャドウマップをSRV状態へ遷移しメインパスのレンダーターゲットを復帰させる).
+	void EndShadowPass();
+	// シャドウマップテクスチャの取得(Actorがピクセルシェーダー用SRVを作るのに使う. 未初期化時はnullptr).
+	ID3D12Resource* GetShadowMapResource() const { return m_pShadowMap.Get(); }
 	
 	// デフォルトの透明テクスチャを取得.
 	MyComPtr<ID3D12Resource>& GetAlphaTex();
@@ -55,6 +62,8 @@ private:
 	void CreateGraphicsPipelineForPMX();
 	// ルートシグネチャ初期化.
 	void CreateRootSignature();
+	// シャドウマップ用の深度テクスチャ・DSV・深度専用パイプラインの初期化.
+	void CreateShadowResources();
 
 	/*******************************************
 	* @brief	シェーダーのコンパイル.
@@ -86,6 +95,13 @@ private:
 	MyComPtr<ID3D12PipelineState>	m_pPipelineState;		// パイプライン.
 	MyComPtr<ID3D12PipelineState>	m_pTransparentPipelineState;	// 半透明パイプライン.
 	MyComPtr<ID3D12RootSignature>	m_pRootSignature;		// ルートシグネチャ.
+
+	// シャドウマッピング.
+	static constexpr UINT SHADOW_MAP_SIZE = 1024;						// シャドウマップの解像度(固定. 品質チューニングは今回のスコープ外).
+	MyComPtr<ID3D12Resource>		m_pShadowMap;						// 光源視点深度バッファ(D32_FLOAT).
+	MyComPtr<ID3D12DescriptorHeap>	m_pShadowDSVHeap;					// シャドウマップ用DSVヒープ(1ディスクリプタ).
+	MyComPtr<ID3D12PipelineState>	m_pShadowPipelineState;				// 深度専用パイプライン(VS_Shadow+PS無し).
+	bool							m_ShadowMapInShaderResourceState = false; // シャドウマップの現在リソース状態(DEPTH_WRITE=false).
 
 	//PMX用共通テクスチャ.
 	MyComPtr<ID3D12Resource>		m_pAlphaTex;			// 透明のテクスチャ.

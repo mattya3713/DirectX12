@@ -8,11 +8,37 @@
 
 constexpr size_t PMDTexWide = 4;
 
+// PMX用の入力レイアウト(メインパイプラインとシャドウ深度パイプラインで共用).
+namespace {
+	D3D12_INPUT_ELEMENT_DESC g_PMXInputLayout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+
+		// AdditionalUVs (4つ追加)
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV0
+		{ "TEXCOORD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV1
+		{ "TEXCOORD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV2
+		{ "TEXCOORD", 4, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV3
+
+		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT,  0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+
+		// SDEF Data (セマンティクスはHLSLと一致させる)
+		{ "TEXCOORD", 5, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // SDEF_C
+		{ "TEXCOORD", 6, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // SDEF_R0
+		{ "TEXCOORD", 7, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // SDEF_R1
+
+		{ "BLENDFACTOR", 0, DXGI_FORMAT_R32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // Edge
+	};
+}
+
 MmdlRenderer::MmdlRenderer(DirectX12& dx12)
 	: m_pDx12	(dx12)
 {
 	CreateRootSignature();
 	CreateGraphicsPipelineForPMX();
+	CreateShadowResources();
 
 	// PMX用汎用テクスチャの生成.
 	m_pAlphaTex = MyComPtr<ID3D12Resource>(CreateAlphaTexture());
@@ -31,6 +57,122 @@ void MmdlRenderer::BeforDraw()
 	auto cmdList = m_pDx12.GetCommandList();
 	cmdList->SetPipelineState(m_pPipelineState.Get());
 	cmdList->SetGraphicsRootSignature(m_pRootSignature.Get());
+}
+
+// シャドウマップ用の深度テクスチャ・DSV・深度専用パイプラインの初期化.
+void MmdlRenderer::CreateShadowResources()
+{
+	// ===== 光源視点深度バッファ(D32_FLOAT) =====
+	D3D12_RESOURCE_DESC shadow_desc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_D32_FLOAT,
+		SHADOW_MAP_SIZE,
+		SHADOW_MAP_SIZE,
+		1, 0, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
+	D3D12_CLEAR_VALUE shadow_clear{};
+	shadow_clear.Format          = DXGI_FORMAT_D32_FLOAT;
+	shadow_clear.DepthStencil.Depth = 1.0f;
+
+	auto default_heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	MyAssert::IsFailed(
+		_T("シャドウマップ深度バッファの作成"),
+		&ID3D12Device::CreateCommittedResource, m_pDx12.GetDevice(),
+		&default_heap, D3D12_HEAP_FLAG_NONE, &shadow_desc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE, &shadow_clear,
+		IID_PPV_ARGS(m_pShadowMap.ReleaseAndGetAddressOf()));
+
+	// ===== DSVヒープ =====
+	D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
+	dsv_heap_desc.NumDescriptors = 1;
+	dsv_heap_desc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	MyAssert::IsFailed(
+		_T("シャドウマップDSVヒープの作成"),
+		&ID3D12Device::CreateDescriptorHeap, m_pDx12.GetDevice(),
+		&dsv_heap_desc, IID_PPV_ARGS(m_pShadowDSVHeap.ReleaseAndGetAddressOf()));
+
+	m_pDx12.GetDevice()->CreateDepthStencilView(
+		m_pShadowMap.Get(), nullptr,
+		m_pShadowDSVHeap->GetCPUDescriptorHandleForHeapStart());
+
+	// ===== 深度専用パイプライン(VS_Shadow+PS無し) =====
+	MyComPtr<ID3DBlob> VSBlob(nullptr);
+#if _DEBUG
+	CompileShaderFromFile(
+		L"Data\\Shader\\PMX\\ShadowVertex.hlsl",
+		"VS", "vs_5_0",
+		VSBlob.ReleaseAndGetAddressOf());
+#else
+	LoadCompiledShader(
+		L"Data\\Shader\\PMX\\ShadowVertex.cso",
+		VSBlob.ReleaseAndGetAddressOf());
+#endif
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC shadow_pipeline = {};
+	shadow_pipeline.pRootSignature = m_pRootSignature.Get(); // メインと同一(ActorのDraw()をそのまま流用するため).
+	shadow_pipeline.VS = CD3DX12_SHADER_BYTECODE(VSBlob.Get());
+	shadow_pipeline.PS = { nullptr, 0 }; // カラー出力なし.
+	shadow_pipeline.SampleMask    = D3D12_DEFAULT_SAMPLE_MASK;
+	shadow_pipeline.BlendState    = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	shadow_pipeline.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	shadow_pipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // 薄いジオメトリの影欠け防止のためカリングしない.
+	shadow_pipeline.DepthStencilState.DepthEnable   = true;
+	shadow_pipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	shadow_pipeline.DepthStencilState.DepthFunc      = D3D12_COMPARISON_FUNC_LESS;
+	shadow_pipeline.DSVFormat       = DXGI_FORMAT_D32_FLOAT;
+	shadow_pipeline.InputLayout.pInputElementDescs = g_PMXInputLayout;
+	shadow_pipeline.InputLayout.NumElements        = _countof(g_PMXInputLayout);
+	shadow_pipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	shadow_pipeline.NumRenderTargets = 0; // RTV無し(深度のみ).
+	shadow_pipeline.SampleDesc.Count = 1;
+
+	MyAssert::IsFailed(
+		_T("シャドウ深度パイプラインの作成"),
+		&ID3D12Device::CreateGraphicsPipelineState, m_pDx12.GetDevice(),
+		&shadow_pipeline,
+		IID_PPV_ARGS(m_pShadowPipelineState.ReleaseAndGetAddressOf())
+	);
+}
+
+// シャドウ深度パスを開始する.
+void MmdlRenderer::BeginShadowPass()
+{
+	auto cmdList = m_pDx12.GetCommandList();
+
+	if (m_ShadowMapInShaderResourceState)
+	{
+		// 前フレームでSRVとして使った状態から深度書き込みへ戻す.
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMap.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		cmdList->ResourceBarrier(1, &barrier);
+		m_ShadowMapInShaderResourceState = false;
+	}
+
+	cmdList->SetPipelineState(m_pShadowPipelineState.Get());
+	cmdList->SetGraphicsRootSignature(m_pRootSignature.Get()); // メインと共通のためActor側のSetRootDescriptorTableがそのまま使える.
+
+	D3D12_VIEWPORT viewport{ 0.0f, 0.0f, static_cast<float>(SHADOW_MAP_SIZE), static_cast<float>(SHADOW_MAP_SIZE), 0.0f, 1.0f };
+	D3D12_RECT scissor{ 0, 0, static_cast<LONG>(SHADOW_MAP_SIZE), static_cast<LONG>(SHADOW_MAP_SIZE) };
+	cmdList->RSSetViewports(1, &viewport);
+	cmdList->RSSetScissorRects(1, &scissor);
+
+	auto dsv_handle = m_pShadowDSVHeap->GetCPUDescriptorHandleForHeapStart();
+	cmdList->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	cmdList->OMSetRenderTargets(0, nullptr, false, &dsv_handle);
+}
+
+// シャドウ深度パスを終了する.
+void MmdlRenderer::EndShadowPass()
+{
+	auto cmdList = m_pDx12.GetCommandList();
+
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pShadowMap.Get(),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdList->ResourceBarrier(1, &barrier);
+	m_ShadowMapInShaderResourceState = true;
+
+	// メインパスのレンダーターゲット・ビューポートを復帰させる(シャドウパスで書き換えたため).
+	m_pDx12.RestoreMainRenderTargets();
 }
 
 // テクスチャの汎用素材を作成.
@@ -188,28 +330,6 @@ void MmdlRenderer::CreateGraphicsPipelineForPMX() {
 		PSBlob.ReleaseAndGetAddressOf());
 #endif // _DEBUG.
 
-	D3D12_INPUT_ELEMENT_DESC PMXInputLayout[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-
-		// AdditionalUVs (4つ追加)
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV0
-		{ "TEXCOORD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV1
-		{ "TEXCOORD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV2
-		{ "TEXCOORD", 4, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // AdditionalUV3
-
-		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT,  0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "BLENDWEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-
-		// SDEF Data (セマンティクスはHLSLと一致させる)
-		{ "TEXCOORD", 5, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // SDEF_C
-		{ "TEXCOORD", 6, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // SDEF_R0
-		{ "TEXCOORD", 7, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // SDEF_R1
-
-		{ "BLENDFACTOR", 0, DXGI_FORMAT_R32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, // Edge
-	};
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicPipeLine = {};
 	GraphicPipeLine.pRootSignature = m_pRootSignature.Get();
 	GraphicPipeLine.VS = CD3DX12_SHADER_BYTECODE(VSBlob.Get());
@@ -228,8 +348,8 @@ void MmdlRenderer::CreateGraphicsPipelineForPMX() {
 	GraphicPipeLine.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	GraphicPipeLine.DepthStencilState.StencilEnable = false;
 
-	GraphicPipeLine.InputLayout.pInputElementDescs = PMXInputLayout;//レイアウト先頭アドレス
-	GraphicPipeLine.InputLayout.NumElements = _countof(PMXInputLayout);//レイアウト配列数
+	GraphicPipeLine.InputLayout.pInputElementDescs = g_PMXInputLayout;//レイアウト先頭アドレス
+	GraphicPipeLine.InputLayout.NumElements = _countof(g_PMXInputLayout);//レイアウト配列数
 
 	GraphicPipeLine.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;//ストリップ時のカットなし
 	GraphicPipeLine.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;//三角形で構成
@@ -274,7 +394,7 @@ void MmdlRenderer::CreateGraphicsPipelineForPMX() {
 void MmdlRenderer::CreateRootSignature() 
 {
 	// ディスクリプタレンジの作成.
-	D3D12_DESCRIPTOR_RANGE DescRanges[5] = {};
+	D3D12_DESCRIPTOR_RANGE DescRanges[6] = {};
 
 	// 定数[b0](ビュープロジェクション用).
 	DescRanges[0].NumDescriptors = 1;
@@ -306,8 +426,14 @@ void MmdlRenderer::CreateRootSignature()
 	DescRanges[4].BaseShaderRegister = 3; // t3 レジスタに対応
 	DescRanges[4].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	// シャドウマップ(ピクセルシェーダー用のTexture2D. 頂点シェーダー用のt3とはステージが分離されているためレジスタを再利用).
+	DescRanges[5].NumDescriptors = 1;
+	DescRanges[5].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	DescRanges[5].BaseShaderRegister = 3;
+	DescRanges[5].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	// ルートパラメータの作成.
-	D3D12_ROOT_PARAMETER Rootparams[4] = {};
+	D3D12_ROOT_PARAMETER Rootparams[5] = {};
 
 	// ビュープロジェクション変換.
 	Rootparams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -335,6 +461,12 @@ void MmdlRenderer::CreateRootSignature()
 	Rootparams[3].DescriptorTable.pDescriptorRanges = &DescRanges[4]; // DescRanges[4] を指す
 	Rootparams[3].DescriptorTable.NumDescriptorRanges = 1;
 
+	// シャドウマップ(ピクセルシェーダーからのみ見える).
+	Rootparams[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	Rootparams[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	Rootparams[4].DescriptorTable.pDescriptorRanges = &DescRanges[5];
+	Rootparams[4].DescriptorTable.NumDescriptorRanges = 1;
+
 	// ルートシグネクチャの作成.
 	D3D12_ROOT_SIGNATURE_DESC RootSignatureDesc = {};
 
@@ -343,9 +475,19 @@ void MmdlRenderer::CreateRootSignature()
 	RootSignatureDesc.NumParameters = _countof(Rootparams); // Rootparams のサイズを動的に取得
 
 	// サンプラーの作成.
-	CD3DX12_STATIC_SAMPLER_DESC SamplerDesc[2] = {}; // サンプラーが2つなので、配列サイズも2に修正
+	CD3DX12_STATIC_SAMPLER_DESC SamplerDesc[3] = {}; // s0/s1に加えシャドウ比較用s2を追加.
 	SamplerDesc[0].Init(0); // s0
 	SamplerDesc[1].Init(1, D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // s1
+	SamplerDesc[2].Init(
+		2,                                        // s2
+		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // PCF用のバイリニア比較フィルタ.
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,        // 範囲外はボーダー値(0.0=影)扱い.
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+		0.0f,                                     // mipLODBias.
+		16,                                       // maxAnisotropy.
+		D3D12_COMPARISON_FUNC_LESS_EQUAL,         // SampleCmp用の比較関数.
+		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
 
 	RootSignatureDesc.pStaticSamplers = SamplerDesc;
 	RootSignatureDesc.NumStaticSamplers = _countof(SamplerDesc); // サンプラーの数を動的に取得

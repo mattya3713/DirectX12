@@ -73,3 +73,40 @@ StructuredBuffer<float4x4> boneTransforms : register(t3); // 頂点シェーダ�
 Texture2D<float> ShadowMap : register(t3);                // ピクセルシェーダー用(シャドウマップ. ルート署名上ステージが分離されているためt3を再利用).
 
 SamplerComparisonState smpShadow : register(s2); // シャドウマップ比較用サンプラー(SampleCmp用).
+
+// ワールド座標を光源クリップ空間のUV/深度へ変換する(シャドウサンプリング共通処理).
+float3 WorldToLightUVZ(float4 WorldPos)
+{
+    float4 light_pos = mul(lightView, WorldPos);
+    light_pos = mul(lightProj, light_pos);
+    float3 uvz = light_pos.xyz / light_pos.w;
+    uvz.x = uvz.x * 0.5f + 0.5f;
+    uvz.y = -uvz.y * 0.5f + 0.5f; // LH正射影はY軸が反転するため.
+    return uvz;
+}
+
+// 3x3 PCFでシャドウ係数を求める(1=照明, 0=完全な影. マップ範囲外は影にしない).
+float CalcShadowFactor(float4 WorldPos)
+{
+    float3 uvz = WorldToLightUVZ(WorldPos);
+    if (uvz.x < 0.0f || uvz.x > 1.0f || uvz.y < 0.0f || uvz.y > 1.0f || uvz.z > 1.0f)
+    {
+        return 1.0f;
+    }
+
+    float bias = lightDirection.w;
+    float sum = 0.0f;
+
+    [unroll]
+    for (int y = -1; y <= 1; ++y)
+    {
+        [unroll]
+        for (int x = -1; x <= 1; ++x)
+        {
+            float2 offset = float2(x, y) * (1.0f / 1024.0f);
+            sum += ShadowMap.SampleCmpLevelZero(smpShadow, uvz.xy + offset, uvz.z - bias);
+        }
+    }
+
+    return sum / 9.0f;
+}
