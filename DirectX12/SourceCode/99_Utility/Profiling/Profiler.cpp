@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "ImGui/imgui.h"
+#include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
@@ -106,7 +107,7 @@ void Profiler::DrawImGui()
 				ImGui::Text("%-16s %8.3f ms", scope.Label.c_str(), gpu_ms);
 			}
 			else {
-				ImGui::Text("%-16s %s", scope.Label.c_str(), "(計測中)");
+				ImGui::Text("%-16s %s", scope.Label.c_str(), IMGUI_JP("(計測中)"));
 			}
 		}
 	}
