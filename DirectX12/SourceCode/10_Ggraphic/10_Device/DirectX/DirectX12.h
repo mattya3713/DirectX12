@@ -6,7 +6,7 @@
 //ヘッダ読込.
 #include <cstdint>
 #include <d3d12.h>
-#include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
+#include "d3dx12.h" // /IのData\Library\DirectXTex\Commonを参照(worktree等どんなチェックアウトでも解決する形式).
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\DirectXTex\\DirectXTex.h"
