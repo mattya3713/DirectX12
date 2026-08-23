@@ -11,6 +11,8 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #include "10_Ggraphic/20_Render/Sprite/SpriteRenderer.h"
+#include "10_Ggraphic/20_Render/Sprite/TextRenderer.h"
+#include "20_Resource/Font/FontLoader.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -124,6 +126,7 @@ void MainScene::Create()
 	try {
 		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
 		m_upSpriteRenderer = std::make_unique<SpriteRenderer>(*p_dx12);
+		m_upTextRenderer = std::make_unique<TextRenderer>(*m_upSpriteRenderer);
 		m_pMstcRenderer = std::make_shared<MstcRenderer>(*p_dx12);
 	}
 	catch (const std::runtime_error& Msg) {
@@ -705,6 +708,13 @@ void MainScene::Draw()
 				m_upSpriteRenderer->DrawSprite3D(p_sprite_tex, head_pos, 0.8f, 0.8f);
 			}
 		}
+	}
+
+	// テキスト描画の動作確認(既定フォント+ローカライズ).
+	if (m_upTextRenderer) {
+		const int font_id = FontLoader::GetDefaultFont();
+		m_upTextRenderer->DrawText2D(font_id, "FPS Demo / 日本語テスト", 40.0f, 180.0f, 0.75f);
+		m_upTextRenderer->DrawTextLocalized(font_id, "test_hello", 40.0f, 220.0f, 0.75f);
 	}
 
 	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する

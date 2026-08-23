@@ -57,6 +57,9 @@ public:
 	// バインドポーズでのY軸方向の高さ(Scaleを掛ける前. モデルサイズ検知用).
 	float GetLocalHeight() const noexcept { return m_LocalHeight; }
 
+	// ボーン名から最新のワールド位置を取得する(未更新・不明時はfalse).
+	bool TryGetBoneWorldPosition(const std::string& BoneName, DirectX::XMFLOAT3& Out) const;
+
 	// 読み込まれているクリップ名の一覧(ImGui等での一覧表示用).
 	const std::vector<XSkeleton::AnimationClip>& GetClips() const noexcept { return m_Skeleton.Clips; }
 	int GetCurrentClipIndex() const noexcept { return m_CurrentClipIndex; }
@@ -116,6 +119,7 @@ private:
 	float m_LocalHeight = 0.0f; // バインドポーズでの高さ(Y方向 max-min. モデルサイズ検知用).
 
 	std::vector<MyComPtr<ID3D12Resource>> m_pTextureResource; // ベーステクスチャ(MaterialIndexに対応).
+	std::vector<DirectX::XMFLOAT3>       m_BoneWorldPositions; // 最新のボーンワールド位置(UpdateBoneMatrices時に更新).
 	std::vector<MyComPtr<ID3D12Resource>> m_pToonResource; // トゥーンテクスチャ(MaterialIndexに対応).
 	std::vector<MyComPtr<ID3D12Resource>> m_pSphereResource; // スフィアテクスチャ(MaterialIndexに対応).
 	std::vector<RuntimeFormat::SkinSubmeshRole> m_SkinSubmeshRoles; // モデル固有の合成役割.
