@@ -34,8 +34,10 @@ public:
 	// DEBUGビルドでは実行中のAction名がGetLastActiveAction()で取得できるよう接続される.
 	std::unique_ptr<RootNode> BuildRuntime(const ActionRegistry& Actions);
 
-	// デバッグ表示用: 直近にTickされたActionノード名(DEBUGビルドのみ更新される).
+#if _DEBUG
+	// デバッグ表示用: 直近にTickされたActionノード名(実体がDEBUGビルド限定のためgetterもガードを揃える).
 	const std::string& GetLastActiveAction() const noexcept { return m_LastActiveAction; }
+#endif
 
 	// 編集データを一括差し替える(Undo/Redoコマンドから履歴復元に使う).
 	void ApplyModel(const BTTreeModel& Model);

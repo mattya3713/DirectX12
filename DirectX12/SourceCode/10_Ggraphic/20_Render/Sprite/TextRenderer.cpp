@@ -61,7 +61,9 @@ void TextRenderer::DrawText2D(const std::string& Utf8Text,
 	float PosX, float PosY, float Scale,
 	const DirectX::XMFLOAT4& Color)
 {
-	RegisterFontDebugCommands();
+#if _DEBUG
+	RegisterFontDebugCommands(); // font/fontinfoデバッグコマンドの遅延登録(定義自体が_DEBUG限定のためガードを揃える).
+#endif
 	DrawText2D((s_ActiveFontId >= 0) ? s_ActiveFontId : FontLoader::GetDefaultFont(), Utf8Text, PosX, PosY, Scale, Color);
 }
 

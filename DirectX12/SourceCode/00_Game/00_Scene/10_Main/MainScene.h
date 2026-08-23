@@ -25,13 +25,14 @@ class CutScenePlayer;
 class ParticleSystem;
 class EventBus;
 class UILayoutRuntime;
+// 非同期モデルロードはDebug/Release共通の機能(Player/Bossのモデル読込に常時使う).
+class AsyncModelLoader;
+class AsyncModelRequest;
 #if _DEBUG
 class CutSceneEditor;
 class LevelEditor;
 class CombatTuningEditor;
 class ParticleSystemEditor;
-class AsyncModelLoader;
-class AsyncModelRequest;
 class SoundEventEditor;
 #endif
 
@@ -92,12 +93,14 @@ private:
 	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
 	std::unique_ptr<SoundEventEditor> m_upSoundEventEditor; // Sound Event編集ツール(デバッグのみ).
 	std::unique_ptr<ParticleSystemEditor> m_upParticleEditor; // パーティクル編集ツール(デバッグのみ).
-	std::unique_ptr<class AsyncModelLoader> m_upAsyncModels; // 非同期モデルローダー.
-	std::shared_ptr<class AsyncModelRequest> m_PlayerModelRequest; // Playerモデルのロード要求.
-	std::shared_ptr<class AsyncModelRequest> m_BossModelRequest;   // Bossモデルのロード要求.
 	std::unique_ptr<LevelEditor>    m_upLevelEditor;    // レベルシーン編集ツール(デバッグのみ).
 	std::unique_ptr<CombatTuningEditor> m_upCombatTuningEditor; // Combat調整ツール(デバッグのみ).
 #endif
+
+	// 非同期モデルロード(Debug/Release共通. ロード完了前もゲーム更新を継続するために使う).
+	std::unique_ptr<AsyncModelLoader>  m_upAsyncModels;      // 非同期モデルローダー.
+	std::shared_ptr<AsyncModelRequest> m_PlayerModelRequest; // Playerモデルのロード要求.
+	std::shared_ptr<AsyncModelRequest> m_BossModelRequest;   // Bossモデルのロード要求.
 
 	// レベルデータ(Data\Json\Level配下)から復元した静的オブジェクト.
 	std::shared_ptr<MstcRenderer>               m_pMstcRenderer;

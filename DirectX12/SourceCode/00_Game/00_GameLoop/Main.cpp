@@ -21,7 +21,9 @@
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "99_Utility/Event/EventBus.h"
+#if _DEBUG
 #include "99_Utility/DebugBridge/DebugBridgeServer.h"
+#endif
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/00_Scene/SceneManager.h"
@@ -293,11 +295,14 @@ void Main::Draw()
 // 解放処理.
 void Main::Release()
 {
-    // 通信スレッドがシーン/サービスへ触れないよう、最初にサーバーだけ停止する.
+#if _DEBUG
+    // 通信スレッドがシーン/サービスへ触れないよう、最初にサーバーだけ停止する
+    // (DebugBridgeServerクラス自体が_DEBUG限定のためガードを揃える).
     if (m_upDebugBridgeServer) {
         m_upDebugBridgeServer->Stop();
         m_upDebugBridgeServer.reset();
     }
+#endif
 
     // DirectX12/CameraManagerへの参照を各シーンが持ちうるため、それらより先に解放する.
     if (m_upSceneManager) {
