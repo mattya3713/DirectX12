@@ -18,6 +18,9 @@ public:
 	// 現在のアニメーション内再生位置を秒で取得する(クリップ未再生なら0).
 	virtual float GetCurrentAnimationSeconds() const = 0;
 
+	// アニメーション再生速度の倍率を設定する(未対応の実装は何もしない).
+	virtual void SetPlaybackSpeed(float /*Speed*/) {}
+
 #if _DEBUG
 	// バインドポーズでのY軸方向の高さを取得する(Debugビルドのみ).
 	virtual float GetLocalHeight() const = 0;

@@ -36,6 +36,9 @@ public:
 	// アタッチ中のメッシュの現在のアニメーション内再生位置を秒で取得する.
 	float GetCurrentAnimationSeconds() const noexcept { return m_spMesh ? m_spMesh->GetCurrentAnimationSeconds() : 0.0f; }
 
+	// アタッチ中のメッシュのアニメーション再生速度倍率を設定する(未対応メッシュは無視される).
+	void SetAnimPlaybackSpeed(float Speed) noexcept { if (m_spMesh) { m_spMesh->SetPlaybackSpeed(Speed); } }
+
 #if _DEBUG
 	// アタッチ中のメッシュのローカル高さを取得する(Debugビルドのみ).
 	float GetLocalHeight() const noexcept { return m_spMesh ? m_spMesh->GetLocalHeight() : 0.0f; }

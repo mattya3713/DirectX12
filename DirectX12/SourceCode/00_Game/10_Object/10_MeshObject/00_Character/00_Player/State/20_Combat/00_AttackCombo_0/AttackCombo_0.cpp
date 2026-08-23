@@ -17,6 +17,9 @@ void AttackCombo_0::Enter()
 {
 	Combat::Enter();
 
+	ApplyComboSpeedToAnimation();
+	DecideRushDirection(false); // 1段目はBoss方向へ突進(方向転換なし).
+
 	ApplyNamedClip("player_attack1");
 	GetPlayer()->SetAttackAmount(ATTACK_AMOUNT);
 }

@@ -104,6 +104,9 @@ private:
 		m_HasParryReactionTarget    = true;
 	}
 
+	// 自分の攻撃が相手にヒットした瞬間を処理する(コンボ加算・必殺ゲージ獲得・画面揺れ. コンボフロー用).
+	void ProcessAttackHits();
+
 protected:
 	// 被弾リアクション: 吹き飛び方向を計算してKnockBack Stateへ遷移する.
 	// (Boss/Enemyは既定の空実装のまま. ノックバック初速はKnockBack StateがGetKnockBackVelocity()で受け取る.)
@@ -124,6 +127,7 @@ private:
 	float                m_RunMoveSpeed   = 8.0f;				// 走り移動速度(単位/秒).
 	PlayerState::eID     m_CurrentStateID = PlayerState::eID::None;	// 現在ステートID(デバッグ表示用).
 	std::uint32_t        m_LastParriedActivationId = 0;	// 直前にパリィ成立した攻撃の有効化ID(0=なし).
+	std::map<const ColliderBase*, std::uint32_t> m_ProcessedHitAttackIds;	// 相手コライダーごとに最後にヒット判定した攻撃の有効化ID(同一スイングの重複加算防止).
 #if _DEBUG
 	float m_ModelFrontOffsetDeg = 180.0f;	// モデル正面軸のズレ補正角(度). player.msknは-Z正面のため既定で180.
 #endif

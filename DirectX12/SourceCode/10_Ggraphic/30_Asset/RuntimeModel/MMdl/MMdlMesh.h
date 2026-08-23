@@ -30,6 +30,7 @@ public:
 	void PlayNamedClip(const std::string& ClipName) override;
 	void SetCurrentFrame(float ActionFrame) override;
 	float GetCurrentAnimationSeconds() const override;
+	void SetPlaybackSpeed(float Speed) override;
 
 #if _DEBUG
 	float GetLocalHeight() const override;

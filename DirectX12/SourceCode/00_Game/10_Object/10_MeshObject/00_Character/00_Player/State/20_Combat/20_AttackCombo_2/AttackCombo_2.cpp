@@ -17,6 +17,9 @@ void AttackCombo_2::Enter()
 {
 	Combat::Enter();
 
+	ApplyComboSpeedToAnimation();
+	DecideRushDirection(true); // 最終段のみ移動入力による方向転換を許可(無入力ならBoss方向).
+
 	ApplyNamedClip("player_attack3");
 	GetPlayer()->SetAttackAmount(ATTACK_AMOUNT);
 }

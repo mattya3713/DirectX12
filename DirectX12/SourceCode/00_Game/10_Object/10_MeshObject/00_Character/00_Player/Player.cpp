@@ -12,7 +12,10 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/40_KnockBack/KnockBack.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "00_Game/30_Camera/00_Base/CameraBase.h"
+#include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "99_Utility/ObjectPool/ObjectPool.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
@@ -37,6 +40,12 @@ namespace {
 namespace {
 	constexpr float KNOCKBACK_HORIZONTAL_SPEED = 6.0f; // ノックバックの水平初速(KnockBack State側の定数と合わせる).
 	constexpr float KNOCKBACK_VERTICAL_SPEED   = 3.0f; // ノックバックの垂直初速.
+
+	// コンボフロー用の仮値(バランスは後で調整する).
+	constexpr float kUltGainPerHit     = 5.0f;  // 攻撃1ヒットあたりの必殺ゲージ獲得量.
+	constexpr float kShakeBaseIntensity = 0.05f; // 揺れ幅の基本値.
+	constexpr float kShakePerCombo      = 0.004f; // コンボ数1あたりの揺れ幅増加.
+	constexpr float kShakeMaxIntensity  = 0.15f;  // 揺れ幅の上限(過剰防止).
 }
 
 Player::Player()
@@ -89,6 +98,8 @@ void Player::Update()
 		drawn_transform.Rotation.y += DirectX::XMConvertToRadians(m_ModelFrontOffsetDeg);
 		m_spMesh->SetWorldTransform(drawn_transform);
 	}
+
+	ProcessAttackHits(); // 攻撃ヒット時のコンボ/ゲージ加算と画面揺れ(コンボフロー用).
 }
 
 void Player::Draw()
@@ -107,6 +118,9 @@ void Player::DrawDebugColliders() const
 
 void Player::OnDamaged(const HitEvent& Event)
 {
+	// 被弾すると勢い(コンボ)はリセットされるが、必殺ゲージは保持する
+	// (「今の勢い」と「溜めた資源」を区別する設計).
+	ResetCombo(PlayerAccess::ComboEconomyKey{});
 	// 吹き飛び方向を求める(接触点から離れる水平方向が最も確実.
 	// Normalの向きは衝突判定の引数順に依存するため、フォールバック扱いにする).
 	DirectX::XMFLOAT3 direction{ 0.0f, 0.0f, 1.0f };
@@ -137,6 +151,38 @@ void Player::OnDamaged(const HitEvent& Event)
 		direction.z * KNOCKBACK_HORIZONTAL_SPEED };
 
 	ChangeState(PlayerState::eID::KnockBack);
+}
+
+void Player::ProcessAttackHits()
+{
+	// 攻撃コライダーが相手被弾判定と重なった情報(=実際に攻撃が当たった瞬間)を処理する.
+	for (const CollisionInfo& info : m_AttackCollider.GetCollisionEvents())
+	{
+		if (!info.IsHit || info.AttackActivationId == 0) { continue; }
+
+		// 同一スイング中の重なりで複数回加算しないよう、有効化IDで重複を排除する.
+		const auto it = m_ProcessedHitAttackIds.find(info.OtherCollider);
+		if (it != m_ProcessedHitAttackIds.end() && it->second >= info.AttackActivationId) { continue; }
+		m_ProcessedHitAttackIds[info.OtherCollider] = info.AttackActivationId;
+
+		AddCombo(1, PlayerAccess::ComboEconomyKey{});
+		AddUltValue(kUltGainPerHit, PlayerAccess::ComboEconomyKey{});
+
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogInfo("Attack Hit! Combo=" + std::to_string(GetCombo())
+				+ " Ult=" + std::to_string(GetCurrentUltValue()));
+		}
+
+		// 画面揺れ(コンボ数に応じて強くなる. 上限付き).
+		if (CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>())
+		{
+			if (CameraBase* p_camera = p_camera_manager->GetActive())
+			{
+				const float intensity = std::min(kShakeBaseIntensity + GetCombo() * kShakePerCombo, kShakeMaxIntensity);
+				p_camera->Shake(intensity, 0.12f);
+			}
+		}
+	}
 }
 
 void Player::ChangeState(PlayerState::eID Id)

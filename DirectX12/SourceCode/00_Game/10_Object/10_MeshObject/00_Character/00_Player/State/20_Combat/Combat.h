@@ -37,31 +37,46 @@ namespace PlayerState {
 		void Update() override;
 		void Exit() override;
 
-		// このステートが使うJSON設定ファイルのパス(派生クラスで上書き. 空文字なら読み込まない).
+		// 突進移動(攻撃中に方向へ距離を詰める. コンボフロー用).
+		void LateUpdate() override;
+
+		// 次のステートを使うJSON設定ファイルのパス(派生クラスで上書き. 空文字なら読み込まない).
 		virtual std::string GetSettingsFileName() const { return {}; }
 
 	protected:
-		// JSON設定ファイルから諸パラメータ・ColliderWindowsを読み込む.
+		// JSON設定ファイルから攻撃パラメータ・ColliderWindowsを読み込む.
 		void LoadSettings();
 
-		// 攻撃判定ウィンドウを追加する.
+		// 攻撃ウィンドウを追加する.
 		void AddColliderWindow(float Start, float Duration);
 
-		// 経過時間に応じて攻撃判定のON/OFFを切り替える.
+		// 経過時間に応じて攻撃判定をON/OFFを切り替える.
 		void ProcessColliderWindows();
 
-		// コンボ入力(攻撃ボタン)の受付・遷移判定. 次のコンボへ遷移してよければtrueを返す
-		// (呼び出し側はtrueが返ったら次のコンボStateへChangeStateしてreturnすること).
+		// コンボ受付(攻撃ボタン)の受付・判定処理. 次のコンボへ遷移してよいならtrueを返す
+		// (呼び出し元がtrueを返したら次のComboStateへChangeStateしてreturnすること).
 		bool UpdateComboInput();
 
+		// コンボ数に応じたアニメーション再生速度を適用する(勢い制. 上限付き).
+		void ApplyComboSpeedToAnimation();
+
+		// 突進方向を確定する(AllowInputRedirect=trueなら移動入力を優先、無ければターゲット方向).
+		void DecideRushDirection(bool AllowInputRedirect);
+
+		// 突進移動(LateUpdateから呼ぶ. 攻撃時間全体でRushDistance分だけ詰める).
+		void ProcessRushMovement();
+
 	protected:
-		float m_MinComboTransTime = 0.0f; // これ以降でないとコンボ入力を受け付けない.
+		float m_MinComboTransTime = 0.0f; // 以降でないとコンボ入力を受け付けない.
 		float m_ComboStartTime    = 0.0f; // コンボ入力の受付開始時刻.
-		float m_ComboEndTime      = 1.0f; // このステートの終了時刻(コンボ入力が無ければIdleへ).
+		float m_ComboEndTime      = 1.0f; // このステートの終了時刻(コンボ入力が間に合わなければIdleへ).
 		float m_CurrentTime       = 0.0f; // 攻撃クリップの現在の再生位置(秒).
 		bool  m_IsComboAccepted   = false; // コンボ入力(次の攻撃ボタン)を受け付け済みか.
 
 		std::vector<ColliderWindow> m_ColliderWindows;
+
+		DirectX::XMFLOAT3 m_RushDirection{ 0.0f, 0.0f, 1.0f }; // 突進方向(Enter時に確定).
+		bool              m_IsRushEnabled = false;             // 突進有効フラグ(攻撃系のみtrue).
 	};
 
 } // namespace PlayerState

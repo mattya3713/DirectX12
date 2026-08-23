@@ -125,4 +125,10 @@ private:
 	int   m_CurrentClipIndex = -1; // 再生中のクリップ(m_Skeleton.Clipsへのインデックス. -1=未再生=バインドポーズ).
 	float m_CurrentTime      = 0.0f; // 現在のクリップ内再生時刻(ファイル依存の時間軸. 秒ではない).
 	bool  m_IsExternallyDriven = false; // 外部指定フレームで再生を停止中.
+	float m_PlaybackSpeed    = 1.0f; // 再生速度倍率(コンボフロー用. 1.0=等速).
+
+public:
+	// アニメーション再生速度の倍率を設定する(0以下は1.0へ丸める).
+	void SetPlaybackSpeed(float Speed) noexcept { m_PlaybackSpeed = (Speed > 0.0f) ? Speed : 1.0f; }
+	float GetPlaybackSpeed() const noexcept { return m_PlaybackSpeed; }
 };

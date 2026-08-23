@@ -17,6 +17,9 @@ void AttackCombo_1::Enter()
 {
 	Combat::Enter();
 
+	ApplyComboSpeedToAnimation();
+	DecideRushDirection(false); // 2段目もBoss方向へ突進(方向転換なし).
+
 	ApplyNamedClip("player_attack2");
 	GetPlayer()->SetAttackAmount(ATTACK_AMOUNT);
 }

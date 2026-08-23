@@ -4,6 +4,7 @@
 namespace PlayerState {
 	class Idle;
 	class Run;
+	class Combat;
 	class AttackCombo_0;
 	class AttackCombo_1;
 	class AttackCombo_2;
@@ -28,6 +29,10 @@ namespace PlayerAccess {
 		friend class PlayerState::Idle;
 		friend class PlayerState::Run;
 		friend class PlayerState::KnockBack; // 吹き飛び方向を向かせるため.
+		friend class PlayerState::AttackCombo_0; // 突進方向へ向かせるため.
+		friend class PlayerState::AttackCombo_1;
+		friend class PlayerState::AttackCombo_2;
+		friend class PlayerState::Combat; // 共通の突進方向確定処理のため.
 		MovementKey() {}
 	};
 
@@ -38,6 +43,7 @@ namespace PlayerAccess {
 		friend class PlayerState::AttackCombo_1;
 		friend class PlayerState::AttackCombo_2;
 		friend class PlayerState::Parry;
+		friend class Player; // 攻撃ヒット時の加算・被弾時のリセットを行うため.
 		ComboEconomyKey() {}
 	};
 

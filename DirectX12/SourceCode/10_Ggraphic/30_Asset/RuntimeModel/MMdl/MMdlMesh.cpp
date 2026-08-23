@@ -66,6 +66,11 @@ float MMdlMesh::GetCurrentAnimationSeconds() const
 	return m_upActor->GetCurrentAnimationSeconds();
 }
 
+void MMdlMesh::SetPlaybackSpeed(float Speed)
+{
+	m_upActor->SetPlaybackSpeed(Speed);
+}
+
 #if _DEBUG
 float MMdlMesh::GetLocalHeight() const
 {
