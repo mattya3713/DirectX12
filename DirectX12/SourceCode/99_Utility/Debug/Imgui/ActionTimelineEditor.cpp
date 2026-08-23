@@ -1,6 +1,7 @@
 ﻿#include "ActionTimelineEditor.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "ImGuiManager.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MMdlActor.h"
@@ -21,6 +22,37 @@ namespace {
 	};
 
 	constexpr float kTimelinePadRate = 1.05f; // 最長時刻に対する表示余白の割合.
+
+	// SettingsData同士の同値比較(Undoコマンドの要否判定用).
+	bool SettingsEquals(const ActionTimelineEditor::SettingsData& A, const ActionTimelineEditor::SettingsData& B)
+	{
+		return A.ComboStartTime == B.ComboStartTime &&
+		       A.MinComboTransTime == B.MinComboTransTime &&
+		       A.ComboEndTime == B.ComboEndTime &&
+		       A.Windows == B.Windows;
+	}
+
+	// ドラッグ編集1回分を「編集前後のSettingsDataスナップショット」として記録するコマンド.
+	// (ベクタ再配置に強い全状態スナップショット方式. データは数フレーム分程度と小さい).
+	class TimelineStateCommand final : public IEditorCommand
+	{
+	public:
+		TimelineStateCommand(ActionTimelineEditor* pOwner, ActionTimelineEditor::SettingsData OldState,
+			ActionTimelineEditor::SettingsData NewState, const char* pLabel)
+			: m_pOwner(pOwner), m_OldState(OldState), m_NewState(NewState), m_Label(pLabel)
+		{
+		}
+
+		void Execute() override { m_pOwner->ApplySettings(m_NewState); }
+		void Undo() override { m_pOwner->ApplySettings(m_OldState); }
+		const char* GetLabel() const override { return m_Label; }
+
+	private:
+		ActionTimelineEditor* const            m_pOwner;
+		const ActionTimelineEditor::SettingsData m_OldState;
+		const ActionTimelineEditor::SettingsData m_NewState;
+		const char* const                      m_Label;
+	};
 }
 
 ActionTimelineEditor::ActionTimelineEditor()
@@ -62,6 +94,7 @@ void ActionTimelineEditor::LoadSelected(MmdlActor* pActor)
 	m_DragMode       = DragMode::None;
 	m_DragWindow     = -1;
 	m_ClipName       = FindClipName();
+	m_Commands.Clear(); // ファイルが変わったためUndo/Redo履歴は無効化する.
 
 	const nlohmann::json data = FileManager::JsonLoad(m_SelectedPath);
 	if (!data.empty())
@@ -133,10 +166,19 @@ float ActionTimelineEditor::TimeMax() const
 	return std::max(latest * kTimelinePadRate, 0.1f);
 }
 
+// 編集データを一括差し替える(Undo/Redoコマンドから履歴復元に使う).
+void ActionTimelineEditor::ApplySettings(const SettingsData& Data)
+{
+	m_Data = Data;
+}
+
 void ActionTimelineEditor::Draw(MmdlActor& Actor)
 {
 	ImGui::SetNextWindowPos(ImVec2(500.0f, 430.0f), ImGuiCond_FirstUseEver);
 	if (!ImGui::Begin(IMGUI_JP("Action Timeline Editor"))) { ImGui::End(); return; }
+
+	// Ctrl+Z / Ctrl+Y(Ctrl+Shift+Z)での取り消し・やり直し(共通Editorフレームワーク).
+	m_Commands.HandleShortcuts();
 
 	if (!m_SelectedPath.empty() && ImGui::Button(IMGUI_JP("保存")))
 	{
@@ -315,6 +357,12 @@ void ActionTimelineEditor::DrawTimeline(MmdlActor& Actor)
 				m_DragMode = DragMode::MoveMinTrans;
 			}
 		}
+
+		// 編集を伴うドラッグなら開始時の状態を記録しておく(確定時にUndoコマンドへ積む).
+		if (m_DragMode != DragMode::Scrub && m_DragMode != DragMode::None)
+		{
+			m_DragStartSnapshot = m_Data;
+		}
 	}
 
 	// ドラッグ中の反映(毎フレーム現在のマウスXへ追従させる).
@@ -355,6 +403,24 @@ void ActionTimelineEditor::DrawTimeline(MmdlActor& Actor)
 	}
 	else
 	{
+		// ドラッグ確定: 開始時と値が変わっていればUndo履歴へ積む(スクラブは履歴対象外).
+		if (m_DragMode != DragMode::None && m_DragMode != DragMode::Scrub &&
+		    !SettingsEquals(m_DragStartSnapshot, m_Data))
+		{
+			const char* p_label = "edit";
+			switch (m_DragMode)
+			{
+			case DragMode::MoveWindow:    p_label = "区間移動"; break;
+			case DragMode::ResizeWindow:  p_label = "区間長変更"; break;
+			case DragMode::MoveComboStart: p_label = "コンボ受付開始移動"; break;
+			case DragMode::MoveMinTrans:   p_label = "最低遷移時刻移動"; break;
+			default: break;
+			}
+
+			auto p_command = std::make_unique<TimelineStateCommand>(this, m_DragStartSnapshot, m_Data, p_label);
+			m_Commands.Execute(std::move(p_command));
+		}
+
 		m_DragMode = DragMode::None;
 	}
 }

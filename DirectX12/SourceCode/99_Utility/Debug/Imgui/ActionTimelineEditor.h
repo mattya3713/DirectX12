@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "EditorFramework/EditorCommandStack.h"
+
 class MmdlActor;
 
 /**********************************************************************************
@@ -26,12 +28,14 @@ public:
 	// 毎フレーム呼ぶ. JSON選択・数値編集・タイムライン編集・スクラブ・保存を行う.
 	void Draw(MmdlActor& Actor);
 
-private:
+public:
 	// ColliderWindowの編集用データ(Combat::ColliderWindowから実行時フラグを除いたもの).
 	struct WindowParam
 	{
 		float Start    = 0.0f;
 		float Duration = 0.1f;
+
+		bool operator==(const WindowParam& Other) const noexcept { return Start == Other.Start && Duration == Other.Duration; }
 	};
 
 	// 攻撃アクションJSON1件分の編集用データ.
@@ -43,6 +47,10 @@ private:
 		std::vector<WindowParam> Windows;
 	};
 
+	// 編集データを一括差し替える(Undo/Redoコマンドから履歴復元に使う).
+	void ApplySettings(const SettingsData& Data);
+
+private:
 	// タイムライン上のドラッグ操作の種別.
 	enum class DragMode
 	{
@@ -92,4 +100,6 @@ private:
 	DragMode m_DragMode       = DragMode::None; // 現在のドラッグ状態.
 	int      m_DragWindow     = -1;             // ドラッグ中のColliderWindow(-1=なし).
 	float    m_DragGrabOffset = 0.0f;           // 掴んだ位置から区間Startまでのオフセット(秒).
+	SettingsData m_DragStartSnapshot;            // ドラッグ開始時の値(Undo用の旧状態スナップショット).
+	EditorCommandStack m_Commands;               // Undo/Redo履歴(共通Editorフレームワーク).
 };
