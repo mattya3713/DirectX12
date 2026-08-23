@@ -22,6 +22,10 @@ KnockBack::KnockBack(Player* pOwner) noexcept
 
 void KnockBack::Enter()
 {
+	// 被弾クリップを再生する(player.msknに存在するplayer_take_damageを使用.
+	// クリップはループ再生のため、着地でIdleへ戻った際はIdle側が現在フレームでポーズ固定する).
+	ApplyNamedClip("player_take_damage");
+
 	// 吹き飛び初速はPlayer::OnDamaged()が被弾時に計算して保持しているものを受け取る.
 	m_Physics.SetVelocity(GetPlayer()->GetKnockBackVelocity());
 
