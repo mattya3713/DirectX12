@@ -1,4 +1,4 @@
-// Standalone verification for CombatTuning::ClampToValidRange (直接入力検証タスク).
+﻿// Standalone verification for CombatTuning::ClampToValidRange (直接入力検証タスク).
 // JSON読込値の不正値・極端値が妥当範囲へクランプされることを検証する.
 #include <cassert>
 #include <cstdio>

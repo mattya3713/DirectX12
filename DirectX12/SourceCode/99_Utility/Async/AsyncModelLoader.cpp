@@ -79,6 +79,7 @@ std::shared_ptr<AsyncModelRequest> AsyncModelLoader::Request(const std::filesyst
 		else
 		{
 			request = std::make_shared<AsyncModelRequest>();
+			request->m_FilePath = Path; // ワーカーがこのパスを読むため、キューへ積む前に必ず設定する.
 			m_RequestMap[key] = request;
 		}
 	}

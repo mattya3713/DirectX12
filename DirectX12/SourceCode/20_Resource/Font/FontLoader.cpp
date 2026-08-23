@@ -21,7 +21,11 @@ namespace {
 	{
 		D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(
 			DXGI_FORMAT_R8G8B8A8_UNORM, ATLAS_W, ATLAS_H);
-		D3D12_HEAP_PROPERTIES heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		// D3D12はUPLOADヒープにテクスチャを置けない(バッファのみ)ため、CPUから直接
+		// WriteToSubresource()できるCUSTOMヒープ(WRITE_BACK/L0)で作る
+		// (グリフを随時書き足す用途のため、ステージング経由ではなく常時CPU書き込み可能にしておく).
+		D3D12_HEAP_PROPERTIES heap = CD3DX12_HEAP_PROPERTIES(
+			D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 		ID3D12Resource* p_page = nullptr;
 		MyAssert::IsFailed(
 			_T("フォントアトラステクスチャの作成"),
