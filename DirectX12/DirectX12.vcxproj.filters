@@ -149,6 +149,9 @@
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
+    <ClInclude Include="SourceCode\99_Utility\Profiling\Profiler.h">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>

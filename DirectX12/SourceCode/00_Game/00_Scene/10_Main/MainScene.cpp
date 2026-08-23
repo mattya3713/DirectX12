@@ -25,6 +25,7 @@
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/Profiling/Profiler.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
 #include "00_Game/00_Scene/SceneManager.h"
@@ -291,6 +292,8 @@ void MainScene::Draw()
 	m_pMmdlRenderer->BeforDraw();
 	p_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	Profiler::Instance().GpuBegin("GPU:Characters");
+
 	if (m_upPlayer) {
 		m_upPlayer->Draw();
 	}
@@ -298,6 +301,8 @@ void MainScene::Draw()
 	if (m_upBoss) {
 		m_upBoss->Draw();
 	}
+
+	Profiler::Instance().GpuEnd("GPU:Characters");
 
 #if _DEBUG
 	// コライダー描画は「各キャラが登録→DebugColliderRendererがまとめて描画」の分離方式.
@@ -311,7 +316,9 @@ void MainScene::Draw()
 	}
 
 	if (DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>()) {
+		Profiler::Instance().GpuBegin("GPU:Colliders");
 		p_collider_renderer->Draw();
+		Profiler::Instance().GpuEnd("GPU:Colliders");
 	}
 #endif
 }

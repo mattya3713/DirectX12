@@ -4,6 +4,7 @@
 #pragma warning(disable:4005)
 
 //ヘッダ読込.
+#include <cstdint>
 #include <d3d12.h>
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
 #include <dxgi1_6.h>
@@ -235,9 +236,29 @@ private:
 	UINT								m_SceneColorRequestedWidth;
 	UINT								m_SceneColorRequestedHeight;
 
-	//シーンを構成するバッファまわり
+	// シーンを構成するバッファまわり
 	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン定数バッファのリソース
 	SceneData*								m_pMappedSceneData;		// シーン定数バッファのCPU側マップ済みポインタ.
+
+	// GPUタイムスタンプクエリ(簡易プロファイラ用).
+	static constexpr UINT MaxGpuTimestamps = 16; // 1フレームあたりのタイムスタンプ数(開始/終了の組8個分).
+
+public:
+	// GPUタイムスタンプ計測が利用可能か(初期化成功後はtrue).
+	bool IsGpuProfilingAvailable() const noexcept { return m_pGpuQueryHeap != nullptr; }
+
+	// タイムスタンプの記録を積む(コマンドリスト記録中に呼ぶ. IndexInFrameは0〜MaxGpuTimestamps-1).
+	void WriteGpuTimestamp(UINT IndexInFrame);
+
+	// 記録したクエリ結果を読み取りバッファへ解決する(EndDraw内でClose前に呼ぶ).
+	void ResolveGpuQueries();
+
+	// 完了済みフレームのタイムスタンプ差分をミリ秒で取得する(開始/終了インデックスを指定).
+	float ReadGpuMilliseconds(UINT StartIndexInFrame, UINT EndIndexInFrame) const;
+
+private:
+	// GPUタイムスタンプクエリ用のヒープと読み取りバッファを作成する.
+	void CreateGpuQueryResources();
 
 	// SetCamera()で設定される現在のカメラ行列.
 	DirectX::XMMATRIX						m_ViewMatrix;
@@ -263,5 +284,11 @@ private:
 
 	// ファイル名パスとリソースのマップテーブル.
 	std::map<std::string, MyComPtr<ID3D12Resource>>	m_ResourceTable;
+
+	// GPUタイムスタンプクエリ(簡易プロファイラ用).
+	MyComPtr<ID3D12QueryHeap>	m_pGpuQueryHeap;     // タイムスタンプクエリヒープ(バックバッファ数xスロット分).
+	MyComPtr<ID3D12Resource>	m_pGpuQueryReadback; // 解決結果の読み取りバッファ(マップ済み).
+	std::uint64_t*				m_pMappedGpuQueries = nullptr; // マップ済み読み取りポインタ.
+	std::uint64_t				m_GpuTimestampFrequency = 0;   // キューのタイムスタンプ周波数(Hz).
 
 };

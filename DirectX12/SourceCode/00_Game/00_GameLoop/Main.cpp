@@ -16,6 +16,7 @@
 #include "99_Utility/Debug/Imgui/DebugConsole.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Sound/SoundManager.h"
+#include "99_Utility/Profiling/Profiler.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/00_Scene/SceneManager.h"
@@ -162,6 +163,8 @@ HRESULT Main::LoadData()
 // 更新処理.
 void Main::Update()
 {
+    Profiler::ScopedTimer cpu_timer("CPU:Update");
+
 #if _DEBUG
     if (m_upSceneManager && m_upSceneManager->IsAnimationTuningActive()) {
         // ドッキング対象のBegin()より先にホストを提出し、ImGuiのドッキング処理順を保証する.
@@ -188,6 +191,9 @@ void Main::Draw()
 {
     if (!m_pDx12) return;
 
+    Profiler::ScopedTimer cpu_timer("CPU:Draw");
+    Profiler::Instance().GpuBegin("GPU:Frame");
+
 #if _DEBUG
     const bool is_editor_scene = m_upSceneManager && m_upSceneManager->IsAnimationTuningActive();
 #else
@@ -200,11 +206,14 @@ void Main::Draw()
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
 	DebugConsole::Draw();
+	Profiler::Instance().DrawImGui();
 	if (is_editor_scene) {
 		SceneView::Draw();
 	}
 	if (m_upSceneManager) {
+        Profiler::Instance().GpuBegin("GPU:Scene");
         m_upSceneManager->Draw();
+        Profiler::Instance().GpuEnd("GPU:Scene");
     }
 
 	if (is_editor_scene) {
@@ -213,9 +222,12 @@ void Main::Draw()
 	}
 
     // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
+    Profiler::Instance().GpuBegin("GPU:UI");
     ImGuiManager::Render();
+    Profiler::Instance().GpuEnd("GPU:UI");
 
     // 終了処理.
+    Profiler::Instance().GpuEnd("GPU:Frame");
     m_pDx12->EndDraw();
 }
 
@@ -330,6 +342,8 @@ void Main::Loop()
             GameTime::MaintainFPS();
             Input::Update();
             ImGuiManager::NewFrame();
+
+            Profiler::Instance().BeginFrame();
 
             Update();
             Draw();

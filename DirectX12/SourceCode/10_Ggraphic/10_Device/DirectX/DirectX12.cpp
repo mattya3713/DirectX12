@@ -94,6 +94,9 @@ bool DirectX12::Create(HWND hWnd)
 		// フェンスの表示.
 		CreateFance(
 			m_pFence);
+
+		// GPUタイムスタンプクエリ(簡易プロファイラ用).
+		CreateGpuQueryResources();
 	}
 	catch(const std::runtime_error& Msg) {
 
@@ -371,6 +374,9 @@ void DirectX12::EndDraw()
 
 	m_pCmdList->ResourceBarrier(1, &barrier);
 
+	// 記録されたタイムスタンプクエリを読み取りバッファへ解決する(Close前に行う).
+	ResolveGpuQueries();
+
 	// 命令のクローズ.
 	m_pCmdList->Close();
 
@@ -392,6 +398,71 @@ void DirectX12::EndDraw()
 const MyComPtr<IDXGISwapChain4> DirectX12::GetSwapChain()
 {
 	return m_pSwapChain;
+}
+
+// GPUタイムスタンプクエリ用のヒープと読み取りバッファを作成する.
+void DirectX12::CreateGpuQueryResources()
+{
+	// タイムスタンプクエリヒープ(バックバッファ数フレーム分のスロット).
+	D3D12_QUERY_HEAP_DESC query_heap_desc = {};
+	query_heap_desc.Type          = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+	query_heap_desc.Count         = MaxGpuTimestamps * FrameBufferCount;
+	query_heap_desc.NodeMask      = 0;
+
+	if (FAILED(m_pDevice12->CreateQueryHeap(&query_heap_desc, IID_PPV_ARGS(m_pGpuQueryHeap.ReleaseAndGetAddressOf())))) {
+		return; // 非対応環境ではプロファイラのGPU計測を無効化するだけで続行.
+	}
+
+	// 解決結果の読み取りバッファ(読み取り型ヒープにマップしたまま使う).
+	const UINT64 readback_size = static_cast<UINT64>(sizeof(std::uint64_t)) * MaxGpuTimestamps * FrameBufferCount;
+	auto readback_desc = CD3DX12_RESOURCE_DESC::Buffer(readback_size);
+	auto readback_heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
+
+	if (FAILED(m_pDevice12->CreateCommittedResource(&readback_heap, D3D12_HEAP_FLAG_NONE, &readback_desc,
+		D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(m_pGpuQueryReadback.ReleaseAndGetAddressOf())))) {
+		m_pGpuQueryHeap.Reset();
+		return;
+	}
+
+	if (FAILED(m_pGpuQueryReadback->Map(0, nullptr, reinterpret_cast<void**>(&m_pMappedGpuQueries)))) {
+		m_pGpuQueryHeap.Reset();
+		m_pGpuQueryReadback.Reset();
+		return;
+	}
+
+	m_pCmdQueue->GetTimestampFrequency(&m_GpuTimestampFrequency);
+}
+
+// タイムスタンプの記録を積む.
+void DirectX12::WriteGpuTimestamp(UINT IndexInFrame)
+{
+	if (!m_pGpuQueryHeap || IndexInFrame >= MaxGpuTimestamps) { return; }
+	m_pCmdList->EndQuery(m_pGpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+		m_FrameIndex * MaxGpuTimestamps + IndexInFrame);
+}
+
+// 記録したクエリ結果を読み取りバッファへ解決する.
+void DirectX12::ResolveGpuQueries()
+{
+	if (!m_pGpuQueryHeap || !m_pGpuQueryReadback) { return; }
+
+	m_pCmdList->ResolveQueryData(m_pGpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+		m_FrameIndex * MaxGpuTimestamps, MaxGpuTimestamps,
+		m_pGpuQueryReadback.Get(), m_FrameIndex * MaxGpuTimestamps);
+}
+
+// 完了済みフレームのタイムスタンプ差分をミリ秒で取得する.
+float DirectX12::ReadGpuMilliseconds(UINT StartIndexInFrame, UINT EndIndexInFrame) const
+{
+	if (!m_pMappedGpuQueries || m_GpuTimestampFrequency == 0 ||
+		StartIndexInFrame >= MaxGpuTimestamps || EndIndexInFrame >= MaxGpuTimestamps) { return -1.0f; }
+
+	// 現在のバックバッファインデックス領域はBeginDraw()でフェンス待ち済み(2フレーム前完了)のため安全に読める.
+	const std::uint64_t start = m_pMappedGpuQueries[m_FrameIndex * MaxGpuTimestamps + StartIndexInFrame];
+	const std::uint64_t end   = m_pMappedGpuQueries[m_FrameIndex * MaxGpuTimestamps + EndIndexInFrame];
+	if (end <= start) { return -1.0f; } // 未記録 or 同一フレーム未完了.
+
+	return static_cast<float>(static_cast<double>(end - start) / static_cast<double>(m_GpuTimestampFrequency) * 1000.0);
 }
 
 // DirectX12デバイスを取得.

@@ -267,6 +267,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugDockSpace.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.h" />
+    <ClInclude Include="SourceCode\99_Utility\Profiling\Profiler.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\SceneView.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h" />
@@ -398,6 +399,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ImGuiManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugDockSpace.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugHud.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Profiling\Profiler.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\SceneView.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp" />
