@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <cstring>
 
+#include "00_Game/00_Scene/Level/LevelLint.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
@@ -96,6 +98,28 @@ void LevelEditor::Draw()
 				std::memset(m_NewFileName, 0, sizeof(m_NewFileName));
 				if (m_OnLevelChanged) { m_OnLevelChanged(m_SelectedPath); }
 			}
+		}
+	}
+
+	ImGui::Separator();
+
+	// レベルJSONの検証(lint)結果表示. 保存前に毎回実行する.
+	const LevelLintResult lint_result = m_SelectedFile.empty()
+		? LevelLintResult{}
+		: LevelLint::LintFile(m_SelectedPath, m_Catalog);
+
+	if (lint_result.Issues.empty())
+	{
+		ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), IMGUI_JP("レベル検証: 問題なし"));
+	}
+	else
+	{
+		for (const LevelLintIssue& issue : lint_result.Issues)
+		{
+			const bool is_error = issue.Severity == LevelLintIssue::Severity::Error;
+			ImGui::TextColored(
+				is_error ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f) : ImVec4(1.0f, 0.85f, 0.2f, 1.0f),
+				"%s%s", is_error ? "[ERROR] " : "[WARN] ", issue.Message.c_str());
 		}
 	}
 
