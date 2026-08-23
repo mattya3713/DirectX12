@@ -133,17 +133,34 @@ void SoundManager::Play(const std::string& Name, bool IsLoop, float Volume)
 		return;
 	}
 
-	m_ActiveVoices.push_back(p_voice);
+	m_ActiveVoices.push_back({ p_voice, Name, IsLoop });
 }
 
 void SoundManager::StopAll()
 {
-	for (IXAudio2SourceVoice* p_voice : m_ActiveVoices)
+	for (const ActiveVoice& active_voice : m_ActiveVoices)
 	{
-		p_voice->Stop();
-		p_voice->DestroyVoice();
+		active_voice.Voice->Stop();
+		active_voice.Voice->DestroyVoice();
 	}
 	m_ActiveVoices.clear();
+}
+
+void SoundManager::StopLooping(const std::string& Name)
+{
+	for (auto it = m_ActiveVoices.begin(); it != m_ActiveVoices.end(); )
+	{
+		if (it->IsLoop && it->Name == Name)
+		{
+			it->Voice->Stop();
+			it->Voice->DestroyVoice();
+			it = m_ActiveVoices.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
 }
 
 void SoundManager::Update()
@@ -151,11 +168,11 @@ void SoundManager::Update()
 	for (auto it = m_ActiveVoices.begin(); it != m_ActiveVoices.end(); )
 	{
 		XAUDIO2_VOICE_STATE state{};
-		(*it)->GetState(&state);
+		it->Voice->GetState(&state);
 
 		if (state.BuffersQueued == 0)
 		{
-			(*it)->DestroyVoice();
+			it->Voice->DestroyVoice();
 			it = m_ActiveVoices.erase(it);
 		}
 		else
