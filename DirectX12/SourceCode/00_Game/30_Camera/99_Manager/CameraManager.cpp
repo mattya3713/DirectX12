@@ -14,7 +14,18 @@ CameraManager::~CameraManager()
 
 void CameraManager::Register(std::string_view Name, std::unique_ptr<CameraBase> upCamera)
 {
-	m_Cameras[std::string(Name)] = std::move(upCamera);
+	auto key = std::string(Name);
+	auto it = m_Cameras.find(key);
+
+	// 同名再登録でアクティブカメラ自身が破棄される場合は、破棄前に非アクティブ化して
+	// 参照を切る(m_pActiveCameraのダングリング防止. シーン往復時の再登録や
+	// PlayOneShotの同名列連続再生で発生しうる).
+	if (it != m_Cameras.end() && m_pActiveCamera == it->second.get()) {
+		m_pActiveCamera->OnDeactivated();
+		m_pActiveCamera = nullptr;
+	}
+
+	m_Cameras[key] = std::move(upCamera);
 }
 
 void CameraManager::SetActive(std::string_view Name)
