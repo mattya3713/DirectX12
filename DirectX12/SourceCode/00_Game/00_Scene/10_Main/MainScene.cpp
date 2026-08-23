@@ -24,6 +24,7 @@
 #include "00_Game/50_Input/VirtualPad.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/PlayerAccessKeys.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/80_CutScene/CutScenePlayer.h"
@@ -204,6 +205,11 @@ void MainScene::Update()
 		if (SceneManager* p_scene_manager = ServiceLocator::Get<SceneManager>()) {
 			p_scene_manager->LoadScene(SceneManager::eList::AnimationTuning);
 		}
+	}
+
+	// F7で撃破シーケンスを強制発動する(演出確認用デバッグキー).
+	if (Input::IsKeyDown(VK_F7)) {
+		DebugStartFinisherSequence();
 	}
 
 #endif // _DEBUG.
@@ -394,8 +400,12 @@ void MainScene::Update()
 		m_upBoss->Update();
 	}
 
+	// 撃破シーケンス基盤(ゲージ加速/成立判定/演出フック). Player/Boss更新後に呼ぶ.
+	TickFinisherSequence();
+
 	// カットシーン再生(Player/Boss更新後に呼び、カットシーン側のTransformを優先させる).
-	if (m_upCutScenePlayer && !is_paused && !m_IsGameOver) {
+	// 撃破シーケンス中(Playing)は戦闘停止後も演出側の更新を継続させる.
+	if (m_upCutScenePlayer && !is_paused && (!m_IsGameOver || m_FinisherPhase == FinisherPhase::Playing)) {
 		m_upCutScenePlayer->Update(GameTime::GetDeltaTime());
 	}
 
@@ -462,6 +472,84 @@ void MainScene::Update()
 	CombatDebugHud::Draw(m_upPlayer.get(), m_upBoss.get());
 #endif
 }
+
+// ===== 撃破シーケンス基盤(演出内容はユーザー実装. ここでは状態遷移とフックのみ扱う) =====
+
+// ゲージ加速・必殺ヒット成立判定・演出開始フックの毎フレーム処理.
+void MainScene::TickFinisherSequence()
+{
+	if (!m_upPlayer || !m_upBoss) { return; }
+
+	const float boss_hp  = m_upBoss->GetHealth().GetHP();
+	const float boss_max = m_upBoss->GetHealth().GetMaxHP();
+
+	if (m_FinisherPhase == FinisherPhase::None && !m_IsGameOver)
+	{
+		// ゲージ加速: Boss HPが20%以下になったら必殺ゲージを自動チャージする(仮値. 2秒で満タン).
+		constexpr float GAUGE_BOOST_HP_RATIO = 0.2f;
+		constexpr float GAUGE_BOOST_RATE     = 0.5f;
+		if (boss_max > 0.0f && boss_hp / boss_max <= GAUGE_BOOST_HP_RATIO) {
+			m_upPlayer->ChargeUltByRatio(GAUGE_BOOST_RATE * GameTime::GetDeltaTime());
+		}
+
+		// 成立判定: 必殺技(仮)がBossへヒットしたフレーム(HPが減少した帧)にゲージ満タンなら撃破成立.
+		if (m_PrevBossHpForFinisher > boss_hp &&
+			m_upPlayer->GetCurrentStateID() == PlayerState::eID::SpecialMove &&
+			m_upPlayer->GetCurrentUltValue() >= m_upPlayer->GetMaxUltValue()) {
+			BeginFinisherSequence();
+		}
+	}
+
+	m_PrevBossHpForFinisher = boss_hp;
+}
+
+// 撃破成立: 戦闘/AI停止+撃破イベント発行+演出開始フック.
+void MainScene::BeginFinisherSequence()
+{
+	if (m_FinisherPhase != FinisherPhase::None) { return; }
+
+	m_FinisherPhase  = FinisherPhase::Playing;
+	m_WinnerIsPlayer = true;
+	m_IsGameOver     = true; // 既存ガードでPlayer/Boss/パーティクルの通常更新を停止させる.
+
+	// 撃破成立: Boss HPを下限無視で0へ.
+	if (m_upBoss) {
+		m_upBoss->ForceKill();
+	}
+
+	// 撃破成立イベント(EventBus購読者へ通知).
+	if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+		if (m_upBoss) { p_event_bus->Publish(BossDefeatedEvent{ m_upBoss.get() }); }
+	}
+
+	// 演出開始フック: カットシーン"Finisher"を再生し、完了時にNotifyFinisherCutsceneFinished()
+	// を呼んでもらう。カットシーン未登録の場合は即座に完了扱いとする(基盤単体でも動作させるため).
+	if (m_upCutScenePlayer && m_upCutScenePlayer->Play("Finisher", [this]() { NotifyFinisherCutsceneFinished(); })) {
+		return; // 再生開始. 完了通知を待つ.
+	}
+
+	NotifyFinisherCutsceneFinished();
+}
+
+// 【演出完了通知API】カットシーン側から呼ばれる(完了→状態区切りとして次状態へ).
+void MainScene::NotifyFinisherCutsceneFinished()
+{
+	if (m_FinisherPhase != FinisherPhase::Playing) { return; }
+
+	// 完了: 以降は既存のWIN表示(Game Result)等の後続処理へ流れる.
+	m_FinisherPhase = FinisherPhase::Completed;
+}
+
+#if _DEBUG
+// デバッグ用強制発動(演出確認用. 正式な発動経路はゲージMAX+ヒット).
+void MainScene::DebugStartFinisherSequence()
+{
+	if (m_FinisherPhase != FinisherPhase::None || !m_upPlayer || !m_upBoss) { return; }
+
+	m_upPlayer->ChargeUltByRatio(1.0f);
+	BeginFinisherSequence();
+}
+#endif
 
 void MainScene::LateUpdate()
 {

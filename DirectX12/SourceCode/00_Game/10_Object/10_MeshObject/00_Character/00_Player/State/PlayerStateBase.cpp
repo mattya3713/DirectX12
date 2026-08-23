@@ -43,6 +43,15 @@ bool PlayerStateBase::TryStartCombatAction() const
 	VirtualPad* p_pad = ServiceLocator::Get<VirtualPad>();
 	if (!p_pad) { return false; }
 
+	// 【仮実装】必殺技トリガー: 必殺ゲージMAX中にSpecialAttackで発動する.
+	// 正式な必殺技システム(入力・発動条件)は別Featureで上書きされる前提.
+	if (p_pad->IsActionPress(VirtualPad::eGameAction::SpecialAttack) &&
+		GetPlayer()->GetCurrentUltValue() >= GetPlayer()->GetMaxUltValue())
+	{
+		GetPlayer()->ChangeState(PlayerState::eID::SpecialMove);
+		return true;
+	}
+
 	if (p_pad->IsActionPress(VirtualPad::eGameAction::Attack))
 	{
 		GetPlayer()->ChangeState(PlayerState::eID::AttackCombo_0);

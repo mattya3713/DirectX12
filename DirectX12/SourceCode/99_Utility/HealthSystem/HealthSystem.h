@@ -18,6 +18,11 @@ public:
 
 	// 最大HPの取得.
 	float GetMaxHP() const noexcept override { return m_MaxHP; }
+
+	// ダメージ下限(この値未満には下がらない. 0=通常. 撃破シーケンスの「実質的下限」用).
+	void SetMinHP(float MinHP) noexcept { m_MinHP = MinHP; }
+	// HPを直接設定する(必殺撃破成立時の0化など、ダメージ計算を経由しない操作用).
+	void SetHP(float HP) noexcept { m_HP = std::clamp(HP, 0.0f, m_MaxHP); }
 	// 現在HPの取得.
 	float GetHP() const noexcept override { return m_HP; }
 	// 生存しているか.
@@ -31,7 +36,8 @@ public:
 	void SetOnDeath(DeathCallback Callback) override { m_OnDeath = std::move(Callback); }
 
 private:
-	float m_MaxHP;	// 最大HP.
+float m_MaxHP;	// 最大HP.
+float m_MinHP = 0.0f;	// ダメージ下限(この値未満には下がらない. 撃破シーケンス用).
 	float m_HP;		// 現在HP.
 
 	DamageCallback	m_OnDamage;	// ダメージを受けた時に呼ばれる.

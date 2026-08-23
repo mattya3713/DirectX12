@@ -10,6 +10,7 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/20_Combat/30_Parry/Parry.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/30_Dodge/00_DodgeExecute/DodgeExecute.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/40_KnockBack/KnockBack.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/State/50_SpecialMove/SpecialMove.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/30_Camera/00_Base/CameraBase.h"
@@ -221,6 +222,11 @@ void Player::ChangeState(PlayerState::eID Id)
 
 	case PlayerState::eID::KnockBack:
 		m_StateMachine.ChangeState(std::make_shared<PlayerState::KnockBack>(this));
+		break;
+
+	// 【仮実装】必殺技(骨格のみ. 正式実装は別Feature).
+	case PlayerState::eID::SpecialMove:
+		m_StateMachine.ChangeState(std::make_shared<PlayerState::SpecialMove>(this));
 		break;
 
 	default:

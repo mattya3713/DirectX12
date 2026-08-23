@@ -238,7 +238,12 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\20_Combat\30_Parry\Parry.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.h">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\50_SpecialMove\SpecialMove.h">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateID.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.h" />
@@ -394,7 +399,12 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\20_Combat\30_Parry\Parry.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.cpp">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\50_SpecialMove\SpecialMove.cpp">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClCompile>
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\00_Idle\Idle.cpp" />

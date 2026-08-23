@@ -42,6 +42,9 @@ public:
 	// 現在ステートIDの取得(デバッグ表示等、外部からの参照用).
 	BossState::eID GetCurrentStateID() const noexcept { return m_CurrentStateID; }
 
+	// 必殺撃破成立用: HP下限を無視してHPを0へ直接設定する(撃破シーケンス基盤から呼ぶ).
+	void ForceKill();
+
 private:
 	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration);
 

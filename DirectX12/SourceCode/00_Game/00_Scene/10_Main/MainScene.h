@@ -18,6 +18,7 @@ class ThirdPersonCamera;
 class LockOnCamera;
 class CutScenePlayer;
 class ParticleSystem;
+class EventBus;
 #if _DEBUG
 class CutSceneEditor;
 class LevelEditor;
@@ -42,6 +43,16 @@ public:
 	void Update() override;
 	void LateUpdate() override;
 	void Draw() override;
+
+#if _DEBUG
+	// 撃破シーケンスのデバッグ用強制発動(演出確認用. 正式な発動経路はゲージMAX+ヒット).
+	void DebugStartFinisherSequence();
+#endif
+
+public:
+	// 【演出完了通知API】撃破カットシーン側から呼ぶ(演出完了→ゲーム状態を次へ進める).
+	// カットシーン内容自体はユーザー実装。本メソッドは状態区切りのみ担当する.
+	void NotifyFinisherCutsceneFinished();
 
 private:
 	std::shared_ptr<MmdlRenderer> m_pMmdlRenderer;
@@ -72,4 +83,17 @@ private:
 
 	bool m_IsGameOver = false;     // 勝敗確定フラグ(確定後はPlayer/Bossの更新を止める).
 	bool m_WinnerIsPlayer = false; // true=Player勝利(WIN). false=Boss勝利(LOSE).
+
+	// ===== 撃破シーケンス基盤(演出内容はユーザー実装. 玄武は状態遷移とフックのみ) =====
+	enum class FinisherPhase
+	{
+		None,      // 通常戦闘中.
+		Playing,   // 撃破成立〜演出再生中(Combat/AI停止. CutScenePlayerへ制御移譲).
+		Completed, // 演出完了通知済み(ゲーム状態を次へ進めた状態).
+	};
+	FinisherPhase m_FinisherPhase = FinisherPhase::None;
+	float m_PrevBossHpForFinisher = -1.0f; // 前フレームのBoss HP(必殺ヒット検出用).
+
+	void TickFinisherSequence();      // ゲージ加速・成立判定・演出開始フックを毎フレーム処理する.
+	void BeginFinisherSequence();     // 撃破成立: 戦闘停止+イベント発行+演出開始フックを呼ぶ.
 };

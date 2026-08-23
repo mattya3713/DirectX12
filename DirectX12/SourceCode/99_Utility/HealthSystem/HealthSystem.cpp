@@ -14,7 +14,7 @@ void HealthSystem::ApplyDamage(float DamageAmount)
 {
 	const bool was_alive = IsAlive();
 
-	m_HP = std::clamp(m_HP - DamageAmount, 0.0f, m_MaxHP);
+	m_HP = std::clamp(m_HP - DamageAmount, m_MinHP, m_MaxHP);
 
 	if (m_OnDamage) { m_OnDamage(DamageAmount); }
 
