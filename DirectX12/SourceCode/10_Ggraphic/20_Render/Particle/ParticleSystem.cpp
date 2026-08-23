@@ -263,11 +263,18 @@ void ParticleSystem::Draw()
 	p_cmd_list->DrawInstanced(static_cast<UINT>(vertex_count), 1, 0, 0);
 }
 
-// ヒットエフェクト用の既定emit(白い粒子が放射状に散る).
+// 現在パラメータでヒットエフェクトを発生させる.
 void ParticleSystem::SpawnHitEffect(const DirectX::XMFLOAT3& Position)
 {
-	EmitterParams params{};
-	Emit(Position, params);
+	Emit(Position, m_Params);
+}
+
+// 全パーティクルを消す(EditorのStop/Reset用).
+void ParticleSystem::ClearParticles()
+{
+	std::vector<Particle*> all_particles;
+	m_Pool.ForEachActive([&](Particle& particle) { all_particles.push_back(&particle); });
+	for (Particle* p_particle : all_particles) { m_Pool.Release(p_particle); }
 }
 
 // 指定位置へ指定パラメータでパーティクルを発生させる(ObjectPool経由. new/deleteなし).
