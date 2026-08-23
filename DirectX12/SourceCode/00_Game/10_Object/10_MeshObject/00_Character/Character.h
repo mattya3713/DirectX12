@@ -47,6 +47,8 @@ public:
 public:
 	// HP関連の情報取得.
 	const HealthSystem& GetHealth() const noexcept { return m_Health; }
+	// 最大HPと現在HPを設定する(EnemyFactory等の生成時初期化用).
+	void SetHealth(float MaxHP, float CurrentHP) noexcept { m_Health.SetMaxHP(MaxHP); m_Health.SetHP(CurrentHP); }
 
 	// デバッグ用: 現在HPを全て削って通常の死亡フローを通す(デバッグコンソールのkill_boss等から使用).
 	void ApplyDebugKill() { m_Health.ApplyDamage(m_Health.GetHP()); }
