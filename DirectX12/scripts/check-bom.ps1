@@ -19,11 +19,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = Split-Path -Parent $PSScriptRoot
-Set-Location $repoRoot
+# リポジトリ直下(DirectX12)を絶対パスで解決する(呼び出し元のCWDに依存しない).
+$repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+Set-Location -LiteralPath $repoRoot
 
 function Test-HasBom([string]$Path) {
-    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    # 絶対パスで読む(相対パスだとCWD次第で別ファイル/存在しないファイルになるため).
+    $full = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $Path))
+    $bytes = [System.IO.File]::ReadAllBytes($full)
     return ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
 }
 
@@ -62,8 +65,9 @@ if (-not $missing) {
 if ($Fix) {
     $utf8Bom = New-Object System.Text.UTF8Encoding $true
     foreach ($f in $missing) {
-        $content = [System.IO.File]::ReadAllText($f)
-        [System.IO.File]::WriteAllText($f, $content, $utf8Bom)
+        $full = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $f))
+        $content = [System.IO.File]::ReadAllText($full)
+        [System.IO.File]::WriteAllText($full, $content, $utf8Bom)
         Write-Host "Fixed (BOM added): $f"
         if ($StagedOnly) {
             git add -- $f
