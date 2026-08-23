@@ -201,6 +201,7 @@
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\ActionNode.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\DecoratorNode.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\RootNode.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\CollisionInfo.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\HitEvent.h" />
@@ -350,6 +351,7 @@
     <ClCompile Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\ColliderBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\CollisionMath.cpp" />
