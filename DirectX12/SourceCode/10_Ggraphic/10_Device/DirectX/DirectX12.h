@@ -144,7 +144,7 @@ public:
 	void DrawRewindFrame();
 
 	// 巻き戻り逆再生中か(呼び出し側は通常のシーン描画を止める).
-	bool IsRewindActive() const;
+	bool IsRewindActive() const noexcept;
 
 	// リングバッファ保存・逆再生の実体.
 	std::unique_ptr<class FrameRewind> m_upFrameRewind;
@@ -161,11 +161,21 @@ public:
 	// テクスチャを取得.
 	MyComPtr<ID3D12Resource> GetTextureByPath(const char* texpath);
 
-	ID3D12Resource* GetSceneConstantBuffer() const { return m_pSceneConstBuff.Get(); }
-	SceneData* GetMappedSceneData() const { return m_pMappedSceneData; }
+	// CPUデータをDestResource(既定ヒープ, 事前にD3D12_RESOURCE_STATE_COPY_DESTで作成済みのもの)へ
+	// 同期的にアップロードする(専用の一時コマンドリストでコピー+StateAfterへの遷移を行い、GPU完了を
+	// フェンス待機してから戻る. CreateTextureFromFile()と同じ「一時コマンドリスト+フェンス待機」パターン
+	// を汎用化したもの. アップロード用の中間バッファはこの関数の中だけで完結して破棄されるため、呼び出し側が
+	// GPU完了を待たずに解放してしまう心配が無い. 毎フレームのコマンドリストとは独立しているため、
+	// 描画中でも安全に呼べるが、同期待ちが発生するのでロード処理(初期化時)専用. 毎フレーム呼ばないこと).
+	void UploadBufferSync(ID3D12Resource* DestResource, const void* SrcData, UINT64 Size, D3D12_RESOURCE_STATES StateAfter);
+
+	// 現在描画中フレーム(m_FrameIndex)分のシーン定数バッファを返す(BeginDraw()以降のDraw時専用.
+	// FrameBufferCount分スロットを持つのはCPU/GPUパイプライニング中の書き換え競合を防ぐため).
+	ID3D12Resource* GetSceneConstantBuffer() const noexcept { return m_pSceneConstBuff[m_FrameIndex].Get(); }
+	SceneData* GetMappedSceneData() const noexcept { return m_pMappedSceneData[m_FrameIndex]; }
 
 	// 現在描画中フレーム(m_FrameIndex)のバックバッファとインデックスを返す(巻き戻り演出等の特殊パス用).
-	ID3D12Resource* GetBackBuffer(UINT Index) const
+	ID3D12Resource* GetBackBuffer(UINT Index) const noexcept
 	{
 		return (Index < m_pBackBuffer.size()) ? m_pBackBuffer[Index].Get() : nullptr;
 	}
@@ -281,9 +291,10 @@ private:
 	UINT								m_SceneColorRequestedWidth;
 	UINT								m_SceneColorRequestedHeight;
 
-	// シーンを構成するバッファまわり
-	MyComPtr<ID3D12Resource>				m_pSceneConstBuff;		// シーン定数バッファのリソース
-	SceneData*								m_pMappedSceneData;		// シーン定数バッファのCPU側マップ済みポインタ.
+	// シーンを構成するバッファまわり(FrameBufferCount分スロットを持つ. CPUがUpdateSceneBuffer()で
+	// 次フレーム分を書き込む間、GPUが前フレーム分を読み終えていない競合を避けるため単一バッファにしない).
+	MyComPtr<ID3D12Resource>				m_pSceneConstBuff[FrameBufferCount];	// シーン定数バッファのリソース.
+	SceneData*								m_pMappedSceneData[FrameBufferCount] {};	// シーン定数バッファのCPU側マップ済みポインタ.
 
 	// GPUタイムスタンプクエリ(簡易プロファイラ用).
 	static constexpr UINT MaxGpuTimestamps = 16; // 1フレームあたりのタイムスタンプ数(開始/終了の組8個分).
