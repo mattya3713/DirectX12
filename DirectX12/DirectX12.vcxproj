@@ -284,6 +284,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\CombatDebugHud.h" />
     <ClInclude Include="SourceCode\99_Utility\Profiling\Profiler.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\BTTreeEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\SceneView.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.h" />
@@ -307,6 +308,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\DecoratorNode.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\RootNode.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.h" />
+    <ClInclude Include="SourceCode\99_Utility\BehaviorTree\BTEditorModel.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\CollisionInfo.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\HitEvent.h" />
@@ -438,6 +440,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\CombatDebugHud.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Profiling\Profiler.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\DebugConsole.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\BTTreeEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\SceneView.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.cpp" />
@@ -449,6 +452,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTEditorModel.cpp" />
     <ClCompile Include="SourceCode\99_Utility\HealthSystem\HealthSystem.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\ColliderBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\40_Collision\00_Core\CollisionMath.cpp" />

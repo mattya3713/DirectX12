@@ -18,6 +18,12 @@ class CompositeNodeBase : public NodeBase
 public:
 	~CompositeNodeBase() override = default;
 
+	// 生成済みの子ノードを末尾へ接続する(BT Editor等、外部で生成したノードの取り込み用).
+	void AdoptChild(std::unique_ptr<NodeBase> upChild)
+	{
+		if (upChild) { m_upChildren.push_back(std::move(upChild)); }
+	}
+
 	// 子ノードを末尾へ生成追加し、追加したノードへの参照を返す.
 	template<typename T, typename... TArgs>
 	T& AddChild(TArgs&&... Args)
