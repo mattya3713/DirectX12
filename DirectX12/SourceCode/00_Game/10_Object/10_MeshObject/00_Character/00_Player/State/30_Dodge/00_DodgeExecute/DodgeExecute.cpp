@@ -7,13 +7,12 @@
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/40_Collision/00_Core/ColliderBase.h"
+#include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/Math/Easing/Easing.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
-	constexpr float DODGE_DISTANCE   = 25.0f;
-	constexpr float DODGE_DURATION   = 1.7f;
 	constexpr float EASE_BLEND_RATIO = 0.5f; // InOutCubicとLinerを半々でブレンドする.
 
 	// JustDodge成立とみなす敵攻撃判定との最大距離(接触半径1.5+すれ違いの猶予分).
@@ -42,8 +41,8 @@ void DodgeExecute::Enter()
 {
 	Dodge::Enter();
 
-	m_Distance         = DODGE_DISTANCE;
-	m_MaxTime          = DODGE_DURATION;
+	m_Distance         = CombatTuning::Get().DodgeDistance;
+	m_MaxTime          = CombatTuning::Get().DodgeDuration;
 	m_TraveledDistance = 0.0f;
 	m_IsJustDodgeJudged = false;
 

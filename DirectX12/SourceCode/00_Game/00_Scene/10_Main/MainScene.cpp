@@ -30,6 +30,10 @@
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
 #include "99_Utility/Debug/Imgui/CombatDebugHud.h"
 #include "99_Utility/Debug/Imgui/LevelEditor.h"
+#include "99_Utility/Debug/Imgui/CombatTuningEditor.h"
+#include "00_Game/60_Combat/CombatTuning.h"
+#include "99_Utility/Debug/Imgui/ParticleSystemEditor.h"
+#include "99_Utility/Debug/PlaytestRecorder.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
@@ -175,6 +179,12 @@ void MainScene::Create()
 		m_upLevelEditor->SetOnLevelChanged([this](const std::filesystem::path& Path) {
 			LoadLevelFromJson(Path);
 		});
+
+		m_upParticleEditor = std::make_unique<ParticleSystemEditor>();
+
+		// Combat調整値のプリセット(Data\Json\Combat\tuning.json)があれば自動読込.
+		m_upCombatTuningEditor = std::make_unique<CombatTuningEditor>();
+		CombatTuning::Load("Data/Json/Combat/tuning.json");
 #endif
 	}
 	catch (const std::runtime_error& Msg) {
@@ -415,6 +425,27 @@ void MainScene::Update()
 	if (m_upLevelEditor) {
 		m_upLevelEditor->Draw();
 	}
+
+	// Combat調整ツール(デバッグ用ImGui).
+	if (m_upCombatTuningEditor) {
+		m_upCombatTuningEditor->Draw();
+	}
+#endif
+
+#if _DEBUG
+	// パーティクル編集ツール(デバッグ用ImGui).
+	if (m_upParticleEditor) {
+		m_upParticleEditor->Draw();
+	}
+#endif
+
+#if _DEBUG
+	// Playtest Recorder(F9で記録開始/停止. 入力/State/HP/カメラをCSV保存するデバッグ用).
+	if (Input::IsKeyDown(VK_F9)) {
+		PlaytestRecorder::Instance().Toggle();
+	}
+	PlaytestRecorder::Instance().Tick();
+	PlaytestRecorder::Instance().DrawImGui();
 #endif
 
 #if _DEBUG
@@ -531,6 +562,7 @@ void MainScene::Draw()
 			}
 		}
 	}
+
 	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する
 	// (ImGuiオーバーレイ前・デバッグコライダー描画前のゲーム描画だけを保存する).
 	p_dx12->CaptureForRewind();

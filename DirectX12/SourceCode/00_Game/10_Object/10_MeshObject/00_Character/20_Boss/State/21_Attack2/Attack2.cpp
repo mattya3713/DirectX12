@@ -2,15 +2,10 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "00_Game/60_Combat/CombatTuning.h"
 
 namespace {
-	// Attack(0.6/0.3/0.8, 威力25)との差別化用の仮値. 予備動作が長く大振り・高威力.
-	constexpr float ATTACK_WINDUP_TIME   = 0.9f;   // 予備動作(この間は攻撃判定なし).
-	constexpr float ATTACK_ACTIVE_TIME   = 0.25f;  // 攻撃判定が有効な時間.
-	constexpr float ATTACK_RECOVERY_TIME = 0.6f;   // 硬直(この間は動けない).
-	constexpr float ATTACK_TOTAL_TIME    = ATTACK_WINDUP_TIME + ATTACK_ACTIVE_TIME + ATTACK_RECOVERY_TIME;
-	constexpr float ATTACK_AMOUNT        = 40.0f;
-	constexpr float ATTACK_ROTATE_SPEED  = 360.0f; // 度/秒(大振りな分、攻撃中の追い回しはAttackより遅い).
+	constexpr float ATTACK_ROTATE_SPEED = 360.0f; // 度/秒(大振りな分、攻撃中の追い回しはAttackより遅い).
 }
 
 namespace BossState {
@@ -25,21 +20,26 @@ void Attack2::Enter()
 	ApplyNamedClip("boss_attack2");
 	m_ElapsedTime = 0.0f;
 	GetBoss()->SetAttackColliderActive(false);
-	GetBoss()->SetAttackAmount(ATTACK_AMOUNT);
+	GetBoss()->SetAttackAmount(CombatTuning::Get().Boss2Amount);
 }
 
 void Attack2::Update()
 {
+	// 判定窓・硬直はCombatTuningから毎フレーム参照(エディタでの変更を即時反映).
+	const float windup   = CombatTuning::Get().Boss2Windup;
+	const float active   = CombatTuning::Get().Boss2Active;
+	const float recovery = CombatTuning::Get().Boss2Recovery;
+
 	m_ElapsedTime += GameTime::GetDeltaTime();
 
 	GetBoss()->RotateToTarget(AngleToTargetDeg(), ATTACK_ROTATE_SPEED);
 
 	const bool in_active_window =
-		m_ElapsedTime >= ATTACK_WINDUP_TIME &&
-		m_ElapsedTime <  ATTACK_WINDUP_TIME + ATTACK_ACTIVE_TIME;
+		m_ElapsedTime >= windup &&
+		m_ElapsedTime <  windup + active;
 	GetBoss()->SetAttackColliderActive(in_active_window);
 
-	if (m_ElapsedTime >= ATTACK_TOTAL_TIME)
+	if (m_ElapsedTime >= windup + active + recovery)
 	{
 		const bool target_in_range = DistanceToTargetXZ() <= GetBoss()->GetLoseRange();
 		GetBoss()->ChangeState(target_in_range ? BossState::eID::Move : BossState::eID::Idle);

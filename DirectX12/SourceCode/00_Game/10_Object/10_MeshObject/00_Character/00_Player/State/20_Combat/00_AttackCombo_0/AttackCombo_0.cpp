@@ -1,10 +1,7 @@
 ﻿#include "AttackCombo_0.h"
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
-
-namespace {
-	constexpr float ATTACK_AMOUNT = 25.0f;
-}
+#include "00_Game/60_Combat/CombatTuning.h"
 
 namespace PlayerState {
 
@@ -21,7 +18,7 @@ void AttackCombo_0::Enter()
 	DecideRushDirection(false); // 1段目はBoss方向へ突進(方向転換なし).
 
 	ApplyNamedClip("player_attack1");
-	GetPlayer()->SetAttackAmount(ATTACK_AMOUNT);
+	GetPlayer()->SetAttackAmount(CombatTuning::Get().Attack0Amount);
 }
 
 void AttackCombo_0::Update()

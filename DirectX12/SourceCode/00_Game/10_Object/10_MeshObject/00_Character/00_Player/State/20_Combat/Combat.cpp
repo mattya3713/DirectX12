@@ -9,16 +9,11 @@
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
 #include "00_Game/50_Input/VirtualPad.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/FileManager/FileManager.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
-	// 突進の合計距離(攻撃時間全体で詰める量. 仮値. 演出バランスは後で調整する).
-	constexpr float kRushDistance = 2.5f;
-	// コンボ数1あたりの再生速度上昇量(倍率).
-	constexpr float kSpeedPerCombo = 0.01f;
-	// 再生速度上昇の上限(+20%. 青天井にしないための制限).
-	constexpr float kMaxSpeedBonus = 0.2f;
 	// 入力を「有り」とみなす閾値(2乗).
 	constexpr float kInputEpsilonSq = 1e-4f;
 }
@@ -133,7 +128,7 @@ bool Combat::UpdateComboInput()
 void Combat::ApplyComboSpeedToAnimation()
 {
 	// 勢い制: コンボ数が乗るほど攻撃モーションが速くなる(上限付き).
-	const float speed = 1.0f + std::min(GetPlayer()->GetCombo() * kSpeedPerCombo, kMaxSpeedBonus);
+	const float speed = 1.0f + std::min(GetPlayer()->GetCombo() * CombatTuning::Get().ComboSpeedPerCombo, CombatTuning::Get().ComboSpeedMaxBonus);
 	GetPlayer()->SetAnimPlaybackSpeed(speed);
 }
 
@@ -210,7 +205,7 @@ void Combat::ProcessRushMovement()
 	if (m_CurrentTime >= m_ComboEndTime) { return; } // 攻撃時間中のみ詰める.
 
 	const float duration  = (m_ComboEndTime > 0.01f) ? m_ComboEndTime : 0.01f;
-	const float rush_speed = kRushDistance / duration;
+	const float rush_speed = CombatTuning::Get().ComboRushDistance / duration;
 	const float delta_time = GameTime::GetDeltaTime();
 
 	GetPlayer()->AddPosition({ m_RushDirection.x * rush_speed * delta_time,

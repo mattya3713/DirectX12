@@ -10,6 +10,7 @@ class MmdlRenderer;
 class MstcRenderer;
 class MstcActor;
 class DirectionLight;
+class SpriteRenderer;
 class Player;
 class Boss;
 class ModelPreviewPanel;
@@ -20,6 +21,8 @@ class ParticleSystem;
 #if _DEBUG
 class CutSceneEditor;
 class LevelEditor;
+class CombatTuningEditor;
+class ParticleSystemEditor;
 #endif
 
 /**********************************************************************************
@@ -52,7 +55,9 @@ private:
 	std::unique_ptr<ParticleSystem> m_upParticleSystem; // パーティクルシステム(VFX基盤).
 #if _DEBUG
 	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
+	std::unique_ptr<ParticleSystemEditor> m_upParticleEditor; // パーティクル編集ツール(デバッグのみ).
 	std::unique_ptr<LevelEditor>    m_upLevelEditor;    // レベルシーン編集ツール(デバッグのみ).
+	std::unique_ptr<CombatTuningEditor> m_upCombatTuningEditor; // Combat調整ツール(デバッグのみ).
 #endif
 
 	// レベルデータ(Data\Json\Level配下)から復元した静的オブジェクト.
