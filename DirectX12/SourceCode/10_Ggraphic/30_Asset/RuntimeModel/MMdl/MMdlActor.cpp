@@ -407,6 +407,19 @@ void MmdlActor::UpdateBoneMatrices()
 			local = DirectX::XMMatrixAffineTransformation(blended_scale, DirectX::XMVectorZero(), blended_rot, blended_trans);
 		}
 
+		// ルートモーション抽出(DESIGN.md既知制約の解消): ルートボーン(親を持たない腰等)が
+		// アニメーションの移動キーでワールド空間を漂うため、水平成分(XZ)をバインド位置へ
+		// 固定して打ち消す。垂直成分(Y)の上下バウンスと回転は自然さのため残す.
+		// (ループ境界での位置ジャンプも同時に解消される).
+		if (bone.ParentIndex < 0)
+		{
+			local.r[3] = DirectX::XMVectorSet(
+				bone.LocalBindMatrix.m[3][0],
+				DirectX::XMVectorGetY(local.r[3]),
+				bone.LocalBindMatrix.m[3][2],
+				1.0f);
+		}
+
 		// 次回のPlayAnimation切替時にブレンド源となるよう現フレームの姿勢を保持する.
 		if (m_LastLocalTransforms.size() != m_Skeleton.Bones.size()) { m_LastLocalTransforms.resize(m_Skeleton.Bones.size()); }
 		m_LastLocalTransforms[i] = local;
