@@ -310,6 +310,35 @@ void MainScene::Update()
 
 		p_camera_manager->Update();
 
+#if _DEBUG
+		// カメラ入力診断(不具合再現時の状態確認用): アクティブカメラ・入力値・更新実績を毎フレーム表示する.
+		// 「カメラが動かない」報告の切り分け用なので、原因確定後に削除してよい.
+		{
+			static unsigned int s_camera_update_count = 0;
+			++s_camera_update_count;
+
+			if (CameraBase* active_camera = p_camera_manager->GetActive()) {
+				ImGui::Begin("Camera Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+				ImGuiManager::Text(p_camera_manager->GetActiveName().c_str());
+				ImGui::Text("update frames : %u", s_camera_update_count);
+				ImGui::Text("yaw/pitch     : %.1f / %.1f deg",
+					active_camera->GetYaw() * (180.0f / DirectX::XM_PI),
+					active_camera->GetPitch() * (180.0f / DirectX::XM_PI));
+
+				const DirectX::XMFLOAT3& cam_pos = active_camera->GetPosition();
+				ImGui::Text("cam pos       : %.1f, %.1f, %.1f", cam_pos.x, cam_pos.y, cam_pos.z);
+
+				const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
+				ImGui::Text("cursor delta  : %.1f, %.1f", cursor_delta.x, cursor_delta.y);
+				ImGui::Text("center cursor : %s / show %s",
+					Input::IsCenterMouseCursor() ? "ON" : "OFF",
+					Input::IsCursorInWindow() ? "in-window" : "out-window");
+				ImGui::Text("paused        : %s", GameTime::IsPaused() ? "YES" : "no");
+				ImGui::End();
+			}
+		}
+#endif
+
 		// アクティブカメラの行列をDirectX12側へ反映.
 		if (CameraBase* active_camera = p_camera_manager->GetActive()) {
 			const ImVec2 scene_view_size = SceneView::GetContentSize();

@@ -35,6 +35,9 @@ public:
 	// アクティブカメラを取得(未設定ならnullptr).
 	CameraBase* GetActive() const noexcept;
 
+	// アクティブカメラの登録名を取得(デバッグ表示用).
+	const std::string& GetActiveName() const noexcept { return m_ActiveName; }
+
 	// アクティブカメラのUpdateを呼び出す.
 	void Update();
 
