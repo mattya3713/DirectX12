@@ -48,6 +48,9 @@ public:
 	// HP関連の情報取得.
 	const HealthSystem& GetHealth() const noexcept { return m_Health; }
 
+	// デバッグ用: 現在HPを全て削って通常の死亡フローを通す(デバッグコンソールのkill_boss等から使用).
+	void ApplyDebugKill() { m_Health.ApplyDamage(m_Health.GetHP()); }
+
 public: // 攻撃判定の制御(攻撃系Stateから呼ぶ想定).
 	void SetAttackColliderActive(bool IsActive) noexcept { m_AttackCollider.SetActive(IsActive); }
 	void SetAttackAmount(float AttackAmount) noexcept { m_AttackCollider.SetAttackAmount(AttackAmount); }
