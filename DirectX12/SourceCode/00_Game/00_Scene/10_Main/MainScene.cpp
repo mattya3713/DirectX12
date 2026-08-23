@@ -34,6 +34,7 @@
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Imgui/ParticleSystemEditor.h"
 #include "99_Utility/Debug/Imgui/SoundEventEditor.h"
+#include "99_Utility/Async/AsyncModelLoader.h"
 #include "99_Utility/ECS/World.h"
 #include "99_Utility/ECS/SampleComponents.h"
 #include "99_Utility/Debug/PlaytestRecorder.h"
@@ -89,6 +90,9 @@ MainScene::~MainScene()
 	if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 		p_combat_coordinator->Clear();
 	}
+
+	// 非同期ローダーを停止(残ジョブ処理後にワーカー終了).
+	if (m_upAsyncModels) { m_upAsyncModels->Shutdown(); }
 }
 
 void MainScene::Initialize()
@@ -129,18 +133,22 @@ void MainScene::Create()
 
 	try {
 		m_upPlayer = std::make_unique<Player>();
-		m_upPlayer->AttachMesh(std::make_shared<MMdlMesh>(std::filesystem::path{"Data/Model/mmdl/mskin/player.mskn"}, *m_pMmdlRenderer));
 		Transform player_transform;
 		player_transform.Position = { 0.0f, 0.0f, 0.0f };
 		player_transform.Scale = { 1.36f, 1.36f, 1.36f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upPlayer->SetTransform(player_transform);
 
 		m_upBoss = std::make_unique<Boss>();
-		m_upBoss->AttachMesh(std::make_shared<MMdlMesh>(std::filesystem::path{"Data/Model/mmdl/mskin/boss.mskn"}, *m_pMmdlRenderer));
 		Transform boss_transform;
 		boss_transform.Position = { 0.0f, 0.0f, 8.0f };
 		boss_transform.Scale = { 1.05f, 1.05f, 1.05f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upBoss->SetTransform(boss_transform);
+
+		// モデルは非同期ロード(Updateは継続. CPUパース完了後にメインスレッドでGPU接続).
+		m_upAsyncModels = std::make_unique<AsyncModelLoader>();
+		m_upAsyncModels->Initialize();
+		m_PlayerModelRequest = m_upAsyncModels->Request("Data/Model/mmdl/mskin/player.mskn");
+		m_BossModelRequest   = m_upAsyncModels->Request("Data/Model/mmdl/mskin/boss.mskn");
 
 		if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 			p_combat_coordinator->Initialize(PlayerCombatView{ *m_upPlayer }, BossCombatView{ *m_upBoss });
@@ -410,6 +418,60 @@ void MainScene::Update()
 	// パーティクル更新(一時停止・勝敗確定後は止める).
 	if (m_upParticleSystem && !is_paused && !m_IsGameOver) {
 		m_upParticleSystem->Update(GameTime::GetDeltaTime());
+	}
+
+	// 非同期モデルロードの完了取り込み(CPUパース完了→メインスレッドでGPU接続).
+	if (m_upAsyncModels)
+	{
+		auto attach_when_ready = [&](std::shared_ptr<AsyncModelRequest>& request, Character& owner, const char* label) {
+			if (!request || request->GetState() != eModelLoadState::CpuParsed) { return; }
+
+			owner.AttachMesh(std::make_shared<MMdlMesh>(request->GetResource(), *m_pMmdlRenderer));
+			request->MarkGpuAttached();
+
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogInfo(std::string("Async model ready: ") + label);
+			}
+		};
+
+		attach_when_ready(m_PlayerModelRequest, *m_upPlayer, "player");
+		attach_when_ready(m_BossModelRequest,   *m_upBoss,   "boss");
+
+		// 失敗した要求は1回だけログへ出す(DEBUG表示. ゲーム自体は継続).
+		for (std::shared_ptr<AsyncModelRequest>* request : { &m_PlayerModelRequest, &m_BossModelRequest })
+		{
+			if (*request && (*request)->GetState() == eModelLoadState::Failed && !(*request)->IsFailureLogged())
+			{
+				(*request)->SetFailureLogged();
+				if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+					p_debug_log->LogError("Async model load failed: " + (*request)->GetPath().generic_string()
+						+ " / " + (*request)->GetError());
+				}
+			}
+		}
+
+		// ロード状態のDEBUG表示+欠損モデル要求テスト(Failed経路の動作確認用).
+		static std::shared_ptr<AsyncModelRequest> s_FailureTestRequest;
+		ImGui::Begin("Async Model Load", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		auto state_text = [](eModelLoadState s) -> const char* {
+			switch (s) {
+			case eModelLoadState::Loading:   return "Loading";
+			case eModelLoadState::CpuParsed: return "CpuParsed";
+			case eModelLoadState::Ready:     return "Ready";
+			case eModelLoadState::Failed:    return "FAILED";
+			default:                         return "?";
+			}
+		};
+		ImGui::Text("Player: %s", state_text(m_PlayerModelRequest ? m_PlayerModelRequest->GetState() : eModelLoadState::Failed));
+		ImGui::Text("Boss  : %s", state_text(m_BossModelRequest ? m_BossModelRequest->GetState() : eModelLoadState::Failed));
+		if (ImGui::Button(IMGUI_JP("欠損モデル要求テスト"))) {
+			s_FailureTestRequest = m_upAsyncModels->Request("debug_missing/missing.mskn");
+		}
+		if (s_FailureTestRequest) {
+			ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "FailureTest: %s %s",
+				state_text(s_FailureTestRequest->GetState()), s_FailureTestRequest->GetError().c_str());
+		}
+		ImGui::End();
 	}
 
 #if _DEBUG

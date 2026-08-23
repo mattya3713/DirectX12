@@ -23,6 +23,8 @@ class CutSceneEditor;
 class LevelEditor;
 class CombatTuningEditor;
 class ParticleSystemEditor;
+class AsyncModelLoader;
+class AsyncModelRequest;
 class SoundEventEditor;
 #endif
 
@@ -58,6 +60,9 @@ private:
 	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
 	std::unique_ptr<SoundEventEditor> m_upSoundEventEditor; // Sound Event編集ツール(デバッグのみ).
 	std::unique_ptr<ParticleSystemEditor> m_upParticleEditor; // パーティクル編集ツール(デバッグのみ).
+	std::unique_ptr<class AsyncModelLoader> m_upAsyncModels; // 非同期モデルローダー.
+	std::shared_ptr<class AsyncModelRequest> m_PlayerModelRequest; // Playerモデルのロード要求.
+	std::shared_ptr<class AsyncModelRequest> m_BossModelRequest;   // Bossモデルのロード要求.
 	std::unique_ptr<LevelEditor>    m_upLevelEditor;    // レベルシーン編集ツール(デバッグのみ).
 	std::unique_ptr<CombatTuningEditor> m_upCombatTuningEditor; // Combat調整ツール(デバッグのみ).
 #endif
