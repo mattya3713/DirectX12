@@ -8,6 +8,9 @@
 #include "10_Device/DirectX/DirectX12.h"
 #include "10_Ggraphic/30_Asset/RuntimeFormat/RuntimeFormatIO.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
+#include "99_Utility/Asset/AssetManager.h"
+#include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\Common\\d3dx12.h"
 
 namespace {
@@ -54,6 +57,34 @@ namespace {
 
 } // namespace
 
+namespace {
+
+	// MmdlResourceのプロセス共通キャッシュ(同じmsknパスの二重ロード防止用).
+	AssetManager<MmdlResource>& GetResourceCache() noexcept
+	{
+		static AssetManager<MmdlResource> s_Cache;
+		return s_Cache;
+	}
+
+	// キャッシュにあれば再利用し、無ければ空リソースを新規生成する(ロード自体は呼び出し側).
+	std::shared_ptr<MmdlResource> AcquireResource(const std::filesystem::path& FilePath)
+	{
+		if (std::shared_ptr<MmdlResource> cached = GetResourceCache().Find(FilePath))
+		{
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogInfo("MmdlResource reusing cache: " + FilePath.generic_string());
+			}
+			return cached;
+		}
+
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogInfo("MmdlResource loaded: " + FilePath.generic_string());
+		}
+		return std::make_shared<MmdlResource>(FilePath);
+	}
+
+}
+
 MmdlActor::MmdlActor(const char* FilePath, MmdlRenderer& Renderer)
 	: MmdlActor(std::filesystem::path{ FilePath }, Renderer)
 {
@@ -62,11 +93,17 @@ MmdlActor::MmdlActor(const char* FilePath, MmdlRenderer& Renderer)
 MmdlActor::MmdlActor(const std::filesystem::path& FilePath, MmdlRenderer& Renderer)
 	: m_Renderer { Renderer }
 	, m_Dx12     { Renderer.m_pDx12 }
-	, m_spResource { std::make_shared<MmdlResource>(FilePath) }
+	, m_spResource { AcquireResource(FilePath) }
 {
-	LoadRuntimeModel(FilePath);
-	m_spResource->StoreCpuData(m_ModelData, m_Skeleton, m_LocalHeight, m_SkinSubmeshRoles,
-		m_FrontCompositeOpacity, m_FrontCompositeMaxDistance);
+	if (!m_spResource->HasCpuData())
+	{
+		LoadRuntimeModel(FilePath);
+		m_spResource->StoreCpuData(m_ModelData, m_Skeleton, m_LocalHeight, m_SkinSubmeshRoles,
+			m_FrontCompositeOpacity, m_FrontCompositeMaxDistance);
+
+		// ロードが完了したリソースをキャッシュへ登録する(参照切れで自然解放される).
+		GetResourceCache().Register(FilePath, m_spResource);
+	}
 	CreateResources();
 }
 
