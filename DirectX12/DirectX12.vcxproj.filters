@@ -111,6 +111,8 @@
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Light\DirectionLight.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.h" />
+    <ClInclude Include="SourceCode\20_Resource\Font\FontLoader.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
     <ClInclude Include="SourceCode\99_Utility\CustomSTL\pair\Pair.h" />
@@ -309,6 +311,8 @@
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Light\DirectionLight.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.cpp" />
+    <ClCompile Include="SourceCode\20_Resource\Font\FontLoader.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.cpp" />
