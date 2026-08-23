@@ -390,6 +390,19 @@ void MmdlActor::UpdateBoneMatrices()
 			local = DirectX::XMLoadFloat4x4(&bone.LocalBindMatrix); // アニメーションキーが無いボーンはバインドポーズのまま.
 		}
 
+		// ルートモーション抽出: ルートボーン(親を持たない=階層最上位/腰)の水平移動は
+		// ワールド座標へ反映させず、その場で脚だけが動く見た目にする
+		// (移動系クリップを再生し続けるとキャラクターが勝手にワールド空間を漂い、
+		//  ループ境界で位置が飛ぶ既知問題の対処. Y方向=上下の揺れは自然さのため残す).
+		if (bone.ParentIndex < 0)
+		{
+			DirectX::XMVECTOR root_scale{}, root_rot{}, root_trans{};
+			DirectX::XMMatrixDecompose(&root_scale, &root_rot, &root_trans, local);
+			root_trans = DirectX::XMVectorSetX(root_trans, 0.0f);
+			root_trans = DirectX::XMVectorSetZ(root_trans, 0.0f);
+			local = DirectX::XMMatrixAffineTransformation(root_scale, DirectX::XMVectorZero(), root_rot, root_trans);
+		}
+
 		// クロスフェード: 切替直前の姿勢→新クリップの姿勢へボーンごとに補間する
 		// (位置/スケールはLerp、回転はSlerp. 親の補間結果を子が継承するため階層全体が滑らかに動く).
 		if (is_blending && blend_alpha < 1.0f)
