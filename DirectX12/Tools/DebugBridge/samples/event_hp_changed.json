@@ -1,0 +1,6 @@
+﻿{
+  "protocolVersion": 1,
+  "type": "event",
+  "event": "entity.hp_changed",
+  "payload": { "who": "boss", "hp": 48.0, "maxHp": 100.0 }
+}

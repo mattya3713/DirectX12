@@ -1,0 +1,11 @@
+﻿{
+  "protocolVersion": 1,
+  "type": "response",
+  "id": "req-handshake-1",
+  "ok": true,
+  "payload": {
+    "server": "SenzanGame",
+    "serverVersion": "0.4.0",
+    "commands": [ "handshake", "ping", "combat.get_state", "game.set_timescale" ]
+  }
+}

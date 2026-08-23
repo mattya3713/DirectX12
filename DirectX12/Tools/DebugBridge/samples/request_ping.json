@@ -1,0 +1,7 @@
+﻿{
+  "protocolVersion": 1,
+  "type": "request",
+  "id": "req-ping-1",
+  "command": "ping",
+  "payload": {}
+}
