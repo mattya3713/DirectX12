@@ -69,6 +69,11 @@ MainScene::~MainScene()
 	ServiceLocator::Provide<Player>(nullptr);
 	ServiceLocator::Provide<Boss>(nullptr);
 
+	// Create()で購読したデモイベントを解除する(シーン再入のたびにハンドラが蓄積するのを防ぐ).
+	if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+		p_event_bus->UnsubscribeAll<BossDefeatedEvent>();
+	}
+
 	if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 		p_combat_coordinator->Clear();
 	}
