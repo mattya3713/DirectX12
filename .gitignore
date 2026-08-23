@@ -377,3 +377,6 @@ MigrationBackup/
 FodyWeavers.xsd
 # AI開発ワークフロー(production_loop/local_worker)の状態ディレクトリ. 頻繁に更新されるためgit管理外.
 .ai-project/
+
+# Playtest Recorderの記録CSV(実行時生成物. 玄武)
+PlaytestLogs/
