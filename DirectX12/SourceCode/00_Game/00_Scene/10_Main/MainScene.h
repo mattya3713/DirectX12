@@ -23,7 +23,6 @@ class CutSceneEditor;
 class LevelEditor;
 class CombatTuningEditor;
 class ParticleSystemEditor;
-class SoundEventEditor;
 #endif
 
 /**********************************************************************************
@@ -56,7 +55,6 @@ private:
 	std::unique_ptr<ParticleSystem> m_upParticleSystem; // パーティクルシステム(VFX基盤).
 #if _DEBUG
 	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
-	std::unique_ptr<SoundEventEditor> m_upSoundEventEditor; // Sound Event編集ツール(デバッグのみ).
 	std::unique_ptr<ParticleSystemEditor> m_upParticleEditor; // パーティクル編集ツール(デバッグのみ).
 	std::unique_ptr<LevelEditor>    m_upLevelEditor;    // レベルシーン編集ツール(デバッグのみ).
 	std::unique_ptr<CombatTuningEditor> m_upCombatTuningEditor; // Combat調整ツール(デバッグのみ).
