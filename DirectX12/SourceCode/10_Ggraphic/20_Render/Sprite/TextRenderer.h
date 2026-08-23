@@ -18,7 +18,16 @@ class TextRenderer final
 public:
 	explicit TextRenderer(SpriteRenderer& Sprites);
 
-	// 直接文字列(UTF-8)を画面座標へ描画する. PixelHeightはフォント読込時の解像度に対する倍率でなく実ピクセル換算.
+	// 既定フォントIDの取得/切替(FontRegistry::Resolveの結果を設定する).
+	static int  GetActiveFontId() noexcept { return s_ActiveFontId; }
+	static void SetActiveFont(int FontId) noexcept { s_ActiveFontId = FontId; }
+
+	// 直接文字列(UTF-8)を画面座標へ描画する(アクティブフォント使用).
+	void DrawText2D(const std::string& Utf8Text,
+		float PosX, float PosY, float Scale,
+		const DirectX::XMFLOAT4& Color = { 1.0f, 1.0f, 1.0f, 1.0f });
+
+	// 直接文字列(UTF-8)を画面座標へ描画する(フォントID明示).
 	void DrawText2D(int FontId, const std::string& Utf8Text,
 		float PosX, float PosY, float Scale,
 		const DirectX::XMFLOAT4& Color = { 1.0f, 1.0f, 1.0f, 1.0f });
@@ -30,4 +39,5 @@ public:
 
 private:
 	SpriteRenderer& m_Sprites;
+	static inline int s_ActiveFontId = -1; // -1=FontLoader既定.
 };

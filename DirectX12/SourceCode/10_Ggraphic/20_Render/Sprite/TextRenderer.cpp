@@ -14,6 +14,13 @@ TextRenderer::TextRenderer(SpriteRenderer& Sprites)
 }
 
 // 直接文字列(UTF-8)を画面座標へ描画する.
+void TextRenderer::DrawText2D(const std::string& Utf8Text,
+	float PosX, float PosY, float Scale,
+	const DirectX::XMFLOAT4& Color)
+{
+	DrawText2D((s_ActiveFontId >= 0) ? s_ActiveFontId : FontLoader::GetDefaultFont(), Utf8Text, PosX, PosY, Scale, Color);
+}
+
 void TextRenderer::DrawText2D(int FontId, const std::string& Utf8Text,
 	float PosX, float PosY, float Scale,
 	const DirectX::XMFLOAT4& Color)
