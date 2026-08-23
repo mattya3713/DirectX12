@@ -4,6 +4,8 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/10_Move/Move.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/20_Attack/Attack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/21_Attack2/Attack2.h"
+#include "00_Game/00_GameLoop/Time/Time.h"
+#include "99_Utility/Ragdoll/RagdollDefinition.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/22_BeamAttack/BeamAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/23_JumpAttack/JumpAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/24_SpinAttack/SpinAttack.h"
@@ -46,7 +48,13 @@ void Boss::Update()
 	m_StateMachine.Update();
 	m_StateMachine.LateUpdate();
 
-	Character::Update(); // Enemy::Update()は使わない(Enemy側の未使用StateMachineを動かさないため).
+	Character::Update(); // Enemy::Update()は使わない(Enemy側の未使用StateMachineを動かさない).
+
+	// 死亡時ラグドールの物理ステップ(Active中のみ進行する).
+	if (m_Ragdoll.IsActive())
+	{
+		m_Ragdoll.Update(GameTime::GetDeltaTime());
+	}
 }
 
 void Boss::ChangeState(BossState::eID Id)
@@ -90,6 +98,23 @@ void Boss::ChangeState(BossState::eID Id)
 	}
 
 	m_CurrentStateID = Id;
+}
+
+// 死亡時ラグドールを起動する(Boss撃破演出. 二重呼び出し安全).
+bool Boss::ActivateDeathRagdoll()
+{
+	static const RagdollDefinition s_Definition = RagdollDefinition::CreateBossDefault();
+
+	if (m_Ragdoll.IsActive()) { return true; }
+
+	// TODO(Phase3): 実ボーンワールド位置からの引き継ぎに置き換える.
+	std::vector<DirectX::XMFLOAT3> pose(s_Definition.Bones.size(), GetPosition());
+	for (size_t i = 0; i < pose.size(); ++i)
+	{
+		pose[i].y += 1.0f + static_cast<float>(i) * 0.4f;
+	}
+
+	return m_Ragdoll.Activate(pose);
 }
 
 void Boss::EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration)

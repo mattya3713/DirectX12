@@ -2,6 +2,7 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/BossStateID.h"
+#include "99_Utility/Ragdoll/RagdollComponent.h"
 #include "99_Utility/StateMachine/StateMachine.h"
 
 class BossCombatView;
@@ -42,9 +43,15 @@ public:
 	// 現在ステートIDの取得(デバッグ表示等、外部からの参照用).
 	BossState::eID GetCurrentStateID() const noexcept { return m_CurrentStateID; }
 
+
+	bool ActivateDeathRagdoll();
+
+	RagdollComponent& GetRagdoll() noexcept { return m_Ragdoll; }
+	const RagdollComponent& GetRagdoll() const noexcept { return m_Ragdoll; }
 private:
 	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration);
 
+	RagdollComponent m_Ragdoll; // 死亡時ラグドール.
 	StateMachine<Boss> m_StateMachine;                        // 現在ステートの保持・更新.
 	BossState::eID      m_CurrentStateID = BossState::eID::None;
 };
