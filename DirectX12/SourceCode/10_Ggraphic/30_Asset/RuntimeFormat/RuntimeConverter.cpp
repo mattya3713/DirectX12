@@ -465,3 +465,64 @@ RuntimeConverter::ConversionResult RuntimeConverter::ConvertX(const std::filesys
 	}
 	catch (const std::exception& exception) { result.Error = exception.what(); return result; }
 }
+
+RuntimeConverter::ConversionResult RuntimeConverter::ConvertXStatic(const std::filesystem::path& XPath,
+	const std::filesystem::path& OutputDirectory, const std::filesystem::path& MaterialDirectory)
+{
+	ConversionResult result{};
+	try {
+		std::filesystem::create_directories(OutputDirectory);
+		Model::ModelData model{};
+		XParser parser{};
+		if (!parser.Load(XPath.string(), model)) { result.Error = "Xファイルを読み込めませんでした: " + XPath.string(); return result; }
+		if (model.Vertices.empty() || model.Indices.empty()) { result.Error = "Xファイルにメッシュデータが含まれていません。"; return result; }
+		if (model.Vertices.size() > 0xFFFFU) { result.Error = "静的メッシュの頂点数がuint16_tインデックスの範囲を超えています。"; return result; }
+
+		RuntimeFormat::MstcData data{};
+		data.Vertices.reserve(model.Vertices.size());
+		for (const Model::Vertex& source : model.Vertices)
+		{
+			RuntimeFormat::StaticVertex vertex{};
+			vertex.Position = source.Position;
+			vertex.Normal   = source.Normal;
+			vertex.UV       = source.UV;
+			data.Vertices.push_back(vertex);
+		}
+		data.Indices.reserve(model.Indices.size());
+		for (const std::uint32_t source : model.Indices) { data.Indices.push_back(static_cast<std::uint16_t>(source)); }
+
+		// マテリアル(静的メッシュは先頭マテリアル1つのみ使用. テクスチャ無しでもMMATは出す).
+		const std::filesystem::path material_directory = MaterialDirectory.empty() ? OutputDirectory : MaterialDirectory;
+		std::filesystem::create_directories(material_directory);
+		std::string material_name;
+		if (!model.Materials.empty())
+		{
+			if (!WriteMaterial(material_directory, model.Materials.front(), material_name))
+			{
+				result.Error = "静的メッシュのMMAT書き出しに失敗しました。";
+				return result;
+			}
+		}
+		// ランタイム側はMSTCの親ディレクトリの兄弟"mmat"ディレクトリへ解決するため、
+		// MaterialPathにはファイル名のみを記録する(msknのサブメッシュと同じ規約).
+		data.MaterialPath = material_name;
+
+		const std::filesystem::path mstc_path = OutputDirectory / (XPath.stem().string() + ".mstc");
+		if (!RuntimeFormatIO::WriteMstc(mstc_path, data))
+		{
+			result.Error = "静的メッシュのMSTC書き出しに失敗しました。";
+			return result;
+		}
+		// 往復検証(書き出したファイルが読み戻せ、要素数が一致すること).
+		RuntimeFormat::MstcData written{};
+		if (!RuntimeFormatIO::ReadMstc(mstc_path, written) || written.Vertices.size() != data.Vertices.size() ||
+			written.Indices.size() != data.Indices.size() || written.MaterialPath != data.MaterialPath)
+		{
+			result.Error = "静的メッシュのMSTC読み戻し検証に失敗しました。";
+			return result;
+		}
+
+		result.Success = true; return result;
+	}
+	catch (const std::exception& exception) { result.Error = exception.what(); return result; }
+}

@@ -25,5 +25,10 @@ namespace RuntimeConverter {
 	ConversionResult ConvertPmx(const std::filesystem::path& PmxPath, const std::filesystem::path& VmdPath, const std::filesystem::path& OutputDirectory);
 	// XからMSKN/MMATとAnimationSetごとのMCLPを生成する.
 	ConversionResult ConvertX(const std::filesystem::path& XPath, const std::filesystem::path& OutputDirectory);
+	// X(ボーン無しの単純モデル)から静的メッシュMSTCを生成する.
+	// MaterialDirectoryが空ならMMATはOutputDirectoryへ出力する(指定時はそちらへ出力し、
+	// MSTCのMaterialPathにはファイル名のみを記録する. ランタイム側でmmatディレクトリへ解決する).
+	ConversionResult ConvertXStatic(const std::filesystem::path& XPath, const std::filesystem::path& OutputDirectory,
+		const std::filesystem::path& MaterialDirectory = {});
 
 } // namespace RuntimeConverter

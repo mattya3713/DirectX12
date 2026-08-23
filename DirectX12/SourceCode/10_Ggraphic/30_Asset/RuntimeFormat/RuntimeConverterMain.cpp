@@ -13,7 +13,8 @@ namespace {
 	{
 		std::cerr << "Usage:\n"
 			"  RuntimeConverter.exe x <input.x> <output-directory>\n"
-			"  RuntimeConverter.exe pmx <input.pmx> <input.vmd> <output-directory>\n";
+			"  RuntimeConverter.exe pmx <input.pmx> <input.vmd> <output-directory>\n"
+			"  RuntimeConverter.exe xstatic <input.x> <output-directory> <material-directory>\n";
 	}
 
 	int PrintFailure(const std::string& Message)
@@ -312,6 +313,23 @@ int main(int ArgumentCount, char** p_Arguments)
 		output_directory = p_Arguments[4];
 		if (!std::filesystem::is_regular_file(input_path) || !std::filesystem::is_regular_file(p_Arguments[3])) return PrintFailure("入力PMX/VMDファイルが存在しません。");
 		result = RuntimeConverter::ConvertPmx(input_path, p_Arguments[3], output_directory);
+	}
+	else if (mode == "xstatic" && (ArgumentCount == 4 || ArgumentCount == 5))
+	{
+		input_path = p_Arguments[2];
+		output_directory = p_Arguments[3];
+		const std::filesystem::path material_directory = (ArgumentCount == 5) ? std::filesystem::path(p_Arguments[4]) : std::filesystem::path{};
+		if (!std::filesystem::is_regular_file(input_path)) return PrintFailure("入力Xファイルが存在しません。");
+		result = RuntimeConverter::ConvertXStatic(input_path, output_directory, material_directory);
+		std::cout << "Converted(static): " << input_path.string() << '\n';
+		for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(output_directory))
+		{
+			if (entry.is_regular_file() && entry.path().extension() == ".mstc")
+			{
+				std::cout << "  " << entry.path().filename().string() << '\n';
+			}
+		}
+		return result.Success ? 0 : PrintFailure(result.Error.empty() ? "変換に失敗しました。" : result.Error);
 	}
 	else
 	{
