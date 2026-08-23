@@ -437,10 +437,16 @@ LRESULT CALLBACK Main::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
             // キーボードが押されたとき.
         case WM_KEYDOWN:
-            if (wParam == VK_ESCAPE) {
-                if (MessageBox(hWnd, _T("ゲームを終了しますか？"), _T("警告"), MB_YESNO) == IDYES) {
+            // ESCはゲーム内ポーズ(VirtualPad::Pause)と兼用のため、単押しでは終了しない.
+            // 0.5秒以内の2連打(ダブルタップ)で終了する. 自動リピート押下は除外する
+            // (旧実装はESCを押すたびモーダル確認が出てポーズ操作と衝突していた).
+            if (wParam == VK_ESCAPE && (lParam & 0x40000000) == 0) {
+                static DWORD s_last_esc_tick = 0;
+                const DWORD now_tick = GetTickCount();
+                if (s_last_esc_tick != 0 && now_tick - s_last_esc_tick <= 500) {
                     DestroyWindow(hWnd);
                 }
+                s_last_esc_tick = now_tick;
             }
             break;
 
