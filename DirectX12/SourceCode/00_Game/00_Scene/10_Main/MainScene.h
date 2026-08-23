@@ -18,6 +18,7 @@ class ThirdPersonCamera;
 class LockOnCamera;
 class CutScenePlayer;
 class ParticleSystem;
+class UILayoutRuntime;
 #if _DEBUG
 class CutSceneEditor;
 class LevelEditor;
@@ -50,6 +51,8 @@ private:
 
 	std::unique_ptr<Player>      m_upPlayer;
 	std::unique_ptr<Boss>        m_upBoss;
+
+	std::unique_ptr<UILayoutRuntime> m_upUILayoutRuntime; // JSONレイアウト駆動の最小HUD(Player/BossHPバー).
 
 	std::unique_ptr<CutScenePlayer> m_upCutScenePlayer; // カットシーンランタイム再生.
 	std::unique_ptr<ParticleSystem> m_upParticleSystem; // パーティクルシステム(VFX基盤).

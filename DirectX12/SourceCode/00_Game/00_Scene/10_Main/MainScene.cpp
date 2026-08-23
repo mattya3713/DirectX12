@@ -11,6 +11,7 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #include "10_Ggraphic/20_Render/Sprite/SpriteRenderer.h"
+#include "00_Game/20_UI/UILayoutRuntime.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -114,6 +115,10 @@ void MainScene::Create()
 		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
 		m_upSpriteRenderer = std::make_unique<SpriteRenderer>(*p_dx12);
 		m_pMstcRenderer = std::make_shared<MstcRenderer>(*p_dx12);
+
+		// JSONレイアウトから最小HUDを構築する(無い/壊れている場合は内蔵レイアウトへフォールバック).
+		m_upUILayoutRuntime = std::make_unique<UILayoutRuntime>();
+		m_upUILayoutRuntime->LoadOrDefault(std::filesystem::path{"Data/Json/UI/layout.json"});
 	}
 	catch (const std::runtime_error& Msg) {
 		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
@@ -561,6 +566,20 @@ void MainScene::Draw()
 				m_upSpriteRenderer->DrawSprite3D(p_sprite_tex, head_pos, 0.8f, 0.8f);
 			}
 		}
+	}
+
+	// JSONレイアウト駆動の最小HUD(Player/BossのHPバー. レイアウトはアンカー配置で解像度追従).
+	if (m_upUILayoutRuntime && m_upSpriteRenderer) {
+		if (m_upPlayer) {
+			const HealthSystem& health = m_upPlayer->GetHealth();
+			m_upUILayoutRuntime->SetRatio("PlayerHP", health.GetMaxHP() > 0.0f ? health.GetHP() / health.GetMaxHP() : 0.0f);
+		}
+		if (m_upBoss) {
+			const HealthSystem& health = m_upBoss->GetHealth();
+			m_upUILayoutRuntime->SetRatio("BossHP", health.GetMaxHP() > 0.0f ? health.GetHP() / health.GetMaxHP() : 0.0f);
+		}
+
+		m_upUILayoutRuntime->Draw(*m_upSpriteRenderer, *p_dx12);
 	}
 
 	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する

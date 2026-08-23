@@ -1,0 +1,44 @@
+{
+  "elements": [
+    {
+      "id": "ui1", "type": "Sprite", "name": "BossHPBack",
+      "image_id": "Data\\Image\\toon01.bmp", "text": "",
+      "anchor_x": 0.5, "anchor_y": 0.04, "offset_x": -304.0, "offset_y": 14.0,
+      "width": 608.0, "height": 26.0, "rotation": 0.0, "layer": 0,
+      "color_r": 0.05, "color_g": 0.05, "color_b": 0.05, "color_a": 0.85,
+      "visible": true
+    },
+    {
+      "id": "ui2", "type": "Sprite", "name": "BossHP",
+      "image_id": "Data\\Image\\toon01.bmp", "text": "",
+      "anchor_x": 0.5, "anchor_y": 0.04, "offset_x": -302.0, "offset_y": 16.0,
+      "width": 604.0, "height": 22.0, "rotation": 0.0, "layer": 1,
+      "color_r": 1.0, "color_g": 0.25, "color_b": 0.25, "color_a": 0.95,
+      "visible": true
+    },
+    {
+      "id": "ui3", "type": "Sprite", "name": "PlayerHPBack",
+      "image_id": "Data\\Image\\toon01.bmp", "text": "",
+      "anchor_x": 0.02, "anchor_y": 0.94, "offset_x": -2.0, "offset_y": -2.0,
+      "width": 404.0, "height": 22.0, "rotation": 0.0, "layer": 0,
+      "color_r": 0.05, "color_g": 0.05, "color_b": 0.05, "color_a": 0.85,
+      "visible": true
+    },
+    {
+      "id": "ui4", "type": "Sprite", "name": "PlayerHP",
+      "image_id": "Data\\Image\\toon01.bmp", "text": "",
+      "anchor_x": 0.02, "anchor_y": 0.94, "offset_x": 0.0, "offset_y": 0.0,
+      "width": 400.0, "height": 18.0, "rotation": 0.0, "layer": 1,
+      "color_r": 0.2, "color_g": 1.0, "color_b": 0.35, "color_a": 0.95,
+      "visible": true
+    },
+    {
+      "id": "ui5", "type": "Text", "name": "TimerLabel",
+      "image_id": "", "text": "TIME 00:00",
+      "anchor_x": 0.98, "anchor_y": 0.02, "offset_x": -160.0, "offset_y": 12.0,
+      "width": 150.0, "height": 28.0, "rotation": 0.0, "layer": 2,
+      "color_r": 1.0, "color_g": 1.0, "color_b": 1.0, "color_a": 1.0,
+      "visible": true
+    }
+  ]
+}

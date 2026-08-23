@@ -151,8 +151,9 @@
 xcopy /Y /I /E /D "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
 xcopy /Y /I /E /D "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
 xcopy /Y /I /E /D "$(ProjectDir)Data\Font" "$(OutDir)Data\Font\"
+xcopy /Y /I /E /D "$(ProjectDir)Data\Json" "$(OutDir)Data\Json\"
 exit /b 0</Command>
-      <Message>Data\Shader・Data\Model・Data\Sound・Data\Fontのうち更新分のみ出力先へコピー(実行時に相対パスで読み込むため. /Dで未変更ファイルの再コピーを省略し毎回のビルドを高速化).</Message>
+      <Message>Data\Shader・Data\Model・Data\Sound・Data\Font・Data\Jsonのうち更新分のみ出力先へコピー(実行時に相対パスで読み込むため. /Dで未変更ファイルの再コピーを省略し毎回のビルドを高速化).</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -314,6 +315,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UISpriteObject.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UILayoutModel.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\UILayoutEditor.h" />
+    <ClInclude Include="SourceCode\00_Game\20_UI\UILayoutRuntime.h" />
     <ClInclude Include="SourceCode\20_Resource\ResourceCatalog.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatTuning.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\PlaytestRecorder.h" />
@@ -466,6 +468,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\10_Object\30_UIObject\UIObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\30_UIObject\UILayoutModel.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\UILayoutEditor.cpp" />
+    <ClCompile Include="SourceCode\00_Game\20_UI\UILayoutRuntime.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\CombatTuning.cpp" />
