@@ -313,6 +313,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UIObject.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UISpriteObject.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UILayoutModel.h" />
+    <ClInclude Include="SourceCode\00_Game\20_UI\UILayoutRuntime.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\UILayoutEditor.h" />
     <ClInclude Include="SourceCode\20_Resource\ResourceCatalog.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatTuning.h" />
@@ -466,6 +467,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\00_Game\10_Object\20_SpriteObject\SpriteObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\30_UIObject\UIObject.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\30_UIObject\UILayoutModel.cpp" />
+    <ClCompile Include="SourceCode\00_Game\20_UI\UILayoutRuntime.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\UILayoutEditor.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.cpp" />

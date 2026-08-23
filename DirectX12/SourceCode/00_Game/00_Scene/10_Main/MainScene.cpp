@@ -11,6 +11,7 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #include "10_Ggraphic/20_Render/Sprite/SpriteRenderer.h"
+#include "00_Game/20_UI/UILayoutRuntime.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -122,6 +123,12 @@ void MainScene::Create()
 		}
 		std::wstring w_str = MyString::StringToWString(Msg.what());
 		_ASSERT_EXPR(false, w_str.c_str());
+	}
+
+	// UI Layoutランタイム(layout.jsonを読み込み、欠損/破損時は既定表示へフォールバック).
+	m_upUILayoutRuntime = std::make_unique<UILayoutRuntime>();
+	if (!m_upUILayoutRuntime->LoadFromJson("Data/Json/UI/layout.json")) {
+		m_upUILayoutRuntime->LoadDefaultLayout();
 	}
 
 	try {
@@ -403,6 +410,16 @@ void MainScene::Update()
 	// 撃破シーケンス基盤(ゲージ加速/成立判定/演出フック). Player/Boss更新後に呼ぶ.
 	TickFinisherSequence();
 
+	// UI Layoutランタイム: HUD要素へゲーム値(HP)を反映する.
+	if (m_upUILayoutRuntime && m_upPlayer && m_upBoss) {
+		UIHudSnapshot snapshot{};
+		snapshot.PlayerHpRatio = m_upPlayer->GetHealth().IsAlive()
+			? (m_upPlayer->GetHealth().GetHP() / std::max(m_upPlayer->GetHealth().GetMaxHP(), 1.0f)) : 0.0f;
+		snapshot.BossHpRatio = m_upBoss->GetHealth().IsAlive()
+			? (m_upBoss->GetHealth().GetHP() / std::max(m_upBoss->GetHealth().GetMaxHP(), 1.0f)) : 0.0f;
+		m_upUILayoutRuntime->BindGameValues(snapshot);
+	}
+
 	// カットシーン再生(Player/Boss更新後に呼び、カットシーン側のTransformを優先させる).
 	// 撃破シーケンス中(Playing)は戦闘停止後も演出側の更新を継続させる.
 	if (m_upCutScenePlayer && !is_paused && (!m_IsGameOver || m_FinisherPhase == FinisherPhase::Playing)) {
@@ -649,6 +666,11 @@ void MainScene::Draw()
 				m_upSpriteRenderer->DrawSprite3D(p_sprite_tex, head_pos, 0.8f, 0.8f);
 			}
 		}
+	}
+
+	// UI Layoutランタイム(layout.json/既定表示のHUDを描画).
+	if (m_upUILayoutRuntime && m_upSpriteRenderer) {
+		m_upUILayoutRuntime->Draw(*m_upSpriteRenderer);
 	}
 
 	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する

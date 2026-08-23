@@ -19,6 +19,7 @@ class LockOnCamera;
 class CutScenePlayer;
 class ParticleSystem;
 class EventBus;
+class UILayoutRuntime;
 #if _DEBUG
 class CutSceneEditor;
 class LevelEditor;
@@ -64,6 +65,7 @@ private:
 
 	std::unique_ptr<CutScenePlayer> m_upCutScenePlayer; // カットシーンランタイム再生.
 	std::unique_ptr<ParticleSystem> m_upParticleSystem; // パーティクルシステム(VFX基盤).
+	std::unique_ptr<UILayoutRuntime> m_upUILayoutRuntime; // layout.jsonランタイムUI(HPバー等のHUD).
 #if _DEBUG
 	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
 	std::unique_ptr<ParticleSystemEditor> m_upParticleEditor; // パーティクル編集ツール(デバッグのみ).
