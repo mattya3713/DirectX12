@@ -2,6 +2,7 @@
 
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
+#include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 #if _DEBUG
@@ -155,5 +156,15 @@ void Character::ProcessBodyCollisions()
 
 		// 水平成分のみ押し出す(Y押し出しは地面コライダーが無い現状では沈み込み・浮きの原因になるため).
 		AddPosition({ -info.Normal.x * push, 0.0f, -info.Normal.z * push });
+	}
+}
+
+// ワールド座標指定のエフェクト再生(パーティクルシステムへ接続. 現在はヒットエフェクトのみ).
+void Character::PlayEffectAtWorldPos(const std::string& Name, const DirectX::XMFLOAT3& WorldPos, float Scale, bool IsUI)
+{
+	(void)Name; (void)Scale; (void)IsUI; // v1は名前・スケール未対応の固定ヒットエフェクト.
+
+	if (ParticleSystem* p_particle_system = ServiceLocator::Get<ParticleSystem>()) {
+		p_particle_system->SpawnHitEffect(WorldPos);
 	}
 }

@@ -168,6 +168,8 @@ void Player::ProcessAttackHits()
 		AddCombo(1, PlayerAccess::ComboEconomyKey{});
 		AddUltValue(kUltGainPerHit, PlayerAccess::ComboEconomyKey{});
 
+		PlayEffectAtWorldPos("hit", info.ContactPoint); // ヒットパーティクル(コンボフローとは独立の演出).
+
 		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
 			p_debug_log->LogInfo("Attack Hit! Combo=" + std::to_string(GetCombo())
 				+ " Ult=" + std::to_string(GetCurrentUltValue()));

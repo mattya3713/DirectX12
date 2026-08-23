@@ -10,6 +10,7 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcActor.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
+#include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
 #endif
@@ -26,6 +27,7 @@
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/80_CutScene/CutScenePlayer.h"
 #include "99_Utility/Debug/Imgui/ImGuiManager.h"
+#include "99_Utility/Debug/Imgui/CombatDebugHud.h"
 #include "99_Utility/Debug/Imgui/LevelEditor.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
@@ -66,6 +68,7 @@ MainScene::~MainScene()
 {
 	// カットシーンシステム・キャラクターの非所有参照を破棄前に解除する.
 	ServiceLocator::Provide<CutScenePlayer>(nullptr);
+	ServiceLocator::Provide<ParticleSystem>(nullptr);
 	ServiceLocator::Provide<Player>(nullptr);
 	ServiceLocator::Provide<Boss>(nullptr);
 
@@ -149,6 +152,12 @@ void MainScene::Create()
 
 		m_upCutScenePlayer = std::make_unique<CutScenePlayer>();
 		ServiceLocator::Provide<CutScenePlayer>(m_upCutScenePlayer.get());
+
+		// パーティクルシステム(パイプライン構築+ServiceLocator登録).
+		m_upParticleSystem = std::make_unique<ParticleSystem>();
+		if (m_upParticleSystem->Initialize(p_dx12->GetDevice().Get())) {
+			ServiceLocator::Provide<ParticleSystem>(m_upParticleSystem.get());
+		}
 
 		// レベルデータ(Data\Json\Level配下)から静的オブジェクトを構築し、
 		// スポーン地点指定(キーが有る場合のみ)でPlayer/Boss初期位置を上書きする.
@@ -378,6 +387,11 @@ void MainScene::Update()
 		m_upCutScenePlayer->Update(GameTime::GetDeltaTime());
 	}
 
+	// パーティクル更新(一時停止・勝敗確定後は止める).
+	if (m_upParticleSystem && !is_paused && !m_IsGameOver) {
+		m_upParticleSystem->Update(GameTime::GetDeltaTime());
+	}
+
 #if _DEBUG
 	// カットシーン編集ツールとテスト再生(デバッグ用ImGui).
 	if (m_upCutSceneEditor) {
@@ -410,6 +424,9 @@ void MainScene::Update()
 		ImGui::TextUnformatted(m_WinnerIsPlayer ? "WIN" : "LOSE");
 		ImGui::End();
 	}
+
+	// 戦闘状態一括表示(HP/State/コンボ/必殺ゲージ/TimeScale/コライダー有効状態).
+	CombatDebugHud::Draw(m_upPlayer.get(), m_upBoss.get());
 #endif
 }
 
@@ -513,6 +530,11 @@ void MainScene::Draw()
 			actor->Draw();
 		}
 		Profiler::Instance().GpuEnd("GPU:StaticLevel");
+	}
+
+	// パーティクル(半透明のためキャラ・静的オブジェクトの後. 深度書き込みなし).
+	if (m_upParticleSystem) {
+		m_upParticleSystem->Draw();
 	}
 
 #if _DEBUG

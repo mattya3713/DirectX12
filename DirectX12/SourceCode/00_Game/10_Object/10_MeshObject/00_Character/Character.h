@@ -56,6 +56,12 @@ public: // 攻撃判定の制御(攻撃系Stateから呼ぶ想定).
 	void SetAttackAmount(float AttackAmount) noexcept { m_AttackCollider.SetAttackAmount(AttackAmount); }
 	void SetAttackColliderOffset(const DirectX::XMFLOAT3& Offset) noexcept { m_AttackCollider.SetPositionOffset(Offset); }
 
+#if _DEBUG
+	// Combat Debug HUD用の有効状態取得(表示専用. ロジックは変更しない).
+	bool IsAttackColliderActive() const noexcept { return m_AttackCollider.GetActive(); }
+	bool IsDamageColliderActive() const noexcept { return m_DamageCollider.GetActive(); }
+#endif
+
 public: // 被弾判定の制御(パリィ等、一時的に無敵にしたいStateから呼ぶ想定).
 	void SetDamageColliderActive(bool IsActive) noexcept { m_DamageCollider.SetActive(IsActive); }
 
@@ -64,8 +70,8 @@ public: // エフェクト再生(フックのみ. 中身は未実装 — Effekse
 	// 自分の位置からの相対オフセットで再生する.
 	void PlayEffect(const std::string& Name, const DirectX::XMFLOAT3& Offset = { 0.0f, 0.0f, 0.0f }, float Scale = 1.0f, bool IsUI = false) {}
 
-	// ワールド座標を指定して再生する.
-	void PlayEffectAtWorldPos(const std::string& Name, const DirectX::XMFLOAT3& WorldPos, float Scale = 1.0f, bool IsUI = false) {}
+	// ワールド座標を指定して再生する(パーティクルシステムへ接続済み. 現在はヒットエフェクトのみ).
+	void PlayEffectAtWorldPos(const std::string& Name, const DirectX::XMFLOAT3& WorldPos, float Scale = 1.0f, bool IsUI = false);
 
 	// ワールド座標+回転を指定して再生する.
 	void PlayEffectAtWorldPos(const std::string& Name, const DirectX::XMFLOAT3& WorldPos, const DirectX::XMFLOAT3& EulerRotation, float Scale = 1.0f, bool IsUI = false) {}

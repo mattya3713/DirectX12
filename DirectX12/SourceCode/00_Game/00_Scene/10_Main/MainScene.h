@@ -16,6 +16,7 @@ class ModelPreviewPanel;
 class ThirdPersonCamera;
 class LockOnCamera;
 class CutScenePlayer;
+class ParticleSystem;
 #if _DEBUG
 class CutSceneEditor;
 class LevelEditor;
@@ -47,6 +48,7 @@ private:
 	std::unique_ptr<Boss>        m_upBoss;
 
 	std::unique_ptr<CutScenePlayer> m_upCutScenePlayer; // カットシーンランタイム再生.
+	std::unique_ptr<ParticleSystem> m_upParticleSystem; // パーティクルシステム(VFX基盤).
 #if _DEBUG
 	std::unique_ptr<CutSceneEditor> m_upCutSceneEditor; // カットシーン編集ツール(デバッグのみ).
 	std::unique_ptr<LevelEditor>    m_upLevelEditor;    // レベルシーン編集ツール(デバッグのみ).
