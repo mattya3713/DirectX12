@@ -24,6 +24,62 @@ CombatTuningData& CombatTuning::Get() noexcept
 void CombatTuning::ResetToDefaults() noexcept
 {
 	Get() = Defaults();
+}// フィールドを妥当範囲へクランプする(Editorスライダー範囲と同一の定義).
+namespace {
+
+	void ClampField(float& Value, float Min, float Max) noexcept
+	{
+		if (Value < Min) { Value = Min; }
+		if (Value > Max) { Value = Max; }
+	}
+
+}
+
+void CombatTuning::ClampToValidRange(CombatTuningData& Tuning) noexcept
+{
+	ClampField(Tuning.ComboRushDistance,  0.0f, 10.0f);
+	ClampField(Tuning.ComboSpeedPerCombo, 0.0f, 0.2f);
+	ClampField(Tuning.ComboSpeedMaxBonus, 0.0f, 1.0f);
+	ClampField(Tuning.Attack0Amount,      0.0f, 200.0f);
+	ClampField(Tuning.Attack1Amount,      0.0f, 200.0f);
+	ClampField(Tuning.Attack2Amount,      0.0f, 200.0f);
+
+	ClampField(Tuning.ParryMaxWaitTime, 0.0f, 5.0f);
+	ClampField(Tuning.DodgeDistance,    1.0f, 50.0f);
+	ClampField(Tuning.DodgeDuration,    0.05f, 5.0f);
+
+	ClampField(Tuning.HitStopScale,        0.0f, 1.0f);
+	ClampField(Tuning.HitStopDuration,     0.0f, 0.5f);
+	ClampField(Tuning.ParrySlowScale,      0.0f, 1.0f);
+	ClampField(Tuning.ParrySlowDuration,   0.0f, 2.0f);
+
+	ClampField(Tuning.Boss1Windup,   0.0f, 5.0f);
+	ClampField(Tuning.Boss1Active,   0.0f, 3.0f);
+	ClampField(Tuning.Boss1Recovery, 0.0f, 5.0f);
+	ClampField(Tuning.Boss1Amount,   0.0f, 200.0f);
+
+	ClampField(Tuning.Boss2Windup,   0.0f, 5.0f);
+	ClampField(Tuning.Boss2Active,   0.0f, 3.0f);
+	ClampField(Tuning.Boss2Recovery, 0.0f, 5.0f);
+	ClampField(Tuning.Boss2Amount,   0.0f, 200.0f);
+
+	ClampField(Tuning.BeamWindup,    0.0f, 5.0f);
+	ClampField(Tuning.BeamActive,    0.0f, 3.0f);
+	ClampField(Tuning.BeamRecovery,  0.0f, 5.0f);
+	ClampField(Tuning.BeamAmount,    0.0f, 200.0f);
+
+	ClampField(Tuning.JumpCrouch,              0.0f, 3.0f);
+	ClampField(Tuning.JumpAirTime,             0.1f, 3.0f);
+	ClampField(Tuning.JumpHeight,              0.1f, 10.0f);
+	ClampField(Tuning.JumpLandingActiveBefore, 0.0f, 1.0f);
+	ClampField(Tuning.JumpLandingActiveAfter,  0.0f, 1.0f);
+	ClampField(Tuning.JumpRecovery,            0.0f, 3.0f);
+	ClampField(Tuning.JumpAmount,              0.0f, 200.0f);
+
+	ClampField(Tuning.SpinWindup,   0.0f, 5.0f);
+	ClampField(Tuning.SpinActive,   0.0f, 3.0f);
+	ClampField(Tuning.SpinRecovery, 0.0f, 5.0f);
+	ClampField(Tuning.SpinAmount,   0.0f, 200.0f);
 }
 
 void from_json(const nlohmann::json& Data, CombatTuningData& Tuning)
@@ -125,6 +181,7 @@ bool CombatTuning::Load(const std::filesystem::path& Path)
 		file >> data;
 		CombatTuningData loaded{};
 		from_json(data, loaded); // 欠損キーは既定値で補完される.
+		ClampToValidRange(loaded); // 不正値・極端値は妥当範囲へクランプ(手編集JSON対策).
 		Get() = loaded;
 		return true;
 	}

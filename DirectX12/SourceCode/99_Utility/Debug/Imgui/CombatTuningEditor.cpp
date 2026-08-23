@@ -18,6 +18,20 @@ namespace {
 		ImGuiManager::Tweak("硬直(s)", *Recovery, 0.0f, 5.0f);
 		ImGuiManager::Tweak("威力", *Amount, 0.0f, 200.0f);
 	}
+
+	// プリセット名が安全か(空文字・パス区切り・".."は任意ディレクトリ読み書きになるため拒否).
+	bool IsPresetNameValid(const char* Name) noexcept
+	{
+		if (Name == nullptr || Name[0] == '\0') { return false; }
+
+		const std::string name(Name);
+		if (name.find("..") != std::string::npos) { return false; }
+		if (name.find('/') != std::string::npos) { return false; }
+		if (name.find('\\') != std::string::npos) { return false; }
+		if (name.find(':') != std::string::npos) { return false; }
+
+		return true;
+	}
 }
 
 void CombatTuningEditor::Draw()
@@ -33,7 +47,7 @@ void CombatTuningEditor::Draw()
 	}
 
 	ImGui::SameLine();
-	if (ImGui::Button(IMGUI_JP("保存")) && m_PresetName[0] != '\0') {
+	if (ImGui::Button(IMGUI_JP("保存")) && m_PresetName[0] != '\0' && IsPresetNameValid(m_PresetName)) {
 		std::string name = m_PresetName;
 		if (name.find(".json") == std::string::npos) { name += ".json"; }
 		const std::filesystem::path path = std::filesystem::path(kPresetDir) / name;
@@ -42,13 +56,18 @@ void CombatTuningEditor::Draw()
 	}
 
 	ImGui::SameLine();
-	if (ImGui::Button(IMGUI_JP("読込")) && m_PresetName[0] != '\0') {
+	if (ImGui::Button(IMGUI_JP("読込")) && m_PresetName[0] != '\0' && IsPresetNameValid(m_PresetName)) {
 		std::string name = m_PresetName;
 		if (name.find(".json") == std::string::npos) { name += ".json"; }
 		m_WasLoadedFromMissingFile = !CombatTuning::Load(std::filesystem::path(kPresetDir) / name);
 	}
 	if (m_WasLoadedFromMissingFile) {
 		ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.2f, 1.0f), IMGUI_JP("プリセットが見つかりません"));
+	}
+
+	// プリセット名の不正文字チェック(保存/読込ボタン押下時に表示).
+	if (m_PresetName[0] != '\0' && !IsPresetNameValid(m_PresetName)) {
+		ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), IMGUI_JP("プリセット名に使えない文字があります(\\ / : ..)"));
 	}
 
 	ImGui::InputText(IMGUI_JP("プリセット名"), m_PresetName, sizeof(m_PresetName));
