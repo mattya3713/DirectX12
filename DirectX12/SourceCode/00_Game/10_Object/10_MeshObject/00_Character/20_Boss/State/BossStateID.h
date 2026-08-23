@@ -17,6 +17,9 @@ namespace BossState {
 		Move,          // 接近(ターゲットへ直進. 将来は攻撃選択の起点にもなる想定).
 		Attack,        // 攻撃(足止めして攻撃判定を出す).
 		Attack2,       // 攻撃その2(boss_attack2. 予備動作が長い大振り高威力. Moveがランダムで選択する).
+		BeamAttack,    // 攻撃その3(boss_beem1. 遠距離牽制用のビーム. 中距離からも発生しうる).
+		JumpAttack,    // 攻撃その4(boss_jump_attack1. 空中へ跳んで着地と同時に判定を出す).
+		SpinAttack,    // 攻撃その5(boss_spin_attack1. その場で振り回す. 判定有効時間が長い).
 		ParryReaction, // パリィされた直後のリアクション(Boss::EnterParryReaction経由でのみ入る. 汎用ChangeStateのswitchには無い).
 		Dead,          // 死亡(HPが0になった後. その場に残り続ける).
 

@@ -34,9 +34,21 @@ void Move::Update()
 
 	if (distance <= GetBoss()->GetAttackRange())
 	{
-		// 攻撃範囲内に入ったら2パターンからランダムに選ぶ(50/50の単純な抽選).
-		const int pick = MyRand::GetRandomPercentage(0, 1);
-		GetBoss()->ChangeState(pick == 0 ? BossState::eID::Attack : BossState::eID::Attack2);
+		// 攻撃範囲内に入ったら5パターンを重み付きで抽選する(近距離ほど近接攻撃が出やすい).
+		// 内訳(仮値): Attack40% / Attack2 25% / Spin20% / Jump10% / Beam5%.
+		const int roll = MyRand::GetRandomPercentage(0, 99);
+		if      (roll < 40) { GetBoss()->ChangeState(BossState::eID::Attack); }
+		else if (roll < 65) { GetBoss()->ChangeState(BossState::eID::Attack2); }
+		else if (roll < 85) { GetBoss()->ChangeState(BossState::eID::SpinAttack); }
+		else if (roll < 95) { GetBoss()->ChangeState(BossState::eID::JumpAttack); }
+		else                { GetBoss()->ChangeState(BossState::eID::BeamAttack); }
+		return;
+	}
+
+	// 中距離では稀にビームで牽制する(遠距離攻撃の存在を知らせる役割).
+	if (MyRand::GetRandomPercentage(0, 99) < 20)
+	{
+		GetBoss()->ChangeState(BossState::eID::BeamAttack);
 		return;
 	}
 

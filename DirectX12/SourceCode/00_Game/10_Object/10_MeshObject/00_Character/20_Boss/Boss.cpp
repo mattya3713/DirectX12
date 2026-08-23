@@ -4,6 +4,9 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/10_Move/Move.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/20_Attack/Attack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/21_Attack2/Attack2.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/22_BeamAttack/BeamAttack.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/23_JumpAttack/JumpAttack.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/24_SpinAttack/SpinAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/30_Dead/Dead.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/40_ParryReaction/ParryReaction.h"
 
@@ -54,6 +57,18 @@ void Boss::ChangeState(BossState::eID Id)
 
 	case BossState::eID::Attack2:
 		m_StateMachine.ChangeState(std::make_shared<BossState::Attack2>(this));
+		break;
+
+	case BossState::eID::BeamAttack:
+		m_StateMachine.ChangeState(std::make_shared<BossState::BeamAttack>(this));
+		break;
+
+	case BossState::eID::JumpAttack:
+		m_StateMachine.ChangeState(std::make_shared<BossState::JumpAttack>(this));
+		break;
+
+	case BossState::eID::SpinAttack:
+		m_StateMachine.ChangeState(std::make_shared<BossState::SpinAttack>(this));
 		break;
 
 	case BossState::eID::Dead:
