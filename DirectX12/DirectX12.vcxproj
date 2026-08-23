@@ -223,6 +223,8 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.h" />
     <ClInclude Include="SourceCode\20_Resource\Font\FontLoader.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\ISerializable.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\SaveLoadManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\IEditorCommand.h" />
@@ -409,6 +411,8 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.cpp" />
     <ClCompile Include="SourceCode\20_Resource\Font\FontLoader.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Serialization\SaveLoadManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlMesh.cpp" />

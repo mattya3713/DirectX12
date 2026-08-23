@@ -91,6 +91,8 @@
     <ClInclude Include="SourceCode\99_Utility\FileManager\FileManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Sound\SoundManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\ISerializable.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\SaveLoadManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\IEditorCommand.h" />
@@ -293,6 +295,8 @@
     <ClCompile Include="SourceCode\99_Utility\FileManager\FileManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Sound\SoundManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Serialization\SaveLoadManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\99_Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.cpp" />
