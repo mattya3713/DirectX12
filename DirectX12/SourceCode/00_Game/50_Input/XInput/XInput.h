@@ -82,42 +82,42 @@ public:
 public: // Getter、Setter.
 
 	// トリガーの生の値(0～255)を取得.
-	const BYTE GetLTriggerRaw() const;
-	const BYTE GetRTriggerRaw() const;
+	const BYTE GetLTriggerRaw() const noexcept;
+	const BYTE GetRTriggerRaw() const noexcept;
 
 	// トリガーの正規化された値(0.0f～1.0f)を取得.
-	const float GetLeftTrigger() const;
-	const float GetRightTrigger() const;
+	const float GetLeftTrigger() const noexcept;
+	const float GetRightTrigger() const noexcept;
 
 	// スティックの入力方向を取得(デッドゾーン考慮・正規化済み).
-	const DirectX::XMFLOAT2 GetLStickDirection() const;
-	const DirectX::XMFLOAT2 GetRStickDirection() const;
+	const DirectX::XMFLOAT2 GetLStickDirection() const noexcept;
+	const DirectX::XMFLOAT2 GetRStickDirection() const noexcept;
 
 	// 左スティックの生入力値を取得.
-	const DirectX::XMFLOAT2 GetLThumb() const;
-	const float GetLThumbX() const;
-	const float GetLThumbY() const;
+	const DirectX::XMFLOAT2 GetLThumb() const noexcept;
+	const float GetLThumbX() const noexcept;
+	const float GetLThumbY() const noexcept;
 
 	// 左スティックの-1～1にクランプされた入力値を取得.
-	const DirectX::XMFLOAT2 GetLThumb_Clamp() const;
-	const float GetLThumbX_Clamp() const;
-	const float GetLThumbY_Clamp() const;
+	const DirectX::XMFLOAT2 GetLThumb_Clamp() const noexcept;
+	const float GetLThumbX_Clamp() const noexcept;
+	const float GetLThumbY_Clamp() const noexcept;
 
 	// 右スティックの生入力値を取得.
-	const DirectX::XMFLOAT2 GetRThumb() const;
-	const float GetRThumbX() const;
-	const float GetRThumbY() const;
+	const DirectX::XMFLOAT2 GetRThumb() const noexcept;
+	const float GetRThumbX() const noexcept;
+	const float GetRThumbY() const noexcept;
 
 	// 右スティックの-1～1にクランプされた入力値を取得.
-	const DirectX::XMFLOAT2 GetRThumb_Clamp() const;
-	const float GetRThumbX_Clamp() const;
-	const float GetRThumbY_Clamp() const;
+	const DirectX::XMFLOAT2 GetRThumb_Clamp() const noexcept;
+	const float GetRThumbX_Clamp() const noexcept;
+	const float GetRThumbY_Clamp() const noexcept;
 
 	// パッド番号を取得.
-	const DWORD GetPadID() const;
+	const DWORD GetPadID() const noexcept;
 
 	// 接続状態を取得.
-	const bool IsConnect() const;
+	const bool IsConnect() const noexcept;
 
 	// 振動を設定.
 	const bool SetVibration(const WORD& LeftMotorSpd, const WORD& RightMotorSpd);

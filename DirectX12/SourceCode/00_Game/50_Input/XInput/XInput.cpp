@@ -158,27 +158,27 @@ bool XInput::IsRStickActive(const float DeadZone)
 	return IsOutsideDeadZone(DeadZone, GetRThumb_Clamp());
 }
 
-const BYTE XInput::GetLTriggerRaw() const
+const BYTE XInput::GetLTriggerRaw() const noexcept
 {
 	return m_State.Gamepad.bLeftTrigger;
 }
 
-const BYTE XInput::GetRTriggerRaw() const
+const BYTE XInput::GetRTriggerRaw() const noexcept
 {
 	return m_State.Gamepad.bRightTrigger;
 }
 
-const float XInput::GetLeftTrigger() const
+const float XInput::GetLeftTrigger() const noexcept
 {
 	return static_cast<float>(m_State.Gamepad.bLeftTrigger) / 255.0f;
 }
 
-const float XInput::GetRightTrigger() const
+const float XInput::GetRightTrigger() const noexcept
 {
 	return static_cast<float>(m_State.Gamepad.bRightTrigger) / 255.0f;
 }
 
-const DirectX::XMFLOAT2 XInput::GetLStickDirection() const
+const DirectX::XMFLOAT2 XInput::GetLStickDirection() const noexcept
 {
 	DirectX::XMFLOAT2 raw_thumb = GetLThumb();
 	DirectX::XMFLOAT2 result = { 0.0f, 0.0f };
@@ -215,7 +215,7 @@ const DirectX::XMFLOAT2 XInput::GetLStickDirection() const
 	return result;
 }
 
-const DirectX::XMFLOAT2 XInput::GetRStickDirection() const
+const DirectX::XMFLOAT2 XInput::GetRStickDirection() const noexcept
 {
 	DirectX::XMFLOAT2 raw_thumb = GetRThumb();
 	DirectX::XMFLOAT2 result = { 0.0f, 0.0f };
@@ -250,22 +250,22 @@ const DirectX::XMFLOAT2 XInput::GetRStickDirection() const
 	return result;
 }
 
-const DirectX::XMFLOAT2 XInput::GetLThumb() const
+const DirectX::XMFLOAT2 XInput::GetLThumb() const noexcept
 {
 	return DirectX::XMFLOAT2(GetLThumbX(), GetLThumbY());
 }
 
-const float XInput::GetLThumbX() const
+const float XInput::GetLThumbX() const noexcept
 {
 	return static_cast<float>(m_State.Gamepad.sThumbLX);
 }
 
-const float XInput::GetLThumbY() const
+const float XInput::GetLThumbY() const noexcept
 {
 	return static_cast<float>(m_State.Gamepad.sThumbLY);
 }
 
-const DirectX::XMFLOAT2 XInput::GetRThumb_Clamp() const
+const DirectX::XMFLOAT2 XInput::GetRThumb_Clamp() const noexcept
 {
 	// 生の入力値を取得.
 	float raw_x = static_cast<float>(m_State.Gamepad.sThumbRX);
@@ -297,33 +297,33 @@ const DirectX::XMFLOAT2 XInput::GetRThumb_Clamp() const
 }
 
 // X軸のクランプ値.
-const float XInput::GetRThumbX_Clamp() const
+const float XInput::GetRThumbX_Clamp() const noexcept
 {
 	return GetRThumb_Clamp().x;
 }
 
 // Y軸のクランプ値.
-const float XInput::GetRThumbY_Clamp() const
+const float XInput::GetRThumbY_Clamp() const noexcept
 {
 	return GetRThumb_Clamp().y;
 }
 
-const DirectX::XMFLOAT2 XInput::GetRThumb() const
+const DirectX::XMFLOAT2 XInput::GetRThumb() const noexcept
 {
 	return DirectX::XMFLOAT2(GetRThumbX(), GetRThumbY());
 }
 
-const float XInput::GetRThumbX() const
+const float XInput::GetRThumbX() const noexcept
 {
 	return static_cast<float>(m_State.Gamepad.sThumbRX);
 }
 
-const float XInput::GetRThumbY() const
+const float XInput::GetRThumbY() const noexcept
 {
 	return static_cast<float>(m_State.Gamepad.sThumbRY);
 }
 
-const DirectX::XMFLOAT2 XInput::GetLThumb_Clamp() const
+const DirectX::XMFLOAT2 XInput::GetLThumb_Clamp() const noexcept
 {
 	// 生の入力値を取得.
 	float raw_x = static_cast<float>(m_State.Gamepad.sThumbLX);
@@ -355,23 +355,23 @@ const DirectX::XMFLOAT2 XInput::GetLThumb_Clamp() const
 }
 
 // X軸のクランプ値.
-const float XInput::GetLThumbX_Clamp() const
+const float XInput::GetLThumbX_Clamp() const noexcept
 {
 	return GetLThumb_Clamp().x;
 }
 
 // Y軸のクランプ値.
-const float XInput::GetLThumbY_Clamp() const
+const float XInput::GetLThumbY_Clamp() const noexcept
 {
 	return GetLThumb_Clamp().y;
 }
 
-const DWORD XInput::GetPadID() const
+const DWORD XInput::GetPadID() const noexcept
 {
 	return m_PadID;
 }
 
-const bool XInput::IsConnect() const
+const bool XInput::IsConnect() const noexcept
 {
 	return m_IsConnect;
 }

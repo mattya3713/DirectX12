@@ -80,7 +80,8 @@ void FrameRewind::CreateRingTexture(UINT Index)
 {
 	D3D12_HEAP_PROPERTIES default_heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC ring_desc = CD3DX12_RESOURCE_DESC::Tex2D(
-		DXGI_FORMAT_R8G8B8A8_UNORM, REWIND_WIDTH, REWIND_HEIGHT);
+		DXGI_FORMAT_R8G8B8A8_UNORM, REWIND_WIDTH, REWIND_HEIGHT, 1, 1, 1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
 	MyAssert::IsFailed(
 		_T("巻き戻りリングテクスチャの作成"),
@@ -212,10 +213,17 @@ void FrameRewind::Capture()
 	auto ring_rtv = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	ring_rtv.ptr += static_cast<UINT64>(m_WriteIndex) *
 		m_Dx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	auto ring_to_rtv = CD3DX12_RESOURCE_BARRIER::Transition(m_Ring[m_WriteIndex].Get(),
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmd_list->ResourceBarrier(1, &ring_to_rtv);
 	cmd_list->OMSetRenderTargets(1, &ring_rtv, false, nullptr);
 
 	cmd_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmd_list->DrawInstanced(3, 1, 0, 0); // SV_VertexIDによるフルスクリーントライアングル.
+
+	auto ring_to_srv = CD3DX12_RESOURCE_BARRIER::Transition(m_Ring[m_WriteIndex].Get(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmd_list->ResourceBarrier(1, &ring_to_srv);
 
 	// メインパス続行のためバックバッファをレンダーターゲットへ戻す.
 	auto to_rtv = CD3DX12_RESOURCE_BARRIER::Transition(p_backbuffer,

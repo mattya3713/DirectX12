@@ -14,7 +14,7 @@ void BossStateBase::ApplyNamedClip(const char* ClipName) const
 	GetBoss()->PlayNamedClip(ClipName);
 }
 
-float BossStateBase::DistanceToTargetXZ() const noexcept
+float BossStateBase::DistanceSqToTargetXZ() const noexcept
 {
 	const DirectX::XMFLOAT3& self_pos   = m_pOwner->GetPosition();
 	const DirectX::XMFLOAT3& target_pos = m_pOwner->GetTargetPos();
@@ -22,7 +22,12 @@ float BossStateBase::DistanceToTargetXZ() const noexcept
 	const float dx = target_pos.x - self_pos.x;
 	const float dz = target_pos.z - self_pos.z;
 
-	return std::sqrtf(dx * dx + dz * dz);
+	return dx * dx + dz * dz;
+}
+
+float BossStateBase::DistanceToTargetXZ() const noexcept
+{
+	return std::sqrtf(DistanceSqToTargetXZ());
 }
 
 float BossStateBase::AngleToTargetDeg() const noexcept

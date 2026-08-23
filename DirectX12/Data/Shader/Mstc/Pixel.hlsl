@@ -29,7 +29,7 @@ float4 PS(MstcVsOutput input) : SV_TARGET
     float4 ambCol = float4(ambientUseNormalMap.rgb * 0.6, 1);
 
     // PMXのPixel.hlslと同じ構成(トゥーン/スフィア無し版).
-    float4 color = saturate(lightColor * diffuse * texColor * diffuseB)
+    float4 color = saturate(float4(lightColor, 1.0f) * diffuse * texColor * diffuseB)
         + float4(specularB * specularAmount.rgb, 1)
         + float4(texColor.xyz * ambientUseNormalMap.rgb * 0.5, 1);
     color.a = saturate(diffuse.a * texColor.a);

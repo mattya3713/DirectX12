@@ -104,6 +104,9 @@ SpriteRenderer::SpriteRenderer(DirectX12& Dx12)
 	m_IndexBufferView.BufferLocation = p_ib_upload->GetGPUVirtualAddress();
 	m_IndexBufferView.SizeInBytes    = ib_size;
 	m_IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
+
+	// Viewだけ残すとローカルのアップロードバッファが解放されGPU VAが無効化されるため、本体をメンバで保持する.
+	m_pIndexBuffer = std::move(p_ib_upload);
 }
 
 SpriteRenderer::~SpriteRenderer()
@@ -347,6 +350,35 @@ void SpriteRenderer::DrawSprite2D(
 		{ { x1, y0 }, { 1.0f, 0.0f }, Color },
 		{ { x1, y1 }, { 1.0f, 1.0f }, Color },
 		{ { x0, y1 }, { 0.0f, 1.0f }, Color },
+	};
+
+	DrawQuad(false, verts, sizeof(Sprite2DVertex), pTexture);
+}
+
+// UV矩形を指定して画面座標へ描画する.
+void SpriteRenderer::DrawSprite2DUV(
+	ID3D12Resource* pTexture,
+	float PosX, float PosY, float Width, float Height,
+	float U0, float V0, float U1, float V1,
+	const DirectX::XMFLOAT4& Color)
+{
+	const float screen_w = static_cast<float>(m_Dx12.GetBackBufferWidth());
+	const float screen_h = static_cast<float>(m_Dx12.GetBackBufferHeight());
+	if (screen_w <= 0.0f || screen_h <= 0.0f) { return; }
+
+	const auto to_ndc_x = [screen_w](float x) { return (x / screen_w) * 2.0f - 1.0f; };
+	const auto to_ndc_y = [screen_h](float y) { return 1.0f - (y / screen_h) * 2.0f; };
+
+	const float x0 = to_ndc_x(PosX);
+	const float y0 = to_ndc_y(PosY);
+	const float x1 = to_ndc_x(PosX + Width);
+	const float y1 = to_ndc_y(PosY + Height);
+
+	Sprite2DVertex verts[4] = {
+		{ { x0, y0 }, { U0, V0 }, Color },
+		{ { x1, y0 }, { U1, V0 }, Color },
+		{ { x1, y1 }, { U1, V1 }, Color },
+		{ { x0, y1 }, { U0, V1 }, Color },
 	};
 
 	DrawQuad(false, verts, sizeof(Sprite2DVertex), pTexture);

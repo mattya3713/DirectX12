@@ -71,11 +71,17 @@ public:
 	// 自身の形状種別.
 	virtual eShapeType GetShapeType() const noexcept = 0;
 
+	// Broad Phase用の外接球半径(ワールド座標・オフセット込みの保守的な値).
+	virtual float GetBoundRadius() const noexcept = 0;
+
 	// ワールド座標(オフセットを持ち主の回転(Yaw)で回転させてから加算したもの).
 	DirectX::XMFLOAT3 GetPosition() const noexcept;
 
-public: // Getter・Setter.
+protected:
+	// オフセットベクトルの長さ(BoundRadius計算用. Yaw回転で不変).
+	float GetOffsetLength() const noexcept;
 
+public: // Getter・Setter.
 	// オフセット座標の取得・設定.
 	const DirectX::XMFLOAT3& GetPositionOffset() const noexcept { return m_PositionOffset; }
 	void SetPositionOffset(const DirectX::XMFLOAT3& PositionOffset) noexcept { m_PositionOffset = PositionOffset; }

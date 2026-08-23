@@ -26,6 +26,11 @@ public:
 	DirectX::XMVECTOR GetLocalAxisX() const noexcept;
 	DirectX::XMVECTOR GetLocalAxisZ() const noexcept;
 
+	// 両軸をsin/cos1回でまとめて取得する(判定関数側のホットパス用).
+	void GetLocalAxes(DirectX::XMVECTOR& AxisX, DirectX::XMVECTOR& AxisZ) const noexcept;
+
+	float GetBoundRadius() const noexcept override;
+
 	CollisionInfo CheckCollision(const ColliderBase& Other) const override;
 
 protected:

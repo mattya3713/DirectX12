@@ -70,25 +70,29 @@ DirectX::XMMATRIX CameraBase::GetViewProjMatrix() const noexcept
 	return m_View * m_Proj;
 }
 
+// Forward/Rightを1回の行列生成で両方出す(呼び出し側が2回Getすると行列が2回作っていた).
+void CameraBase::GetBasis(DirectX::XMFLOAT3& Forward, DirectX::XMFLOAT3& Right) const noexcept
+{
+	using namespace DirectX;
+
+	const XMVECTOR v_rotation = XMLoadFloat3(&m_upTransform->Rotation);
+	const XMMATRIX rotation_matrix = XMMatrixRotationRollPitchYawFromVector(v_rotation);
+
+	XMStoreFloat3(&Forward, XMVector3Normalize(rotation_matrix.r[2]));
+	XMStoreFloat3(&Right,   XMVector3Normalize(rotation_matrix.r[0]));
+}
+
 DirectX::XMFLOAT3 CameraBase::GetForward() const noexcept
 {
-	DirectX::XMVECTOR v_rotation = DirectX::XMLoadFloat3(&m_upTransform->Rotation);
-	DirectX::XMMATRIX rotation_matrix = DirectX::XMMatrixRotationRollPitchYawFromVector(v_rotation);
-	DirectX::XMVECTOR v_forward = DirectX::XMVector3Normalize(rotation_matrix.r[2]);
-
-	DirectX::XMFLOAT3 forward = {};
-	DirectX::XMStoreFloat3(&forward, v_forward);
+	DirectX::XMFLOAT3 forward, right;
+	GetBasis(forward, right);
 	return forward;
 }
 
 DirectX::XMFLOAT3 CameraBase::GetRight() const noexcept
 {
-	DirectX::XMVECTOR v_rotation = DirectX::XMLoadFloat3(&m_upTransform->Rotation);
-	DirectX::XMMATRIX rotation_matrix = DirectX::XMMatrixRotationRollPitchYawFromVector(v_rotation);
-	DirectX::XMVECTOR v_right = DirectX::XMVector3Normalize(rotation_matrix.r[0]);
-
-	DirectX::XMFLOAT3 right = {};
-	DirectX::XMStoreFloat3(&right, v_right);
+	DirectX::XMFLOAT3 forward, right;
+	GetBasis(forward, right);
 	return right;
 }
 

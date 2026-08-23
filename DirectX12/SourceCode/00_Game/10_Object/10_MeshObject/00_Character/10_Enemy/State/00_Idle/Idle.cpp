@@ -11,7 +11,7 @@ Idle::Idle(Enemy* pOwner) noexcept
 
 void Idle::Update()
 {
-	if (DistanceToTargetXZ() <= GetEnemy()->GetAggroRange())
+	if (DistanceSqToTargetXZ() <= GetEnemy()->GetAggroRange() * GetEnemy()->GetAggroRange())
 	{
 		GetEnemy()->ChangeState(EnemyState::eID::Chase);
 	}

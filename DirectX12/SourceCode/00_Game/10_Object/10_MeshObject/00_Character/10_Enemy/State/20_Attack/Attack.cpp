@@ -39,7 +39,7 @@ void Attack::Update()
 
 	if (m_ElapsedTime >= ATTACK_TOTAL_TIME)
 	{
-		const bool target_in_range = DistanceToTargetXZ() <= GetEnemy()->GetLoseRange();
+		const bool target_in_range = DistanceSqToTargetXZ() <= GetEnemy()->GetLoseRange() * GetEnemy()->GetLoseRange();
 		GetEnemy()->ChangeState(target_in_range ? EnemyState::eID::Chase : EnemyState::eID::Idle);
 	}
 }

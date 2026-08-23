@@ -1,0 +1,5 @@
+{
+  "combat_tuning.title": "戦闘調整エディタ",
+  "combat_tuning.reset": "既定値へリセット",
+  "settings.demo_note": "設定はData/Json/Settings.jsonへ保存されます"
+}

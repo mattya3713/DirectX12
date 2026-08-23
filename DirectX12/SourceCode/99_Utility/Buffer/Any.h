@@ -179,7 +179,7 @@ public:
     }
 
     // ヌルポインタかどうかを判定するメソッド.
-    bool IsNull() const { return !ptr; } 
+    bool IsNull() const noexcept { return !ptr; }
 
 private:
     std::unique_ptr<Base> ptr; // 基底クラスのポインタを保持.

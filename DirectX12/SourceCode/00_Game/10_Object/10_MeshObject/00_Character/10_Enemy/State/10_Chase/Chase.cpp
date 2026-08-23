@@ -18,15 +18,15 @@ Chase::Chase(Enemy* pOwner) noexcept
 
 void Chase::Update()
 {
-	const float distance = DistanceToTargetXZ();
+	const float distance_sq = DistanceSqToTargetXZ();
 
-	if (distance > GetEnemy()->GetLoseRange())
+	if (distance_sq > GetEnemy()->GetLoseRange() * GetEnemy()->GetLoseRange())
 	{
 		GetEnemy()->ChangeState(EnemyState::eID::Idle);
 		return;
 	}
 
-	if (distance <= GetEnemy()->GetAttackRange())
+	if (distance_sq <= GetEnemy()->GetAttackRange() * GetEnemy()->GetAttackRange())
 	{
 		GetEnemy()->ChangeState(EnemyState::eID::Attack);
 		return;

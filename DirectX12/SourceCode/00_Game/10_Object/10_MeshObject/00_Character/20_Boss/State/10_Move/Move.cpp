@@ -24,15 +24,15 @@ void Move::Enter()
 
 void Move::Update()
 {
-	const float distance = DistanceToTargetXZ();
+	const float distance_sq = DistanceSqToTargetXZ();
 
-	if (distance > GetBoss()->GetLoseRange())
+	if (distance_sq > GetBoss()->GetLoseRange() * GetBoss()->GetLoseRange())
 	{
 		GetBoss()->ChangeState(BossState::eID::Idle);
 		return;
 	}
 
-	if (distance <= GetBoss()->GetAttackRange())
+	if (distance_sq <= GetBoss()->GetAttackRange() * GetBoss()->GetAttackRange())
 	{
 		// 攻撃範囲内に入ったら5パターンを重み付きで抽選する(近距離ほど近接攻撃が出やすい).
 		// 内訳(仮値): Attack40% / Attack2 25% / Spin20% / Jump10% / Beam5%.

@@ -63,7 +63,7 @@ bool VirtualPad::CheckActionState(eGameAction Action, KeyCheckFunc&& KeyCheck, B
 }
 
 // 押され続けているか.
-bool VirtualPad::IsActionPress(eGameAction Action) const
+bool VirtualPad::IsActionPress(eGameAction Action) const noexcept
 {
 	auto key_check = [](const int& code) {
 		return Input::IsKeyRepeat(code);
@@ -77,7 +77,7 @@ bool VirtualPad::IsActionPress(eGameAction Action) const
 }
 
 // 押された瞬間か.
-bool VirtualPad::IsActionDown(eGameAction Action, float InputBufferTime) const
+bool VirtualPad::IsActionDown(eGameAction Action, float InputBufferTime) const noexcept
 {
 	auto key_check = [](const int& code) {
 		// TODO(未実装): InputBufferTimeを使う場合ここに追加.
@@ -92,7 +92,7 @@ bool VirtualPad::IsActionDown(eGameAction Action, float InputBufferTime) const
 }
 
 // 離された瞬間か.
-bool VirtualPad::IsActionUp(eGameAction Action) const
+bool VirtualPad::IsActionUp(eGameAction Action) const noexcept
 {
 	auto key_check = [](const int& code) {
 		return Input::IsKeyUp(code);
@@ -106,7 +106,7 @@ bool VirtualPad::IsActionUp(eGameAction Action) const
 }
 
 // 軸アクションの合計値を取得.
-float VirtualPad::GetSingleAxisValue(eGameAction ComponentAction) const
+float VirtualPad::GetSingleAxisValue(eGameAction ComponentAction) const noexcept
 {
 	auto it = m_KeyMap.find(ComponentAction);
 	if (it == m_KeyMap.end() || it->second.Type != eActionType::Axis)
@@ -175,7 +175,7 @@ float VirtualPad::GetSingleAxisValue(eGameAction ComponentAction) const
 }
 
 // 複合軸取得.
-DirectX::XMFLOAT2 VirtualPad::GetAxisInput(eGameAxisAction AxisType) const
+DirectX::XMFLOAT2 VirtualPad::GetAxisInput(eGameAxisAction AxisType) const noexcept
 {
 	DirectX::XMFLOAT2 result = { 0.0f, 0.0f };
 

@@ -222,7 +222,8 @@ void PlaytestRecorder::DrawImGui()
 	ImGui::Separator();
 
 	// イベント履歴(直近100件. State遷移とHP変化を追える).
-	ImGui::BeginChild("events", ImVec2(0.0f, 200.0f), ImGuiWindowFlags_HorizontalScrollbar);
+	// NOTE: BeginChildの第3引数はImGuiChildFlags. WindowFlagsは第4引数へ(誤渡しするとアサート).
+	ImGui::BeginChild("events", ImVec2(0.0f, 200.0f), ImGuiChildFlags_Border, ImGuiWindowFlags_HorizontalScrollbar);
 	for (auto it = m_Events.rbegin(); it != m_Events.rend(); ++it)
 	{
 		ImGui::TextUnformatted(it->c_str());

@@ -104,7 +104,10 @@ HRESULT Main::Create()
 
 	// DirectX12の構築.
     m_pDx12 = std::make_shared<DirectX12>();
-    m_pDx12->Create(m_hWnd);
+    if (!m_pDx12->Create(m_hWnd)) {
+        _ASSERT_EXPR(false, _T("DirectX12の初期化に失敗しました"));
+        return E_FAIL;
+    }
     ServiceLocator::Provide<DirectX12>(m_pDx12.get());
 
 #if _DEBUG

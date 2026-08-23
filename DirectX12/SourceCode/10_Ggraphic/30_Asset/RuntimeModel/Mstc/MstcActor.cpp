@@ -66,64 +66,40 @@ void MstcActor::CreateResources()
 	}
 
 	ID3D12Device* const p_device = m_Dx12.GetDevice().Get();
-	auto command_list = m_Dx12.GetCommandList();
 
 	const UINT vertex_buffer_size = static_cast<UINT>(mstc.Vertices.size() * sizeof(RuntimeFormat::StaticVertex));
 	const UINT index_buffer_size  = static_cast<UINT>(mstc.Indices.size() * sizeof(std::uint16_t));
 
-	const auto upload_heap_prop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	const auto upload_heap_prop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD); // Transform/Material CB(永続マップ用)が使う.
 	const auto default_heap_prop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
-	// ===== 頂点バッファ(アップロード→既定ヒープへコピー) =====
+	// ===== 頂点バッファ(既定ヒープを作成し、UploadBufferSync()で同期アップロード) =====
+	// UploadBufferSync()はGPUの完了をフェンス待機してから戻るため、アップロード用の中間バッファを
+	// GPUがまだ読んでいる最中に破棄してしまう競合が起きない(過去にここで実際に起きていたバグの修正).
+	// StateAfterへの遷移バリアも内部で行うため、VB/IBがCOPY_DESTのまま使われることも無い.
 	{
 		const auto buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(vertex_buffer_size);
-
 		MyAssert::IsFailed(_T("MstcActor: 頂点バッファの作成"),
 			&ID3D12Device::CreateCommittedResource, p_device,
 			&default_heap_prop, D3D12_HEAP_FLAG_NONE, &buffer_desc,
 			D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
 			IID_PPV_ARGS(m_pVertexBuffer.ReleaseAndGetAddressOf()));
 
-		MyComPtr<ID3D12Resource> upload_buffer;
-		MyAssert::IsFailed(_T("MstcActor: 頂点アップロードバッファの作成"),
-			&ID3D12Device::CreateCommittedResource, p_device,
-			&upload_heap_prop, D3D12_HEAP_FLAG_NONE, &buffer_desc,
-			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-			IID_PPV_ARGS(upload_buffer.ReleaseAndGetAddressOf()));
-
-		void* p_mapped_vertex = nullptr;
-		MyAssert::IsFailed(_T("MstcActor: 頂点アップロードバッファをマップ"),
-			&ID3D12Resource::Map, upload_buffer.Get(), 0, nullptr, &p_mapped_vertex);
-		std::memcpy(p_mapped_vertex, mstc.Vertices.data(), vertex_buffer_size);
-		upload_buffer->Unmap(0, nullptr);
-
-		command_list->CopyBufferRegion(m_pVertexBuffer.Get(), 0, upload_buffer.Get(), 0, vertex_buffer_size);
+		m_Dx12.UploadBufferSync(m_pVertexBuffer.Get(), mstc.Vertices.data(), vertex_buffer_size,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	}
 
-	// ===== インデックスバッファ(アップロード→既定ヒープへコピー) =====
+	// ===== インデックスバッファ(既定ヒープを作成し、UploadBufferSync()で同期アップロード) =====
 	{
 		const auto buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(index_buffer_size);
-
 		MyAssert::IsFailed(_T("MstcActor: インデックスバッファの作成"),
 			&ID3D12Device::CreateCommittedResource, p_device,
 			&default_heap_prop, D3D12_HEAP_FLAG_NONE, &buffer_desc,
 			D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
 			IID_PPV_ARGS(m_pIndexBuffer.ReleaseAndGetAddressOf()));
 
-		MyComPtr<ID3D12Resource> upload_buffer;
-		MyAssert::IsFailed(_T("MstcActor: インデックスアップロードバッファの作成"),
-			&ID3D12Device::CreateCommittedResource, p_device,
-			&upload_heap_prop, D3D12_HEAP_FLAG_NONE, &buffer_desc,
-			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-			IID_PPV_ARGS(upload_buffer.ReleaseAndGetAddressOf()));
-
-		void* p_mapped_index = nullptr;
-		MyAssert::IsFailed(_T("MstcActor: インデックスアップロードバッファをマップ"),
-			&ID3D12Resource::Map, upload_buffer.Get(), 0, nullptr, &p_mapped_index);
-		std::memcpy(p_mapped_index, mstc.Indices.data(), index_buffer_size);
-		upload_buffer->Unmap(0, nullptr);
-
-		command_list->CopyBufferRegion(m_pIndexBuffer.Get(), 0, upload_buffer.Get(), 0, index_buffer_size);
+		m_Dx12.UploadBufferSync(m_pIndexBuffer.Get(), mstc.Indices.data(), index_buffer_size,
+			D3D12_RESOURCE_STATE_INDEX_BUFFER);
 	}
 
 	m_IndexCount = static_cast<std::uint32_t>(mstc.Indices.size());

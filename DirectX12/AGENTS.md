@@ -58,9 +58,14 @@ completion report so Claude can fix the docs if it's actually a docs error.
   rely on it — fix it yourself as part of the work).
 - **No `using` declarations anywhere** — this includes `using namespace` and plain
   type-alias `using Foo = Bar;`. Use full type names instead.
-- Comments are Japanese, one line per member/function (not long blocks), following
-  the templates in `README.md` §1. Don't pad comments with restated-the-code content;
-  state the non-obvious "why" only.
+- Comments must look like what a human developer would naturally leave behind,
+  matching the tone and density of surrounding code. Forbidden: textbook/report-style
+  explanations, over-polite phrasing, Japanese restatement of what the code does,
+  long justifications or implementation history (git covers that). Keep only short,
+  natural warnings needed for accident prevention or maintenance
+  (e.g. "GPUが参照中のため、アップロード完了まで解放しない。").
+  No line-count limit — judge by "would a human dev really leave this for their
+  future self?".
 - Match this repo's existing per-owner-type state machine shape
   (`*StateID.h` enum + `*StateBase : public StateBase<T>` + numbered `State/`
   subfolders per concrete state) when adding new states — don't invent a different

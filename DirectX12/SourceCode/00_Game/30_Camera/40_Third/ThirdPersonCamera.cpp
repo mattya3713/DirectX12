@@ -4,13 +4,14 @@
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/50_Input/Input.h"
 #include "99_Utility/DirectXMath/DirectXMathExpansion.h"
+#include "99_Utility/Settings/Settings.h"
 
 namespace {
 	constexpr float DEFAULT_DISTANCE    = 15.0f;
 	constexpr float DEFAULT_ORBIT_SPEED = 2.0f;
 	constexpr float PITCH_LIMIT_MIN     = -DirectX::XM_PIDIV2 * 0.05f;
 	constexpr float PITCH_LIMIT_MAX     =  DirectX::XM_PIDIV2 * 0.6f;
-	// マウス1ピクセルあたりの回転量(ラジアン). DebugCameraと共通の係数.
+	// マウス1ピクセルあたりの回転量(ラジアン)の既定値. Settings.jsonで永続化可能.
 	constexpr float MOUSE_ROTATION_SPEED = 0.0035f;
 }
 
@@ -21,6 +22,9 @@ ThirdPersonCamera::ThirdPersonCamera()
 	, m_Distance		{ DEFAULT_DISTANCE }
 	, m_OrbitSpeed		{ DEFAULT_ORBIT_SPEED }
 {
+	// マウス回転係数はSettings.jsonから復元(未設定なら既定値).
+	m_MouseRotationSpeed = SettingsManager::Instance().Get<float>(
+		"camera.mouse_rotation_speed", MOUSE_ROTATION_SPEED);
 }
 
 ThirdPersonCamera::~ThirdPersonCamera()
@@ -71,9 +75,9 @@ void ThirdPersonCamera::Update()
 	float pitch = GetPitch();
 
 	// マウス移動量でターゲットを軸に周回する.
-	// 左Alt押下中はカーソル固定を解除してUI操作できるようにする(回転も停止).
+	// 左Alt押下中・ポーズ中はカーソル固定を解除してUI操作できるようにする(回転も停止).
 	const bool is_alt_held = (GetAsyncKeyState(VK_LMENU) & 0x8000) != 0;
-	if (is_alt_held) {
+	if (is_alt_held || GameTime::IsPaused()) {
 		if (Input::IsCenterMouseCursor()) {
 			Input::SetCenterMouseCursor(false);
 			Input::SetShowCursor(true);
@@ -85,10 +89,10 @@ void ThirdPersonCamera::Update()
 		Input::CenterMouseCursor();
 	}
 
-	if (is_alt_held == false) {
+	if (is_alt_held == false && GameTime::IsPaused() == false) {
 		const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
-		yaw   += cursor_delta.x * MOUSE_ROTATION_SPEED;
-		pitch += cursor_delta.y * MOUSE_ROTATION_SPEED;
+		yaw   += cursor_delta.x * m_MouseRotationSpeed;
+		pitch += cursor_delta.y * m_MouseRotationSpeed;
 		Input::CenterMouseCursor();
 	}
 

@@ -8,6 +8,7 @@
 
 #include <type_traits>
 #include <cstdio>
+#include <unordered_map>
 
 // imgui_impl_win32.hはWindows.hへの依存を避けるため、WndProcHandlerの宣言を#if 0で無効化している.
 // 実体はimgui_impl_win32.cppにあるため、ここで手動宣言してから呼び出す(公式ヘッダーのコメントに従った書き方).
@@ -34,6 +35,16 @@ namespace
 
 		utf8_text.resize(static_cast<size_t>(utf8_len) - 1); // 末尾のヌル文字分を除く.
 		return utf8_text;
+	}
+
+	// ラベルは毎フレーム同じリテラルが渡されるため、変換結果をキャッシュして
+	// Win32変換APIとアロケーションを初回1回だけに抑える(シングルスレッド専用).
+	const std::string& ToUtf8Cached(const char* AnsiText)
+	{
+		static std::unordered_map<std::string, std::string> cache;
+		const auto it = cache.find(AnsiText);
+		if (it != cache.end()) { return it->second; }
+		return cache.emplace(AnsiText, ToUtf8(AnsiText)).first->second;
 	}
 }
 
@@ -156,7 +167,7 @@ LRESULT ImGuiManager::WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 // テキスト表示.
 void ImGuiManager::Text(const char* InText)
 {
-	const std::string utf8_text = ToUtf8(InText);
+	const std::string& utf8_text = ToUtf8Cached(InText);
 	ImGui::Text("%s", utf8_text.c_str());
 }
 
@@ -164,7 +175,7 @@ void ImGuiManager::Text(const char* InText)
 template<typename T>
 void ImGuiManager::Slider(const char* Label, T& Value, T ValueMin, T ValueMax, bool IsLabel)
 {
-	const std::string utf8_label = ToUtf8(Label);
+	const std::string& utf8_label = ToUtf8Cached(Label);
 
 	if (IsLabel)
 	{
@@ -214,7 +225,7 @@ void ImGuiManager::Tweak(const char* Label, T& Value, T ValueMin, T ValueMax, bo
 
 	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip("%s", ToUtf8("現在の値をC++リテラルとしてコピー").c_str());
+		ImGui::SetTooltip("%s", ToUtf8Cached("現在の値をC++リテラルとしてコピー").c_str());
 	}
 }
 template void ImGuiManager::Tweak<int>(const char*, int&, int, int, bool);
@@ -224,7 +235,7 @@ template void ImGuiManager::Tweak<float>(const char*, float&, float, float, bool
 template<typename T>
 bool ImGuiManager::Input(const char* Label, T& Value, bool IsLabel, float Step, float StepFast, const char* Format)
 {
-	const std::string utf8_label = ToUtf8(Label);
+	const std::string& utf8_label = ToUtf8Cached(Label);
 
 	if (IsLabel)
 	{
@@ -266,7 +277,7 @@ template bool ImGuiManager::Input<std::string>(const char*, std::string&, bool, 
 // チェックボックス表示.
 bool ImGuiManager::CheckBox(const char* Label, bool& Flag, bool IsLabel)
 {
-	const std::string utf8_label = ToUtf8(Label);
+	const std::string& utf8_label = ToUtf8Cached(Label);
 
 	if (IsLabel)
 	{
@@ -295,11 +306,11 @@ std::string ImGuiManager::Combo(const char* Label, std::string& NowItem, const s
 
 	if (IsLabel)
 	{
-		ImGui::Text("%s", ToUtf8(Label).c_str());
+		ImGui::Text("%s", ToUtf8Cached(Label).c_str());
 		ImGui::SameLine(Space);
 	}
 
-	const std::string new_label = "##" + ToUtf8(Label);
+	const std::string new_label = "##" + ToUtf8Cached(Label);
 	if (ImGui::BeginCombo(new_label.c_str(), NowItem.c_str()))
 	{
 		for (int i = 0; i < list_size; ++i)

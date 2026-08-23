@@ -62,7 +62,7 @@ namespace BossState {
 		const float total_time = landing_time + active_after + recovery;
 		if (m_ElapsedTime >= total_time)
 		{
-			const bool target_in_range = DistanceToTargetXZ() <= GetBoss()->GetLoseRange();
+			const bool target_in_range = DistanceSqToTargetXZ() <= GetBoss()->GetLoseRange() * GetBoss()->GetLoseRange();
 			GetBoss()->ChangeState(target_in_range ? BossState::eID::Move : BossState::eID::Idle);
 		}
 	}

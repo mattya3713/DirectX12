@@ -104,16 +104,16 @@ public:
 
 public:
 	// 指定アクションが押され続けているかを返す.
-	bool IsActionPress(eGameAction Action) const;
+	bool IsActionPress(eGameAction Action) const noexcept;
 
 	// 指定アクションが押された瞬間かを返す(入力バッファ対応).
-	bool IsActionDown(eGameAction Action, float InputBufferTime = 0.0f) const;
+	bool IsActionDown(eGameAction Action, float InputBufferTime = 0.0f) const noexcept;
 
 	// 指定アクションが離された瞬間かを返す.
-	bool IsActionUp(eGameAction Action) const;
+	bool IsActionUp(eGameAction Action) const noexcept;
 
 	// 軸入力の取得.
-	DirectX::XMFLOAT2 GetAxisInput(eGameAxisAction AxisType) const;
+	DirectX::XMFLOAT2 GetAxisInput(eGameAxisAction AxisType) const noexcept;
 
 	// デフォルトの入力バインディングをセットアップする.
 	void SetupDefaultBindings();
@@ -124,7 +124,7 @@ private:
 	bool CheckActionState(eGameAction Action, KeyCheckFunc&& KeyCheck, ButtonCheckFunc&& ButtonCheck) const;
 
 	// 単一コンポーネント(例: Move_Axis_X等)の軸値を取得する.
-	float GetSingleAxisValue(eGameAction ComponentAction) const;
+	float GetSingleAxisValue(eGameAction ComponentAction) const noexcept;
 
 private:
 	// TODO(未実装): コヨーテタイム等の入力補正.

@@ -66,8 +66,8 @@ private:
 	// 条件ノード: 追跡を継続/開始できるか(追跡中はロスト範囲、未追跡なら索敵範囲で判定).
 	NodeStatus CondCanChase();
 
-	// ターゲットまでのXZ平面距離.
-	float DistanceToTargetXZ() const noexcept;
+	// ターゲットまでのXZ距離の2乗.
+	float DistanceSqToTargetXZ() const noexcept;
 
 	// ターゲットへの角度(度). 0度=+Z前方.
 	float AngleToTargetDeg() const noexcept;

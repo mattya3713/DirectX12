@@ -3,19 +3,15 @@
 #include <cassert>
 #include <concepts>
 #include <functional>
+#include <limits>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 /**********************************************************************************
 * @author    : Coder 玄武(閃斬 Production Loop).
 * @date      : 2026/08/23.
-* @brief     : 汎用オブジェクトプーリング(ジャンル非依存).
-*            : 弾幕・パーティクル・大量スポーン等を毎回new/deleteせず再利用する.
-*            : Tは再初期化メソッドReset()を持つことを推奨(持つ場合のみ自動呼び出し.
-*            : 持たない型でも使用可能だが、Acquire時に前回の状態が残るため注意).
-*            : シングルスレッド専用(スレッドセーフは保証しない).
-*            : 所有権はプールがunique_ptrで持ち、利用者には生ポインタまたは
-*            : プール返却デリータ付きshared_ptr(AcquireShared())を渡す.
+* @brief     : シングルスレッド用の汎用オブジェクトプール.
 **********************************************************************************/
 
 template<typename T>
@@ -28,14 +24,12 @@ public:
 	ObjectPool() = default;
 	~ObjectPool() = default;
 
-	// スマートポインタの使い分け規約に合わせコピー/ムーブ禁止.
 	ObjectPool(const ObjectPool&)            = delete;
 	ObjectPool& operator=(const ObjectPool&) = delete;
 	ObjectPool(ObjectPool&&)                 = delete;
 	ObjectPool& operator=(ObjectPool&&)      = delete;
 
-	// 空きが無ければ新規生成し、あれば再利用して返す(Reset()が定義されていれば呼ぶ).
-	// Argsは新規生成時のコンストラクタ引数(再利用時には渡されない. 再初期化はReset()の責務).
+	// 再利用時の初期化はReset()へ任せる.
 	template<typename... Args>
 	T* Acquire(Args&&... Args_)
 	{
@@ -45,6 +39,8 @@ public:
 		{
 			m_Owned.push_back(std::make_unique<T>(std::forward<Args>(Args_)...));
 			p_object = m_Owned.back().get();
+			m_OwnedIndices.emplace(p_object, m_Owned.size() - 1);
+			m_ActivePositions.push_back(INACTIVE_POSITION);
 			++m_CreatedCount;
 		}
 		else
@@ -58,25 +54,37 @@ public:
 			p_object->Reset();
 		}
 
+		const std::size_t owned_index = m_OwnedIndices.at(p_object);
+		m_ActivePositions[owned_index] = m_Active.size();
 		m_Active.push_back(p_object);
 		return p_object;
 	}
 
-	// プールへ返却する(二重返却はアサート).
+	// プールへ返却する.
 	void Release(T* pObject)
 	{
 		if (!pObject) { return; }
 
-		const auto it = std::find(m_Active.begin(), m_Active.end(), pObject);
-		if (it == m_Active.end())
+		const auto owned_it = m_OwnedIndices.find(pObject);
+		if (owned_it == m_OwnedIndices.end())
 		{
-			assert(false && "ObjectPool: 所有していないポインタがReleaseされました(二重返却/他プールからの返却)");
+			assert(false && "ObjectPool: 所有していないポインタがReleaseされました");
 			return;
 		}
 
-		// 順序維持不要のためswap&popでO(1)削除.
-		*it = m_Active.back();
+		const std::size_t owned_index = owned_it->second;
+		const std::size_t active_position = m_ActivePositions[owned_index];
+		if (active_position == INACTIVE_POSITION)
+		{
+			assert(false && "ObjectPool: 同じポインタが二重にReleaseされました");
+			return;
+		}
+
+		T* p_moved = m_Active.back();
+		m_Active[active_position] = p_moved;
 		m_Active.pop_back();
+		m_ActivePositions[m_OwnedIndices.at(p_moved)] = active_position;
+		m_ActivePositions[owned_index] = INACTIVE_POSITION;
 		m_Free.push_back(pObject);
 	}
 
@@ -117,8 +125,12 @@ public:
 	void ClearStats() noexcept { m_CreatedCount = 0; }
 
 private:
+	static constexpr std::size_t INACTIVE_POSITION = (std::numeric_limits<std::size_t>::max)();
+
 	std::vector<std::unique_ptr<T>> m_Owned;  // 全オブジェクトの所有(破棄はここで一括).
 	std::vector<T*>                 m_Active; // 使用中.
 	std::vector<T*>                 m_Free;   // 再利用待ち.
+	std::unordered_map<T*, std::size_t> m_OwnedIndices; // ポインタから固定スロットを引く.
+	std::vector<std::size_t> m_ActivePositions; // 固定スロットごとのActive内位置.
 	size_t                          m_CreatedCount = 0; // 累積新規生成数.
 };

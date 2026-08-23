@@ -67,7 +67,7 @@ public:
     }
 
     // 内部ポインタの取得.
-    T* Get() const { return m_ptr; }
+    T* Get() const noexcept { return m_ptr; }
 
     // ポインタのデリファレンス.
     T& operator*() const { return *m_ptr; }

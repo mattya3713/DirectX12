@@ -43,7 +43,7 @@ void ParryReaction::Update()
 
 	if (m_ElapsedTime >= m_Duration)
 	{
-		const bool target_in_range = DistanceToTargetXZ() <= GetBoss()->GetLoseRange();
+		const bool target_in_range = DistanceSqToTargetXZ() <= GetBoss()->GetLoseRange() * GetBoss()->GetLoseRange();
 		GetBoss()->ChangeState(target_in_range ? BossState::eID::Move : BossState::eID::Idle);
 	}
 }
