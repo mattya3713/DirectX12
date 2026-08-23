@@ -48,6 +48,11 @@ public:
 
 	RagdollComponent& GetRagdoll() noexcept { return m_Ragdoll; }
 	const RagdollComponent& GetRagdoll() const noexcept { return m_Ragdoll; }
+
+#if _DEBUG
+	// ラグドール中のボディとJointをワイヤー表示する.
+	void DrawDebugColliders() const override;
+#endif
 private:
 	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration);
 

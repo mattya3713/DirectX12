@@ -41,7 +41,7 @@ public:
 	// 被弾/攻撃判定コライダーをワイヤーフレームで描画する(Debugビルドのみ).
 	// 描画中にRoot Signature/PSOを切り替えるため、全キャラのDraw()が終わった後に
 	// MainScene側でまとめて呼ぶこと(メッシュ描画と混ぜるとPSO競合でクラッシュする).
-	void DrawDebugColliders() const;
+	virtual void DrawDebugColliders() const;
 #endif
 
 public:
