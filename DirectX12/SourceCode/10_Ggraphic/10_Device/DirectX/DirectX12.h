@@ -185,6 +185,30 @@ public:
 	UINT GetBackBufferWidth() const noexcept { return m_SwapChainDesc.Width; }
 	UINT GetBackBufferHeight() const noexcept { return m_SwapChainDesc.Height; }
 
+	// オフスクリーンのシーンカラーバッファを返す(ポストプロセス等の特殊パス用. 無ければnullptr).
+	ID3D12Resource* GetSceneColorBuffer() const noexcept { return m_pSceneColorBuffer.Get(); }
+
+	// 現在のシーン描画先(オフスクリーン有効時はシーンカラーバッファ. 無効時はバックバッファ)を返す.
+	// (巻き戻りキャプチャ等、「今フレームの描画結果」を扱う特殊パス用).
+	ID3D12Resource* GetCurrentSceneTarget() const noexcept
+	{
+		return (m_bUseOffscreenScene && m_pSceneColorBuffer)
+			? m_pSceneColorBuffer.Get()
+			: ((m_FrameIndex < m_pBackBuffer.size()) ? m_pBackBuffer[m_FrameIndex].Get() : nullptr);
+	}
+
+	// 指定バックバッファのRTVハンドルを返す(ポストプロセスの最終合成先として使用).
+	D3D12_CPU_DESCRIPTOR_HANDLE GetBackBufferRtvHandle(UINT Index) const noexcept
+	{
+		auto handle = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
+		handle.ptr += Index * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		return handle;
+	}
+
+	// メインパス(バックバッファ)のビューポート・シザーを返す.
+	const D3D12_VIEWPORT* GetMainViewport() const noexcept { return m_pViewport.get(); }
+	const D3D12_RECT* GetMainScissorRect() const noexcept { return m_pScissorRect.get(); }
+
 	// GPUの完了待ち(全キューをflushする. 終了処理など、確実に同期したい箇所専用).
 	void WaitForGPU();
 

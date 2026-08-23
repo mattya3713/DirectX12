@@ -404,6 +404,7 @@ exit /b 0</Command>
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Light\DirectionLight.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\PostProcess\PostProcessPipeline.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Serialization\SaveLoadManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\RuntimeModel\MMdl\MMdlActor.cpp" />

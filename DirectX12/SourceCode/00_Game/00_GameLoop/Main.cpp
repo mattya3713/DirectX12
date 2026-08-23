@@ -14,6 +14,7 @@
 #include "99_Utility/Debug/Imgui/DebugHud.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
 #include "99_Utility/Debug/Imgui/DebugConsole.h"
+#include "10_Ggraphic/20_Render/PostProcess/PostProcessPipeline.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Sound/SoundManager.h"
 #include "99_Utility/Profiling/Profiler.h"
@@ -125,6 +126,12 @@ HRESULT Main::Create()
 	// (Scene ViewパネルがImGui::Image()で表示する. ImGuiManager初期化済みである必要がある).
 	m_pDx12->CreateSceneColorTarget(*m_upImGuiManager);
 
+	// ポストプロセス(Bloom)パイプラインを初期化する.
+	m_upPostProcess = std::make_unique<PostProcessPipeline>();
+	if (!m_upPostProcess->Create(*m_pDx12)) {
+		m_upPostProcess.reset();
+	}
+
 	// ログ管理を構築し、DebugConsoleから参照できるよう登録する.
 	m_upDebugLog = std::make_unique<DebugLog>();
 	ServiceLocator::Provide<DebugLog>(m_upDebugLog.get());
@@ -206,7 +213,9 @@ void Main::Draw()
 #endif
 
     // 全体の描画準備.
-    m_pDx12->BeginDraw(is_editor_scene);
+    // ポストプロセス有効時はシーンをオフスクリーンへ描画し、後段のApply()でバックバッファへ合成する.
+    const bool use_post_process = (m_upPostProcess != nullptr);
+    m_pDx12->BeginDraw(is_editor_scene || use_post_process);
 
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
     DebugHud::Draw();
@@ -221,7 +230,14 @@ void Main::Draw()
         Profiler::Instance().GpuEnd("GPU:Scene");
     }
 
-	if (is_editor_scene) {
+	if (use_post_process && !is_editor_scene) {
+		// ポストプロセス(Bloom): シーンカラーを後処理してバックバッファへ出力する
+		// (内部でシーンカラー→SRV遷移・バックバッファ→RT設定まで行う. 続くImGuiはその上へ).
+		Profiler::Instance().GpuBegin("GPU:PostProcess");
+		m_upPostProcess->Apply();
+		Profiler::Instance().GpuEnd("GPU:PostProcess");
+	}
+	else if (is_editor_scene) {
 		// 3DシーンをオフスクリーンからPIXEL_SHADER_RESOURCEへ、実際のバックバッファをImGui用のRENDER_TARGETへ.
 		m_pDx12->PrepareUIRenderTarget();
 	}
