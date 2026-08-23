@@ -302,6 +302,15 @@ void MmdlActor::PlayAnimation(const std::string& ClipName)
 	{
 		if (m_Skeleton.Clips[i].Name == ClipName)
 		{
+			// クロスフェード: 切替直前の各ボーンのローカル変換をブレンド源として保持する
+			// (前フレームの計算結果を使うため、呼び出し側APIは一切変更不要).
+			if (m_LastLocalTransforms.size() == m_Skeleton.Bones.size())
+			{
+				m_BlendSourceLocals = m_LastLocalTransforms;
+				m_IsBlending   = true;
+				m_BlendElapsed = 0.0f;
+			}
+
 			m_CurrentClipIndex = static_cast<int>(i);
 			m_CurrentTime = 0.0f;
 			m_IsExternallyDriven = false;
@@ -322,6 +331,13 @@ void MmdlActor::Update()
 			m_CurrentTime += GameTime::GetDeltaTime() * static_cast<float>(m_Skeleton.TicksPerSecond) * m_PlaybackSpeed;
 			if (max_time > 0.0f) { m_CurrentTime = std::fmod(m_CurrentTime, max_time); } // ループ再生.
 		}
+	}
+
+	// クロスフェード進行(完了したら通常再生へ戻る).
+	if (m_IsBlending)
+	{
+		m_BlendElapsed += GameTime::GetDeltaTime();
+		if (m_BlendElapsed >= kBlendDuration) { m_IsBlending = false; }
 	}
 
 	UpdateBoneMatrices();
@@ -352,6 +368,11 @@ void MmdlActor::UpdateBoneMatrices()
 	// ボーンは親が必ず自分より前のIndexになるように構築されている(Frame階層を親から子へ
 	// 辿りながらpush_backしているため)ので、前から1回なめるだけでワールド変換を計算できる.
 	std::vector<DirectX::XMMATRIX> world_transforms(m_Skeleton.Bones.size());
+
+	// クロスフェード用の補間率(ブレンド中は旧ポーズ→新ポーズへ線形に近づく).
+	const bool is_blending = m_IsBlending && m_BlendSourceLocals.size() == m_Skeleton.Bones.size();
+	const float blend_alpha = is_blending ? std::min(m_BlendElapsed / kBlendDuration, 1.0f) : 1.0f;
+
 	for (size_t i = 0; i < m_Skeleton.Bones.size(); ++i)
 	{
 		const XSkeleton::Bone& bone = m_Skeleton.Bones[i];
@@ -368,6 +389,27 @@ void MmdlActor::UpdateBoneMatrices()
 		{
 			local = DirectX::XMLoadFloat4x4(&bone.LocalBindMatrix); // アニメーションキーが無いボーンはバインドポーズのまま.
 		}
+
+		// クロスフェード: 切替直前の姿勢→新クリップの姿勢へボーンごとに補間する
+		// (位置/スケールはLerp、回転はSlerp. 親の補間結果を子が継承するため階層全体が滑らかに動く).
+		if (is_blending && blend_alpha < 1.0f)
+		{
+			DirectX::XMVECTOR src_scale{}, src_rot{}, src_trans{};
+			DirectX::XMVECTOR dst_scale{}, dst_rot{}, dst_trans{};
+			DirectX::XMMatrixDecompose(&src_scale, &src_rot, &src_trans, m_BlendSourceLocals[i]);
+			DirectX::XMMatrixDecompose(&dst_scale, &dst_rot, &dst_trans, local);
+
+			const DirectX::XMVECTOR blended_scale = DirectX::XMVectorLerp(src_scale, dst_scale, blend_alpha);
+			const DirectX::XMVECTOR blended_trans = DirectX::XMVectorLerp(src_trans, dst_trans, blend_alpha);
+			const DirectX::XMVECTOR blended_rot = DirectX::XMQuaternionSlerp(
+				DirectX::XMQuaternionNormalize(src_rot), DirectX::XMQuaternionNormalize(dst_rot), blend_alpha);
+
+			local = DirectX::XMMatrixAffineTransformation(blended_scale, DirectX::XMVectorZero(), blended_rot, blended_trans);
+		}
+
+		// 次回のPlayAnimation切替時にブレンド源となるよう現フレームの姿勢を保持する.
+		if (m_LastLocalTransforms.size() != m_Skeleton.Bones.size()) { m_LastLocalTransforms.resize(m_Skeleton.Bones.size()); }
+		m_LastLocalTransforms[i] = local;
 
 		world_transforms[i] = (bone.ParentIndex >= 0 && static_cast<size_t>(bone.ParentIndex) < i)
 			? DirectX::XMMatrixMultiply(local, world_transforms[bone.ParentIndex])

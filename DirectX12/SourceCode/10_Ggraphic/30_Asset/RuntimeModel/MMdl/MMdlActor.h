@@ -127,6 +127,13 @@ private:
 	bool  m_IsExternallyDriven = false; // 外部指定フレームで再生を停止中.
 	float m_PlaybackSpeed    = 1.0f; // 再生速度倍率(コンボフロー用. 1.0=等速).
 
+	// クロスフェード用(PlayAnimation切替時に前ポーズへ線形補間で滑らかにつなぐ).
+	static constexpr float kBlendDuration = 0.2f;                       // ブレンド時間(秒).
+	std::vector<DirectX::XMMATRIX> m_BlendSourceLocals;                 // ブレンド開始時の各ボーンのローカル変換.
+	std::vector<DirectX::XMMATRIX> m_LastLocalTransforms;               // 前フレームの各ボーンのローカル変換(スナップショット取得用).
+	bool  m_IsBlending   = false;                                       // ブレンド中か.
+	float m_BlendElapsed = 0.0f;                                        // ブレンド経過時間(秒).
+
 public:
 	// アニメーション再生速度の倍率を設定する(0以下は1.0へ丸める).
 	void SetPlaybackSpeed(float Speed) noexcept { m_PlaybackSpeed = (Speed > 0.0f) ? Speed : 1.0f; }
