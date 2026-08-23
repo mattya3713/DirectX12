@@ -73,6 +73,10 @@ public: // Getter・Setter.
 	void AddUltValue(float Amount, PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = std::clamp(m_CurrentUltValue + Amount, 0.0f, m_MaxUltValue); }
 	void ResetUltValue(PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = 0.0f; }
 
+	// 【撃破シーケンス】Boss瀕死時の必殺ゲージ自動チャージ(MainSceneから呼ぶ. 最大値に対する割合で加算).
+	// Passkeyを要求しない公開窓口(ゲーム進行システムからの加算専用. 通常の加算はComboEconomyKey経由).
+	void ChargeUltByRatio(float MaxRatio) noexcept { m_CurrentUltValue = std::clamp(m_CurrentUltValue + m_MaxUltValue * MaxRatio, 0.0f, m_MaxUltValue); }
+
 	// リアクション目標が設定されているか(PlayerState::Parryが毎フレーム確認する).
 	bool HasParryReactionTarget() const noexcept { return m_HasParryReactionTarget; }
 	const DirectX::XMFLOAT3& GetParryReactionTargetPos() const noexcept { return m_ParryReactionTargetPos; }

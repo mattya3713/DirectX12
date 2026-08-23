@@ -21,6 +21,9 @@
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "99_Utility/Event/EventBus.h"
+#include "99_Utility/DebugBridge/DebugBridgeServer.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/00_Scene/SceneManager.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -160,6 +163,33 @@ HRESULT Main::Create()
     m_upEventBus = std::make_unique<EventBus>();
     ServiceLocator::Provide<EventBus>(m_upEventBus.get());
 
+#if _DEBUG
+    // DebugBridgeサーバーを起動(外部EditorとのNamed Pipe通信. _DEBUG限定).
+    m_upDebugBridgeServer = std::make_unique<DebugBridgeServer>();
+    m_upDebugBridgeServer->SetRuntimeInfoResolver([]() -> nlohmann::json {
+        nlohmann::json info{};
+        if (Player* p_player = ServiceLocator::Get<Player>()) {
+            info["player"] = {
+                { "hp", p_player->GetHealth().GetHP() },
+                { "maxHp", p_player->GetHealth().GetMaxHP() },
+                { "stateId", static_cast<int>(p_player->GetCurrentStateID()) }, // State名はCombatDebugHudの対応表参照.
+                { "combo", p_player->GetCombo() },
+            };
+        }
+        if (Boss* p_boss = ServiceLocator::Get<Boss>()) {
+            info["boss"] = {
+                { "hp", p_boss->GetHealth().GetHP() },
+                { "maxHp", p_boss->GetHealth().GetMaxHP() },
+                { "stateId", static_cast<int>(p_boss->GetCurrentStateID()) },
+            };
+        }
+        info["timeScale"] = GameTime::GetTimeScale();
+        info["paused"] = GameTime::IsPaused();
+        return info;
+    });
+    m_upDebugBridgeServer->Start(L"\\\\.\\pipe\\senzan.debugbridge.control.v1");
+#endif
+
     // シーンマネージャーを構築し、最初のシーン(MainScene)を読み込む.
     m_upSceneManager = std::make_unique<SceneManager>();
     ServiceLocator::Provide<SceneManager>(m_upSceneManager.get());
@@ -179,6 +209,11 @@ HRESULT Main::LoadData()
 void Main::Update()
 {
     Profiler::ScopedTimer cpu_timer("CPU:Update");
+
+#if _DEBUG
+    // DebugBridge: 受信済み要求を実行し応答を積む(メインスレッド上でのみゲーム状態へ触れる).
+    if (m_upDebugBridgeServer) { m_upDebugBridgeServer->Pump(); }
+#endif
 
 #if _DEBUG
     if (m_upSceneManager && m_upSceneManager->IsAnimationTuningActive()) {
@@ -258,6 +293,12 @@ void Main::Draw()
 // 解放処理.
 void Main::Release()
 {
+    // 通信スレッドがシーン/サービスへ触れないよう、最初にサーバーだけ停止する.
+    if (m_upDebugBridgeServer) {
+        m_upDebugBridgeServer->Stop();
+        m_upDebugBridgeServer.reset();
+    }
+
     // DirectX12/CameraManagerへの参照を各シーンが持ちうるため、それらより先に解放する.
     if (m_upSceneManager) {
         ServiceLocator::Provide<SceneManager>(nullptr);

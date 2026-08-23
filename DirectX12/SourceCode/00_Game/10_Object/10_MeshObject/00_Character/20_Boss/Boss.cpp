@@ -42,10 +42,21 @@ Boss::Boss()
 		}
 	});
 
+	// 撃破シーケンス用: 通常攻撃ではHP最大値の5%未満へ下がらない(仮値. 最後の一撃は必殺のみ).
+	m_Health.SetMinHP(m_Health.GetMaxHP() * 0.05f);
+
 	ChangeState(BossState::eID::Idle);
 }
 
 Boss::~Boss() = default;
+
+// 必殺撃破成立用: HP下限を無視してHPを0へ直接設定する.
+// NOTE: SetHPはOnDeathコールバックを通らないため、撃破成立イベントと
+//       Dead状態への遷移は撃破シーケンス基盤(MainScene)側が責任を持つ.
+void Boss::ForceKill()
+{
+	m_Health.SetHP(0.0f);
+}
 
 void Boss::Update()
 {

@@ -25,6 +25,8 @@ namespace PlayerState {
 
 		KnockBack, // 被弾ノックバック(吹き飛び→着地でIdleへ戻る).
 
+		SpecialMove, // 必殺技(仮実装: special_move1〜3を順に再生するだけの骨格. 正式実装は別Feature).
+
 		_Max
 	};
 

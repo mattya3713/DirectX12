@@ -1,0 +1,7 @@
+﻿{
+  "protocolVersion": 1,
+  "type": "response",
+  "id": "req-ping-1",
+  "ok": true,
+  "payload": { "pong": true }
+}

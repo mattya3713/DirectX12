@@ -1,0 +1,7 @@
+﻿{
+  "protocolVersion": 1,
+  "type": "request",
+  "id": "req-runtime-info-1",
+  "command": "bridge.get_runtime_info",
+  "payload": {}
+}
