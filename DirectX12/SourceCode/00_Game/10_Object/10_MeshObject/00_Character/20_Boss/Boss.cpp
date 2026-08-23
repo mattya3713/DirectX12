@@ -9,6 +9,8 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/24_SpinAttack/SpinAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/30_Dead/Dead.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/40_ParryReaction/ParryReaction.h"
+#include "99_Utility/Event/EventBus.h"
+#include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
 	// Enemyの既定値(4.0/10.0/2.5/20.0)より大柄・広範囲(仮値. 専用攻撃パターン実装時に見直す).
@@ -24,7 +26,15 @@ Boss::Boss()
 {
 	// Enemy()が登録したOnDeathはEnemy自身の(Bossからは使わない)StateMachine<Enemy>を
 	// 動かすものなので、Boss専用StateMachineを動かすものに差し替える.
-	SetOnDeath([this]() { ChangeState(BossState::eID::Dead); });
+	SetOnDeath([this]() {
+		ChangeState(BossState::eID::Dead);
+
+		// EventBusデモ: 既存OnDeathコールバックの隣で同じ死亡通知を配信する
+		// (既存コールバックの置き換えではなく共存. 本格導入は別タスク).
+		if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+			p_event_bus->Publish(BossDefeatedEvent{ this });
+		}
+	});
 
 	ChangeState(BossState::eID::Idle);
 }

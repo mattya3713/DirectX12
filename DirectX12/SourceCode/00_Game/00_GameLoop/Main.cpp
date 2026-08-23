@@ -19,6 +19,7 @@
 #include "99_Utility/Profiling/Profiler.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
+#include "99_Utility/Event/EventBus.h"
 #include "00_Game/00_Scene/SceneManager.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -145,6 +146,10 @@ HRESULT Main::Create()
     m_upCombatCoordinator = std::make_unique<CombatCoordinator>();
     ServiceLocator::Provide<CombatCoordinator>(m_upCombatCoordinator.get());
 
+    // 汎用イベントバスを構築(UI/サウンド等がゲーム内イベントを購読するための共通基盤).
+    m_upEventBus = std::make_unique<EventBus>();
+    ServiceLocator::Provide<EventBus>(m_upEventBus.get());
+
     // シーンマネージャーを構築し、最初のシーン(MainScene)を読み込む.
     m_upSceneManager = std::make_unique<SceneManager>();
     ServiceLocator::Provide<SceneManager>(m_upSceneManager.get());
@@ -256,6 +261,11 @@ void Main::Release()
         m_upCombatCoordinator->Clear();
         ServiceLocator::Provide<CombatCoordinator>(nullptr);
         m_upCombatCoordinator.reset();
+    }
+
+    if (m_upEventBus) {
+        ServiceLocator::Provide<EventBus>(nullptr);
+        m_upEventBus.reset();
     }
 
     if (m_upSoundManager) {

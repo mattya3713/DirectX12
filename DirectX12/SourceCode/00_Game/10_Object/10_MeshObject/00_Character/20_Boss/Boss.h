@@ -6,6 +6,12 @@
 
 class BossCombatView;
 
+// EventBus用デモイベント(Boss死亡時に発行される. UI/サウンド/実績等の購読想定).
+struct BossDefeatedEvent
+{
+	class Boss* Who = nullptr;
+};
+
 /**********************************************************************************
 * @author    : mattya3713.
 * @date      : 2026/08/13.

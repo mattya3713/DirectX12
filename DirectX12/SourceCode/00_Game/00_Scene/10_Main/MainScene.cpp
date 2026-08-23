@@ -30,6 +30,7 @@
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
 #include "99_Utility/Debug/Log/DebugLog.h"
+#include "99_Utility/Event/EventBus.h"
 #include "99_Utility/Profiling/Profiler.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 #include "99_Utility/String/String.h"
@@ -131,6 +132,15 @@ void MainScene::Create()
 		// (CutScenePlayerのExistingInstanceトラックがServiceLocator経由で解決する).
 		ServiceLocator::Provide<Player>(m_upPlayer.get());
 		ServiceLocator::Provide<Boss>(m_upBoss.get());
+
+		// EventBusデモ: Boss死亡イベントを購読し、ログへ出力する(実機確認用. 本格導入は別タスク).
+		if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+			p_event_bus->Subscribe<BossDefeatedEvent>([](const BossDefeatedEvent& Event) {
+				if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+					p_debug_log->LogInfo("EventBus demo: BossDefeated (Who!=null: " + std::string(Event.Who ? "true" : "false") + ")");
+				}
+			});
+		}
 
 		m_upCutScenePlayer = std::make_unique<CutScenePlayer>();
 		ServiceLocator::Provide<CutScenePlayer>(m_upCutScenePlayer.get());
