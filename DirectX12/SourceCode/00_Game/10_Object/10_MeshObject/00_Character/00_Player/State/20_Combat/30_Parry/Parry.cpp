@@ -27,8 +27,9 @@ void Parry::Enter()
 
 	m_ElapsedTime = 0.0f;
 	m_IsReacting  = false;
-	GetPlayer()->SetDamageColliderActive(false); // 構え中は通常のダメージを受けない.
-	GetPlayer()->SetParryColliderActive(true);   // パリィ判定を有効化.
+	// パリィはリスクのある一発勝負(Sekiro型)のため、構え中も被弾判定は有効のまま
+	// (SetDamageColliderActive(false)は呼ばない. 成立した攻撃のみProcessHits側で無視する).
+	GetPlayer()->SetParryColliderActive(true); // パリィ判定を有効化.
 
 	ApplyNamedClip("player_parry");
 }
@@ -44,6 +45,11 @@ void Parry::Update()
 		for (const CollisionInfo& info : GetPlayer()->GetParryCollisionEvents())
 		{
 			if (!info.IsHit) { continue; }
+
+			// 成立した攻撃の有効化IDを記録し、同一攻撃のダメージ適用を防ぐ
+			// (パリィ構え中も被弾判定が有効なため、同じ攻撃がDamageColliderにも検出されうる).
+			GetPlayer()->NotifyParriedAttack(info.AttackActivationId);
+
 			if (CombatCoordinator* p_coordinator = ServiceLocator::Get<CombatCoordinator>())
 			{
 				p_coordinator->OnParrySuccess();

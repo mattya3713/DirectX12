@@ -126,6 +126,10 @@ void Character::ProcessHits()
 		if (it != m_ProcessedAttackIds.end() && it->second >= info.AttackActivationId) { continue; }
 		m_ProcessedAttackIds[info.OtherCollider] = info.AttackActivationId;
 
+		// 派生クラスが無視を指定したヒットはダメージ適用しない
+		// (パリィ成立済み攻撃の二重処理防止. 記録は上で済ませるため同一スイング中は二度と入らない).
+		if (ShouldIgnoreHit(info)) { continue; }
+
 		HitEvent hit_event{};
 		hit_event.AttackAmount = info.AttackAmount;
 		hit_event.ContactPoint = info.ContactPoint;

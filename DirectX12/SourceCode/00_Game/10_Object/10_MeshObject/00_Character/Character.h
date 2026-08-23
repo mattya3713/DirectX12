@@ -87,6 +87,9 @@ protected:
 	void SetOnDamage(HealthSystem::DamageCallback Callback) { m_Health.SetOnDamage(std::move(Callback)); }
 	void SetOnDeath(HealthSystem::DeathCallback Callback) { m_Health.SetOnDeath(std::move(Callback)); }
 
+	// 特定のヒットを無視するか(派生クラスで上書き. パリィ済み攻撃のダメージ二重適用防止等に使う).
+	virtual bool ShouldIgnoreHit(const CollisionInfo& Info) const noexcept { (void)Info; return false; }
+
 	// HitEventを受けてダメージを適用する(publicにはしない. ApplyDamageは必ず
 	// 自分の被弾コライダーが検出したHitEvent経由でのみ呼ばれる想定).
 	void ApplyDamage(const HitEvent& Event) noexcept

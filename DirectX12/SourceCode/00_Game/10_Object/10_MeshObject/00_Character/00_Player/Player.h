@@ -88,6 +88,9 @@ public: // Getter・Setter.
 	// パリィ判定の結果(PlayerState::Parryが毎フレーム確認する. EnemyAttackを検出したら成立とみなす).
 	const std::vector<CollisionInfo>& GetParryCollisionEvents() const noexcept { return m_ParryCollider.GetCollisionEvents(); }
 
+	// パリィ成立した攻撃の有効化IDを記録する(ProcessHitsがダメージ二重適用を防ぐために参照する).
+	void NotifyParriedAttack(std::uint32_t AttackActivationId) noexcept { m_LastParriedActivationId = AttackActivationId; }
+
 public:
 	// ステートを変更する(PlayerState::eIDから対応するステートを生成しStateMachineへ渡す).
 	void ChangeState(PlayerState::eID Id);
@@ -106,6 +109,13 @@ protected:
 	// (Boss/Enemyは既定の空実装のまま. ノックバック初速はKnockBack StateがGetKnockBackVelocity()で受け取る.)
 	void OnDamaged(const HitEvent& Event) override;
 
+	// パリィ済みの攻撃(直前に成立した有効化ID)はダメージ適用をスキップする
+	// (パリィ構え中も被弾判定が有効なため、同一攻撃がParryColliderとDamageColliderの両方に当たる).
+	bool ShouldIgnoreHit(const CollisionInfo& Info) const noexcept override
+	{
+		return Info.AttackActivationId != 0 && Info.AttackActivationId == m_LastParriedActivationId;
+	}
+
 private:
 	StateMachine<Player> m_StateMachine;					// 現在ステートの保持・更新.
 	CapsuleCollider       m_ParryCollider;					// パリィ判定専用(m_DamageColliderとは別物. Parry中のみ有効).
@@ -113,6 +123,7 @@ private:
 	DirectX::XMFLOAT3    m_KnockBackVelocity{ 0.0f, 0.0f, 0.0f };	// ノックバック初速(OnDamagedが計算し、KnockBack Stateが消費する).
 	float                m_RunMoveSpeed   = 8.0f;				// 走り移動速度(単位/秒).
 	PlayerState::eID     m_CurrentStateID = PlayerState::eID::None;	// 現在ステートID(デバッグ表示用).
+	std::uint32_t        m_LastParriedActivationId = 0;	// 直前にパリィ成立した攻撃の有効化ID(0=なし).
 #if _DEBUG
 	float m_ModelFrontOffsetDeg = 180.0f;	// モデル正面軸のズレ補正角(度). player.msknは-Z正面のため既定で180.
 #endif
