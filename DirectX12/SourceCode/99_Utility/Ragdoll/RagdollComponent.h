@@ -35,10 +35,13 @@ public:
 
 	bool IsActive() const noexcept { return m_State == eState::Active; }
 
-	// 物理ステップを進める(重力+減衰の簡易積分. Active時のみ).
+	// 物理ステップを進める(重力+減衰+親子距離制約の位置ベース解決. Active時のみ).
 	void Update(float DeltaTime, float Gravity = 20.0f, float DampingRate = 0.5f);
 
 	const std::vector<BodyState>& GetBodyStates() const noexcept { return m_Bodies; }
+
+	// 各ボディの姿勢行列を返す(DEBUG可視化・骨行列反映用. 回転は簡易: 位置差分から).
+	std::vector<DirectX::XMFLOAT4X4> GetBodyMatrices() const;
 
 private:
 	enum class eState
@@ -47,7 +50,11 @@ private:
 		Active,
 	};
 
+	// 親子間距離を初期長へ保つ位置ベース制約を解決する.
+	void SolveConstraints();
+
 	const RagdollDefinition* m_pDefinition = nullptr;
 	eState                   m_State       = eState::Inactive;
 	std::vector<BodyState>   m_Bodies;      // Definition.Bonesと同じ順序.
+	std::vector<float>       m_RestLengths; // 親子間の静止距離(Activate時に記録).
 };

@@ -12,6 +12,7 @@
 struct RagdollBoneDesc
 {
 	std::string            BoneName;                 // 対象ボーン名(Mmdlのボーン名と一致させる).
+	int                    ParentIndex  = -1;        // 親Bones index(-1=根. 制約生成に使用).
 	float                  Mass         = 1.0f;
 	DirectX::XMFLOAT3      ColliderHalf = { 0.1f, 0.1f, 0.1f }; // Box近似の半サイズ.
 	DirectX::XMFLOAT3      LocalOffset  = { 0.0f, 0.0f, 0.0f }; // ボーン原点からのオフセット.

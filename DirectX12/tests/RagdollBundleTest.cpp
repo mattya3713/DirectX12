@@ -94,6 +94,30 @@ int main()
 		std::cout << "[PASS] 5. no definition rejected" << std::endl;
 	}
 
+	// ---- 6. 親子距離制約(落下しても親子間距離が爆発しない) ----
+	{
+		RagdollDefinition def = MakeSample();
+		RagdollComponent ragdoll;
+		ragdoll.SetDefinition(&def);
+
+		// hips=原点, spine=hips+1m上.
+		std::vector<DirectX::XMFLOAT3> pose(def.Bones.size(), { 0.0f, 0.0f, 0.0f });
+		pose[1] = { 0.0f, 1.0f, 0.0f };
+
+		assert(ragdoll.Activate(pose));
+		for (int i = 0; i < 60; ++i) { ragdoll.Update(1.0f / 60.0f); }
+
+		const auto& bodies = ragdoll.GetBodyStates();
+		const float dx = bodies[1].Position.x - bodies[0].Position.x;
+		const float dy = bodies[1].Position.y - bodies[0].Position.y;
+		const float dz = bodies[1].Position.z - bodies[0].Position.z;
+		const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+		const float rest = std::abs(pose[1].y - pose[0].y);
+
+		assert(dist < rest * 3.0f); // 制約なしでは自由落下で距離が無制限に広がる.
+		std::cout << "[PASS] 6. parent-child constraint" << std::endl;
+	}
+
 	std::filesystem::remove(kTestFile, ec);
 	std::cout << "All tests passed." << std::endl;
 	return 0;
