@@ -443,6 +443,13 @@ void MmdlActor::UpdateBoneMatrices()
 		// ボーンの現在のワールド変換(行ベクトル規約のためオフセットを先に掛ける).
 		m_pMappedBoneTransforms[i] = DirectX::XMMatrixMultiply(offset, world);
 	}
+
+	// ボーンのワールド位置を記録する(ラグドール等の外部参照用).
+	m_BoneWorldPositions.assign(world_transforms.size(), DirectX::XMFLOAT3{});
+	for (size_t i = 0; i < world_transforms.size(); ++i)
+	{
+		DirectX::XMStoreFloat3(&m_BoneWorldPositions[i], world_transforms[i].r[3]);
+	}
 }
 
 void MmdlActor::Draw()
@@ -753,6 +760,22 @@ void MmdlActor::CreateResources()
 		m_pToonResource = m_spResource->GetToonTextureResources();
 		m_pSphereResource = m_spResource->GetSphereTextureResources();
 	}
+}
+
+// ボーン名から最新のワールド位置を取得する.
+bool MmdlActor::TryGetBoneWorldPosition(const std::string& BoneName, DirectX::XMFLOAT3& Out) const
+{
+	if (m_BoneWorldPositions.size() != m_Skeleton.Bones.size()) { return false; }
+
+	for (size_t i = 0; i < m_Skeleton.Bones.size(); ++i)
+	{
+		if (m_Skeleton.Bones[i].Name == BoneName)
+		{
+			Out = m_BoneWorldPositions[i];
+			return true;
+		}
+	}
+	return false;
 }
 
 MyComPtr<ID3D12Resource> MmdlActor::LoadTexture(const std::string& Path)

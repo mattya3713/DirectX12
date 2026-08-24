@@ -5,6 +5,10 @@
 
 #include <cstring>
 
+// このスレッドが並列記録中に使う専用コマンドリスト(nullptrならメインリスト側).
+// ワーカースレッドは1フレームでjoinされるため、この領域がフレームを跨いで残ることは無い.
+static thread_local ID3D12GraphicsCommandList* tls_pRecordingParallelCmdList = nullptr;
+
 
 DirectX12::DirectX12()
 	: m_hWnd			{ nullptr }
@@ -12,7 +16,7 @@ DirectX12::DirectX12()
 	, m_pSwapChain		{ nullptr }
 	, m_SwapChainDesc	{ }
 	, m_pDevice12		{ nullptr }
-	, m_pCmdList		{ nullptr }
+	, m_ActiveMainListIndex { 0 }
 	, m_pCmdQueue		{ nullptr }
 	, m_FrameIndex		{ 0 }
 	, m_pRenderTargetViewHeap{ nullptr }
@@ -71,8 +75,6 @@ bool DirectX12::Create(HWND hWnd)
 	
 		// コマンド類の生成.
 		CreateCommandObject(
-			m_pCmdAllocators,
-			m_pCmdList,
 			m_pCmdQueue);
 		
 		// スワップチェーンの生成.
@@ -193,6 +195,8 @@ void DirectX12::BeginDraw(bool UseOffscreenScene)
 	// (Reset()は「そのアロケータから確保したコマンドの実行がGPU側で全て終わっている」場合のみ有効.
 	// 通常は2フレーム前(FrameBufferCount=2)の処理なので、ここではほぼ待たない.
 	// これによりPresentの直後に毎回GPUの完了を待つ必要がなくなり、CPUとGPUが並行して動ける).
+	// メイン3本+並列スロット全てが同一フレームの同一フェンス値で実行されるため、
+	// 1つのフェンス値で全部のアロケータの再利用可否を管理できる).
 	if (m_pFence->GetCompletedValue() < m_FrameFenceValues[m_FrameIndex]) {
 		if (m_hFenceEvent != nullptr) {
 			m_pFence->SetEventOnCompletion(m_FrameFenceValues[m_FrameIndex], m_hFenceEvent);
@@ -200,8 +204,21 @@ void DirectX12::BeginDraw(bool UseOffscreenScene)
 		}
 	}
 
-	m_pCmdAllocators[m_FrameIndex]->Reset();
-	m_pCmdList->Reset(m_pCmdAllocators[m_FrameIndex].Get(), nullptr);
+	// メインリスト(前半/後半/終端)と並列記録スロットをフレーム先頭でまとめて初期化する.
+	for (UINT i = 0; i < MainListCount; ++i) {
+		m_pCmdAllocators[m_FrameIndex][i]->Reset();
+		m_pCmdLists[i]->Reset(m_pCmdAllocators[m_FrameIndex][i].Get(), nullptr);
+		m_bMainListClosed[i] = false;
+	}
+	for (UINT Slot = 0; Slot < ParallelRecordSlotCount; ++Slot) {
+		m_pParallelCmdAllocators[m_FrameIndex][Slot]->Reset();
+		m_pParallelCmdLists[Slot]->Reset(m_pParallelCmdAllocators[m_FrameIndex][Slot].Get(), nullptr);
+		m_bParallelSlotClosed[Slot] = false;
+	}
+	tls_pRecordingParallelCmdList = nullptr;
+	m_ActiveMainListIndex = 0;
+
+	ID3D12GraphicsCommandList* p_cmd_list = CurrentMainCmdList();
 
 	if (UseOffscreenScene)
 	{
@@ -210,56 +227,58 @@ void DirectX12::BeginDraw(bool UseOffscreenScene)
 		// Scene ViewパネルがこのバッファをImGui::Image()でサンプルする).
 		auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pSceneColorBuffer.Get(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pCmdList->ResourceBarrier(1, &Barrier);
+		p_cmd_list->ResourceBarrier(1, &Barrier);
 
 		// レンダーターゲットを指定(オフスクリーンのシーンカラーバッファ).
 		auto rtvH = m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart();
 
 		// 深度を指定.
 		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
-		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
-		m_pCmdList->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		p_cmd_list->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		p_cmd_list->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		// 画面クリア.
 		float ClearColor[] = { 0.f,0.f,0.f,1.0f };
-		m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+		p_cmd_list->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
 		//ビューポート、0.シザー矩形のセット.
-		m_pCmdList->RSSetViewports(1, m_pSceneColorViewport.get());
-		m_pCmdList->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
+		p_cmd_list->RSSetViewports(1, m_pSceneColorViewport.get());
+		p_cmd_list->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
 	}
 	else
 	{
 		// 実際のバックバッファへ直接描画する(MainScene用).
 		auto Barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		m_pCmdList->ResourceBarrier(1, &Barrier);
+		p_cmd_list->ResourceBarrier(1, &Barrier);
 
 		auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
 		rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
-		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
-		m_pCmdList->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		p_cmd_list->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		p_cmd_list->ClearDepthStencilView(DSVHeapPointer, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		float ClearColor[] = { 0.f,0.f,0.f,1.0f };
-		m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+		p_cmd_list->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
-		m_pCmdList->RSSetViewports(1, m_pViewport.get());
-		m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+		p_cmd_list->RSSetViewports(1, m_pViewport.get());
+		p_cmd_list->RSSetScissorRects(1, m_pScissorRect.get());
 	}
 }
 
 void DirectX12::RestoreMainRenderTargets()
 {
+	ID3D12GraphicsCommandList* p_cmd_list = CurrentMainCmdList();
+
 	if (m_bUseOffscreenScene)
 	{
 		// オフスクリーンのシーンカラーバッファへ復帰.
 		auto rtvH = m_pSceneColorRTVHeap->GetCPUDescriptorHandleForHeapStart();
 		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
-		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
-		m_pCmdList->RSSetViewports(1, m_pSceneColorViewport.get());
-		m_pCmdList->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
+		p_cmd_list->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		p_cmd_list->RSSetViewports(1, m_pSceneColorViewport.get());
+		p_cmd_list->RSSetScissorRects(1, m_pSceneColorScissorRect.get());
 	}
 	else
 	{
@@ -268,9 +287,9 @@ void DirectX12::RestoreMainRenderTargets()
 		rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		auto DSVHeapPointer = m_pDepthHeap->GetCPUDescriptorHandleForHeapStart();
-		m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
-		m_pCmdList->RSSetViewports(1, m_pViewport.get());
-		m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+		p_cmd_list->OMSetRenderTargets(1, &rtvH, false, &DSVHeapPointer);
+		p_cmd_list->RSSetViewports(1, m_pViewport.get());
+		p_cmd_list->RSSetScissorRects(1, m_pScissorRect.get());
 	}
 }
 
@@ -302,28 +321,30 @@ bool DirectX12::IsRewindActive() const noexcept
 
 void DirectX12::PrepareUIRenderTarget()
 {
+	ID3D12GraphicsCommandList* p_cmd_list = CurrentMainCmdList();
+
 	// オフスクリーンのシーンカラーバッファをRENDER_TARGET→PIXEL_SHADER_RESOURCEへ
 	// (このフレームのImGui::Image()でサンプルできるようにする).
 	auto ToSrv = CD3DX12_RESOURCE_BARRIER::Transition(m_pSceneColorBuffer.Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	m_pCmdList->ResourceBarrier(1, &ToSrv);
+	p_cmd_list->ResourceBarrier(1, &ToSrv);
 
 	// 実際のバックバッファをImGui描画用にPRESENT→RENDER_TARGETへ(EndDraw()で戻す).
 	auto ToRt = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	m_pCmdList->ResourceBarrier(1, &ToRt);
+	p_cmd_list->ResourceBarrier(1, &ToRt);
 
 	auto rtvH = m_pRenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
 	rtvH.ptr += m_FrameIndex * m_pDevice12->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
+	p_cmd_list->OMSetRenderTargets(1, &rtvH, false, nullptr);
 
 	// ドッキングされていない隙間に前フレームの残像が出ないようクリアする(ImGuiパネルは後で上書きされる).
 	float ClearColor[] = { 0.f,0.f,0.f,1.0f };
-	m_pCmdList->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
+	p_cmd_list->ClearRenderTargetView(rtvH, ClearColor, 0, nullptr);
 
-	m_pCmdList->RSSetViewports(1, m_pViewport.get());
-	m_pCmdList->RSSetScissorRects(1, m_pScissorRect.get());
+	p_cmd_list->RSSetViewports(1, m_pViewport.get());
+	p_cmd_list->RSSetScissorRects(1, m_pScissorRect.get());
 }
 
 void DirectX12::CreateSceneColorTarget(ImGuiManager& ImGuiMgr)
@@ -458,22 +479,96 @@ void DirectX12::ResizeSceneColorTarget(UINT Width, UINT Height)
 	m_SceneColorHeight = Height;
 }
 
+// 並列記録を開始する.
+bool DirectX12::BeginParallelRecording(UINT Slot)
+{
+	if (Slot >= ParallelRecordSlotCount || !m_pParallelCmdLists[Slot]) { return false; }
+	if (tls_pRecordingParallelCmdList != nullptr) { return false; } // 同一スレッドの二重開始は不備.
+
+	tls_pRecordingParallelCmdList = m_pParallelCmdLists[Slot].Get();
+	return true;
+}
+
+// 並列記録を完了する.
+void DirectX12::EndParallelRecording()
+{
+	if (tls_pRecordingParallelCmdList == nullptr) { return; }
+
+	// 対応するスロットを逆引きしてCloseし、EndDraw()のバッチ対象へ登録する.
+	for (UINT Slot = 0; Slot < ParallelRecordSlotCount; ++Slot)
+	{
+		if (m_pParallelCmdLists[Slot].Get() == tls_pRecordingParallelCmdList)
+		{
+			tls_pRecordingParallelCmdList->Close();
+			m_bParallelSlotClosed[Slot] = true;
+			break;
+		}
+	}
+	tls_pRecordingParallelCmdList = nullptr;
+}
+
+// メインパス後半のコマンドリストへ記録先を切り替える.
+void DirectX12::SwitchToDeferredMainList()
+{
+	constexpr UINT DeferredIndex = RenderBatchOrder::MainDeferred;
+
+	// 前半(インデックス0)以外から呼ばれた場合は何もしない(二重切替防止).
+	if (m_ActiveMainListIndex != RenderBatchOrder::MainFirst) { return; }
+
+	m_bMainListClosed[m_ActiveMainListIndex] = m_pCmdLists[m_ActiveMainListIndex]->Close() == S_OK;
+	m_ActiveMainListIndex = DeferredIndex;
+}
+
+// 現在アクティブなメインリストの記録先を返す.
+ID3D12GraphicsCommandList* DirectX12::CurrentMainCmdList()
+{
+	return m_pCmdLists[m_ActiveMainListIndex].Get();
+}
+
 void DirectX12::EndDraw()
 {
+	// 終端リストへPRESENT遷移とクエリ解決を記録する(全リストの中で最後に実行される).
+	ID3D12GraphicsCommandList* p_final_list = m_pCmdLists[RenderBatchOrder::MainFinal].Get();
+
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pBackBuffer[m_FrameIndex].Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-	m_pCmdList->ResourceBarrier(1, &barrier);
+	p_final_list->ResourceBarrier(1, &barrier);
 
 	// 記録されたタイムスタンプクエリを読み取りバッファへ解決する(Close前に行う).
 	ResolveGpuQueries();
 
-	// 命令のクローズ.
-	m_pCmdList->Close();
+	p_final_list->Close();
+	m_bMainListClosed[RenderBatchOrder::MainFinal] = true;
 
-	// コマンドリストの実行.
-	ID3D12CommandList* cmdlists[] = { m_pCmdList.Get() };
-	m_pCmdQueue->ExecuteCommandLists(1, cmdlists);
+	// 未Closeのメインリストを閉じる(並列記録へ切り替えなかったフレームでは前半/後半がここで閉じる).
+	for (UINT i = 0; i < MainListCount; ++i)
+	{
+		if (!m_bMainListClosed[i])
+		{
+			m_pCmdLists[i]->Close();
+			m_bMainListClosed[i] = true;
+		}
+	}
+
+	// 全コマンドリストを実行順(RenderBatchOrder::Build()の規則)に並べ、
+	// 1回のExecuteCommandLists()へまとめて渡す(仕様: 待ち合わせ後に一括実行).
+	const std::vector<UINT> ExecuteOrder = RenderBatchOrder::Build(m_bParallelSlotClosed, ParallelRecordSlotCount);
+
+	ID3D12CommandList* CmdListsToExecute[MainListCount + ParallelRecordSlotCount] = {};
+	UINT NumLists = 0;
+	for (UINT Id : ExecuteOrder)
+	{
+		switch (Id)
+		{
+			case RenderBatchOrder::MainFirst:    { CmdListsToExecute[NumLists++] = m_pCmdLists[RenderBatchOrder::MainFirst].Get(); break; }
+			case RenderBatchOrder::MainDeferred: { CmdListsToExecute[NumLists++] = m_pCmdLists[RenderBatchOrder::MainDeferred].Get(); break; }
+			case RenderBatchOrder::MainFinal:    { CmdListsToExecute[NumLists++] = m_pCmdLists[RenderBatchOrder::MainFinal].Get(); break; }
+			default:                             { CmdListsToExecute[NumLists++] = m_pParallelCmdLists[Id - RenderBatchOrder::ParallelBase].Get(); break; }
+		}
+	}
+
+	m_pCmdQueue->ExecuteCommandLists(NumLists, CmdListsToExecute);
 
 	// SwapChain の Present を呼び出す (ここで一度だけ行われる)
 	m_pSwapChain->Present(1, 0);
@@ -528,7 +623,7 @@ void DirectX12::CreateGpuQueryResources()
 void DirectX12::WriteGpuTimestamp(UINT IndexInFrame)
 {
 	if (!m_pGpuQueryHeap || IndexInFrame >= MaxGpuTimestamps) { return; }
-	m_pCmdList->EndQuery(m_pGpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+	CurrentMainCmdList()->EndQuery(m_pGpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
 		m_FrameIndex * MaxGpuTimestamps + IndexInFrame);
 }
 
@@ -537,7 +632,7 @@ void DirectX12::ResolveGpuQueries()
 {
 	if (!m_pGpuQueryHeap || !m_pGpuQueryReadback) { return; }
 
-	m_pCmdList->ResolveQueryData(m_pGpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+	CurrentMainCmdList()->ResolveQueryData(m_pGpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
 		m_FrameIndex * MaxGpuTimestamps, MaxGpuTimestamps,
 		m_pGpuQueryReadback.Get(), m_FrameIndex * MaxGpuTimestamps);
 }
@@ -562,10 +657,13 @@ const MyComPtr<ID3D12Device> DirectX12::GetDevice()
 	return m_pDevice12;
 }
 
-// コマンドリストを取得.
+// コマンドリストを取得(並列記録中のスレッドは専用リスト、それ以外は現在のメインリスト).
 const MyComPtr<ID3D12GraphicsCommandList> DirectX12::GetCommandList()
 {
-	return m_pCmdList;
+	if (tls_pRecordingParallelCmdList != nullptr) {
+		return MyComPtr<ID3D12GraphicsCommandList>(tls_pRecordingParallelCmdList);
+	}
+	return m_pCmdLists[m_ActiveMainListIndex];
 }
 
 // テクスチャを取得.
@@ -656,30 +754,52 @@ void DirectX12::CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory)
 
 // コマンド類の生成.
 void DirectX12::CreateCommandObject(
-	MyComPtr<ID3D12CommandAllocator>	(&CmdAllocators)[FrameBufferCount],
-	MyComPtr<ID3D12GraphicsCommandList>&CmdList,
 	MyComPtr<ID3D12CommandQueue>&		CmdQueue)
 {
 	m_hFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-	// バックバッファの数だけコマンドアロケータを用意する(1フレーム1つだけだと、
+	// バックバッファの数だけコマンドアロケータを用意する(1フレーム1つだと、
 	// Presentの直後に毎回GPUの完了を待たないとReset()できず、CPU/GPUが完全に直列化されてしまう).
+	// メイン側は前半/後半/終端の3本分、並列側はスロット数ぶん(同じくフレーム単位で使い回す).
 	for (UINT i = 0; i < FrameBufferCount; ++i) {
-		MyAssert::IsFailed(
-			_T("コマンドリストアロケーターの生成"),
-			&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
-			D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンドアロケータの種類.
-			IID_PPV_ARGS(CmdAllocators[i].ReleaseAndGetAddressOf()));		// (Out) コマンドアロケータ.
+		for (UINT ListIdx = 0; ListIdx < MainListCount; ++ListIdx) {
+			MyAssert::IsFailed(
+				_T("コマンドリストアロケーターの生成(メイン)"),
+				&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
+				D3D12_COMMAND_LIST_TYPE_DIRECT,			// 作成するコマンドアロケータの種類.
+				IID_PPV_ARGS(m_pCmdAllocators[i][ListIdx].ReleaseAndGetAddressOf()));		// (Out) コマンドアロケータ.
+		}
+
+		for (UINT Slot = 0; Slot < ParallelRecordSlotCount; ++Slot) {
+			MyAssert::IsFailed(
+				_T("コマンドリストアロケーターの生成(並列)"),
+				&ID3D12Device::CreateCommandAllocator, m_pDevice12.Get(),
+				D3D12_COMMAND_LIST_TYPE_DIRECT,
+				IID_PPV_ARGS(m_pParallelCmdAllocators[i][Slot].ReleaseAndGetAddressOf()));
+		}
 	}
 
-	MyAssert::IsFailed(
-		_T("コマンドリストの生成"),
-		&ID3D12Device::CreateCommandList, m_pDevice12.Get(),
-		0,									// 単一のGPU操作の場合は0.
-		D3D12_COMMAND_LIST_TYPE_DIRECT,		// 作成するコマンド リストの種類.
-		CmdAllocators[0].Get(),				// アロケータへのポインタ(最初のフレームで使う分).
-		nullptr,							// ダミーの初期パイプラインが設定される?
-		IID_PPV_ARGS(CmdList.ReleaseAndGetAddressOf()));				// (Out) コマンドリスト.
+	for (UINT ListIdx = 0; ListIdx < MainListCount; ++ListIdx) {
+		MyAssert::IsFailed(
+			_T("コマンドリストの生成(メイン)"),
+			&ID3D12Device::CreateCommandList, m_pDevice12.Get(),
+			0,									// 単一のGPU操作の場合は0.
+			D3D12_COMMAND_LIST_TYPE_DIRECT,		// 作成するコマンド リストの種類.
+			m_pCmdAllocators[0][ListIdx].Get(),	// アロケータへのポインタ(最初のフレームで使う分).
+			nullptr,							// ダミーの初期パイプラインが設定される?
+			IID_PPV_ARGS(m_pCmdLists[ListIdx].ReleaseAndGetAddressOf()));				// (Out) コマンドリスト.
+	}
+
+	for (UINT Slot = 0; Slot < ParallelRecordSlotCount; ++Slot) {
+		MyAssert::IsFailed(
+			_T("コマンドリストの生成(並列)"),
+			&ID3D12Device::CreateCommandList, m_pDevice12.Get(),
+			0,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			m_pParallelCmdAllocators[0][Slot].Get(),
+			nullptr,
+			IID_PPV_ARGS(m_pParallelCmdLists[Slot].ReleaseAndGetAddressOf()));
+	}
 
 	// コマンドキュー構造体の作成.
 	D3D12_COMMAND_QUEUE_DESC CmdQueueDesc = {};

@@ -91,11 +91,14 @@
     <ClInclude Include="SourceCode\99_Utility\FileManager\FileManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Sound\SoundManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\ISerializable.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\SaveLoadManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\IEditorCommand.h" />
     <ClInclude Include="Data\Library\json\json.hpp" />
     <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\RenderBatchOrder.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXActor.h" />
@@ -112,6 +115,9 @@
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\PostProcess\PostProcessPipeline.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.h" />
+    <ClInclude Include="SourceCode\20_Resource\Font\FontLoader.h" />
+    <ClInclude Include="SourceCode\20_Resource\Font\FontRegistry.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
     <ClInclude Include="SourceCode\99_Utility\CustomSTL\pair\Pair.h" />
@@ -294,6 +300,8 @@
     <ClCompile Include="SourceCode\99_Utility\FileManager\FileManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Sound\SoundManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Serialization\SaveLoadManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\99_Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.cpp" />
@@ -313,6 +321,9 @@
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\PostProcess\PostProcessPipeline.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.cpp" />
+    <ClCompile Include="SourceCode\20_Resource\Font\FontLoader.cpp" />
+    <ClCompile Include="SourceCode\20_Resource\Font\FontRegistry.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.cpp" />

@@ -12,6 +12,7 @@
 #include "..\\..\\..\\Data\\Library\\DirectXTex\\DirectXTex\\DirectXTex.h"
 
 #include <d3dcompiler.h>
+#include "RenderBatchOrder.h"
 
 //ライブラリ読み込み.
 #pragma comment(lib, "d3d12.lib")
@@ -155,8 +156,19 @@ public:
 	// DirextX12デバイス取得.
 	const MyComPtr<ID3D12Device> GetDevice();
 
-	// コマンドリスト取得.
+	// コマンドリスト取得(呼び出しスレッドが並列記録中ならそのスロット専用リストを返す).
 	const MyComPtr<ID3D12GraphicsCommandList> GetCommandList();
+
+	// ===== マルチスレッドコマンド記録(Player/Boss/コライダー等を別スレッドへ分散) =====
+
+	// 並列記録を開始する(Slot番の専用コマンドリストへこのスレッドのGetCommandList()を切り替える. 失敗時false).
+	bool BeginParallelRecording(UINT Slot);
+
+	// 並列記録を完了する(専用コマンドリストをCloseしてEndDraw()の実行対象へ登録する).
+	void EndParallelRecording();
+
+	// 並列記録完了後、メインパス後半のコマンドリストへ記録先を切り替える(フレーム中盤で1回呼ぶ).
+	void SwitchToDeferredMainList();
 
 	// テクスチャを取得.
 	MyComPtr<ID3D12Resource> GetTextureByPath(const char* texpath);
@@ -219,13 +231,22 @@ private:// 作っていくんだよねぇ~.
 	// Present直後に毎回GPU完了を待つ必要をなくす(CPU/GPUのパイプライニング).
 	static constexpr UINT FrameBufferCount = 2;
 
+	// メインスレッド側のコマンドリスト数(0=前半/1=後半/2=終端PRESENT遷移専用.
+	// 前半と後半に分けることで、並列記録したリストを1つのExecuteCommandLists()内に
+	// 順序ごと挟み込めるようにする. 詳細はRenderBatchOrder::Build()参照).
+	static constexpr UINT MainListCount = RenderBatchOrder::MainFinal + 1;
+
+	// 並列記録スロット数(運用: 0=Player/1=Boss/2=コライダー. 最終スロットは後半リストより後ろで実行).
+	static constexpr UINT ParallelRecordSlotCount = 3;
+
+	// 現在アクティブなメインリストの記録先を返す(内部用. GetCommandList()の実体).
+	ID3D12GraphicsCommandList* CurrentMainCmdList();
+
 	// DXGIの生成.
 	void CreateDXGIFactory(MyComPtr<IDXGIFactory6>& DxgiFactory);
 
-	// コマンド類の生成.
+	// コマンド類の生成(メイン3本+並列スロット数ぶんのアロケータ/リスト).
 	void CreateCommandObject(
-		MyComPtr<ID3D12CommandAllocator>	(&CmdAllocators)[FrameBufferCount],
-		MyComPtr<ID3D12GraphicsCommandList>&CmdList,
 		MyComPtr<ID3D12CommandQueue>&		CmdQueue);
 
 	// スワップチェーンの作成.
@@ -289,8 +310,13 @@ private:
 
 	// DirectX12.
 	MyComPtr<ID3D12Device>					m_pDevice12;			// DirectX12のデバイスコンテキスト.
-	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocators[FrameBufferCount]; // コマンドアロケータ(バックバッファごとに1つ. 命令をためておくメモリ領域).
-	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdList;				// コマンドリスト.
+	MyComPtr<ID3D12CommandAllocator>		m_pCmdAllocators[FrameBufferCount][MainListCount]; // メイン用アロケータ(フレーム×リスト. 命令をためておくメモリ領域).
+	MyComPtr<ID3D12GraphicsCommandList>		m_pCmdLists[MainListCount];	// メイン用コマンドリスト(前半/後半/終端).
+	UINT									m_ActiveMainListIndex;	// 現在のメイン記録先インデックス(BeginDraw()で0へ戻る).
+	bool									m_bMainListClosed[MainListCount] {}; // 各メインリストのClose済みフラグ(EndDraw()で未Close分を閉じるため).
+	MyComPtr<ID3D12CommandAllocator>		m_pParallelCmdAllocators[FrameBufferCount][ParallelRecordSlotCount]; // 並列記録用アロケータ(フレーム×スロット. メインと同じフェンス管理で使い回す).
+	MyComPtr<ID3D12GraphicsCommandList>		m_pParallelCmdLists[ParallelRecordSlotCount]; // 並列記録用コマンドリスト(ワーカースレッド1本につき1つ).
+	bool									m_bParallelSlotClosed[ParallelRecordSlotCount] {}; // 並列スロットのClose済みフラグ(EndDraw()のバッチ組み立てに使う).
 	MyComPtr<ID3D12CommandQueue>			m_pCmdQueue;			// コマンドキュー.
 	UINT									m_FrameIndex;			// 現在描画中のバックバッファのインデックス(BeginDraw()で設定).
 	bool									m_bUseOffscreenScene = false; // BeginDraw()に渡された描画先モード(RestoreMainRenderTargets()用).
