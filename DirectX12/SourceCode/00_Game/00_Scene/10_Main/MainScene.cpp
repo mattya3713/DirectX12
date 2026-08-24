@@ -1069,10 +1069,6 @@ void MainScene::Draw()
 		m_upUILayoutRuntime->Draw(*m_upSpriteRenderer);
 	}
 
-	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する
-	// (ImGuiオーバーレイ前・デバッグコライダー描画前のゲーム描画だけを保存する).
-	p_dx12->CaptureForRewind();
-
 	// レベル静的オブジェクト(専用パイプラインへ切替て描画).
 	if (!m_LevelActors.empty() && m_pMstcRenderer) {
 		Profiler::Instance().GpuBegin("GPU:StaticLevel");

@@ -93,13 +93,9 @@ bool AsyncComputeDemo::Impl::CreatePipeline(ID3D12Device* pDevice)
 		return false;
 	}
 
-#if defined(_DEBUG)
-	constexpr UINT kCompileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-	constexpr UINT kCompileFlags = 0;
-#endif
-
 	MyComPtr<ID3DBlob> cs_blob(nullptr);
+#if _DEBUG
+	constexpr UINT kCompileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 	ID3DBlob* error_blob = nullptr;
 	const HRESULT hr = D3DCompileFromFile(L"Data/Shader/Compute/TestCompute.hlsl", nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", kCompileFlags, 0,
@@ -114,6 +110,12 @@ bool AsyncComputeDemo::Impl::CreatePipeline(ID3D12Device* pDevice)
 		if (error_blob) { error_blob->Release(); }
 		return false;
 	}
+#else
+	if (FAILED(D3DReadFileToBlob(L"Data/Shader/Compute/TestCompute.cso", cs_blob.GetAddressOf())))
+	{
+		return false;
+	}
+#endif
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC pso_desc{};
 	pso_desc.pRootSignature = m_pRootSignature.Get();

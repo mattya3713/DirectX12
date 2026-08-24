@@ -46,8 +46,9 @@ void Dodge::Enter()
 		if (p_active_camera)
 		{
 			// カメラの前・右方向をXZ平面へ投影して入力と合成する(Runの移動計算と同じ考え方).
-			DirectX::XMFLOAT3 camera_forward, camera_right;
-			p_active_camera->GetBasis(camera_forward, camera_right);
+			// LookAtで視点を作るカメラに合わせ、ビュー行列由来のGetForward/GetRightを使う.
+			DirectX::XMFLOAT3 camera_forward = p_active_camera->GetForward();
+			DirectX::XMFLOAT3 camera_right   = p_active_camera->GetRight();
 			DirectX::XMVECTOR v_forward = DirectX::XMLoadFloat3(&camera_forward);
 			DirectX::XMVECTOR v_right   = DirectX::XMLoadFloat3(&camera_right);
 			v_forward = DirectX::XMVector3Normalize(DirectX::XMVectorSetY(v_forward, 0.0f));
