@@ -254,7 +254,8 @@ void Main::Draw()
 
     // 全体の描画準備.
     // ポストプロセス有効時はシーンをオフスクリーンへ描画し、後段のApply()でバックバッファへ合成する.
-    const bool use_post_process = (m_upPostProcess != nullptr);
+    // 巻き戻り再生中はリングの保存画(既にポストプロセス適用済み)をそのまま出すため、二重掛けを避けて素通しにする.
+    const bool use_post_process = (m_upPostProcess != nullptr) && !m_pDx12->IsRewindActive();
     m_pDx12->BeginDraw(is_editor_scene || use_post_process);
 
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
@@ -281,6 +282,10 @@ void Main::Draw()
 		// 3DシーンをオフスクリーンからPIXEL_SHADER_RESOURCEへ、実際のバックバッファをImGui用のRENDER_TARGETへ.
 		m_pDx12->PrepareUIRenderTarget();
 	}
+
+	// 巻き戻り用にこのフレームの最終画(ポストプロセス適用後・ImGuiオーバーレイ前)をリングバッファへ保存する.
+	// バックバッファがRENDER_TARGETで最終画を保持しているこの位置でのみ正しくキャプチャできる.
+	m_pDx12->CaptureForRewind();
 
     // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
     Profiler::Instance().GpuBegin("GPU:UI");

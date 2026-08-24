@@ -190,8 +190,13 @@ void FrameRewind::Capture()
 	if (m_State != RewindState::Capture || !m_pPipelineState.Get()) { return; }
 
 	ID3D12GraphicsCommandList* cmd_list = m_Dx12.GetCommandList().Get();
-	// キャプチャ対象は「現在のシーン描画先」(ポストプロセス有効時はオフスクリーンのシーンカラー).
-	ID3D12Resource* p_backbuffer = m_Dx12.GetCurrentSceneTarget();
+
+	// キャプチャ対象は「ポストプロセス適用後の最終画」=今フレームのバックバッファ
+	// (プレイヤーが実際に見た絵をそのまま巻き戻すため. 呼び出し元はMain::DrawのPostProcess::Apply()直後).
+	// SRVヒープの先頭2枚がバックバッファ用なので、遷移させるリソースと読むSRVを必ず同じインデックスで揃える
+	// (ここが食い違うとPRESENT状態のリソースをサンプルしてGPUフォルト→デバイスロストになる).
+	const UINT frame_index = m_Dx12.GetFrameIndex();
+	ID3D12Resource* p_backbuffer = m_Dx12.GetBackBuffer(frame_index);
 	if (!p_backbuffer) { return; }
 
 	// バックバッファをサンプリング可能状態へ一時遷移させる.
@@ -204,7 +209,10 @@ void FrameRewind::Capture()
 
 	ID3D12DescriptorHeap* pp_heaps[] = { m_pSrvHeap.Get() };
 	cmd_list->SetDescriptorHeaps(_countof(pp_heaps), pp_heaps);
-	cmd_list->SetGraphicsRootDescriptorTable(0, m_pSrvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	D3D12_GPU_DESCRIPTOR_HANDLE source_srv = m_pSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	source_srv.ptr += static_cast<UINT64>(frame_index) * m_SrvDescriptorSize;
+	cmd_list->SetGraphicsRootDescriptorTable(0, source_srv);
 
 	D3D12_VIEWPORT viewport{ 0.0f, 0.0f, static_cast<float>(REWIND_WIDTH), static_cast<float>(REWIND_HEIGHT), 0.0f, 1.0f };
 	D3D12_RECT scissor{ 0, 0, static_cast<LONG>(REWIND_WIDTH), static_cast<LONG>(REWIND_HEIGHT) };
@@ -226,13 +234,17 @@ void FrameRewind::Capture()
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	cmd_list->ResourceBarrier(1, &ring_to_srv);
 
-	// メインパス続行のためバックバッファをレンダーターゲットへ戻す.
+	// この後のImGui描画のためバックバッファをレンダーターゲットへ戻す.
 	auto to_rtv = CD3DX12_RESOURCE_BARRIER::Transition(p_backbuffer,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	cmd_list->ResourceBarrier(1, &to_rtv);
 
-	// 通常描画用のビューポート・シザー・OMを復帰させる.
-	m_Dx12.RestoreMainRenderTargets();
+	// バックバッファへ描画先を戻す(RestoreMainRenderTargets()はオフスクリーン側へ戻してしまうため使わない.
+	// この時点ではポストプロセス合成が終わっており、以降のImGuiはバックバッファへ描く).
+	auto backbuffer_rtv = m_Dx12.GetBackBufferRtvHandle(frame_index);
+	cmd_list->OMSetRenderTargets(1, &backbuffer_rtv, false, nullptr);
+	cmd_list->RSSetViewports(1, m_Dx12.GetMainViewport());
+	cmd_list->RSSetScissorRects(1, m_Dx12.GetMainScissorRect());
 
 	m_WriteIndex = (m_WriteIndex + 1) % REWIND_FRAME_COUNT;
 	m_ValidCount = (m_ValidCount < REWIND_FRAME_COUNT) ? (m_ValidCount + 1) : REWIND_FRAME_COUNT;

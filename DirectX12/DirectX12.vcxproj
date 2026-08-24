@@ -182,11 +182,10 @@ exit /b 0</Command>
       <Command>xcopy /Y /I /E /D "$(ProjectDir)Data\Model" "$(OutDir)Data\Model\"
 xcopy /Y /I /E /D "$(ProjectDir)Data\Sound" "$(OutDir)Data\Sound\"
 xcopy /Y /I /E /D "$(ProjectDir)Data\Font" "$(OutDir)Data\Font\"
-if not exist "$(OutDir)Data\Shader\PMX\" mkdir "$(OutDir)Data\Shader\PMX\"
-fxc.exe /nologo /T vs_5_0 /E VS /Fo "$(OutDir)Data\Shader\PMX\Vertex.cso" "$(ProjectDir)Data\Shader\PMX\Vertex.hlsl"
-fxc.exe /nologo /T ps_5_0 /E PS /Fo "$(OutDir)Data\Shader\PMX\Pixel.cso" "$(ProjectDir)Data\Shader\PMX\Pixel.hlsl"
-exit /b 0</Command>
-      <Message>Data\Model・Data\Sound・Data\Fontのうち更新分のみ出力先へコピー、PMXシェーダーはfxc.exeで.csoへ事前コンパイル(配布物にソースを含めないため).</Message>
+xcopy /Y /I /E /D "$(ProjectDir)Data\Json" "$(OutDir)Data\Json\"
+call "$(ProjectDir)scripts\compile-shaders.cmd" "$(ProjectDir)" "$(OutDir)"
+exit /b %errorlevel%</Command>
+      <Message>実行データを出力先へコピーし、Release用シェーダーを事前コンパイルします。</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
