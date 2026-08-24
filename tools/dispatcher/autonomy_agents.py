@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import time
+import hashlib
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -69,6 +70,16 @@ def git_head(worktree):
     return result.stdout.strip() if result.returncode == 0 else ""
 
 
+def file_hash(path):
+    if not path.is_file():
+        return ""
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def stable_branch(dispatcher_dir):
     config = load(dispatcher_dir.parent.parent / "tools" / "dispatcher" /
                   "supervisor_config.json", {})
@@ -81,6 +92,36 @@ def stable_is_ancestor(worktree, dispatcher_dir):
                              stable_branch(dispatcher_dir), git_head(worktree)],
                             capture_output=True)
     return result.returncode == 0
+
+
+def verify_build(worktree, dispatcher_dir, entry):
+    config = load(dispatcher_dir.parent.parent / "tools" / "dispatcher" /
+                  "supervisor_config.json", {})
+    build = config.get("build", {})
+    command = build.get("command")
+    if not command:
+        entry["reason"] = "BUILD_COMMAND_NOT_CONFIGURED"
+        return False
+    log_dir = dispatcher_dir / "agent_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r"[^A-Za-z0-9_.-]", "_", entry.get("key", "agent"))
+    log_path = log_dir / (safe + ".verify-build.log")
+    timeout = int(build.get("timeout_sec", 1800))
+    try:
+        result = subprocess.run(command, cwd=str(worktree), capture_output=True,
+                                text=True, encoding="utf-8", errors="replace",
+                                timeout=timeout)
+    except subprocess.TimeoutExpired:
+        log_path.write_text("BUILD TIMEOUT\n", encoding="utf-8")
+        entry["reason"] = "BUILD_VERIFICATION_TIMEOUT"
+        return False
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    log_path.write_text(output, encoding="utf-8")
+    if result.returncode != 0:
+        entry["reason"] = "BUILD_VERIFICATION_FAILED(EXIT=%s)" % result.returncode
+        return False
+    entry["build_verified_at"] = now()
+    return True
 
 
 def alive(pid):
@@ -122,6 +163,7 @@ def launch(entry, dispatcher_dir, prompt):
         entry["status"] = "HUMAN_GATE"
         entry["reason"] = "STALE_BASELINE_REQUIRES_SYNC_WITH_STABLE"
         return None
+    report = worktree / ".ai-project" / "design" / "implementation_report.local.md"
     exe = resolve_opencode()
     if not exe:
         entry["status"] = "HUMAN_GATE"
@@ -136,7 +178,9 @@ def launch(entry, dispatcher_dir, prompt):
                             stdout=out, stderr=err, stdin=subprocess.DEVNULL,
                             env=opencode_env(dispatcher_dir))
     entry.update({"status": "WORKING", "pid": proc.pid, "started_at": now(),
-                 "started_head": git_head(worktree)})
+                 "started_head": git_head(worktree),
+                 "started_report_mtime": report.stat().st_mtime if report.is_file() else 0,
+                 "started_report_hash": file_hash(report)})
     return proc.pid
 
 
@@ -155,10 +199,18 @@ def harvest(entry, dispatcher_dir, max_attempts, max_runtime_minutes):
     report = worktree / ".ai-project" / "design" / "implementation_report.local.md"
     report_text = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
     proof = report_text.lower()
-    valid_proof = (report.is_file() and clean(worktree) and
+    report_fresh = (report.is_file() and
+                    report.stat().st_mtime > float(entry.get("started_report_mtime", 0)) and
+                    file_hash(report) != entry.get("started_report_hash", ""))
+    valid_proof = (report_fresh and clean(worktree) and
                    "build" in proof and "pass" in proof and
                    git_head(worktree) != entry.get("started_head", ""))
     if valid_proof:
+        if not verify_build(worktree, dispatcher_dir, entry):
+            entry["attempts"] = int(entry.get("attempts", 0)) + 1
+            entry["status"] = ("READY_FOR_REPAIR" if entry["attempts"] < max_attempts
+                                else "HUMAN_GATE")
+            return
         entry["status"] = "COMPLETED_CANDIDATE"
         entry["completed_at"] = now()
         return
