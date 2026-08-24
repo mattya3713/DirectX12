@@ -42,9 +42,25 @@ public:
 	// 現在ステートIDの取得(デバッグ表示等、外部からの参照用).
 	BossState::eID GetCurrentStateID() const noexcept { return m_CurrentStateID; }
 
+	// 硬直中のヒットで積まれた吹き飛び要求を取り出して消す(BossState::ParryReactionが消費する).
+	DirectX::XMFLOAT3 ConsumePendingStaggerKnockBack() noexcept
+	{
+		const DirectX::XMFLOAT3 velocity = m_PendingStaggerKnockBack;
+		m_PendingStaggerKnockBack = { 0.0f, 0.0f, 0.0f };
+		return velocity;
+	}
+
+protected:
+	// 被弾リアクション: 硬直中に攻撃を命中させられた分の吹き飛びを積み、専用SEを鳴らす.
+	// (硬直外の通常被弾は既定どおりノーリアクション. 吹き飛び自体はParryReactionステートが消費して動く).
+	void OnDamaged(const HitEvent& Event) override;
+
 private:
 	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration);
 
 	StateMachine<Boss> m_StateMachine;                        // 現在ステートの保持・更新.
 	BossState::eID      m_CurrentStateID = BossState::eID::None;
+
+	// 硬直中ヒットの吹き飛び要求(OnDamagedが設定し、BossState::ParryReactionが消費する. 水平成分のみ使用).
+	DirectX::XMFLOAT3 m_PendingStaggerKnockBack { 0.0f, 0.0f, 0.0f };
 };

@@ -90,9 +90,11 @@ void CombatTuningEditor::Draw()
 	if (ImGui::CollapsingHeader(IMGUI_JP("Player: パリィ/回避")))
 	{
 		CombatTuningData& t = CombatTuning::Get();
-		ImGuiManager::Tweak("パリィ最大持続(s)", t.ParryMaxWaitTime, 0.0f, 5.0f);
-		ImGuiManager::Tweak("回避距離",          t.DodgeDistance, 1.0f, 50.0f);
-		ImGuiManager::Tweak("回避時間(s)",       t.DodgeDuration, 0.05f, 5.0f);
+		ImGuiManager::Tweak("パリィ最大持続(s)",      t.ParryMaxWaitTime, 0.0f, 5.0f);
+		ImGuiManager::Tweak("パリィ時ボス硬直延長(s)", t.ParryStaggerExtraDuration, 0.0f, 2.0f);
+		ImGuiManager::Tweak("硬直ヒット吹き飛び",      t.ParryStaggerKnockBackSpeed, 0.0f, 50.0f);
+		ImGuiManager::Tweak("回避距離",               t.DodgeDistance, 1.0f, 50.0f);
+		ImGuiManager::Tweak("回避時間(s)",            t.DodgeDuration, 0.05f, 5.0f);
 	}
 
 	// ----- 演出 -----

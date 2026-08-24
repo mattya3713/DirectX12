@@ -63,7 +63,11 @@ void CombatCoordinator::OnParrySuccess() noexcept
 	const float boss_to_player_yaw_deg = std::atan2f(nx, nz) * (180.0f / DirectX::XM_PI);
 	const float player_to_boss_yaw_deg = std::atan2f(-nx, -nz) * (180.0f / DirectX::XM_PI);
 
-	m_BossView->EnterParryReaction(boss_pos, boss_to_player_yaw_deg, PARRY_REACTION_DURATION);
+	// Bossの硬直はPlayerの位置合わせ時間より長く保ち、確定で反撃できる時間を作る(パリィ成立の利得).
+	// 延長分はCombat Tuningで調整する(Boss位置は自分の現在位置への補間なので、延長しても留まり続けるだけ).
+	const float boss_stagger_duration = PARRY_REACTION_DURATION + CombatTuning::Get().ParryStaggerExtraDuration;
+
+	m_BossView->EnterParryReaction(boss_pos, boss_to_player_yaw_deg, boss_stagger_duration);
 	m_PlayerView->EnterParryReaction(player_target_pos, player_to_boss_yaw_deg, PARRY_REACTION_DURATION);
 
 	if (CameraManager* p_camera_manager = ServiceLocator::Get<CameraManager>()) {

@@ -48,6 +48,9 @@ void CombatTuning::ClampToValidRange(CombatTuningData& Tuning) noexcept
 	ClampField(Tuning.DodgeDistance,    1.0f, 50.0f);
 	ClampField(Tuning.DodgeDuration,    0.05f, 5.0f);
 
+	ClampField(Tuning.ParryStaggerExtraDuration,  0.0f, 2.0f);
+	ClampField(Tuning.ParryStaggerKnockBackSpeed, 0.0f, 50.0f);
+
 	ClampField(Tuning.HitStopScale,        0.0f, 1.0f);
 	ClampField(Tuning.HitStopDuration,     0.0f, 0.5f);
 	ClampField(Tuning.ParrySlowScale,      0.0f, 1.0f);
@@ -93,6 +96,8 @@ void from_json(const nlohmann::json& Data, CombatTuningData& Tuning)
 	Tuning.ParryMaxWaitTime   = Data.value("ParryMaxWaitTime",   Defaults().ParryMaxWaitTime);
 	Tuning.DodgeDistance      = Data.value("DodgeDistance",      Defaults().DodgeDistance);
 	Tuning.DodgeDuration      = Data.value("DodgeDuration",      Defaults().DodgeDuration);
+	Tuning.ParryStaggerExtraDuration  = Data.value("ParryStaggerExtraDuration",  Defaults().ParryStaggerExtraDuration);
+	Tuning.ParryStaggerKnockBackSpeed = Data.value("ParryStaggerKnockBackSpeed", Defaults().ParryStaggerKnockBackSpeed);
 	Tuning.HitStopScale       = Data.value("HitStopScale",       Defaults().HitStopScale);
 	Tuning.HitStopDuration    = Data.value("HitStopDuration",    Defaults().HitStopDuration);
 	Tuning.ParrySlowScale     = Data.value("ParrySlowScale",     Defaults().ParrySlowScale);
@@ -133,6 +138,8 @@ void to_json(nlohmann::json& Data, const CombatTuningData& Tuning)
 	Data["ParryMaxWaitTime"]   = Tuning.ParryMaxWaitTime;
 	Data["DodgeDistance"]      = Tuning.DodgeDistance;
 	Data["DodgeDuration"]      = Tuning.DodgeDuration;
+	Data["ParryStaggerExtraDuration"]  = Tuning.ParryStaggerExtraDuration;
+	Data["ParryStaggerKnockBackSpeed"] = Tuning.ParryStaggerKnockBackSpeed;
 	Data["HitStopScale"]       = Tuning.HitStopScale;
 	Data["HitStopDuration"]    = Tuning.HitStopDuration;
 	Data["ParrySlowScale"]     = Tuning.ParrySlowScale;
