@@ -531,9 +531,14 @@ void DirectX12::SwitchToDeferredMainList()
 	m_ActiveMainListIndex = DeferredIndex;
 }
 
-// 現在アクティブなメインリストの記録先を返す.
+// 現在の記録先を返す(並列記録中のスレッドは専用リスト、それ以外はアクティブなメインリスト.
+// GetCommandList()と同じ解決規則. RestoreMainRenderTargets()等がワーカースレッドから
+// 呼ばれた際に共有のメインリストへ誤って書き込むのを防ぐため、ここでTLSを見る必要がある).
 ID3D12GraphicsCommandList* DirectX12::CurrentMainCmdList()
 {
+	if (tls_pRecordingParallelCmdList != nullptr) {
+		return tls_pRecordingParallelCmdList;
+	}
 	return m_pCmdLists[m_ActiveMainListIndex].Get();
 }
 
