@@ -1,6 +1,8 @@
 ﻿#include "Boss.h"
 #include <filesystem>
 
+#include <cmath>
+
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/00_Idle/Idle.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/10_Move/Move.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/20_Attack/Attack.h"
@@ -15,7 +17,9 @@
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/24_SpinAttack/SpinAttack.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/30_Dead/Dead.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/40_ParryReaction/ParryReaction.h"
+#include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Event/EventBus.h"
+#include "99_Utility/Debug/Imgui/SoundEventEditor.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
@@ -160,6 +164,8 @@ bool Boss::ActivateDeathRagdoll()
 
 void Boss::EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration)
 {
+	m_PendingStaggerKnockBack = { 0.0f, 0.0f, 0.0f }; // 前回硬直の未消費な吹き飛び要求を持ち越さない.
+
 	m_StateMachine.ChangeState(std::make_shared<BossState::ParryReaction>(this, TargetPosition, TargetYawDeg, Duration));
 	m_CurrentStateID = BossState::eID::ParryReaction;
 }
@@ -199,3 +205,37 @@ void Boss::DrawDebugColliders() const
 	}
 }
 #endif
+
+// 硬直中に攻撃を命中させられた時の「決まった!」演出(通常ヒットより大きく吹き飛び、専用SE. Player::OnDamagedと同じ方向計算).
+void Boss::OnDamaged(const HitEvent& Event)
+{
+	// 硬直中以外はノーリアクション(パリィ成立の利得は硬直中のヒットだけに付く).
+	if (m_CurrentStateID != BossState::eID::ParryReaction) { return; }
+
+	// 吹き飛び方向(接触点から離れる水平方向が最も確実. Normalはフォールバック扱い).
+	DirectX::XMFLOAT3 direction{ 0.0f, 0.0f, 1.0f };
+	{
+		const DirectX::XMFLOAT3 my_pos = GetPosition();
+		const float dir_x = my_pos.x - Event.ContactPoint.x;
+		const float dir_z = my_pos.z - Event.ContactPoint.z;
+		const float length_sq = dir_x * dir_x + dir_z * dir_z;
+
+		if (length_sq > 1e-6f) {
+			const float inv_length = 1.0f / std::sqrtf(length_sq);
+			direction = { dir_x * inv_length, 0.0f, dir_z * inv_length };
+		}
+		else {
+			const float normal_x = -Event.Normal.x;
+			const float normal_z = -Event.Normal.z;
+			const float length = std::sqrtf(normal_x * normal_x + normal_z * normal_z);
+			if (length > 1e-6f) {
+				direction = { normal_x / length, 0.0f, normal_z / length };
+			}
+		}
+	}
+
+	const float speed = CombatTuning::Get().ParryStaggerKnockBackSpeed;
+	m_PendingStaggerKnockBack = { direction.x * speed, 0.0f, direction.z * speed };
+
+	SoundEventEditor::PlayCombatEvent("attack_hit_stagger"); // Sound Eventで定義されていればSE再生.
+}

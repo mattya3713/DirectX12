@@ -68,9 +68,11 @@ namespace CombatTuningRules {
 	inline const std::vector<CombatTuningFieldRule>& ParryDodge()
 	{
 		static const std::vector<CombatTuningFieldRule> fields = {
-			{ "パリィ最大持続(s)", &CombatTuningData::ParryMaxWaitTime, 0.0f,  5.0f  },
-			{ "回避距離",          &CombatTuningData::DodgeDistance,    1.0f,  50.0f },
-			{ "回避時間(s)",       &CombatTuningData::DodgeDuration,    0.05f, 5.0f  },
+			{ "パリィ最大持続(s)",        &CombatTuningData::ParryMaxWaitTime,          0.0f,  5.0f  },
+			{ "パリィ時ボス硬直延長(s)",  &CombatTuningData::ParryStaggerExtraDuration, 0.0f,  2.0f  },
+			{ "硬直ヒット吹き飛び",       &CombatTuningData::ParryStaggerKnockBackSpeed, 0.0f, 50.0f },
+			{ "回避距離",                 &CombatTuningData::DodgeDistance,             1.0f,  50.0f },
+			{ "回避時間(s)",              &CombatTuningData::DodgeDuration,             0.05f, 5.0f  },
 		};
 		return fields;
 	}
