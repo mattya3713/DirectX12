@@ -3,6 +3,10 @@
 #include <cassert>
 #include <cmath>
 #include <filesystem>
+#include <functional>
+#include <system_error>
+#include <thread>
+#include <vector>
 
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
@@ -11,6 +15,9 @@
 #include "10_Ggraphic/30_Asset/RuntimeModel/Mstc/MstcRenderer.h"
 #include "10_Ggraphic/20_Render/Light/DirectionLight.h"
 #include "10_Ggraphic/20_Render/Sprite/SpriteRenderer.h"
+#include "10_Ggraphic/20_Render/Sprite/TextRenderer.h"
+#include "20_Resource/Font/FontLoader.h"
+#include "00_Game/20_UI/UILayoutRuntime.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -24,6 +31,7 @@
 #include "00_Game/50_Input/VirtualPad.h"
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/PlayerAccessKeys.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
 #include "00_Game/50_Enemy/Definition/EnemyDefinitionCatalog.h"
@@ -40,6 +48,10 @@
 #include "99_Utility/Settings/Settings.h"
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "99_Utility/Debug/Imgui/ParticleSystemEditor.h"
+#include "99_Utility/Debug/Imgui/SoundEventEditor.h"
+#include "99_Utility/Async/AsyncModelLoader.h"
+#include "99_Utility/ECS/World.h"
+#include "99_Utility/ECS/SampleComponents.h"
 #include "99_Utility/Debug/PlaytestRecorder.h"
 #include "99_Utility/Debug/Imgui/ModelPreviewPanel.h"
 #include "99_Utility/Debug/Imgui/SceneView.h"
@@ -83,6 +95,7 @@ MainScene::~MainScene()
 	// カットシーンシステム・キャラクターの非所有参照を破棄前に解除する.
 	ServiceLocator::Provide<CutScenePlayer>(nullptr);
 	ServiceLocator::Provide<ParticleSystem>(nullptr);
+	ServiceLocator::Provide<SoundEventEditor>(nullptr);
 	ServiceLocator::Provide<Player>(nullptr);
 	ServiceLocator::Provide<Boss>(nullptr);
 
@@ -94,6 +107,9 @@ MainScene::~MainScene()
 	if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 		p_combat_coordinator->Clear();
 	}
+
+	// 非同期ローダーを停止(残ジョブ処理後にワーカー終了).
+	if (m_upAsyncModels) { m_upAsyncModels->Shutdown(); }
 }
 
 void MainScene::Initialize()
@@ -126,6 +142,7 @@ void MainScene::Create()
 	try {
 		m_pMmdlRenderer = std::make_shared<MmdlRenderer>(*p_dx12);
 		m_upSpriteRenderer = std::make_unique<SpriteRenderer>(*p_dx12);
+		m_upTextRenderer = std::make_unique<TextRenderer>(*m_upSpriteRenderer);
 		m_pMstcRenderer = std::make_shared<MstcRenderer>(*p_dx12);
 	}
 	catch (const std::runtime_error& Msg) {
@@ -136,20 +153,30 @@ void MainScene::Create()
 		_ASSERT_EXPR(false, w_str.c_str());
 	}
 
+	// UI Layoutランタイム(layout.jsonを読み込み、欠損/破損時は既定表示へフォールバック).
+	m_upUILayoutRuntime = std::make_unique<UILayoutRuntime>();
+	if (!m_upUILayoutRuntime->LoadFromJson("Data/Json/UI/layout.json")) {
+		m_upUILayoutRuntime->LoadDefaultLayout();
+	}
+
 	try {
 		m_upPlayer = std::make_unique<Player>();
-		m_upPlayer->AttachMesh(std::make_shared<MMdlMesh>(std::filesystem::path{"Data/Model/mmdl/mskin/player.mskn"}, *m_pMmdlRenderer));
 		Transform player_transform;
 		player_transform.Position = { 0.0f, 0.0f, 0.0f };
 		player_transform.Scale = { 1.36f, 1.36f, 1.36f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upPlayer->SetTransform(player_transform);
 
 		m_upBoss = std::make_unique<Boss>();
-		m_upBoss->AttachMesh(std::make_shared<MMdlMesh>(std::filesystem::path{"Data/Model/mmdl/mskin/boss.mskn"}, *m_pMmdlRenderer));
 		Transform boss_transform;
 		boss_transform.Position = { 0.0f, 0.0f, 8.0f };
 		boss_transform.Scale = { 1.05f, 1.05f, 1.05f }; // モデルサイズ検知パネルで実測し、当たり判定の高さ(2.0)に合わせて調整済み.
 		m_upBoss->SetTransform(boss_transform);
+
+		// モデルは非同期ロード(Updateは継続. CPUパース完了後にメインスレッドでGPU接続).
+		m_upAsyncModels = std::make_unique<AsyncModelLoader>();
+		m_upAsyncModels->Initialize();
+		m_PlayerModelRequest = m_upAsyncModels->Request("Data/Model/mmdl/mskin/player.mskn");
+		m_BossModelRequest   = m_upAsyncModels->Request("Data/Model/mmdl/mskin/boss.mskn");
 
 		if (CombatCoordinator* p_combat_coordinator = ServiceLocator::Get<CombatCoordinator>()) {
 			p_combat_coordinator->Initialize(PlayerCombatView{ *m_upPlayer }, BossCombatView{ *m_upBoss });
@@ -195,6 +222,10 @@ void MainScene::Create()
 
 		m_upParticleEditor = std::make_unique<ParticleSystemEditor>();
 
+		// Sound Event EditorをServiceLocatorへ登録(Combat等からPlayCombatEventで呼べるように).
+		m_upSoundEventEditor = std::make_unique<SoundEventEditor>();
+		ServiceLocator::Provide<SoundEventEditor>(m_upSoundEventEditor.get());
+
 		// Combat調整値のプリセット(Data\Json\Combat\tuning.json)があれば自動読込.
 		m_upCombatTuningEditor = std::make_unique<CombatTuningEditor>();
 		CombatTuning::Load("Data/Json/Combat/tuning.json");
@@ -217,6 +248,11 @@ void MainScene::Update()
 		if (SceneManager* p_scene_manager = ServiceLocator::Get<SceneManager>()) {
 			p_scene_manager->LoadScene(SceneManager::eList::AnimationTuning);
 		}
+	}
+
+	// F7で撃破シーケンスを強制発動する(演出確認用デバッグキー).
+	if (Input::IsKeyDown(VK_F7)) {
+		DebugStartFinisherSequence();
 	}
 
 #endif // _DEBUG.
@@ -318,6 +354,35 @@ void MainScene::Update()
 
 		p_camera_manager->Update();
 
+#if _DEBUG
+		// カメラ入力診断(不具合再現時の状態確認用): アクティブカメラ・入力値・更新実績を毎フレーム表示する.
+		// 「カメラが動かない」報告の切り分け用なので、原因確定後に削除してよい.
+		{
+			static unsigned int s_camera_update_count = 0;
+			++s_camera_update_count;
+
+			if (CameraBase* active_camera = p_camera_manager->GetActive()) {
+				ImGui::Begin("Camera Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+				ImGuiManager::Text(p_camera_manager->GetActiveName().c_str());
+				ImGui::Text("update frames : %u", s_camera_update_count);
+				ImGui::Text("yaw/pitch     : %.1f / %.1f deg",
+					active_camera->GetYaw() * (180.0f / DirectX::XM_PI),
+					active_camera->GetPitch() * (180.0f / DirectX::XM_PI));
+
+				const DirectX::XMFLOAT3& cam_pos = active_camera->GetPosition();
+				ImGui::Text("cam pos       : %.1f, %.1f, %.1f", cam_pos.x, cam_pos.y, cam_pos.z);
+
+				const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
+				ImGui::Text("cursor delta  : %.1f, %.1f", cursor_delta.x, cursor_delta.y);
+				ImGui::Text("center cursor : %s / show %s",
+					Input::IsCenterMouseCursor() ? "ON" : "OFF",
+					Input::IsCursorInWindow() ? "in-window" : "out-window");
+				ImGui::Text("paused        : %s", GameTime::IsPaused() ? "YES" : "no");
+				ImGui::End();
+			}
+		}
+#endif
+
 		// アクティブカメラの行列をDirectX12側へ反映.
 		if (CameraBase* active_camera = p_camera_manager->GetActive()) {
 			const ImVec2 scene_view_size = SceneView::GetContentSize();
@@ -416,8 +481,23 @@ void MainScene::Update()
 		}
 	}
 
+	// 撃破シーケンス基盤(ゲージ加速/成立判定/演出フック). Player/Boss更新後に呼ぶ.
+	TickFinisherSequence();
+
+	// UI Layoutランタイム: HUD要素へゲーム値(HP)を反映する.
+	if (m_upUILayoutRuntime && m_upPlayer && m_upBoss) {
+		UIHudSnapshot snapshot{};
+		snapshot.PlayerHpRatio = m_upPlayer->GetHealth().IsAlive()
+			? (m_upPlayer->GetHealth().GetHP() / std::max(m_upPlayer->GetHealth().GetMaxHP(), 1.0f)) : 0.0f;
+		snapshot.BossHpRatio = m_upBoss->GetHealth().IsAlive()
+			? (m_upBoss->GetHealth().GetHP() / std::max(m_upBoss->GetHealth().GetMaxHP(), 1.0f)) : 0.0f;
+		m_upUILayoutRuntime->BindGameValues(snapshot);
+	}
+
+
 	// カットシーン再生(Player/Boss更新後に呼び、カットシーン側のTransformを優先させる).
-	if (m_upCutScenePlayer && !is_paused && !m_IsGameOver) {
+	// 撃破シーケンス中(Playing)は戦闘停止後も演出側の更新を継続させる.
+	if (m_upCutScenePlayer && !is_paused && (!m_IsGameOver || m_FinisherPhase == FinisherPhase::Playing)) {
 		m_upCutScenePlayer->Update(GameTime::GetDeltaTime());
 	}
 
@@ -425,6 +505,100 @@ void MainScene::Update()
 	if (m_upParticleSystem && !is_paused && !m_IsGameOver) {
 		m_upParticleSystem->Update(GameTime::GetDeltaTime());
 	}
+
+	// 非同期モデルロードの完了取り込み(CPUパース完了→メインスレッドでGPU接続).
+	if (m_upAsyncModels)
+	{
+		auto attach_when_ready = [&](std::shared_ptr<AsyncModelRequest>& request, Character& owner, const char* label) {
+			if (!request || request->GetState() != eModelLoadState::CpuParsed) { return; }
+
+			owner.AttachMesh(std::make_shared<MMdlMesh>(request->GetResource(), *m_pMmdlRenderer));
+			request->MarkGpuAttached();
+
+			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+				p_debug_log->LogInfo(std::string("Async model ready: ") + label);
+			}
+		};
+
+		attach_when_ready(m_PlayerModelRequest, *m_upPlayer, "player");
+		attach_when_ready(m_BossModelRequest,   *m_upBoss,   "boss");
+
+		// 失敗した要求は1回だけログへ出す(DEBUG表示. ゲーム自体は継続).
+		for (std::shared_ptr<AsyncModelRequest>* request : { &m_PlayerModelRequest, &m_BossModelRequest })
+		{
+			if (*request && (*request)->GetState() == eModelLoadState::Failed && !(*request)->IsFailureLogged())
+			{
+				(*request)->SetFailureLogged();
+				if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+					p_debug_log->LogError("Async model load failed: " + (*request)->GetPath().generic_string()
+						+ " / " + (*request)->GetError());
+				}
+			}
+		}
+
+		// ロード状態のDEBUG表示+欠損モデル要求テスト(Failed経路の動作確認用).
+		static std::shared_ptr<AsyncModelRequest> s_FailureTestRequest;
+		ImGui::Begin("Async Model Load", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		auto state_text = [](eModelLoadState s) -> const char* {
+			switch (s) {
+			case eModelLoadState::Loading:   return "Loading";
+			case eModelLoadState::CpuParsed: return "CpuParsed";
+			case eModelLoadState::Ready:     return "Ready";
+			case eModelLoadState::Failed:    return "FAILED";
+			default:                         return "?";
+			}
+		};
+		ImGui::Text("Player: %s", state_text(m_PlayerModelRequest ? m_PlayerModelRequest->GetState() : eModelLoadState::Failed));
+		ImGui::Text("Boss  : %s", state_text(m_BossModelRequest ? m_BossModelRequest->GetState() : eModelLoadState::Failed));
+		if (ImGui::Button(IMGUI_JP("欠損モデル要求テスト"))) {
+			s_FailureTestRequest = m_upAsyncModels->Request("debug_missing/missing.mskn");
+		}
+		if (s_FailureTestRequest) {
+			ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "FailureTest: %s %s",
+				state_text(s_FailureTestRequest->GetState()), s_FailureTestRequest->GetError().c_str());
+		}
+		ImGui::End();
+	}
+
+#if _DEBUG
+	// ECS動作確認サンプル(雑魚敵/Ragdoll移行前の最小構成. 本格移行は別タスク).
+	static ECS::World s_EcsSampleWorld;
+	static bool s_EcsInitialized = false;
+	if (!s_EcsInitialized)
+	{
+		for (int i = 0; i < 3; ++i)
+		{
+			const ECS::Entity entity = s_EcsSampleWorld.CreateEntity();
+			auto& transform = s_EcsSampleWorld.AddComponent<ECS::TransformComponent>(entity);
+			transform.Position = { static_cast<float>(i), 0.0f, 0.0f };
+			s_EcsSampleWorld.AddComponent<ECS::HealthComponent>(entity);
+		}
+
+		// 既存GameObjectからEntityを参照するブリッジサンプル.
+		if (m_upPlayer) {
+			m_upPlayer->SetEntityHandle(s_EcsSampleWorld.CreateEntity());
+		}
+
+		s_EcsSampleWorld.AddSystem("sample_move", [](ECS::World& world, float delta_time) {
+			world.ForEach<ECS::TransformComponent>([delta_time](const ECS::Entity&, ECS::TransformComponent& transform) {
+				transform.Position.x += 0.5f * delta_time;
+			});
+		});
+
+		s_EcsInitialized = true;
+
+		if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
+			p_debug_log->LogInfo("ECS sample: entities=" + std::to_string(s_EcsSampleWorld.GetAliveEntityCount())
+				+ " componentTypes=" + std::to_string(s_EcsSampleWorld.GetComponentTypeCount())
+				+ " systems=" + std::to_string(s_EcsSampleWorld.GetSystemCount()));
+		}
+	}
+
+	if (!is_paused && !m_IsGameOver) {
+		s_EcsSampleWorld.RunSystems(GameTime::GetDeltaTime());
+		s_EcsSampleWorld.FlushDestroyed();
+	}
+#endif
 
 #if _DEBUG
 	// カットシーン編集ツールとテスト再生(デバッグ用ImGui).
@@ -483,6 +657,11 @@ void MainScene::Update()
 	if (m_upParticleEditor) {
 		m_upParticleEditor->Draw();
 	}
+
+	// Sound Event編集ツール(デバッグ用ImGui).
+	if (m_upSoundEventEditor) {
+		m_upSoundEventEditor->Draw();
+	}
 #endif
 
 #if _DEBUG
@@ -527,6 +706,84 @@ void MainScene::Update()
 	ImGui::End();
 #endif
 }
+
+// ===== 撃破シーケンス基盤(演出内容はユーザー実装. ここでは状態遷移とフックのみ扱う) =====
+
+// ゲージ加速・必殺ヒット成立判定・演出開始フックの毎フレーム処理.
+void MainScene::TickFinisherSequence()
+{
+	if (!m_upPlayer || !m_upBoss) { return; }
+
+	const float boss_hp  = m_upBoss->GetHealth().GetHP();
+	const float boss_max = m_upBoss->GetHealth().GetMaxHP();
+
+	if (m_FinisherPhase == FinisherPhase::None && !m_IsGameOver)
+	{
+		// ゲージ加速: Boss HPが20%以下になったら必殺ゲージを自動チャージする(仮値. 2秒で満タン).
+		constexpr float GAUGE_BOOST_HP_RATIO = 0.2f;
+		constexpr float GAUGE_BOOST_RATE     = 0.5f;
+		if (boss_max > 0.0f && boss_hp / boss_max <= GAUGE_BOOST_HP_RATIO) {
+			m_upPlayer->ChargeUltByRatio(GAUGE_BOOST_RATE * GameTime::GetDeltaTime());
+		}
+
+		// 成立判定: 必殺技(仮)がBossへヒットしたフレーム(HPが減少した帧)にゲージ満タンなら撃破成立.
+		if (m_PrevBossHpForFinisher > boss_hp &&
+			m_upPlayer->GetCurrentStateID() == PlayerState::eID::SpecialMove &&
+			m_upPlayer->GetCurrentUltValue() >= m_upPlayer->GetMaxUltValue()) {
+			BeginFinisherSequence();
+		}
+	}
+
+	m_PrevBossHpForFinisher = boss_hp;
+}
+
+// 撃破成立: 戦闘/AI停止+撃破イベント発行+演出開始フック.
+void MainScene::BeginFinisherSequence()
+{
+	if (m_FinisherPhase != FinisherPhase::None) { return; }
+
+	m_FinisherPhase  = FinisherPhase::Playing;
+	m_WinnerIsPlayer = true;
+	m_IsGameOver     = true; // 既存ガードでPlayer/Boss/パーティクルの通常更新を停止させる.
+
+	// 撃破成立: Boss HPを下限無視で0へ.
+	if (m_upBoss) {
+		m_upBoss->ForceKill();
+	}
+
+	// 撃破成立イベント(EventBus購読者へ通知).
+	if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+		if (m_upBoss) { p_event_bus->Publish(BossDefeatedEvent{ m_upBoss.get() }); }
+	}
+
+	// 演出開始フック: カットシーン"Finisher"を再生し、完了時にNotifyFinisherCutsceneFinished()
+	// を呼んでもらう。カットシーン未登録の場合は即座に完了扱いとする(基盤単体でも動作させるため).
+	if (m_upCutScenePlayer && m_upCutScenePlayer->Play("Finisher", [this]() { NotifyFinisherCutsceneFinished(); })) {
+		return; // 再生開始. 完了通知を待つ.
+	}
+
+	NotifyFinisherCutsceneFinished();
+}
+
+// 【演出完了通知API】カットシーン側から呼ばれる(完了→状態区切りとして次状態へ).
+void MainScene::NotifyFinisherCutsceneFinished()
+{
+	if (m_FinisherPhase != FinisherPhase::Playing) { return; }
+
+	// 完了: 以降は既存のWIN表示(Game Result)等の後続処理へ流れる.
+	m_FinisherPhase = FinisherPhase::Completed;
+}
+
+#if _DEBUG
+// デバッグ用強制発動(演出確認用. 正式な発動経路はゲージMAX+ヒット).
+void MainScene::DebugStartFinisherSequence()
+{
+	if (m_FinisherPhase != FinisherPhase::None || !m_upPlayer || !m_upBoss) { return; }
+
+	m_upPlayer->ChargeUltByRatio(1.0f);
+	BeginFinisherSequence();
+}
+#endif
 
 void MainScene::LateUpdate()
 {
@@ -707,13 +964,75 @@ void MainScene::Draw()
 
 	Profiler::Instance().GpuBegin("GPU:Characters");
 
+#if _DEBUG
+	// コライダー登録は並列記録の開始前に済ませる(スロット2のワーカーが登録済みキューを使って記録するため).
 	if (m_upPlayer) {
-		m_upPlayer->Draw();
+		m_upPlayer->DrawDebugColliders();
 	}
 
 	if (m_upBoss) {
-		m_upBoss->Draw();
+		m_upBoss->DrawDebugColliders();
 	}
+
+	for (Enemy* p_enemy : m_pEnemies) {
+		p_enemy->DrawDebugColliders();
+	}
+#endif
+
+	// メインパスのキャラ描画とデバッグコライダーを別スレッドの専用コマンドリストへ並行記録する.
+	// (スロット0=Player/1=Boss/2=コライダー. コライダーだけは後半リストより後ろ・PRESENT遷移より前に実行される.
+	//  各ワーカーは自分のスロットのリスト/アロケータしか触らないため、ディスクリプタヒープへの同時書き込みも発生しない).
+#if _DEBUG
+	constexpr UINT RecorderCount = 3;
+#else
+	constexpr UINT RecorderCount = 2;
+#endif
+
+	const std::function<void()> record_tasks[RecorderCount] = {
+		[this, p_dx12]() // スロット0: Player.
+		{
+			if (!p_dx12->BeginParallelRecording(0)) { return; }
+			m_pMmdlRenderer->BeforDraw();        // PSO/RSはリストごとに独立しているためワーカー側でも設定する.
+			p_dx12->RestoreMainRenderTargets();  // OM/ビューポートも同様(深度クリアは前半リストで済んでいるため行わない).
+			if (m_upPlayer) { m_upPlayer->Draw(); }
+			p_dx12->EndParallelRecording();
+		},
+		[this, p_dx12]() // スロット1: Boss.
+		{
+			if (!p_dx12->BeginParallelRecording(1)) { return; }
+			m_pMmdlRenderer->BeforDraw();
+			p_dx12->RestoreMainRenderTargets();
+			if (m_upBoss) { m_upBoss->Draw(); }
+			p_dx12->EndParallelRecording();
+		},
+#if _DEBUG
+		[p_dx12]() // スロット2: デバッグコライダー(最後に実行されるスロット).
+		{
+			DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>();
+			if (p_collider_renderer == nullptr || !p_dx12->BeginParallelRecording(2)) { return; }
+			p_collider_renderer->Draw();
+			p_dx12->EndParallelRecording();
+		},
+#endif
+	};
+
+	// 全ワーカーの記録完了を待ち合わせる(生成に失敗したぶんはメインスレッドが同じ専用リストへ記録する).
+	std::vector<std::thread> record_threads;
+	UINT spawned_count = 0;
+	try {
+		for (; spawned_count < RecorderCount; ++spawned_count) {
+			record_threads.emplace_back(record_tasks[spawned_count]);
+		}
+	}
+	catch (const std::system_error&) {
+		// スレッド生成失敗時のフォールバック(機能は維持され、記録だけ直列化される).
+	}
+	for (std::thread& th : record_threads) { th.join(); }
+
+	for (; spawned_count < RecorderCount; ++spawned_count) {
+		record_tasks[spawned_count]();
+	}
+	record_threads.clear();
 
 	for (Enemy* p_enemy : m_pEnemies) {
 		p_enemy->Draw();
@@ -721,9 +1040,12 @@ void MainScene::Draw()
 
 	Profiler::Instance().GpuEnd("GPU:Characters");
 
+	// 以降の記録はメインパス後半のリストへ(並列リストはEndDraw()のバッチで後半と終端の間に挟まって実行される).
+	p_dx12->SwitchToDeferredMainList();
+
 	// Sprite2D/Sprite3D描画基盤の動作確認表示(画面端にUIスプライト+Player頭上にビルボード).
 	if (m_upSpriteRenderer) {
-		ID3D12Resource* p_sprite_tex = p_dx12->GetTextureByPath("Data\\Image\\toon01.bmp").Get();
+		ID3D12Resource* p_sprite_tex = p_dx12->GetTextureByPath("Data\\Image\\toon\\toon01.bmp").Get();
 		if (p_sprite_tex) {
 			m_upSpriteRenderer->DrawSprite2D(p_sprite_tex, 40.0f, 40.0f, 128.0f, 128.0f);
 			if (m_upPlayer) {
@@ -734,9 +1056,18 @@ void MainScene::Draw()
 		}
 	}
 
-	// 巻き戻り用にこのフレームの描画結果をリングバッファへ保存する
-	// (ImGuiオーバーレイ前・デバッグコライダー描画前のゲーム描画だけを保存する).
-	p_dx12->CaptureForRewind();
+	// テキスト描画の動作確認(既定フォント+ローカライズ).
+	if (m_upTextRenderer) {
+		const int font_id = FontLoader::GetDefaultFont();
+		m_upTextRenderer->DrawText2D(font_id, "FPS Demo / 日本語テスト", 40.0f, 180.0f, 0.75f);
+		m_upTextRenderer->DrawTextLocalized(font_id, "test_hello", 40.0f, 220.0f, 0.75f);
+	}
+
+	// UI Layoutランタイム(layout.json/既定表示のHUDを描画).
+	// HPの反映はUpdate()のBindGameValues()で済ませてあるため、ここでは描画のみ行う.
+	if (m_upUILayoutRuntime && m_upSpriteRenderer) {
+		m_upUILayoutRuntime->Draw(*m_upSpriteRenderer);
+	}
 
 	// レベル静的オブジェクト(専用パイプラインへ切替て描画).
 	if (!m_LevelActors.empty() && m_pMstcRenderer) {
@@ -754,25 +1085,5 @@ void MainScene::Draw()
 		m_upParticleSystem->Draw();
 	}
 
-#if _DEBUG
-	// コライダー描画は「各キャラが登録→DebugColliderRendererがまとめて描画」の分離方式.
-	// Root Signature/PSOの切替はDebugColliderRenderer::Draw()の1箇所に集約される.
-	if (m_upPlayer) {
-		m_upPlayer->DrawDebugColliders();
-	}
-
-	if (m_upBoss) {
-		m_upBoss->DrawDebugColliders();
-	}
-
-	for (Enemy* p_enemy : m_pEnemies) {
-		p_enemy->DrawDebugColliders();
-	}
-
-	if (DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>()) {
-		Profiler::Instance().GpuBegin("GPU:Colliders");
-		p_collider_renderer->Draw();
-		Profiler::Instance().GpuEnd("GPU:Colliders");
-	}
-#endif
+	// デバッグコライダーは上記スロット2の並列記録へ移動した(全描画の最後に実行される).
 }

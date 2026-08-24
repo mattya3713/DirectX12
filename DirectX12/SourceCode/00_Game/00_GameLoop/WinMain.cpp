@@ -1,5 +1,6 @@
 ﻿#include "Main.h"
 #include <crtdbg.h>	//_ASSERT_EXPR()で必要.
+#include <filesystem>
 #include "99_Utility/Diagnostics/CrashDumpHandler.h"
 
 
@@ -12,6 +13,12 @@ INT WINAPI WinMain(
 	_In_ PSTR lpCmdLine,
 	_In_ INT nCmdShow)
 {
+	wchar_t executable_path[MAX_PATH]{};
+	if (GetModuleFileNameW(nullptr, executable_path, MAX_PATH) != 0)
+	{
+		std::filesystem::current_path(std::filesystem::path(executable_path).parent_path());
+	}
+
 	// 未処理例外時にDumps\へクラッシュダンプを書き出すようにする.
 	Diagnostics::InstallCrashDumpHandler();
 

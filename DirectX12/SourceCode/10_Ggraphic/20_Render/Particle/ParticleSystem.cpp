@@ -102,8 +102,13 @@ bool ParticleSystem::Initialize(ID3D12Device* pDevice)
 	// シェーダーコンパイル.
 	MyComPtr<ID3DBlob> vs_blob(nullptr);
 	MyComPtr<ID3DBlob> ps_blob(nullptr);
+#if _DEBUG
 	if (FAILED(CompileShaderFromFile(L"Data/Shader/Particle/ParticleVS.hlsl", "main", "vs_5_0", vs_blob.GetAddressOf()))) { return false; }
 	if (FAILED(CompileShaderFromFile(L"Data/Shader/Particle/ParticlePS.hlsl", "main", "ps_5_0", ps_blob.GetAddressOf()))) { return false; }
+#else
+	if (FAILED(D3DReadFileToBlob(L"Data/Shader/Particle/ParticleVS.cso", vs_blob.GetAddressOf()))) { return false; }
+	if (FAILED(D3DReadFileToBlob(L"Data/Shader/Particle/ParticlePS.cso", ps_blob.GetAddressOf()))) { return false; }
+#endif
 
 	D3D12_INPUT_ELEMENT_DESC input_layout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },

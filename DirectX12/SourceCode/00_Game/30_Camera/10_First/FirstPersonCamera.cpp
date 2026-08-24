@@ -62,8 +62,8 @@ void FirstPersonCamera::UpdateLook(float DeltaTime)
 
 void FirstPersonCamera::UpdateMove(float DeltaTime)
 {
-	DirectX::XMFLOAT3 forward = GetForward();
-	DirectX::XMFLOAT3 right   = GetRight();
+	DirectX::XMFLOAT3 forward, right;
+	GetBasis(forward, right);
 
 	DirectX::XMVECTOR v_forward = DirectX::XMLoadFloat3(&forward);
 	DirectX::XMVECTOR v_right   = DirectX::XMLoadFloat3(&right);

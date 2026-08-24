@@ -9,7 +9,7 @@ EnemyStateBase::EnemyStateBase(Enemy* pOwner) noexcept
 {
 }
 
-float EnemyStateBase::DistanceToTargetXZ() const noexcept
+float EnemyStateBase::DistanceSqToTargetXZ() const noexcept
 {
 	const DirectX::XMFLOAT3& self_pos   = m_pOwner->GetPosition();
 	const DirectX::XMFLOAT3& target_pos = m_pOwner->GetTargetPos();
@@ -17,7 +17,12 @@ float EnemyStateBase::DistanceToTargetXZ() const noexcept
 	const float dx = target_pos.x - self_pos.x;
 	const float dz = target_pos.z - self_pos.z;
 
-	return std::sqrtf(dx * dx + dz * dz);
+	return dx * dx + dz * dz;
+}
+
+float EnemyStateBase::DistanceToTargetXZ() const noexcept
+{
+	return std::sqrtf(DistanceSqToTargetXZ());
 }
 
 float EnemyStateBase::AngleToTargetDeg() const noexcept

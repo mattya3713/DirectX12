@@ -20,6 +20,8 @@ public:
 	float GetRadius() const noexcept { return m_Radius; }
 	void SetRadius(float Radius) noexcept { m_Radius = Radius; }
 
+	float GetBoundRadius() const noexcept override;
+
 	CollisionInfo CheckCollision(const ColliderBase& Other) const override;
 
 protected:

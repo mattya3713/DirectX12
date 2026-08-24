@@ -70,6 +70,19 @@ DirectX::XMMATRIX CameraBase::GetViewProjMatrix() const noexcept
 	return m_View * m_Proj;
 }
 
+// Forward/Rightを1回の行列生成で両方出す(呼び出し側が2回Getすると行列が2回作っていた).
+// ※TransformのEuler角由来. LookAtで視点を作るカメラはGetForward/GetRightを使うこと.
+void CameraBase::GetBasis(DirectX::XMFLOAT3& Forward, DirectX::XMFLOAT3& Right) const noexcept
+{
+	using namespace DirectX;
+
+	const XMVECTOR v_rotation = XMLoadFloat3(&m_upTransform->Rotation);
+	const XMMATRIX rotation_matrix = XMMatrixRotationRollPitchYawFromVector(v_rotation);
+
+	XMStoreFloat3(&Forward, XMVector3Normalize(rotation_matrix.r[2]));
+	XMStoreFloat3(&Right,   XMVector3Normalize(rotation_matrix.r[0]));
+}
+
 // カメラの前・右方向はTransformのEuler角ではなく「実際のビュー行列」由来で返す.
 // (ThirdPerson/LockOn等はLookAtで視点を作るためRotationを持たない.
 //  Euler由来だと常にワールド固定方向になり、カメラ相対移動が破綻する).

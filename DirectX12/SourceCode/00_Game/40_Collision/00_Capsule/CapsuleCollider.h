@@ -26,6 +26,11 @@ public:
 	DirectX::XMVECTOR GetSegmentStart() const noexcept;
 	DirectX::XMVECTOR GetSegmentEnd() const noexcept;
 
+	// 始点・終点をsin/cos1回でまとめて取得する(判定関数側のホットパス用).
+	void GetSegment(DirectX::XMVECTOR& Start, DirectX::XMVECTOR& End) const noexcept;
+
+	float GetBoundRadius() const noexcept override;
+
 	CollisionInfo CheckCollision(const ColliderBase& Other) const override;
 
 protected:

@@ -52,4 +52,7 @@ private:
 	float                      m_ElapsedTime   = 0.0f;
 	bool                       m_IsPlaying     = false;
 	std::function<void()>      m_OnFinished;
+
+	std::vector<std::string> m_ActiveLoopSoundNames; // ループ再生を開始したSE名(Stop()で個別に止めるため).
+	bool                      m_TargetResolveWarned = false; // SkinMeshターゲット未解決の警告済みフラグ(再生ごとにリセットする).
 };

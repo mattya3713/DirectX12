@@ -66,7 +66,7 @@ public:
 	std::string DuplicateSubtree(const std::string& Id);
 
 	// 根が存在し、全ノードが根から到達可能か.
-	bool IsConnected() const;
+	bool IsConnected() const noexcept;
 
 	// ---- JSON変換 ----
 	nlohmann::json ToJson() const;

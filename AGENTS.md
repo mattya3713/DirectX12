@@ -78,6 +78,15 @@ Ollamaが応答しない場合は `python "C:\Users\green\source\AI\GameProjectA
 `python "C:\Users\green\source\AI\GameProjectAssistant\GameTechnicalDirector\tools\local_worker\production_loop.py" --project-root "C:\Users\green\source\C++\DirectX" ollama-check --ensure` で
 自動起動を試みる（既存プロセスは自動killしない）。
 
+## コメント規約(全ライン共通)
+
+- 最優先基準: 「AI感のない、開発者が自然に残すコメント」。周辺コードの語調・密度に合わせる
+- 教科書調・報告書調・過剰に丁寧な説明、コードを日本語へ翻訳しただけのコメントは書かない
+- 実装経緯や正当化の長文は書かない（履歴はGitへ任せる）
+- 事故防止や保守判断に必要な注意だけ短く残す。
+  良い例: 「GPUが参照中のため、アップロード完了まで解放しない。」
+- 行数制限はない。「半年後の自分に本当に残すか」で判断する
+
 ## Git安全対策
 
 - `git reset --hard` / `git clean -fd` は使用しない

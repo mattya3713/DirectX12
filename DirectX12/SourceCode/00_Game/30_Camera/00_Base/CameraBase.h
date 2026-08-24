@@ -54,6 +54,8 @@ public: // Getter・Setter.
 	DirectX::XMFLOAT3 GetForward() const noexcept;
 	// 右方向ベクトルの取得.
 	DirectX::XMFLOAT3 GetRight() const noexcept;
+	// 前方向・右方向を1回の行列生成でまとめて取得する(毎フレーム両方使う移動計算用).
+	void GetBasis(DirectX::XMFLOAT3& Forward, DirectX::XMFLOAT3& Right) const noexcept;
 
 	// Yawの取得・設定(ラジアン).
 	float GetYaw() const noexcept;

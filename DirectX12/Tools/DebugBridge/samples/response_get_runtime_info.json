@@ -1,0 +1,12 @@
+﻿{
+  "protocolVersion": 1,
+  "type": "response",
+  "id": "req-runtime-info-1",
+  "ok": true,
+  "payload": {
+    "player": { "hp": 100.0, "maxHp": 100.0, "state": "Idle", "combo": 0, "ult": 0.0, "maxUlt": 10000.0 },
+    "boss":   { "hp": 5.0,   "maxHp": 100.0, "state": "Move" },
+    "timeScale": 1.0,
+    "paused": false
+  }
+}

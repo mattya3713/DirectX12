@@ -241,15 +241,14 @@ void DebugColliderRenderer::Draw()
 
 	// 全カプセル分の頂点を1枚の頂点バッファへまとめて書き込み、DrawInstancedは1回だけ発行する
 	// (呼び出しごとに同じバッファへ上書きすると、GPU実行時には最後の内容しか残らず描画が消える).
-	std::vector<LineVertex> vertices;
-	vertices.reserve(static_cast<size_t>(m_PendingCapsules.size()) * CAPSULE_VERTEX_COUNT);
+	// 一時vectorを作らずマップ済みバッファへ直接書く(毎フレームのアロケーション回避).
+	size_t vertex_count = 0;
+	LineVertex* p_vertices = static_cast<LineVertex*>(static_cast<void*>(m_pMappedVertexBuffer));
 	for (const CapsuleRequest& request : m_PendingCapsules)
 	{
-		vertices.resize(vertices.size() + CAPSULE_VERTEX_COUNT);
-		LineVertex* p_out = vertices.data() + (vertices.size() - CAPSULE_VERTEX_COUNT);
-		BuildCapsuleVertices(p_out, request.SegStart, request.SegEnd, request.Radius, request.Color);
+		BuildCapsuleVertices(p_vertices + vertex_count, request.SegStart, request.SegEnd, request.Radius, request.Color);
+		vertex_count += CAPSULE_VERTEX_COUNT;
 	}
-	std::memcpy(m_pMappedVertexBuffer, vertices.data(), vertices.size() * sizeof(LineVertex));
 
 	*m_pMappedConstantBuffer = p_active_camera->GetViewProjMatrix();
 
@@ -259,7 +258,7 @@ void DebugColliderRenderer::Draw()
 	p_command_list->IASetVertexBuffers(0, 1, &m_VertexBufferView);
 	p_command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 	p_command_list->SetGraphicsRootConstantBufferView(0, m_pConstantBuffer->GetGPUVirtualAddress());
-	p_command_list->DrawInstanced(static_cast<UINT>(vertices.size()), 1, 0, 0);
+	p_command_list->DrawInstanced(static_cast<UINT>(vertex_count), 1, 0, 0);
 
 	m_PendingCapsules.clear();
 }

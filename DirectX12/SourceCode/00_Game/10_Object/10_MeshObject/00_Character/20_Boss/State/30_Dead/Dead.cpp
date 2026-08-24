@@ -14,6 +14,9 @@ void Dead::Enter()
 	ApplyNamedClip("boss_die");
 	GetBoss()->SetAttackColliderActive(false);
 	GetBoss()->SetDamageColliderActive(false);
+
+	// Boss撃破時にラグドールを起動する(攻撃判定/AIは既に無効化済み).
+	GetBoss()->ActivateDeathRagdoll();
 }
 
 } // namespace BossState

@@ -375,12 +375,21 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-# AIŠJ”­ƒ[ƒNƒtƒ[(production_loop/local_worker)‚Ìó‘ÔƒfƒBƒŒƒNƒgƒŠ. •p”É‚ÉXV‚³‚ê‚é‚½‚ßgitŠÇ—ŠO.
+# AIï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½Nï¿½tï¿½ï¿½ï¿½[(production_loop/local_worker)ï¿½Ìï¿½Ôƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½. ï¿½pï¿½É‚ÉXï¿½Vï¿½ï¿½ï¿½ï¿½é‚½ï¿½ï¿½gitï¿½Ç—ï¿½ï¿½O.
 .ai-project/
 
-# Playtest Recorder‚Ì‹L˜^CSV(Às¶¬•¨. Œº•)
+# Playtest Recorderï¿½Ì‹Lï¿½^CSV(ï¿½ï¿½ï¿½sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½)
 PlaytestLogs/
 
-# Standalone unit-test artifacts (tests/*.cpp built directly by cl). Not part of the game build.
+# ç”Ÿæˆç‰©ãƒ»ä»–ãƒ©ã‚¤ãƒ³worktreeãƒ»è¨ºæ–­ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é™¤å¤–
+worktrees/
+Dumps/
+Dumps/*.dmp
+DirectX12/Dumps/
+DirectX12/_d_*.txt
+DirectX12/_diag_*.txt
+DirectX12/DirectX12/
+
+# å˜ä½“ãƒ†ã‚¹ãƒˆã®ç”Ÿæˆç‰©(tests/*.cppã¯clã§ç›´æ¥ãƒ“ãƒ«ãƒ‰ã™ã‚‹. ã‚²ãƒ¼ãƒ æœ¬ä½“ã®ãƒ“ãƒ«ãƒ‰å¯¾è±¡å¤–).
 DirectX12/tests/*.exe
 DirectX12/tests/*.json

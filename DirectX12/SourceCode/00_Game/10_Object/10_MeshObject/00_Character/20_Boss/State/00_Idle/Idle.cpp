@@ -16,7 +16,7 @@ void Idle::Enter()
 
 void Idle::Update()
 {
-	if (DistanceToTargetXZ() <= GetBoss()->GetAggroRange())
+	if (DistanceSqToTargetXZ() <= GetBoss()->GetAggroRange() * GetBoss()->GetAggroRange())
 	{
 		GetBoss()->ChangeState(BossState::eID::Move);
 	}

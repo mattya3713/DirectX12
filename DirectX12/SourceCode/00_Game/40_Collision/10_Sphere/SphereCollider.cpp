@@ -1,10 +1,17 @@
 ﻿#include "SphereCollider.h"
 
+#include <cmath>
+
 #include "00_Game/40_Collision/00_Core/CollisionMath.h"
 
 SphereCollider::SphereCollider(const Transform* pOwnerTransform) noexcept
 	: ColliderBase(pOwnerTransform)
 {
+}
+
+float SphereCollider::GetBoundRadius() const noexcept
+{
+	return m_Radius + GetOffsetLength();
 }
 
 CollisionInfo SphereCollider::CheckCollision(const ColliderBase& Other) const

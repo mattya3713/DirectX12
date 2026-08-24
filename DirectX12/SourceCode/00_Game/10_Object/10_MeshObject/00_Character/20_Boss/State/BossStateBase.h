@@ -30,6 +30,8 @@ protected:
 
 	// 自分からターゲット(Player)までの水平距離(XZ平面).
 	float DistanceToTargetXZ() const noexcept;
+	// 距離の2乗(閾値比較用. sqrtを省く).
+	float DistanceSqToTargetXZ() const noexcept;
 
 	// 自分からターゲット(Player)へ向く角度(度. atan2f(x,z)基準、PlayerStateBaseと同じ規約).
 	float AngleToTargetDeg() const noexcept;

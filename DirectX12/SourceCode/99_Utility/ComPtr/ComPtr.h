@@ -67,7 +67,7 @@ public:
     }
 
     // 内部ポインタの取得.
-    T* Get() const { return m_ptr; }
+    T* Get() const noexcept { return m_ptr; }
 
     // ポインタのデリファレンス.
     T& operator*() const { return *m_ptr; }
@@ -89,15 +89,11 @@ public:
     bool operator==(std::nullptr_t) const noexcept { return m_ptr == nullptr; }
     bool operator!=(std::nullptr_t) const noexcept { return m_ptr != nullptr; }
 
-    // 新しいポインタを設定する.
-    void Reset(T* ptr = nullptr) {
-        T* old_ptr = m_ptr;
-
-        m_ptr = ptr;
-
-        if (m_ptr) { m_ptr->AddRef(); }
-
-        if (old_ptr) { old_ptr->Release(); }
+    // 現在のポインタを解放する(本家Microsoft::WRL::ComPtrのReset()と同じく引数無し.
+    // 新しいポインタの所有権を移したい場合はAttach()、AddRefさせたい場合はコピー代入を使うこと).
+    void Reset() noexcept {
+        if (m_ptr) { m_ptr->Release(); }
+        m_ptr = nullptr;
     }
 
     // ポインタを交換する.
@@ -119,10 +115,11 @@ public:
         return m_ptr->QueryInterface(IID_PPV_ARGS(Out.ReleaseAndGetAddressOf()));
     }
 
-    // 内部ポインタのアドレスを取得する.
-    T** GetAddressOf() {
-        if (m_ptr) { m_ptr->Release(); }
-        m_ptr = nullptr; 
+    // 内部ポインタのアドレスを取得する(Release()しない. 本家Microsoft::WRL::ComPtr
+    // と同じ仕様. SetDescriptorHeaps等、既存の値を読み取り専用で渡す入力引数に使う想定.
+    // 出力引数(IID_PPV_ARGS等で新しいポインタを書き込ませたい場合)は
+    // ReleaseAndGetAddressOf()を使うこと).
+    T** GetAddressOf() noexcept {
         return &m_ptr;
     }
 

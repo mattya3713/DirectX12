@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="SourceCode">
@@ -91,11 +91,14 @@
     <ClInclude Include="SourceCode\99_Utility\FileManager\FileManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Sound\SoundManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\ISerializable.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.h" />
+    <ClInclude Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.h" />
     <ClInclude Include="SourceCode\99_Utility\Serialization\SaveLoadManager.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\IEditorCommand.h" />
     <ClInclude Include="Data\Library\json\json.hpp" />
     <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\RenderBatchOrder.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXActor.h" />
@@ -112,6 +115,9 @@
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\20_Render\PostProcess\PostProcessPipeline.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.h" />
+    <ClInclude Include="SourceCode\20_Resource\Font\FontLoader.h" />
+    <ClInclude Include="SourceCode\20_Resource\Font\FontRegistry.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXStructHeader.h" />
     <ClInclude Include="SourceCode\Utility\Debug\Timer\DebugTimer.h" />
     <ClInclude Include="SourceCode\99_Utility\CustomSTL\pair\Pair.h" />
@@ -192,6 +198,9 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Log\DebugLog.h">
       <Filter>SourceCode\99_Utility\Debug\Log</Filter>
     </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\DebugBridge\DebugBridgeServer.h">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.h">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClInclude>
@@ -199,6 +208,7 @@
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ModelPreviewPanel.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneManager.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\00_Base\SceneBase.h" />
+    <ClInclude Include="SourceCode\00_Game\00_Scene\Level\LevelLint.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.h" />
     <ClInclude Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\00_Base\GameObject.h" />
@@ -215,6 +225,14 @@
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\DecoratorNode.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\RootNode.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\20_SpriteObject\SpriteObject.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UIObject.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UISpriteObject.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\30_UIObject\UILayoutModel.h" />
+    <ClInclude Include="SourceCode\00_Game\20_UI\UILayoutRuntime.h">
+      <Filter>SourceCode\00_Game</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\UILayoutEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\BehaviorTree\BTEditorModel.h" />
     <ClInclude Include="SourceCode\99_Utility\HealthSystem\HealthSystem.h" />
     <ClInclude Include="SourceCode\00_Game\40_Collision\00_Core\CollisionInfo.h" />
@@ -240,7 +258,12 @@
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\20_Combat\30_Parry\Parry.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.h" />
-    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.h" />
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.h">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\50_SpecialMove\SpecialMove.h">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClInclude>
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateID.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.h" />
@@ -276,6 +299,10 @@
     <ClInclude Include="SourceCode\00_Game\80_CutScene\CutScenePlayer.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\CutSceneEditor.h" />
     <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\LevelEditor.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\ParticleSystemEditor.h" />
+    <ClInclude Include="SourceCode\99_Utility\Debug\Imgui\SoundEventEditor.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\20_Render\Compute\AsyncComputeDemo.h" />
+    <ClInclude Include="SourceCode\99_Utility\Async\AsyncModelLoader.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\BossCombatView.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\PlayerCombatView.h" />
     <ClInclude Include="Data\Library\ImGui\imgui.h" />
@@ -302,6 +329,8 @@
     <ClCompile Include="SourceCode\99_Utility\FileManager\FileManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Sound\SoundManager.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Serialization\SaveLoadManager.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollDefinition.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Ragdoll\RagdollComponent.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\EditorFramework\EditorCommandStack.cpp" />
     <ClCompile Include="SourceCode\99_Utility\String\FilePath\FilePath.inl" />
     <ClCompile Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.cpp" />
@@ -321,6 +350,9 @@
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Rewind\FrameRewind.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\SpriteRenderer.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\20_Render\PostProcess\PostProcessPipeline.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Sprite\TextRenderer.cpp" />
+    <ClCompile Include="SourceCode\20_Resource\Font\FontLoader.cpp" />
+    <ClCompile Include="SourceCode\20_Resource\Font\FontRegistry.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMXParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\PMDParser.cpp" />
     <ClCompile Include="SourceCode\10_Ggraphic\30_Asset\Parser\XParser.cpp" />
@@ -366,6 +398,9 @@
     <ClCompile Include="SourceCode\99_Utility\Debug\Log\DebugLog.cpp">
       <Filter>SourceCode\99_Utility\Debug\Log</Filter>
     </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\DebugBridge\DebugBridgeServer.cpp">
+      <Filter>SourceCode\99_Utility</Filter>
+    </ClCompile>
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ActionTimelineEditor.cpp">
       <Filter>SourceCode\99_Utility\Debug\Imgui</Filter>
     </ClCompile>
@@ -375,6 +410,13 @@
     <ClCompile Include="SourceCode\00_Game\00_Scene\10_Main\MainScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\00_Scene\Ex_Test\AnimationTuning\AnimationTuningScene.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\00_Base\GameObject.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\20_SpriteObject\SpriteObject.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\30_UIObject\UIObject.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\30_UIObject\UILayoutModel.cpp" />
+    <ClCompile Include="SourceCode\00_Game\20_UI\UILayoutRuntime.cpp">
+      <Filter>SourceCode\00_Game</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\UILayoutEditor.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\MeshObject.cpp" />
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTDemoEnemy.cpp" />
     <ClCompile Include="SourceCode\99_Utility\BehaviorTree\BTEditorModel.cpp" />
@@ -397,7 +439,12 @@
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\20_Combat\30_Parry\Parry.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\Dodge.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\30_Dodge\00_DodgeExecute\DodgeExecute.cpp" />
-    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.cpp" />
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\40_KnockBack\KnockBack.cpp">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClCompile>
+    <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player\State\50_SpecialMove\SpecialMove.cpp">
+      <Filter>SourceCode\00_Game\10_Object\10_MeshObject\00_Character\00_Player</Filter>
+    </ClCompile>
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\Enemy.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\EnemyStateBase.cpp" />
     <ClCompile Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\10_Enemy\State\00_Idle\Idle.cpp" />
@@ -429,6 +476,10 @@
     <ClCompile Include="SourceCode\00_Game\80_CutScene\CutScenePlayer.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\CutSceneEditor.cpp" />
     <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\LevelEditor.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\ParticleSystemEditor.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Debug\Imgui\SoundEventEditor.cpp" />
+    <ClCompile Include="SourceCode\10_Ggraphic\20_Render\Compute\AsyncComputeDemo.cpp" />
+    <ClCompile Include="SourceCode\99_Utility\Async\AsyncModelLoader.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\BossCombatView.cpp" />
     <ClCompile Include="SourceCode\00_Game\60_Combat\PlayerCombatView.cpp" />
     <ClCompile Include="Data\Library\ImGui\imgui.cpp" />

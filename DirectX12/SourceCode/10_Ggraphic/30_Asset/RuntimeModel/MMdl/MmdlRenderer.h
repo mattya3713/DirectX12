@@ -35,7 +35,7 @@ public:
 	// シャドウ深度パスを終了する(シャドウマップをSRV状態へ遷移しメインパスのレンダーターゲットを復帰させる).
 	void EndShadowPass();
 	// シャドウマップテクスチャの取得(Actorがピクセルシェーダー用SRVを作るのに使う. 未初期化時はnullptr).
-	ID3D12Resource* GetShadowMapResource() const { return m_pShadowMap.Get(); }
+	ID3D12Resource* GetShadowMapResource() const noexcept { return m_pShadowMap.Get(); }
 	
 	// デフォルトの透明テクスチャを取得.
 	MyComPtr<ID3D12Resource>& GetAlphaTex();

@@ -75,9 +75,9 @@ void ThirdPersonCamera::Update()
 	float pitch = GetPitch();
 
 	// マウス移動量でターゲットを軸に周回する.
-	// 左Alt押下中はカーソル固定を解除してUI操作できるようにする(回転も停止).
+	// 左Alt押下中・ポーズ中はカーソル固定を解除してUI操作できるようにする(回転も停止).
 	const bool is_alt_held = (GetAsyncKeyState(VK_LMENU) & 0x8000) != 0;
-	if (is_alt_held) {
+	if (is_alt_held || GameTime::IsPaused()) {
 		if (Input::IsCenterMouseCursor()) {
 			Input::SetCenterMouseCursor(false);
 			Input::SetShowCursor(true);
@@ -89,7 +89,7 @@ void ThirdPersonCamera::Update()
 		Input::CenterMouseCursor();
 	}
 
-	if (is_alt_held == false) {
+	if (is_alt_held == false && GameTime::IsPaused() == false) {
 		const DirectX::XMFLOAT2 cursor_delta = Input::GetClientCursorDelta();
 		yaw   += cursor_delta.x * m_MouseRotationSpeed;
 		pitch += cursor_delta.y * m_MouseRotationSpeed;

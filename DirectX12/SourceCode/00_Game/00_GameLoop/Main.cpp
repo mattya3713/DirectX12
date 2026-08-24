@@ -22,6 +22,11 @@
 #include "00_Game/60_Combat/CombatCoordinator.h"
 #include "00_Game/60_Combat/CombatEvents.h"
 #include "99_Utility/Event/EventBus.h"
+#if _DEBUG
+#include "99_Utility/DebugBridge/DebugBridgeServer.h"
+#endif
+#include "00_Game/10_Object/10_MeshObject/00_Character/00_Player/Player.h"
+#include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/Boss.h"
 #include "00_Game/00_Scene/SceneManager.h"
 #if _DEBUG
 #include "10_Ggraphic/20_Render/Debug/DebugColliderRenderer.h"
@@ -106,7 +111,10 @@ HRESULT Main::Create()
 
 	// DirectX12の構築.
     m_pDx12 = std::make_shared<DirectX12>();
-    m_pDx12->Create(m_hWnd);
+    if (!m_pDx12->Create(m_hWnd)) {
+        _ASSERT_EXPR(false, _T("DirectX12の初期化に失敗しました"));
+        return E_FAIL;
+    }
     ServiceLocator::Provide<DirectX12>(m_pDx12.get());
 
 #if _DEBUG
@@ -158,6 +166,33 @@ HRESULT Main::Create()
     m_upEventBus = std::make_unique<EventBus>();
     ServiceLocator::Provide<EventBus>(m_upEventBus.get());
 
+#if _DEBUG
+    // DebugBridgeサーバーを起動(外部EditorとのNamed Pipe通信. _DEBUG限定).
+    m_upDebugBridgeServer = std::make_unique<DebugBridgeServer>();
+    m_upDebugBridgeServer->SetRuntimeInfoResolver([]() -> nlohmann::json {
+        nlohmann::json info{};
+        if (Player* p_player = ServiceLocator::Get<Player>()) {
+            info["player"] = {
+                { "hp", p_player->GetHealth().GetHP() },
+                { "maxHp", p_player->GetHealth().GetMaxHP() },
+                { "stateId", static_cast<int>(p_player->GetCurrentStateID()) }, // State名はCombatDebugHudの対応表参照.
+                { "combo", p_player->GetCombo() },
+            };
+        }
+        if (Boss* p_boss = ServiceLocator::Get<Boss>()) {
+            info["boss"] = {
+                { "hp", p_boss->GetHealth().GetHP() },
+                { "maxHp", p_boss->GetHealth().GetMaxHP() },
+                { "stateId", static_cast<int>(p_boss->GetCurrentStateID()) },
+            };
+        }
+        info["timeScale"] = GameTime::GetTimeScale();
+        info["paused"] = GameTime::IsPaused();
+        return info;
+    });
+    m_upDebugBridgeServer->Start(L"\\\\.\\pipe\\senzan.debugbridge.control.v1");
+#endif
+
     // Combat基礎SEの購読登録(ヒット/パリィ/被弾の3種. Mainと同じアプリ寿命のため解除は不要).
     // NOTE: 音源は暫定の生成プレースホルダー(Data\Sound\SE\*.wav. 著作権的に安全な正式素材への差し替えはユーザー判断).
     if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
@@ -199,6 +234,11 @@ void Main::Update()
     Profiler::ScopedTimer cpu_timer("CPU:Update");
 
 #if _DEBUG
+    // DebugBridge: 受信済み要求を実行し応答を積む(メインスレッド上でのみゲーム状態へ触れる).
+    if (m_upDebugBridgeServer) { m_upDebugBridgeServer->Pump(); }
+#endif
+
+#if _DEBUG
     if (m_upSceneManager && m_upSceneManager->IsAnimationTuningActive()) {
         // ドッキング対象のBegin()より先にホストを提出し、ImGuiのドッキング処理順を保証する.
         DebugDockSpace::Draw();
@@ -235,7 +275,8 @@ void Main::Draw()
 
     // 全体の描画準備.
     // ポストプロセス有効時はシーンをオフスクリーンへ描画し、後段のApply()でバックバッファへ合成する.
-    const bool use_post_process = (m_upPostProcess != nullptr);
+    // 巻き戻り再生中はリングの保存画(既にポストプロセス適用済み)をそのまま出すため、二重掛けを避けて素通しにする.
+    const bool use_post_process = (m_upPostProcess != nullptr) && !m_pDx12->IsRewindActive();
     m_pDx12->BeginDraw(is_editor_scene || use_post_process);
 
     // デバッグHUD(FPS・デルタタイム・カメラ情報)を表示.
@@ -263,6 +304,10 @@ void Main::Draw()
 		m_pDx12->PrepareUIRenderTarget();
 	}
 
+	// 巻き戻り用にこのフレームの最終画(ポストプロセス適用後・ImGuiオーバーレイ前)をリングバッファへ保存する.
+	// バックバッファがRENDER_TARGETで最終画を保持しているこの位置でのみ正しくキャプチャできる.
+	m_pDx12->CaptureForRewind();
+
     // ImGuiの描画コマンドを積む(他の描画がすべて終わった後、EndDraw前).
     Profiler::Instance().GpuBegin("GPU:UI");
     ImGuiManager::Render();
@@ -276,6 +321,15 @@ void Main::Draw()
 // 解放処理.
 void Main::Release()
 {
+#if _DEBUG
+    // 通信スレッドがシーン/サービスへ触れないよう、最初にサーバーだけ停止する
+    // (DebugBridgeServerクラス自体が_DEBUG限定のためガードを揃える).
+    if (m_upDebugBridgeServer) {
+        m_upDebugBridgeServer->Stop();
+        m_upDebugBridgeServer.reset();
+    }
+#endif
+
     // DirectX12/CameraManagerへの参照を各シーンが持ちうるため、それらより先に解放する.
     if (m_upSceneManager) {
         ServiceLocator::Provide<SceneManager>(nullptr);

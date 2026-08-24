@@ -34,6 +34,13 @@ public:
 		float PosX, float PosY, float Width, float Height,
 		const DirectX::XMFLOAT4& Color = { 1.0f, 1.0f, 1.0f, 1.0f });
 
+	// UV矩形を指定して画面座標へ描画する(TextRendererのグリフ描画で使用).
+	void DrawSprite2DUV(
+		ID3D12Resource* pTexture,
+		float PosX, float PosY, float Width, float Height,
+		float U0, float V0, float U1, float V1,
+		const DirectX::XMFLOAT4& Color = { 1.0f, 1.0f, 1.0f, 1.0f });
+
 	// ワールド座標にカメラ向きのビルボード矩形を描画する(深度テスト有り/書き込み無し).
 	void DrawSprite3D(
 		ID3D12Resource* pTexture,

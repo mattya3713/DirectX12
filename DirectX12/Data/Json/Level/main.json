@@ -1,6 +1,18 @@
 {
   "Objects": [
     {
+      "Mstc": "ArenaFloor.mstc",
+      "Position": [0.0, 0.0, 0.0],
+      "RotationDeg": [0.0, 0.0, 0.0],
+      "Scale": [1.0, 1.0, 1.0]
+    },
+    {
+      "Mstc": "ArenaRing.mstc",
+      "Position": [0.0, 0.0, 0.0],
+      "RotationDeg": [0.0, 0.0, 0.0],
+      "Scale": [1.0, 1.0, 1.0]
+    },
+    {
       "Mstc": "Cube.mstc",
       "Position": [4.0, 1.0, 4.0],
       "RotationDeg": [0.0, 45.0, 0.0],

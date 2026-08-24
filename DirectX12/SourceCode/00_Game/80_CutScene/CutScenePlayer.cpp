@@ -41,6 +41,7 @@ bool CutScenePlayer::PlayEvent(const CutSceneEvent& Event, std::function<void()>
 	m_ElapsedTime   = 0.0f;
 	m_IsPlaying     = true;
 	m_OnFinished    = std::move(OnFinished);
+	m_TargetResolveWarned = false; // 新しい再生ごとに警告を出し直せるようにする.
 
 	return true;
 }
@@ -49,6 +50,14 @@ void CutScenePlayer::Stop()
 {
 	m_IsPlaying   = false;
 	m_OnFinished  = nullptr;
+
+	// ループ再生を開始したSEはXAudio2側で自動停止しないため、個別に止める.
+	if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
+		for (const std::string& sound_name : m_ActiveLoopSoundNames) {
+			p_sound_manager->StopLooping(sound_name);
+		}
+	}
+	m_ActiveLoopSoundNames.clear();
 }
 
 void CutScenePlayer::Update(float DeltaTime)
@@ -121,6 +130,7 @@ void CutScenePlayer::BeginTrack(CutSceneTrack& Track)
 		if (Track.SoundName.empty()) { break; }
 		if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
 			p_sound_manager->Play(Track.SoundName, Track.IsLoopSound);
+			if (Track.IsLoopSound) { m_ActiveLoopSoundNames.push_back(Track.SoundName); }
 		}
 		break;
 	}
@@ -144,15 +154,17 @@ void CutScenePlayer::ProcessSkinMeshTrack(CutSceneTrack& Track, float LocalTime)
 	}
 
 	if (p_target == nullptr) {
-		static bool warned = false; // 毎フレーム警告を避ける初回のみ.
-		if (!warned) {
-			warned = true;
+		// 再生ごとに1回だけ警告する(m_TargetResolveWarnedはPlayEvent()でリセットされる).
+		if (!m_TargetResolveWarned) {
+			m_TargetResolveWarned = true;
 			if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>()) {
 				p_debug_log->LogWarning("CutScenePlayer: SkinMeshトラックのターゲットを解決できません: " + Track.TargetKey);
 			}
 		}
 		return;
-	}	// 現在時刻を挟むキーフレーム対を見つけて補間する.
+	}
+
+	// 現在時刻を挟むキーフレーム対を見つけて補間する.
 	const size_t frame_count = Track.Keyframes.size();
 	if (frame_count == 0) { return; }
 

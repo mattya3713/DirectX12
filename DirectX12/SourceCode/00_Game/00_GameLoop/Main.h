@@ -18,6 +18,7 @@ class SoundManager;
 class CollisionDetector;
 class CombatCoordinator;
 class EventBus;
+class DebugBridgeServer;
 class DebugLog;
 #if _DEBUG
 class DebugColliderRenderer;
@@ -75,6 +76,9 @@ private:
 	std::unique_ptr<CollisionDetector> m_upCollisionDetector; // 当たり判定検出器.
 	std::unique_ptr<CombatCoordinator> m_upCombatCoordinator; // 戦闘演出の仲介役(Player/Bossの実体はシーン側がInitialize()で渡す).
 	std::unique_ptr<EventBus>          m_upEventBus;          // 汎用イベントバス(Publish/Subscribe).
+#if _DEBUG
+	std::unique_ptr<DebugBridgeServer> m_upDebugBridgeServer; // DebugBridgeサーバー(_DEBUG限定. 外部EditorとのNamed Pipe通信).
+#endif
 #if _DEBUG
 	std::unique_ptr<DebugColliderRenderer> m_upDebugColliderRenderer; // 当たり判定コライダーのワイヤーフレーム描画(Debugビルドのみ).
 #endif

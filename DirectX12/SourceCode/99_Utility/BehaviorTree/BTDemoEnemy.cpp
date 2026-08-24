@@ -119,7 +119,7 @@ NodeStatus BTDemoEnemy::TickAttack()
 	// 完了したらFSMのAttackと同じく、ロスト範囲内ならChase、範囲外ならIdleへ復帰する.
 	if (m_AttackElapsed >= ATTACK_TOTAL_TIME)
 	{
-		ChangePhase(DistanceToTargetXZ() <= LOSE_RANGE ? ePhase::Chase : ePhase::Idle);
+		ChangePhase(DistanceSqToTargetXZ() <= LOSE_RANGE * LOSE_RANGE ? ePhase::Chase : ePhase::Idle);
 
 		return NodeStatus::Success;
 	}
@@ -129,27 +129,27 @@ NodeStatus BTDemoEnemy::TickAttack()
 
 NodeStatus BTDemoEnemy::CondInAttackRange()
 {
-	return DistanceToTargetXZ() <= ATTACK_RANGE ? NodeStatus::Success : NodeStatus::Failure;
+	return DistanceSqToTargetXZ() <= ATTACK_RANGE * ATTACK_RANGE ? NodeStatus::Success : NodeStatus::Failure;
 }
 
 NodeStatus BTDemoEnemy::CondCanChase()
 {
 	// FSMはIdleからの再索敵が索敵範囲、Chase継続判定がロスト範囲という
 	// ヒステリシスを持つため、それを現在フェーズ込みの条件で再現する.
-	const float distance = DistanceToTargetXZ();
+	const float distance_sq = DistanceSqToTargetXZ();
 
-	if (distance <= AGGRO_RANGE) { return NodeStatus::Success; }
-	if (m_Phase == ePhase::Chase && distance <= LOSE_RANGE) { return NodeStatus::Success; }
+	if (distance_sq <= AGGRO_RANGE * AGGRO_RANGE) { return NodeStatus::Success; }
+	if (m_Phase == ePhase::Chase && distance_sq <= LOSE_RANGE * LOSE_RANGE) { return NodeStatus::Success; }
 
 	return NodeStatus::Failure;
 }
 
-float BTDemoEnemy::DistanceToTargetXZ() const noexcept
+float BTDemoEnemy::DistanceSqToTargetXZ() const noexcept
 {
 	const float dx = m_TargetPos.x - m_Position.x;
 	const float dz = m_TargetPos.z - m_Position.z;
 
-	return std::sqrtf(dx * dx + dz * dz);
+	return dx * dx + dz * dz;
 }
 
 float BTDemoEnemy::AngleToTargetDeg() const noexcept

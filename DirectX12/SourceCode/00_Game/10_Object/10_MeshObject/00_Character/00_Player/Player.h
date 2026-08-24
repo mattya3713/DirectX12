@@ -73,6 +73,10 @@ public: // Getter・Setter.
 	void AddUltValue(float Amount, PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = std::clamp(m_CurrentUltValue + Amount, 0.0f, m_MaxUltValue); }
 	void ResetUltValue(PlayerAccess::ComboEconomyKey) noexcept { m_CurrentUltValue = 0.0f; }
 
+	// 【撃破シーケンス】Boss瀕死時の必殺ゲージ自動チャージ(MainSceneから呼ぶ. 最大値に対する割合で加算).
+	// Passkeyを要求しない公開窓口(ゲーム進行システムからの加算専用. 通常の加算はComboEconomyKey経由).
+	void ChargeUltByRatio(float MaxRatio) noexcept { m_CurrentUltValue = std::clamp(m_CurrentUltValue + m_MaxUltValue * MaxRatio, 0.0f, m_MaxUltValue); }
+
 	// リアクション目標が設定されているか(PlayerState::Parryが毎フレーム確認する).
 	bool HasParryReactionTarget() const noexcept { return m_HasParryReactionTarget; }
 	const DirectX::XMFLOAT3& GetParryReactionTargetPos() const noexcept { return m_ParryReactionTargetPos; }
@@ -133,9 +137,9 @@ private:
 	PlayerState::eID     m_CurrentStateID = PlayerState::eID::None;	// 現在ステートID(デバッグ表示用).
 	std::uint32_t        m_LastParriedActivationId = 0;	// 直前にパリィ成立した攻撃の有効化ID(0=なし).
 	std::map<const ColliderBase*, std::uint32_t> m_ProcessedHitAttackIds;	// 相手コライダーごとに最後にヒット判定した攻撃の有効化ID(同一スイングの重複加算防止).
-#if _DEBUG
-	float m_ModelFrontOffsetDeg = 180.0f;	// モデル正面軸のズレ補正角(度). player.msknは-Z正面のため既定で180.
-#endif
+	// モデル正面軸のズレ補正角(度). player.msknは-Z正面のため既定で180.
+	// 描画時の向き補正はReleaseでも必要なため、調整用のGetter/SetterのみDEBUG限定にしてメンバは常に持つ.
+	float m_ModelFrontOffsetDeg = 180.0f;
 
 	int   m_Combo           = 0;		// 現在のコンボ数.
 	float m_CurrentUltValue = 0.0f;	// 必殺ゲージ(現在値).

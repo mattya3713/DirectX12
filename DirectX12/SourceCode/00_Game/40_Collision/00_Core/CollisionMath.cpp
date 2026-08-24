@@ -16,10 +16,9 @@ CollisionInfo TestCapsuleVsCapsule(const CapsuleCollider& A, const CapsuleCollid
 
 	CollisionInfo info{};
 
-	const XMVECTOR p1 = A.GetSegmentStart();
-	const XMVECTOR p2 = A.GetSegmentEnd();
-	const XMVECTOR q1 = B.GetSegmentStart();
-	const XMVECTOR q2 = B.GetSegmentEnd();
+	XMVECTOR p1, p2, q1, q2;
+	A.GetSegment(p1, p2);
+	B.GetSegment(q1, q2);
 
 	// 線分P(A側)と線分Q(B側)の最短点を求める(Closest Point Segment-Segment).
 	const XMVECTOR r = XMVectorSubtract(p2, p1);
@@ -90,8 +89,8 @@ CollisionInfo TestCapsuleVsSphere(const CapsuleCollider& Capsule, const SphereCo
 
 	CollisionInfo info{};
 
-	const XMVECTOR p1 = Capsule.GetSegmentStart();
-	const XMVECTOR p2 = Capsule.GetSegmentEnd();
+	XMVECTOR p1, p2;
+	Capsule.GetSegment(p1, p2);
 
 	const XMFLOAT3 sphere_position = Sphere.GetPosition();
 	const XMVECTOR q = XMLoadFloat3(&sphere_position);
@@ -186,10 +185,9 @@ CollisionInfo TestBoxVsBox(const BoxCollider& A, const BoxCollider& B)
 	const float half_ax = size_a.x * 0.5f, half_ay = size_a.y * 0.5f, half_az = size_a.z * 0.5f;
 	const float half_bx = size_b.x * 0.5f, half_by = size_b.y * 0.5f, half_bz = size_b.z * 0.5f;
 
-	const XMVECTOR axis_ax = A.GetLocalAxisX();
-	const XMVECTOR axis_az = A.GetLocalAxisZ();
-	const XMVECTOR axis_bx = B.GetLocalAxisX();
-	const XMVECTOR axis_bz = B.GetLocalAxisZ();
+	XMVECTOR axis_ax, axis_az, axis_bx, axis_bz;
+	A.GetLocalAxes(axis_ax, axis_az);
+	B.GetLocalAxes(axis_bx, axis_bz);
 	const XMVECTOR axis_y  = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // Yaw回転のみのため両者共通.
 
 	// 分離軸判定(SAT). BoxはYawのみで回転するため、必要な分離軸はY軸とお互いのX/Z軸の
@@ -247,8 +245,8 @@ CollisionInfo TestBoxVsSphere(const BoxCollider& Box, const SphereCollider& Sphe
 	const XMFLOAT3 sphere_pos = Sphere.GetPosition();
 	const XMVECTOR v_sphere_center = XMLoadFloat3(&sphere_pos);
 
-	const XMVECTOR axis_x = Box.GetLocalAxisX();
-	const XMVECTOR axis_z = Box.GetLocalAxisZ();
+	XMVECTOR axis_x, axis_z;
+	Box.GetLocalAxes(axis_x, axis_z);
 	const XMFLOAT3& size  = Box.GetSize();
 
 	const XMVECTOR to_sphere = XMVectorSubtract(v_sphere_center, v_box_center);
@@ -296,15 +294,15 @@ CollisionInfo TestBoxVsCapsule(const BoxCollider& Box, const CapsuleCollider& Ca
 	// 持ち主のYawでしか回転しないため、鉛直方向のオフセットは常に鉛直のまま).
 	// これを利用し、水平面(XZ)は「半径Radiusの円 vs Box」、高さ(Y)は区間の重なりとして
 	// 分けて判定する(一般的な線分 vs OBBのSATを実装するより単純かつこの用途では正確).
-	const XMVECTOR p1 = Capsule.GetSegmentStart();
-	const XMVECTOR p2 = Capsule.GetSegmentEnd();
+	XMVECTOR p1, p2;
+	Capsule.GetSegment(p1, p2);
 	const float radius = Capsule.GetRadius();
 
 	const XMFLOAT3 box_pos = Box.GetPosition();
 	const XMVECTOR v_box_center = XMLoadFloat3(&box_pos);
 
-	const XMVECTOR axis_x = Box.GetLocalAxisX();
-	const XMVECTOR axis_z = Box.GetLocalAxisZ();
+	XMVECTOR axis_x, axis_z;
+	Box.GetLocalAxes(axis_x, axis_z);
 	const XMFLOAT3& size  = Box.GetSize();
 	const float half_y = size.y * 0.5f;
 

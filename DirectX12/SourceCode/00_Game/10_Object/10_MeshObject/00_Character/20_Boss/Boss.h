@@ -2,6 +2,7 @@
 
 #include "00_Game/10_Object/10_MeshObject/00_Character/10_Enemy/Enemy.h"
 #include "00_Game/10_Object/10_MeshObject/00_Character/20_Boss/State/BossStateID.h"
+#include "99_Utility/Ragdoll/RagdollComponent.h"
 #include "99_Utility/StateMachine/StateMachine.h"
 
 class BossCombatView;
@@ -42,9 +43,40 @@ public:
 	// 現在ステートIDの取得(デバッグ表示等、外部からの参照用).
 	BossState::eID GetCurrentStateID() const noexcept { return m_CurrentStateID; }
 
+
+	bool ActivateDeathRagdoll();
+
+	RagdollComponent& GetRagdoll() noexcept { return m_Ragdoll; }
+	const RagdollComponent& GetRagdoll() const noexcept { return m_Ragdoll; }
+
+#if _DEBUG
+	// ラグドール中のボディとJointをワイヤー表示する.
+	void DrawDebugColliders() const override;
+#endif
+
+	// 必殺撃破成立用: HP下限を無視してHPを0へ直接設定する(撃破シーケンス基盤から呼ぶ).
+	void ForceKill();
+
+	// 硬直中のヒットで積まれた吹き飛び要求を取り出して消す(BossState::ParryReactionが消費する).
+	DirectX::XMFLOAT3 ConsumePendingStaggerKnockBack() noexcept
+	{
+		const DirectX::XMFLOAT3 velocity = m_PendingStaggerKnockBack;
+		m_PendingStaggerKnockBack = { 0.0f, 0.0f, 0.0f };
+		return velocity;
+	}
+
+protected:
+	// 被弾リアクション: 硬直中に攻撃を命中させられた分の吹き飛びを積み、専用SEを鳴らす.
+	// (硬直外の通常被弾は既定どおりノーリアクション. 吹き飛び自体はParryReactionステートが消費して動く).
+	void OnDamaged(const HitEvent& Event) override;
+
 private:
 	void EnterParryReaction(const DirectX::XMFLOAT3& TargetPosition, float TargetYawDeg, float Duration);
 
+	RagdollComponent m_Ragdoll; // 死亡時ラグドール.
 	StateMachine<Boss> m_StateMachine;                        // 現在ステートの保持・更新.
 	BossState::eID      m_CurrentStateID = BossState::eID::None;
+
+	// 硬直中ヒットの吹き飛び要求(OnDamagedが設定し、BossState::ParryReactionが消費する. 水平成分のみ使用).
+	DirectX::XMFLOAT3 m_PendingStaggerKnockBack { 0.0f, 0.0f, 0.0f };
 };

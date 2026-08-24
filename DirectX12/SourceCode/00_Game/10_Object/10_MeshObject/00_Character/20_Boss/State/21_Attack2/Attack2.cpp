@@ -41,7 +41,7 @@ void Attack2::Update()
 
 	if (m_ElapsedTime >= windup + active + recovery)
 	{
-		const bool target_in_range = DistanceToTargetXZ() <= GetBoss()->GetLoseRange();
+		const bool target_in_range = DistanceSqToTargetXZ() <= GetBoss()->GetLoseRange() * GetBoss()->GetLoseRange();
 		GetBoss()->ChangeState(target_in_range ? BossState::eID::Move : BossState::eID::Idle);
 	}
 }

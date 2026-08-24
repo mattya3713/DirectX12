@@ -3,6 +3,7 @@
 #if _DEBUG
 
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -180,6 +181,11 @@ bool PlaytestRecorder::SaveToCsv()
 {
 	const std::string path = MakeSavePath();
 
+	// 保存先ディレクトリは実行時に生成されるため初回保存前に作る(ofstreamはディレクトリを作らない).
+	std::error_code error;
+	std::filesystem::create_directories(std::filesystem::path(path).parent_path(), error);
+	if (error) { return false; }
+
 	std::ofstream file(path);
 	if (!file.is_open())
 	{
@@ -222,7 +228,8 @@ void PlaytestRecorder::DrawImGui()
 	ImGui::Separator();
 
 	// イベント履歴(直近100件. State遷移とHP変化を追える).
-	ImGui::BeginChild("events", ImVec2(0.0f, 200.0f), ImGuiWindowFlags_HorizontalScrollbar);
+	// NOTE: BeginChildの第3引数はImGuiChildFlags. WindowFlagsは第4引数へ(誤渡しするとアサート).
+	ImGui::BeginChild("events", ImVec2(0.0f, 200.0f), ImGuiChildFlags_Border, ImGuiWindowFlags_HorizontalScrollbar);
 	for (auto it = m_Events.rbegin(); it != m_Events.rend(); ++it)
 	{
 		ImGui::TextUnformatted(it->c_str());

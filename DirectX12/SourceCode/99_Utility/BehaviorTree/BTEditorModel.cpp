@@ -213,7 +213,7 @@ std::string BTTreeModel::DuplicateSubtree(const std::string& Id)
 	return new_root_id;
 }
 
-bool BTTreeModel::IsConnected() const
+bool BTTreeModel::IsConnected() const noexcept
 {
 	return BTValidateModel(*this).empty();
 }

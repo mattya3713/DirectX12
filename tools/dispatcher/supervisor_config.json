@@ -1,0 +1,48 @@
+{
+  "_comment": "Integration Supervisor設定。このファイルは.ai-project/dispatcher/へ配置して使う(ソースはdispatcher専用worktreeのtools/dispatcher/が正)。パスはこのファイルからの相対。stable基準を変えるときはSTABLE_BASELINE.mdの確認後にbranchとcommitを更新すること。",
+  "repo_root": "../..",
+  "design_dir": "../../.ai-project/design",
+  "state_file": "../../.ai-project/dispatcher/dispatcher_state.json",
+  "log_file": "../../.ai-project/dispatcher/supervisor.log",
+  "manifest_dir": "../../.ai-project/dispatcher/manifests",
+  "dispatcher_dir": "../../.ai-project/dispatcher",
+
+  "stable_branch": "stable-20260824",
+  "stable_commit": "abae12714104291619997b4c157d50ad11cb8b86",
+  "fetch_before_sync": false,
+  "merge_timeout_sec": 600,
+
+  "build": {
+    "command": [
+      "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+      "-File", "DirectX12/scripts/build.ps1",
+      "-Configuration", "Debug", "-Platform", "x64"
+    ],
+    "timeout_sec": 1800,
+    "zero_warnings_required": true
+  },
+
+  "smoke": {
+    "exe_path": "DirectX12/x64/Debug/DirectX12.exe",
+    "launch_command": null,
+    "cwd_relative": "DirectX12",
+    "min_alive_seconds": 10,
+    "poll_interval_seconds": 0.5,
+    "dump_dirs": ["Dumps", "DirectX12/Dumps"]
+  },
+
+  "launch": {
+    "enabled": true
+  },
+
+  "worktrees": {
+    "seiryu":   { "path": "../../worktrees/seiryu" },
+    "suzaku":   { "path": "../../worktrees/suzaku" },
+    "byakko":   { "path": "../../worktrees/byakko" },
+    "genbu":    { "path": "../../worktrees/genbu" },
+    "kouryuu":  { "path": "C:/Users/green/source/C++/worktrees/kouryuu" },
+    "line7":    { "path": "../../worktrees/line7" },
+    "line8":    { "path": "../../worktrees/line8" },
+    "dispatcher": { "path": "../../worktrees/dispatcher" }
+  }
+}

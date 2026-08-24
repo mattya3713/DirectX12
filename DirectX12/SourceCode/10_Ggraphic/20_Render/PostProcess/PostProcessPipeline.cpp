@@ -257,6 +257,19 @@ void PostProcessPipeline::Apply()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srv_blur_b(srv_cpu);  srv_blur_b.Offset(3, srv_size);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE srv_white(srv_cpu);   srv_white.Offset(4, srv_size);
 
+	// 中間ターゲット(bright/blurA/blurB)のSRV.
+	// これを作らないとPass2以降が未初期化ディスクリプタをサンプルしてGPUフォルト→デバイスロストになる.
+	MyComPtr<ID3D12Resource>* const intermediates[3] = { &m_pBrightTexture, &m_pBlurTempA, &m_pBlurTempB };
+	const CD3DX12_CPU_DESCRIPTOR_HANDLE intermediate_srvs[3] = { srv_bright, srv_blur_a, srv_blur_b };
+	for (int i = 0; i < 3; ++i)
+	{
+		ID3D12Resource* const p_target = intermediates[i]->Get();
+		if (!p_target) { continue; }
+		srv_desc.Format              = p_target->GetDesc().Format;
+		srv_desc.Texture2D.MipLevels = 1; // 中間ターゲットはミップ無しで作成している.
+		p_device->CreateShaderResourceView(p_target, &srv_desc, intermediate_srvs[i]);
+	}
+
 	// 白テクスチャのSRV(未使用スロットのダミー. 毎フレーム再作成で寿命問題を回避).
 	srv_desc.Format              = m_pWhiteTex->GetDesc().Format;
 	srv_desc.Texture2D.MipLevels = m_pWhiteTex->GetDesc().MipLevels;
@@ -274,7 +287,11 @@ void PostProcessPipeline::Apply()
 
 	// ===== 共通ステート =====
 	cmd_list->SetGraphicsRootSignature(m_pRootSignature.Get());
-	cmd_list->SetDescriptorHeaps(1, m_pSrvHeap.GetAddressOf());
+	// MyComPtr::GetAddressOf()は中身をReleaseしてnullptrにする実装(標準のComPtrと挙動が違う)ため、
+	// 読み取り目的でここへ渡すとSRVヒープが解放されて以降のGetGPUDescriptorHandleForHeapStart()が落ちる.
+	// 他の描画クラスと同じく、ローカル配列にGet()した生ポインタを載せて渡す.
+	ID3D12DescriptorHeap* pp_heaps[] = { m_pSrvHeap.Get() };
+	cmd_list->SetDescriptorHeaps(_countof(pp_heaps), pp_heaps);
 	cmd_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	const float texel_w = 1.0f / static_cast<float>(m_TargetWidth);
@@ -316,42 +333,61 @@ void PostProcessPipeline::Apply()
 
 	// ===== Pass 1: 輝度抽出(シーン→bright) =====
 	{
+		// 中間ターゲットはPIXEL_SHADER_RESOURCE状態で保持しているため、書き込む直前にRTへ遷移させる
+		// (この遷移が無いままRTVとして描くと、後段の「RENDER_TARGETから戻す」バリアと状態が食い違う).
+		const auto to_rt = CD3DX12_RESOURCE_BARRIER::Transition(m_pBrightTexture.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmd_list->ResourceBarrier(1, &to_rt);
+
 		CD3DX12_CPU_DESCRIPTOR_HANDLE bright_rtv(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
 		begin_pass(m_pBrightExtractPso.Get(), bright_rtv, m_TargetWidth, m_TargetHeight,
 			gpu_scene, gpu_white, m_Threshold, 0.0f, 0.0f, 0.0f);
 	}
 
-	// ===== Pass 2: ガウシアンブラー水平(bright→blurA) =====
-	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE a_rtv(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
-		a_rtv.Offset(rtv_size);
-		begin_pass(m_pBlurPso.Get(), a_rtv, m_TargetWidth, m_TargetHeight,
-			gpu_bright, gpu_white, 1.0f * kBlurRadiusScale, 0.0f, 1.0f, 0.0f);
-	}
-
-	// brightは以後未使用のためSRVへ戻す(次フレームの初期状態に合わせる).
+	// 次のパスがbrightをサンプルするため、書き終えた直後にSRVへ戻す
+	// (書き込み対象のまま読むと同一リソースがRTVとSRVで同時バインドされ、GPUフォルトになる).
 	{
 		const auto to_srv = CD3DX12_RESOURCE_BARRIER::Transition(m_pBrightTexture.Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		cmd_list->ResourceBarrier(1, &to_srv);
 	}
 
+	// ===== Pass 2: ガウシアンブラー水平(bright→blurA) =====
+	{
+		const auto to_rt = CD3DX12_RESOURCE_BARRIER::Transition(m_pBlurTempA.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmd_list->ResourceBarrier(1, &to_rt);
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE a_rtv(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
+		a_rtv.Offset(rtv_size);
+		begin_pass(m_pBlurPso.Get(), a_rtv, m_TargetWidth, m_TargetHeight,
+			gpu_bright, gpu_white, 1.0f * kBlurRadiusScale, 0.0f, 1.0f, 0.0f);
+	}
+
+	// Pass3がblurAをサンプルするためSRVへ戻す.
+	{
+		const auto to_srv = CD3DX12_RESOURCE_BARRIER::Transition(m_pBlurTempA.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		cmd_list->ResourceBarrier(1, &to_srv);
+	}
+
 	// ===== Pass 3: ガウシアンブラー垂直(blurA→blurB) =====
 	{
+		const auto to_rt = CD3DX12_RESOURCE_BARRIER::Transition(m_pBlurTempB.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmd_list->ResourceBarrier(1, &to_rt);
+
 		CD3DX12_CPU_DESCRIPTOR_HANDLE b_rtv(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
 		b_rtv.Offset(rtv_size * 2);
 		begin_pass(m_pBlurPso.Get(), b_rtv, m_TargetWidth, m_TargetHeight,
 			gpu_blur_a, gpu_white, 0.0f, 1.0f * kBlurRadiusScale, 0.0f, 1.0f);
 	}
 
-	// blurA/blurBを次フレームの初期状態(SRV)へ戻す.
+	// Pass4がblurBをサンプルするためSRVへ戻す(これで3枚とも次フレーム開始時の状態に揃う).
 	{
-		const auto to_srv_a = CD3DX12_RESOURCE_BARRIER::Transition(m_pBlurTempA.Get(),
+		const auto to_srv = CD3DX12_RESOURCE_BARRIER::Transition(m_pBlurTempB.Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		const auto to_srv_b = CD3DX12_RESOURCE_BARRIER::Transition(m_pBlurTempB.Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		D3D12_RESOURCE_BARRIER barriers[2] = { to_srv_a, to_srv_b };
-		cmd_list->ResourceBarrier(2, barriers);
+		cmd_list->ResourceBarrier(1, &to_srv);
 	}
 
 	// ===== Pass 4: 合成(シーン+Bloom→バックバッファ) =====

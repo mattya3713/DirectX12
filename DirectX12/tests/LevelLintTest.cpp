@@ -1,16 +1,15 @@
 ﻿// LevelLint単体テスト(スタンドアロン. ゲーム本体には含まれない).
-// ビルド方法: cl /nologo /EHsc /std:c++20 /W4 /utf-8 /I Data\Library /I SourceCode tests\LevelLintTest.cpp /Fe:tests\LevelLintTest.exe
+// ビルド方法: cl /nologo /EHsc /std:c++20 /utf-8 /W4 /I SourceCode /I Data\Library tests\LevelLintTest.cpp /Fe:tests\LevelLintTest.exe
 //
 // 確認内容:
 // 1. 正常JSONは問題なし(Issues空)
-// 2. 壊れたJSON/非オブジェクトルート/表現不能な数値はError
-// 3. 未知敵ID・重複InstanceName・負Scale・遠距離座標・ID欠損はWarning/Errorで検出
+// 2. 構文エラー・ファイル欠損はErrorとして報告
+// 3. 必須フィールド欠損/未知敵ID/不正TransformはError
+// 4. 重複InstanceName/負Scale/遠い座標はWarning
 
-#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <string>
 
 #include "../SourceCode/00_Game/00_Scene/Level/LevelLint.h"
 
@@ -35,100 +34,115 @@ namespace {
 		file << Text;
 	}
 
-	bool HasWarningWith(const LevelLintResult& Result, const std::string& Keyword)
+	bool HasIssue(const LevelLintReport& Report, bool IsError, const std::string& PathPart)
 	{
-		for (const LevelLintIssue& issue : Result.Issues)
+		for (const LevelLintIssue& issue : Report.Issues)
 		{
-			if (issue.Severity == LevelLintIssue::Severity::Warning &&
-				issue.Message.find(Keyword) != std::string::npos)
-			{
-				return true;
-			}
+			if (issue.IsError == IsError && issue.Path.find(PathPart) != std::string::npos) { return true; }
 		}
 		return false;
 	}
 
-}
+} // namespace
 
 int main()
 {
-	const std::filesystem::path definitions_json = "LevelLintTest_definitions.json";
-	const std::filesystem::path level_json       = "LevelLintTest_level.json";
-	const std::filesystem::path broken_json      = "LevelLintTest_broken.json";
+	const std::filesystem::path lint_json = "LevelLintTest.json";
+	const std::filesystem::path broken_json = "LevelLintTest_broken.json";
+	const std::filesystem::path mstc_dir = "LevelLintTest_mstc";
 
-	{
-		std::ofstream file(definitions_json);
-		file << R"([
-			{"Id": "goblin",      "DisplayName": "Goblin",     "MaxHP": 40, "MoveSpeed": 3.0},
-			{"Id": "goblin_fast", "DisplayName": "FastGoblin", "MaxHP": 20, "MoveSpeed": 6.5}
-		])";
-	}
+	std::filesystem::create_directories(mstc_dir);
+	{ std::ofstream dummy(mstc_dir / "cube.mstc"); dummy << "dummy"; }
+
+	LevelLint::Options options{};
+	options.MstcDir = mstc_dir;
 
 	EnemyDefinitionCatalog catalog;
-	Check(catalog.Load(definitions_json), "catalog Load");
+	WriteText("LevelLintTest_definitions.json",
+		R"([
+			{"Id": "goblin", "MaxHP": 40, "MoveSpeed": 3.0}
+		])");
+	catalog.Load("LevelLintTest_definitions.json");
+	Check(catalog.Contains("goblin"), "catalog prepared");
+	options.Catalog = &catalog;
 
-	// ===== 1. 正常JSONは問題なし =====
+	// ===== 1. 正常JSON =====
 	{
-		WriteText(level_json,
-			R"({
-				"Objects": [{"Mstc": "cube.mstc", "Position": [1,2,3], "RotationDeg": [0,0,0], "Scale": [1,1,1]}],
-				"EnemySpawns": [
-					{"DefinitionId": "goblin",      "InstanceName": "e1", "Position": [5,0,-3], "RotationDeg": [0,90,0], "Scale": [1,1,1]},
-					{"DefinitionId": "goblin_fast", "InstanceName": "e2", "Position": [-5,0,2], "RotationDeg": [0,270,0], "Scale": [1,1,1]}
-				],
-				"PlayerSpawn": {"Position": [0,0,0], "YawDeg": 0},
-				"BossSpawn":   {"Position": [0,0,8], "YawDeg": 180}
-			})");
-
-		const LevelLintResult result = LevelLint::LintFile(level_json, catalog);
-		Check(!result.HasError(), "normal json has no error");
-		Check(result.Issues.empty(), "normal json has no warnings either");
-	}
-
-	// ===== 2. Warning系の検出 =====
-	{
-		WriteText(level_json,
+		WriteText(lint_json,
 			R"({
 				"Objects": [
-					{"Mstc": "", "Position": [99999,0,0], "RotationDeg": [0,0,0], "Scale": [1,1,1]}
+					{"Mstc": "cube.mstc", "Position": [0, 0, 3], "RotationDeg": [0, 90, 0], "Scale": [1, 1, 1]}
 				],
 				"EnemySpawns": [
-					{"DefinitionId": "dragon",     "InstanceName": "d1", "Position": [5,0,-3], "RotationDeg": [], "Scale": [-1,1,1]},
-					{"DefinitionId": "goblin",     "InstanceName": "e1", "Position": [1,0,1], "RotationDeg": [0,0,0], "Scale": [1,1,1]},
-					{"DefinitionId": "goblin",     "InstanceName": "e1", "Position": [2,0,2], "RotationDeg": [0,0,0], "Scale": [1,1,1]},
-					{"InstanceName": "no_id",      "Position": [0,0,0]}
+					{"DefinitionId": "goblin", "InstanceName": "e1", "Position": [2, 0, 5], "RotationDeg": [0, 0, 0], "Scale": [1, 1, 1]}
+				],
+				"PlayerSpawn": {"Position": [0, 0, 0], "YawDeg": 0},
+				"BossSpawn":   {"Position": [0, 0, 8], "YawDeg": 180}
+			})");
+
+		const LevelLintReport report = LevelLint::RunFile(lint_json, options);
+		Check(report.IsClean(), "valid json is clean");
+	}
+
+	// ===== 2. 構文エラー・欠損ファイル =====
+	{
+		WriteText(broken_json, "{ this is broken ]");
+		const LevelLintReport report = LevelLint::RunFile(broken_json, options);
+		Check(report.ErrorCount() == 1 && HasIssue(report, true, "(syntax)"), "broken json reported as syntax error");
+
+		const LevelLintReport missing = LevelLint::RunFile("LevelLintTest_missing.json", options);
+		Check(missing.ErrorCount() == 1 && HasIssue(missing, true, "(file)"), "missing file reported as error");
+	}
+
+	// ===== 3. Error系(必須欠損/未知ID/不正Transform) =====
+	{
+		WriteText(lint_json,
+			R"({
+				"Objects": [
+					{"Mstc": ""},
+					{"Mstc": "no_such_model.mstc"}
+				],
+				"EnemySpawns": [
+					{"DefinitionId": "", "Position": [1, 2]},
+					{"DefinitionId": "dragon", "Position": [0, 0, 0], "Scale": [-1, 1, 1]}
 				]
 			})");
 
-		const LevelLintResult result = LevelLint::LintFile(level_json, catalog);
-		Check(!result.HasError() || true, "(entry-level issues are warnings)");
-		Check(result.Issues.size() >= 4, "multiple warnings detected");
-		Check(HasWarningWith(result, "Mstc"), "warning: empty Mstc");
-		Check(HasWarningWith(result, "dragon"), "warning: unknown enemy id");
-		Check(HasWarningWith(result, "duplicate") || HasWarningWith(result, "e1"), "warning: duplicate InstanceName");
-		Check(HasWarningWith(result, "Scale"), "warning: negative scale");
-		Check(HasWarningWith(result, "異常に遠い"), "warning: far position");
+		const LevelLintReport report = LevelLint::RunFile(lint_json, options);
+
+		Check(HasIssue(report, true, "Objects[0].Mstc"), "empty Mstc is error");
+		Check(HasIssue(report, false, "Objects[1].Mstc"), "missing model file is warning");
+		Check(HasIssue(report, true, "EnemySpawns[0].DefinitionId"), "empty DefinitionId is error");
+		Check(HasIssue(report, true, "EnemySpawns[0].Position"), "malformed Position array is error");
+		Check(HasIssue(report, true, "EnemySpawns[1].DefinitionId"), "unknown enemy id is error");
+		Check(HasIssue(report, false, "EnemySpawns[1].Scale"), "negative scale is warning");
+		Check(report.ErrorCount() == 4, "error count == 4");
 	}
 
-	// ===== 3. Error系(ID欠損) =====
+	// ===== 4. Warning系(重複InstanceName/遠い座標/Yaw非数値) =====
 	{
-		WriteText(level_json,
-			R"({"EnemySpawns": [{"InstanceName": "no_id"}]})");
+		WriteText(lint_json,
+			R"({
+				"EnemySpawns": [
+					{"DefinitionId": "goblin", "InstanceName": "dup"},
+					{"DefinitionId": "goblin", "InstanceName": "dup", "Position": [90000, 0, 0]},
+					{"DefinitionId": "goblin"}
+				],
+				"PlayerSpawn": {"Position": [0, 0, 0], "YawDeg": "east"}
+			})");
 
-		const LevelLintResult result = LevelLint::LintFile(level_json, catalog);
-		Check(result.HasError(), "empty DefinitionId is Error");
+		const LevelLintReport report = LevelLint::RunFile(lint_json, options);
+
+		Check(HasIssue(report, false, "EnemySpawns[1].InstanceName"), "duplicate instance name is warning");
+		Check(HasIssue(report, false, "EnemySpawns[1].Position"), "far spawn position is warning");
+		Check(!HasIssue(report, true, "EnemySpawns[2]"), "empty instance name does not duplicate");
+		Check(HasIssue(report, true, "PlayerSpawn.YawDeg"), "non-numeric YawDeg is error");
 	}
 
-	// ===== 4. 壊れたJSON =====
-	{
-		WriteText(broken_json, "{ broken ]");
-		const LevelLintResult result = LevelLint::LintFile(broken_json, catalog);
-		Check(result.HasError(), "broken json is Error");
-	}
-
-	std::filesystem::remove(definitions_json);
-	std::filesystem::remove(level_json);
+	std::filesystem::remove(lint_json);
 	std::filesystem::remove(broken_json);
+	std::filesystem::remove("LevelLintTest_definitions.json");
+	std::filesystem::remove_all(mstc_dir);
 
 	std::cout << "All " << g_CheckCount << " checks passed.\n";
 	return 0;

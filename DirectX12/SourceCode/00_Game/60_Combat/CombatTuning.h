@@ -29,6 +29,10 @@ struct CombatTuningData
 	float DodgeDistance    = 25.0f;    // 回避移動距離.
 	float DodgeDuration    = 1.7f;     // 回避移動時間(秒).
 
+	// ----- パリィ成立報酬(Boss硬直延長) -----
+	float ParryStaggerExtraDuration  = 0.4f;  // パリィ成立後、Boss硬直をPlayer反応時間からさらに延長する時間(秒).
+	float ParryStaggerKnockBackSpeed = 10.0f; // 硬直中のBossへ攻撃を命中させた時の吹き飛び初速.
+
 	// ----- 演出(時間スケール) -----
 	float HitStopScale     = 0.05f;    // ヒットストップの時間スケール.
 	float HitStopDuration  = 0.08f;    // ヒットストップの長さ(秒).
@@ -86,6 +90,10 @@ public:
 
 	// 既定値へ戻す.
 	static void ResetToDefaults() noexcept;
+
+	// 各フィールドを妥当範囲へクランプする(JSON読込値の不正値・極端値防止用.
+	// 範囲はEditorのスライダー範囲と一致させる).
+	static void ClampToValidRange(CombatTuningData& Tuning) noexcept;
 
 	// プリセットとしてJSONへ保存/から読込(既定値との差分ではなく全値を書き出す).
 	static bool Save(const std::filesystem::path& Path);

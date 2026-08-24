@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <algorithm>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -50,6 +51,40 @@ public:
 	// 編集データを一括差し替える(Undo/Redoコマンドから履歴復元に使う).
 	void ApplySettings(const SettingsData& Data);
 
+	// 編集中データの取得(デバッグ表示・単体テスト用).
+	const SettingsData& GetSettings() const noexcept { return m_Data; }
+
+	// 数値直接入力等でドラッグ編集と異なる範囲外の値になった場合、同じ制約へ
+	// クランプする(戻り値=補正が発生したか. UIへ警告表示するために使う).
+	// 静的メンバ関数(単体テストからも直接呼び出し可能).
+	static bool ClampSettings(SettingsData& Data)
+	{
+		bool was_clamped = false;
+
+		const auto clamp_check = [&was_clamped](float Value, float Min, float Max) {
+			const float clamped = std::clamp(Value, Min, Max);
+			if (clamped != Value) { was_clamped = true; }
+			return clamped;
+		};
+
+		// 終了時刻が最上位の上限(下限0.1秒).
+		Data.ComboEndTime = clamp_check(Data.ComboEndTime, 0.1f, 3600.0f);
+
+		// 判定区間: 開始>=0、長さ>0、開始+長さ<=終了時刻.
+		for (WindowParam& window : Data.Windows)
+		{
+			window.Start    = clamp_check(window.Start, 0.0f, Data.ComboEndTime);
+			window.Duration = clamp_check(window.Duration, 0.01f,
+				std::max(0.01f, Data.ComboEndTime - window.Start));
+		}
+
+		// コンボ時間: 受付開始 <= 最低遷移 <= 終了(順序制約のためこの順でクランプする).
+		Data.ComboStartTime    = clamp_check(Data.ComboStartTime, 0.0f, Data.ComboEndTime);
+		Data.MinComboTransTime = clamp_check(Data.MinComboTransTime, Data.ComboStartTime, Data.ComboEndTime);
+
+		return was_clamped;
+	}
+
 private:
 	// タイムライン上のドラッグ操作の種別.
 	enum class DragMode
@@ -71,10 +106,6 @@ private:
 
 	// 選択中のJSONへ編集結果を書き戻す.
 	bool SaveSelected();
-
-	// 数値直接入力等でドラッグ編集と異なる範囲外の値になった場合、同じ制約へ
-	// クランプする(戻り値=補正が発生したか. UIへ警告表示するために使う).
-	bool ClampSettings();
 
 	// 選択中ファイル名に対応するアニメーションクリップ名(未知は空文字).
 	const char* FindClipName() const;

@@ -77,8 +77,8 @@ void DebugCamera::Update()
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) { speed = m_SlowMoveSpeed; }
 
 	DirectX::XMFLOAT3 position = GetPosition();
-	const DirectX::XMFLOAT3 forward = GetForward();
-	const DirectX::XMFLOAT3 right   = GetRight();
+	DirectX::XMFLOAT3 forward, right;
+	GetBasis(forward, right);
 
 	DirectX::XMVECTOR v_position = DirectX::XMLoadFloat3(&position);
 	const DirectX::XMVECTOR v_forward = DirectX::XMLoadFloat3(&forward);
