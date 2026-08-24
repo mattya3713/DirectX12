@@ -192,6 +192,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\99_Utility\Debug\DebugKey\KeyDebbuger.h" />
     <ClInclude Include="SourceCode\20_Resource\ResourceManager\MeshManager\MeshManager.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\DirectX12.h" />
+    <ClInclude Include="SourceCode\10_Ggraphic\10_Device\DirectX\RenderBatchOrder.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDActor.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMD\PMDRenderer.h" />
     <ClInclude Include="SourceCode\10_Ggraphic\90_Legacy\PMX\PMXActor.h" />

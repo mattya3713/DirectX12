@@ -3,6 +3,10 @@
 #include <cassert>
 #include <cmath>
 #include <filesystem>
+#include <functional>
+#include <system_error>
+#include <thread>
+#include <vector>
 
 #include "10_Ggraphic/10_Device/DirectX/DirectX12.h"
 #include "10_Ggraphic/30_Asset/RuntimeModel/MMdl/MmdlRenderer.h"
@@ -574,15 +578,65 @@ void MainScene::Draw()
 
 	Profiler::Instance().GpuBegin("GPU:Characters");
 
-	if (m_upPlayer) {
-		m_upPlayer->Draw();
-	}
+	// メインパスのキャラ描画とデバッグコライダーを別スレッドの専用コマンドリストへ並行記録する.
+	// (スロット0=Player/1=Boss/2=コライダー. コライダーだけは後半リストより後ろ・PRESENT遷移より前に実行される.
+	//  各ワーカーは自分のスロットのリスト/アロケータしか触らないため、ディスクリプタヒープへの同時書き込みも発生しない).
+#if _DEBUG
+	constexpr UINT RecorderCount = 3;
+#else
+	constexpr UINT RecorderCount = 2;
+#endif
 
-	if (m_upBoss) {
-		m_upBoss->Draw();
+	const std::function<void()> record_tasks[RecorderCount] = {
+		[this, p_dx12]() // スロット0: Player.
+		{
+			if (!p_dx12->BeginParallelRecording(0)) { return; }
+			m_pMmdlRenderer->BeforDraw();        // PSO/RSはリストごとに独立しているためワーカー側でも設定する.
+			p_dx12->RestoreMainRenderTargets();  // OM/ビューポートも同様(深度クリアは前半リストで済んでいるため行わない).
+			if (m_upPlayer) { m_upPlayer->Draw(); }
+			p_dx12->EndParallelRecording();
+		},
+		[this, p_dx12]() // スロット1: Boss.
+		{
+			if (!p_dx12->BeginParallelRecording(1)) { return; }
+			m_pMmdlRenderer->BeforDraw();
+			p_dx12->RestoreMainRenderTargets();
+			if (m_upBoss) { m_upBoss->Draw(); }
+			p_dx12->EndParallelRecording();
+		},
+#if _DEBUG
+		[p_dx12]() // スロット2: デバッグコライダー(最後に実行されるスロット).
+		{
+			DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>();
+			if (p_collider_renderer == nullptr || !p_dx12->BeginParallelRecording(2)) { return; }
+			p_collider_renderer->Draw();
+			p_dx12->EndParallelRecording();
+		},
+#endif
+	};
+
+	// 全ワーカーの記録完了を待ち合わせる(生成に失敗したぶんはメインスレッドが同じ専用リストへ記録する).
+	std::vector<std::thread> record_threads;
+	UINT spawned_count = 0;
+	try {
+		for (; spawned_count < RecorderCount; ++spawned_count) {
+			record_threads.emplace_back(record_tasks[spawned_count]);
+		}
 	}
+	catch (const std::system_error&) {
+		// スレッド生成失敗時のフォールバック(機能は維持され、記録だけ直列化される).
+	}
+	for (std::thread& th : record_threads) { th.join(); }
+
+	for (; spawned_count < RecorderCount; ++spawned_count) {
+		record_tasks[spawned_count]();
+	}
+	record_threads.clear();
 
 	Profiler::Instance().GpuEnd("GPU:Characters");
+
+	// 以降の記録はメインパス後半のリストへ(並列リストはEndDraw()のバッチで後半と終端の間に挟まって実行される).
+	p_dx12->SwitchToDeferredMainList();
 
 	// Sprite2D/Sprite3D描画基盤の動作確認表示(画面端にUIスプライト+Player頭上にビルボード).
 	if (m_upSpriteRenderer) {
@@ -624,21 +678,5 @@ void MainScene::Draw()
 		m_upParticleSystem->Draw();
 	}
 
-#if _DEBUG
-	// コライダー描画は「各キャラが登録→DebugColliderRendererがまとめて描画」の分離方式.
-	// Root Signature/PSOの切替はDebugColliderRenderer::Draw()の1箇所に集約される.
-	if (m_upPlayer) {
-		m_upPlayer->DrawDebugColliders();
-	}
-
-	if (m_upBoss) {
-		m_upBoss->DrawDebugColliders();
-	}
-
-	if (DebugColliderRenderer* p_collider_renderer = ServiceLocator::Get<DebugColliderRenderer>()) {
-		Profiler::Instance().GpuBegin("GPU:Colliders");
-		p_collider_renderer->Draw();
-		Profiler::Instance().GpuEnd("GPU:Colliders");
-	}
-#endif
+	// デバッグコライダーは上記スロット2の並列記録へ移動した(全描画の最後に実行される).
 }
