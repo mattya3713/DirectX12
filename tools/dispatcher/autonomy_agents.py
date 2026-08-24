@@ -39,6 +39,15 @@ def clean(worktree):
     return result.returncode == 0 and not result.stdout.strip()
 
 
+def alive(pid):
+    if not pid:
+        return False
+    result = subprocess.run(["tasklist", "/FI", "PID eq %s" % int(pid), "/NH"],
+                            capture_output=True, text=True, encoding="mbcs",
+                            errors="replace")
+    return result.returncode == 0 and str(pid) in result.stdout
+
+
 def opencode_env(dispatcher_dir):
     env = os.environ.copy()
     permission = dispatcher_dir / "headless_permissions.json"
@@ -70,7 +79,77 @@ def launch(entry, dispatcher_dir, prompt):
     return proc.pid
 
 
+def harvest(entry, dispatcher_dir, max_attempts):
+    if entry.get("status") != "WORKING" or alive(entry.get("pid")):
+        return
+    worktree = Path(entry.get("worktree", ""))
+    report = worktree / ".ai-project" / "design" / "implementation_report.local.md"
+    if report.is_file():
+        entry["status"] = "COMPLETED_CANDIDATE"
+        entry["completed_at"] = now()
+        return
+    entry["attempts"] = int(entry.get("attempts", 0)) + 1
+    if entry["attempts"] < max_attempts:
+        entry["status"] = "READY_FOR_REPAIR"
+        entry["reason"] = "CODER_EXITED_WITHOUT_REPORT"
+    else:
+        entry["status"] = "HUMAN_GATE"
+        entry["reason"] = "REPAIR_RETRY_LIMIT_REACHED"
+
+
+def prepare_integration(entry, dispatcher_dir):
+    if entry.get("worktree"):
+        return True
+    repo = dispatcher_dir.parent.parent
+    root = repo / "worktrees" / "autointegration"
+    safe = re.sub(r"[^A-Za-z0-9_.-]", "_", entry.get("key", "integration"))[:60]
+    path = root / safe
+    path.parent.mkdir(parents=True, exist_ok=True)
+    branch = "integration/%s" % safe
+    stable = "stable-20260824"
+    if not path.exists():
+        result = subprocess.run(["git", "-C", str(repo), "worktree", "add",
+                                 "-b", branch, str(path), stable],
+                                capture_output=True, text=True,
+                                encoding="utf-8", errors="replace")
+        if result.returncode != 0:
+            entry["status"] = "HUMAN_GATE"
+            entry["reason"] = "INTEGRATION_WORKTREE_CREATE_FAILED(%s)" % result.stderr[-300:]
+            return False
+    entry["worktree"] = str(path)
+    entry["integration_branch"] = branch
+    return True
+
+
+def collect_completed_entries(queues, dispatcher_dir):
+    state = load(dispatcher_dir / "dispatcher_state.json", {})
+    existing = {x.get("key") for x in queues.get("integration", [])}
+    for entry in (state.get("entries") or {}).values():
+        if entry.get("status") != "COMPLETED":
+            continue
+        worktree = entry.get("worktree")
+        if not worktree:
+            continue
+        result = subprocess.run(["git", "-C", worktree, "branch", "--show-current"],
+                                capture_output=True, text=True, encoding="utf-8",
+                                errors="replace")
+        branch = result.stdout.strip()
+        result = subprocess.run(["git", "-C", worktree, "rev-parse", "HEAD"],
+                                capture_output=True, text=True, encoding="utf-8",
+                                errors="replace")
+        head = result.stdout.strip()
+        key = "%s:%s" % (branch, head)
+        if branch and head and key not in existing:
+            queues.setdefault("integration", []).append({
+                "key": key, "line": entry.get("line"), "branch": branch,
+                "head": head, "source_worktree": worktree,
+                "status": "READY_FOR_INTEGRATION", "created_at": now()})
+            existing.add(key)
+
+
 def process_repair(queues, dispatcher_dir, max_agents):
+    for entry in queues.get("repair", []):
+        harvest(entry, dispatcher_dir, max_attempts=2)
     active = sum(1 for e in queues.get("repair", []) if e.get("status") == "WORKING")
     for entry in queues.get("repair", []):
         if active >= max_agents or entry.get("status") != "READY_FOR_REPAIR":
@@ -91,9 +170,13 @@ def process_repair(queues, dispatcher_dir, max_agents):
 
 
 def process_integration(queues, dispatcher_dir, max_agents):
+    for entry in queues.get("integration", []):
+        harvest(entry, dispatcher_dir, max_attempts=1)
     active = sum(1 for e in queues.get("integration", []) if e.get("status") == "WORKING")
     for entry in queues.get("integration", []):
         if active >= max_agents or entry.get("status") != "READY_FOR_INTEGRATION":
+            continue
+        if not prepare_integration(entry, dispatcher_dir):
             continue
         prompt = (
             "You are the Integration Coder. Integrate the listed source branch "
@@ -114,6 +197,7 @@ def main():
     d = Path(args.dispatcher_dir).resolve()
     path = d / "autonomy_queues.json"
     queues = load(path, {"version": 1, "repair": [], "integration": [], "proposals": []})
+    collect_completed_entries(queues, d)
     process_repair(queues, d, args.max_agents)
     process_integration(queues, d, args.max_agents)
     queues["updated_at"] = now()

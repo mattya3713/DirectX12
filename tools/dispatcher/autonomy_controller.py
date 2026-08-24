@@ -51,6 +51,9 @@ def main():
         snap = entry.get("snapshot") or {}
         key = "%s:%s:%s" % (name, snap.get("head", ""), phase)
         previous = [x for x in queues.get("repair", []) if x.get("key") == key]
+        for item in previous:
+            if not item.get("worktree"):
+                item["worktree"] = entry.get("path")
         attempts = max([x.get("attempts", 0) for x in previous] or [0])
         status = "READY_FOR_REPAIR" if attempts < args.max_attempts else "HUMAN_GATE"
         marker = (key, status)
@@ -58,6 +61,7 @@ def main():
             queues.setdefault("repair", []).append({
                 "key": key, "created_at": now(), "line": name,
                 "head": snap.get("head"), "phase": phase,
+                "worktree": entry.get("path"),
                 "reasons": entry.get("reasons", []),
                 "attempts": attempts, "status": status,
                 "policy": "repair agent must preserve worktree and prove build/smoke"
