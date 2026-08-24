@@ -8,7 +8,7 @@
   "dispatcher_dir": "../../.ai-project/dispatcher",
 
   "stable_branch": "stable-20260824",
-  "stable_commit": "abae12714104291619997b4c157d50ad11cb8b86",
+  "stable_commit": "4475af761e02d9eeeb647c86c18eb9bae1118e56",
   "fetch_before_sync": false,
   "merge_timeout_sec": 600,
 
