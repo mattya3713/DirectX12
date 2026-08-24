@@ -110,6 +110,9 @@ def main():
         return 1
     out_dir = d / "proposals"
     out_dir.mkdir(exist_ok=True)
+    if any(p.suffix == ".md" and not p.with_suffix(".reviewed").exists()
+           for p in out_dir.iterdir() if p.is_file()):
+        return 0
     prompt = (
         "You are the Proposal Coder for Senzan. Do not edit source, task status, "
         "branches, or stable. Inspect only current design/state and write one "
