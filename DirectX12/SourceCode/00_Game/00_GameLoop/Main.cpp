@@ -20,6 +20,7 @@
 #include "99_Utility/Profiling/Profiler.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
 #include "00_Game/60_Combat/CombatCoordinator.h"
+#include "00_Game/60_Combat/CombatEvents.h"
 #include "99_Utility/Event/EventBus.h"
 #if _DEBUG
 #include "99_Utility/DebugBridge/DebugBridgeServer.h"
@@ -191,6 +192,26 @@ HRESULT Main::Create()
     });
     m_upDebugBridgeServer->Start(L"\\\\.\\pipe\\senzan.debugbridge.control.v1");
 #endif
+
+    // Combat基礎SEの購読登録(ヒット/パリィ/被弾の3種. Mainと同じアプリ寿命のため解除は不要).
+    // NOTE: 音源は暫定の生成プレースホルダー(Data\Sound\SE\*.wav. 著作権的に安全な正式素材への差し替えはユーザー判断).
+    if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+        p_event_bus->Subscribe<CombatHitEvent>([](const CombatHitEvent&) {
+            if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
+                p_sound_manager->Play("se_combat_hit");
+            }
+        });
+        p_event_bus->Subscribe<ParrySuccessEvent>([](const ParrySuccessEvent&) {
+            if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
+                p_sound_manager->Play("se_parry_success");
+            }
+        });
+        p_event_bus->Subscribe<PlayerDamagedEvent>([](const PlayerDamagedEvent&) {
+            if (SoundManager* p_sound_manager = ServiceLocator::Get<SoundManager>()) {
+                p_sound_manager->Play("se_player_damaged");
+            }
+        });
+    }
 
     // シーンマネージャーを構築し、最初のシーン(MainScene)を読み込む.
     m_upSceneManager = std::make_unique<SceneManager>();

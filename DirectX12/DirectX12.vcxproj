@@ -383,6 +383,7 @@ exit /b 0</Command>
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\30_Dead\Dead.h" />
     <ClInclude Include="SourceCode\00_Game\10_Object\10_MeshObject\00_Character\20_Boss\State\40_ParryReaction\ParryReaction.h" />
     <ClInclude Include="SourceCode\00_Game\60_Combat\CombatCoordinator.h" />
+    <ClInclude Include="SourceCode\00_Game\60_Combat\CombatEvents.h" />
     <ClInclude Include="SourceCode\00_Game\70_Physics\PhysicsBody.h" />
     <ClInclude Include="SourceCode\00_Game\80_CutScene\CutSceneData.h" />
     <ClInclude Include="SourceCode\00_Game\80_CutScene\CutScenePlayer.h" />

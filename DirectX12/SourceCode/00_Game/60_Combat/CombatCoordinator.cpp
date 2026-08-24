@@ -6,7 +6,9 @@
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/30_Camera/50_Keyframe/KeyframeCamera.h"
 #include "00_Game/30_Camera/99_Manager/CameraManager.h"
+#include "00_Game/60_Combat/CombatEvents.h"
 #include "00_Game/60_Combat/CombatTuning.h"
+#include "99_Utility/Event/EventBus.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 namespace {
@@ -35,6 +37,11 @@ void CombatCoordinator::Clear() noexcept
 
 void CombatCoordinator::OnParrySuccess() noexcept
 {
+	// パリィ成功SEイベント(EventBus経由. 成立そのものの通知のためView未接続でも発火させる).
+	if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>()) {
+		p_event_bus->Publish(ParrySuccessEvent{});
+	}
+
 	if (!m_PlayerView || !m_BossView) { return; }
 
 	// パリィ成立スローモーション(グローバル時間スケール. 専用カメラ演出も自動的にスローで進む).
