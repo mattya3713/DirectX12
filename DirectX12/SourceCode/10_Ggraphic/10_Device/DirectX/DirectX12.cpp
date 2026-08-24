@@ -591,7 +591,6 @@ MyComPtr<ID3D12Resource> DirectX12::GetTextureByPath(const char* texpath)
 	return iterator->second;
 }
 
-// GPUの完了待ち.
 // コンピュートキューからフェンスをシグナルする(Async Compute).
 UINT64 DirectX12::SignalComputeFence()
 {
@@ -601,7 +600,10 @@ UINT64 DirectX12::SignalComputeFence()
 	//       組み合わせで解決しないため、ここでは直接HRESULTを判定する.
 	if (FAILED(m_cpComputeQueue->Signal(m_pComputeFence.Get(), m_ComputeFenceValue)))
 	{
-		return m_ComputeFenceValue;
+		// 失敗した値を返すと待ち側(キュー間Wait/CPUイベント待ち)が永久に完了せず
+		// 全キューが停止するため、0(=今回の完了待ち対象なし)を返す.
+		--m_ComputeFenceValue;
+		return 0;
 	}
 
 	return m_ComputeFenceValue;
@@ -613,6 +615,7 @@ void DirectX12::GraphicsWaitComputeFence(UINT64 Value)
 	if (Value == 0) { return; }
 	m_pCmdQueue->Wait(m_pComputeFence.Get(), Value);
 }
+// GPUの完了待ち.
 void DirectX12::WaitForGPU()
 {
 	m_pCmdQueue->Signal(m_pFence.Get(), ++m_FenceValue);

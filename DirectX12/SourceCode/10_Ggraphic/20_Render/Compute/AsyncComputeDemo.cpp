@@ -36,6 +36,7 @@ public:
 private:
 	bool CreatePipeline(ID3D12Device* pDevice);
 	bool CreateBuffersAndCommands(ID3D12Device* pDevice);
+	void CreateTimestampResources(ID3D12Device* pDevice);
 	bool Execute(DirectX12& Dx12);
 
 	MyComPtr<ID3D12RootSignature>       m_pRootSignature;
@@ -45,6 +46,11 @@ private:
 
 	MyComPtr<ID3D12Resource> m_pOutputBuffer;   // コンピュート書き込み先(UAV).
 	MyComPtr<ID3D12Resource> m_pReadbackBuffer; // 読み戻し用(READBACK).
+
+	MyComPtr<ID3D12QueryHeap> m_pTimestampHeap;     // GPU所要時間計測用(開始/終了の2スロット).
+	MyComPtr<ID3D12Resource>  m_pTimestampReadback; // 計測結果の読み戻し先(常時マップ).
+	std::uint64_t*            m_pMappedTimestamps = nullptr;
+	UINT64                    m_TimestampFrequency = 0; // コンピュートキューのタイムスタンプ周波数.
 
 	HANDLE m_FenceEvent = nullptr;
 
@@ -58,6 +64,9 @@ bool AsyncComputeDemo::Impl::Initialize(ID3D12Device* pDevice)
 {
 	if (!CreatePipeline(pDevice)) { return false; }
 	if (!CreateBuffersAndCommands(pDevice)) { return false; }
+
+	// タイムスタンプ非対応環境ではGPU時間ログだけ省略する(致命ではない).
+	CreateTimestampResources(pDevice);
 
 	m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	return m_FenceEvent != nullptr;
@@ -141,12 +150,45 @@ bool AsyncComputeDemo::Impl::CreateBuffersAndCommands(ID3D12Device* pDevice)
 		m_pAllocator.Get(), m_pPipelineState.Get(), IID_PPV_ARGS(m_pCommandList.ReleaseAndGetAddressOf())));
 }
 
+// コンピュート処理のGPU所要時間を計るタイムスタンプクエリ(2スロット)と読み戻し先を作成する.
+void AsyncComputeDemo::Impl::CreateTimestampResources(ID3D12Device* pDevice)
+{
+	D3D12_QUERY_HEAP_DESC heap_desc{};
+	heap_desc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+	heap_desc.Count    = 2; // [0]=記録開始, [1]=記録終了.
+	heap_desc.NodeMask = 0;
+
+	if (FAILED(pDevice->CreateQueryHeap(&heap_desc, IID_PPV_ARGS(m_pTimestampHeap.ReleaseAndGetAddressOf()))))
+	{
+		return;
+	}
+
+	const auto props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
+	const auto desc  = CD3DX12_RESOURCE_DESC::Buffer(sizeof(std::uint64_t) * 2);
+	if (FAILED(pDevice->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+		D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(m_pTimestampReadback.ReleaseAndGetAddressOf()))))
+	{
+		m_pTimestampHeap.Reset();
+		return;
+	}
+
+	if (FAILED(m_pTimestampReadback->Map(0, nullptr, reinterpret_cast<void**>(&m_pMappedTimestamps))))
+	{
+		m_pTimestampHeap.Reset();
+		m_pTimestampReadback.Reset();
+		m_pMappedTimestamps = nullptr;
+	}
+}
+
 // コンピュートキューへ計算を記録・発行する.
 bool AsyncComputeDemo::Impl::Execute(DirectX12& Dx12)
 {
 	ID3D12CommandQueue* p_compute_queue = Dx12.GetComputeQueue();
 	ID3D12Fence*        p_fence         = Dx12.GetComputeFence();
 	if (!p_compute_queue || !p_fence) { return false; }
+
+	// タイムスタンプ周波数はキューごとに取得する(初回のみ).
+	if (m_TimestampFrequency == 0) { p_compute_queue->GetTimestampFrequency(&m_TimestampFrequency); }
 
 	// 前回実行の完了を待ってからアロケータを再利用する(単一アロケータ運用のため).
 	const UINT64 completed = p_fence->GetCompletedValue();
@@ -162,6 +204,12 @@ bool AsyncComputeDemo::Impl::Execute(DirectX12& Dx12)
 	m_pCommandList->SetComputeRootSignature(m_pRootSignature.Get());
 	m_pCommandList->SetPipelineState(m_pPipelineState.Get());
 	m_pCommandList->SetComputeRootUnorderedAccessView(0, m_pOutputBuffer->GetGPUVirtualAddress());
+
+	// GPU所要時間の計測開始(ディスパッチ直前).
+	if (m_pTimestampHeap)
+	{
+		m_pCommandList->EndQuery(m_pTimestampHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0);
+	}
 
 	// バリア: COMMON → UNORDERED_ACCESS.
 	const D3D12_RESOURCE_BARRIER to_uav = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -180,6 +228,14 @@ bool AsyncComputeDemo::Impl::Execute(DirectX12& Dx12)
 	m_pCommandList->ResourceBarrier(1, &to_copy_src);
 
 	m_pCommandList->CopyResource(m_pReadbackBuffer.Get(), m_pOutputBuffer.Get());
+
+	// 計測終了とクエリ解決(読み戻しコピーまで含めた所要時間).
+	if (m_pTimestampHeap)
+	{
+		m_pCommandList->EndQuery(m_pTimestampHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
+		m_pCommandList->ResolveQueryData(m_pTimestampHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+			0, 2, m_pTimestampReadback.Get(), 0);
+	}
 
 	if (FAILED(m_pCommandList->Close())) { return false; }
 
@@ -210,12 +266,24 @@ void AsyncComputeDemo::Impl::Verify()
 	m_pReadbackBuffer->Unmap(0, nullptr);
 	++m_RunCount;
 
+	// 記録開始/終了タイトスタンプ差分をミリ秒へ変換する(未計測環境では負値のまま省略).
+	float compute_gpu_ms = -1.0f;
+	if (m_pMappedTimestamps && m_TimestampFrequency > 0 && m_pMappedTimestamps[1] > m_pMappedTimestamps[0])
+	{
+		compute_gpu_ms = static_cast<float>(
+			static_cast<double>(m_pMappedTimestamps[1] - m_pMappedTimestamps[0])
+			/ static_cast<double>(m_TimestampFrequency) * 1000.0);
+	}
+
 	if (DebugLog* p_debug_log = ServiceLocator::Get<DebugLog>())
 	{
+		const std::string gpu_text = (compute_gpu_ms >= 0.0f)
+			? (", compute GPU " + std::to_string(compute_gpu_ms) + "ms")
+			: "";
 		const std::string message = (correct == static_cast<int>(kElementCount))
 			? ("AsyncCompute verified: " + std::to_string(correct) + "/" + std::to_string(kElementCount)
-				+ " correct (run #" + std::to_string(m_RunCount) + ")")
-			: ("AsyncCompute MISMATCH: " + std::to_string(correct) + "/" + std::to_string(kElementCount));
+				+ " correct (run #" + std::to_string(m_RunCount) + gpu_text + ")")
+			: ("AsyncCompute MISMATCH: " + std::to_string(correct) + "/" + std::to_string(kElementCount) + gpu_text);
 		p_debug_log->LogInfo(message);
 	}
 }

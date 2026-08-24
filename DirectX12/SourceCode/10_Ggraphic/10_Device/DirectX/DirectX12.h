@@ -106,7 +106,7 @@ public:
 	// 非同期コンピュートキュー関連(Async Compute).
 	ID3D12CommandQueue* GetComputeQueue() const noexcept { return m_cpComputeQueue.Get(); }
 	ID3D12Fence*        GetComputeFence() const noexcept { return m_pComputeFence.Get(); }
-	UINT64 SignalComputeFence();                    // コンピュートキューからフェンスをシグナルする.
+	UINT64 SignalComputeFence();                    // コンピュートキューからフェンスをシグナルする(失敗時は0=待ち無しを返す).
 	void   GraphicsWaitComputeFence(UINT64 Value);  // グラフィックスキューへコンピュート完了待ちを挿入する.
 
 	// 平行光源を設定する(呼び出し側でDirectionLightから取得して渡す. ShadowEnableは影サンプリングのON/OFF).
