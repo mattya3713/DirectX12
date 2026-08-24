@@ -2,8 +2,10 @@
 
 #include "00_Game/00_GameLoop/Time/Time.h"
 #include "00_Game/40_Collision/CollisionDetector.h"
+#include "00_Game/60_Combat/CombatEvents.h"
 #include "00_Game/60_Combat/CombatTuning.h"
 #include "10_Ggraphic/20_Render/Particle/ParticleSystem.h"
+#include "99_Utility/Event/EventBus.h"
 #include "99_Utility/ServiceLocator/ServiceLocator.h"
 
 #if _DEBUG
@@ -142,6 +144,21 @@ void Character::ProcessHits()
 
 		// ヒットストップ(命中演出. ほぼ停止に近いスケールを一瞬だけ. Player/Boss対称).
 		GameTime::SetTimeScale(CombatTuning::Get().HitStopScale, CombatTuning::Get().HitStopDuration);
+
+		// Combat基礎SEイベント(EventBus経由の疎結合配信. パリィ済み攻撃は上で除外済みのため発火しない).
+		// Player被弾だけは専用SEを当てる(読み合いの勝ち/負けを音で判別できるようにするため).
+		if (EventBus* p_event_bus = ServiceLocator::Get<EventBus>())
+		{
+			const bool victim_is_player = (m_DamageCollider.GetMyMask() & eCollisionGroup::PlayerDamage) != eCollisionGroup::None;
+			if (victim_is_player)
+			{
+				p_event_bus->Publish(PlayerDamagedEvent{ this, hit_event.ContactPoint });
+			}
+			else
+			{
+				p_event_bus->Publish(CombatHitEvent{ this, hit_event.ContactPoint });
+			}
+		}
 	}
 }
 
