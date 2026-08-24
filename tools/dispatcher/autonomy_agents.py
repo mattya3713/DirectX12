@@ -62,6 +62,27 @@ def clean(worktree):
     return result.returncode == 0 and not result.stdout.strip()
 
 
+def git_head(worktree):
+    result = subprocess.run(["git", "-C", str(worktree), "rev-parse", "HEAD"],
+                            capture_output=True, text=True, encoding="utf-8",
+                            errors="replace")
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def stable_branch(dispatcher_dir):
+    config = load(dispatcher_dir.parent.parent / "tools" / "dispatcher" /
+                  "supervisor_config.json", {})
+    return config.get("stable_branch", "stable-20260824")
+
+
+def stable_is_ancestor(worktree, dispatcher_dir):
+    repo = dispatcher_dir.parent.parent
+    result = subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor",
+                             stable_branch(dispatcher_dir), git_head(worktree)],
+                            capture_output=True)
+    return result.returncode == 0
+
+
 def alive(pid):
     if not pid:
         return False
@@ -97,6 +118,10 @@ def launch(entry, dispatcher_dir, prompt):
         entry["status"] = "HUMAN_GATE"
         entry["reason"] = "WORKTREE_DIRTY_PRESERVED"
         return None
+    if not stable_is_ancestor(worktree, dispatcher_dir):
+        entry["status"] = "HUMAN_GATE"
+        entry["reason"] = "STALE_BASELINE_REQUIRES_SYNC_WITH_STABLE"
+        return None
     exe = resolve_opencode()
     if not exe:
         entry["status"] = "HUMAN_GATE"
@@ -110,7 +135,8 @@ def launch(entry, dispatcher_dir, prompt):
     proc = subprocess.Popen([exe, "run", prompt], cwd=str(worktree),
                             stdout=out, stderr=err, stdin=subprocess.DEVNULL,
                             env=opencode_env(dispatcher_dir))
-    entry.update({"status": "WORKING", "pid": proc.pid, "started_at": now()})
+    entry.update({"status": "WORKING", "pid": proc.pid, "started_at": now(),
+                 "started_head": git_head(worktree)})
     return proc.pid
 
 
@@ -127,10 +153,17 @@ def harvest(entry, dispatcher_dir, max_attempts, max_runtime_minutes):
         return
     worktree = Path(entry.get("worktree", ""))
     report = worktree / ".ai-project" / "design" / "implementation_report.local.md"
-    if report.is_file():
+    report_text = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
+    proof = report_text.lower()
+    valid_proof = (report.is_file() and clean(worktree) and
+                   "build" in proof and "pass" in proof and
+                   git_head(worktree) != entry.get("started_head", ""))
+    if valid_proof:
         entry["status"] = "COMPLETED_CANDIDATE"
         entry["completed_at"] = now()
         return
+    if report.is_file() and not clean(worktree):
+        entry["reason"] = "REPORT_WITH_DIRTY_WORKTREE"
     entry["attempts"] = int(entry.get("attempts", 0)) + 1
     if entry["attempts"] < max_attempts:
         entry["status"] = "READY_FOR_REPAIR"

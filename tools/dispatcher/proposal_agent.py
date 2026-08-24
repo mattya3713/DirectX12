@@ -46,20 +46,46 @@ def resolve_opencode():
     return shim
 
 
+def stop_process(pid):
+    if pid and alive(pid):
+        subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                       capture_output=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dispatcher-dir", required=True)
+    parser.add_argument("--max-runtime-minutes", type=int, default=30)
     args = parser.parse_args()
     d = Path(args.dispatcher_dir).resolve()
     state_path = d / "proposal_state.json"
     state = load(state_path, {"status": "IDLE", "pid": None})
     if state.get("status") == "WORKING":
         if alive(state.get("pid")):
-            return 0
-        state.update({"status": "IDLE", "finished_at": now(),
-                      "reason": "PROPOSAL_AGENT_EXITED"})
-        state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2),
-                              encoding="utf-8")
+            started = state.get("started_at")
+            if started:
+                try:
+                    age = (datetime.now(timezone.utc) -
+                           datetime.fromisoformat(started)).total_seconds()
+                    if age > args.max_runtime_minutes * 60:
+                        stop_process(state.get("pid"))
+                        state.update({"status": "IDLE", "finished_at": now(),
+                                      "reason": "PROPOSAL_AGENT_TIMEOUT"})
+                        state_path.write_text(json.dumps(
+                            state, ensure_ascii=False, indent=2), encoding="utf-8")
+                    else:
+                        return 0
+                except ValueError:
+                    return 0
+            else:
+                return 0
+        else:
+            state.update({"status": "IDLE", "finished_at": now(),
+                          "reason": "PROPOSAL_AGENT_EXITED"})
+            state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2),
+                                  encoding="utf-8")
+    if state.get("status") == "WORKING":
+        return 0
 
     finished = state.get("finished_at")
     if finished:
