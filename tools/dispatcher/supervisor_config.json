@@ -1,11 +1,11 @@
 {
   "_comment": "Integration Supervisor設定。このファイルは.ai-project/dispatcher/へ配置して使う(ソースはdispatcher専用worktreeのtools/dispatcher/が正)。パスはこのファイルからの相対。stable基準を変えるときはSTABLE_BASELINE.mdの確認後にbranchとcommitを更新すること。",
   "repo_root": "../..",
-  "design_dir": "../design",
-  "state_file": "dispatcher_state.json",
-  "log_file": "supervisor.log",
-  "manifest_dir": "manifests",
-  "dispatcher_dir": ".",
+  "design_dir": "../../.ai-project/design",
+  "state_file": "../../.ai-project/dispatcher/dispatcher_state.json",
+  "log_file": "../../.ai-project/dispatcher/supervisor.log",
+  "manifest_dir": "../../.ai-project/dispatcher/manifests",
+  "dispatcher_dir": "../../.ai-project/dispatcher",
 
   "stable_branch": "stable-20260824",
   "stable_commit": "1cd2644783f438a3650346d7d6c12613b3562a95",
