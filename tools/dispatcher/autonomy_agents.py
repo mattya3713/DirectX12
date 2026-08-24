@@ -11,6 +11,8 @@ import os
 import re
 import shutil
 import subprocess
+import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,6 +34,27 @@ def save(path, value):
     tmp.replace(path)
 
 
+@contextmanager
+def queue_lock(path):
+    lock = path.with_suffix(path.suffix + ".lock")
+    for _ in range(30):
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            break
+        except FileExistsError:
+            time.sleep(0.1)
+    else:
+        raise RuntimeError("queue lock timeout: %s" % lock)
+    try:
+        yield
+    finally:
+        try:
+            lock.unlink()
+        except FileNotFoundError:
+            pass
+
+
 def clean(worktree):
     result = subprocess.run(["git", "-C", str(worktree), "status", "--porcelain"],
                             capture_output=True, text=True, encoding="utf-8",
@@ -48,6 +71,18 @@ def alive(pid):
     return result.returncode == 0 and str(pid) in result.stdout
 
 
+def resolve_opencode():
+    exe = shutil.which("opencode")
+    if exe and not exe.lower().endswith((".cmd", ".ps1")):
+        return exe
+    shim = shutil.which("opencode.cmd") or exe
+    if shim:
+        candidate = Path(shim).resolve().parent / "node_modules" / "opencode-ai" / "bin" / "opencode.exe"
+        if candidate.is_file():
+            return str(candidate)
+    return shim
+
+
 def opencode_env(dispatcher_dir):
     env = os.environ.copy()
     permission = dispatcher_dir / "headless_permissions.json"
@@ -62,7 +97,7 @@ def launch(entry, dispatcher_dir, prompt):
         entry["status"] = "HUMAN_GATE"
         entry["reason"] = "WORKTREE_DIRTY_PRESERVED"
         return None
-    exe = shutil.which("opencode") or shutil.which("opencode.cmd")
+    exe = resolve_opencode()
     if not exe:
         entry["status"] = "HUMAN_GATE"
         entry["reason"] = "OPENCODE_NOT_FOUND"
@@ -79,8 +114,16 @@ def launch(entry, dispatcher_dir, prompt):
     return proc.pid
 
 
-def harvest(entry, dispatcher_dir, max_attempts):
+def harvest(entry, dispatcher_dir, max_attempts, max_runtime_minutes):
     if entry.get("status") != "WORKING" or alive(entry.get("pid")):
+        if entry.get("status") == "WORKING" and entry.get("started_at"):
+            started = datetime.fromisoformat(entry["started_at"])
+            if (datetime.now(timezone.utc) - started).total_seconds() > max_runtime_minutes * 60:
+                subprocess.run(["taskkill", "/PID", str(entry.get("pid")), "/T", "/F"],
+                               capture_output=True)
+                entry["status"] = "READY_FOR_REPAIR"
+                entry["reason"] = "CODER_TIMEOUT"
+                entry["attempts"] = int(entry.get("attempts", 0)) + 1
         return
     worktree = Path(entry.get("worktree", ""))
     report = worktree / ".ai-project" / "design" / "implementation_report.local.md"
@@ -106,7 +149,8 @@ def prepare_integration(entry, dispatcher_dir):
     path = root / safe
     path.parent.mkdir(parents=True, exist_ok=True)
     branch = "integration/%s" % safe
-    stable = "stable-20260824"
+    config = load(dispatcher_dir.parent.parent / "tools" / "dispatcher" / "supervisor_config.json", {})
+    stable = config.get("stable_branch", "stable-20260824")
     if not path.exists():
         result = subprocess.run(["git", "-C", str(repo), "worktree", "add",
                                  "-b", branch, str(path), stable],
@@ -147,9 +191,33 @@ def collect_completed_entries(queues, dispatcher_dir):
             existing.add(key)
 
 
-def process_repair(queues, dispatcher_dir, max_agents):
+def enqueue_repair_integrations(queues, dispatcher_dir):
+    existing = {x.get("key") for x in queues.get("integration", [])}
     for entry in queues.get("repair", []):
-        harvest(entry, dispatcher_dir, max_attempts=2)
+        if entry.get("status") != "COMPLETED_CANDIDATE":
+            continue
+        worktree = Path(entry.get("worktree", ""))
+        if not worktree.is_dir():
+            continue
+        branch = subprocess.run(["git", "-C", str(worktree), "branch", "--show-current"],
+                                capture_output=True, text=True, encoding="utf-8",
+                                errors="replace").stdout.strip()
+        head = subprocess.run(["git", "-C", str(worktree), "rev-parse", "HEAD"],
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace").stdout.strip()
+        key = "%s:%s" % (branch, head)
+        if branch and head and key not in existing:
+            queues.setdefault("integration", []).append({"key": key,
+                "branch": branch, "head": head, "source_worktree": str(worktree),
+                "status": "READY_FOR_INTEGRATION", "created_at": now()})
+            existing.add(key)
+        entry["status"] = "INTEGRATION_ENQUEUED"
+
+
+def process_repair(queues, dispatcher_dir, max_agents, max_runtime_minutes):
+    for entry in queues.get("repair", []):
+        harvest(entry, dispatcher_dir, max_attempts=2, max_runtime_minutes=max_runtime_minutes)
+    enqueue_repair_integrations(queues, dispatcher_dir)
     active = sum(1 for e in queues.get("repair", []) if e.get("status") == "WORKING")
     for entry in queues.get("repair", []):
         if active >= max_agents or entry.get("status") != "READY_FOR_REPAIR":
@@ -169,9 +237,9 @@ def process_repair(queues, dispatcher_dir, max_agents):
             active += 1
 
 
-def process_integration(queues, dispatcher_dir, max_agents):
+def process_integration(queues, dispatcher_dir, max_agents, max_runtime_minutes):
     for entry in queues.get("integration", []):
-        harvest(entry, dispatcher_dir, max_attempts=1)
+        harvest(entry, dispatcher_dir, max_attempts=1, max_runtime_minutes=max_runtime_minutes)
     active = sum(1 for e in queues.get("integration", []) if e.get("status") == "WORKING")
     for entry in queues.get("integration", []):
         if active >= max_agents or entry.get("status") != "READY_FOR_INTEGRATION":
@@ -193,15 +261,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dispatcher-dir", required=True)
     parser.add_argument("--max-agents", type=int, default=1)
+    parser.add_argument("--max-runtime-minutes", type=int, default=60)
     args = parser.parse_args()
     d = Path(args.dispatcher_dir).resolve()
     path = d / "autonomy_queues.json"
-    queues = load(path, {"version": 1, "repair": [], "integration": [], "proposals": []})
-    collect_completed_entries(queues, d)
-    process_repair(queues, d, args.max_agents)
-    process_integration(queues, d, args.max_agents)
-    queues["updated_at"] = now()
-    save(path, queues)
+    with queue_lock(path):
+        queues = load(path, {"version": 1, "repair": [], "integration": [], "proposals": []})
+        collect_completed_entries(queues, d)
+        process_repair(queues, d, args.max_agents, args.max_runtime_minutes)
+        process_integration(queues, d, args.max_agents, args.max_runtime_minutes)
+        queues["updated_at"] = now()
+        save(path, queues)
     print(json.dumps({"repair": len(queues.get("repair", [])),
                       "integration": len(queues.get("integration", []))}))
 

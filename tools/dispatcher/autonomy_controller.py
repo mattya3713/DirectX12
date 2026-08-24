@@ -8,6 +8,9 @@ create an infinite repair storm.
 
 import argparse
 import json
+import os
+import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,6 +33,27 @@ def save(path, data):
     tmp.replace(path)
 
 
+@contextmanager
+def queue_lock(path):
+    lock = path.with_suffix(path.suffix + ".lock")
+    for _ in range(30):
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            break
+        except FileExistsError:
+            time.sleep(0.1)
+    else:
+        raise RuntimeError("queue lock timeout: %s" % lock)
+    try:
+        yield
+    finally:
+        try:
+            lock.unlink()
+        except FileNotFoundError:
+            pass
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dispatcher-dir", default=str(Path(__file__).resolve().parents[2] / ".ai-project" / "dispatcher"))
@@ -37,37 +61,39 @@ def main():
     args = parser.parse_args()
 
     root = Path(args.dispatcher_dir).resolve()
-    state = load(root / "dispatcher_state.json", {})
-    supervisor = state.get("supervisor", {})
-    queues = load(root / "autonomy_queues.json", {
+    queue_path = root / "autonomy_queues.json"
+    with queue_lock(queue_path):
+      state = load(root / "dispatcher_state.json", {})
+      supervisor = state.get("supervisor", {})
+      queues = load(queue_path, {
         "version": 1, "updated_at": None, "repair": [],
         "integration": [], "proposals": [], "dead_agents": []
     })
-    seen = {(x.get("key"), x.get("status")) for x in queues.get("repair", [])}
-    for name, entry in (supervisor.get("worktrees") or {}).items():
-        phase = entry.get("phase")
-        if phase not in {"ISOLATED_DIRTY", "CONFLICT", "BUILD_FAILED", "SMOKE_FAILED", "ERROR"}:
-            continue
-        snap = entry.get("snapshot") or {}
-        key = "%s:%s:%s" % (name, snap.get("head", ""), phase)
-        previous = [x for x in queues.get("repair", []) if x.get("key") == key]
-        for item in previous:
-            if not item.get("worktree"):
-                item["worktree"] = entry.get("path")
-        attempts = max([x.get("attempts", 0) for x in previous] or [0])
-        status = "READY_FOR_REPAIR" if attempts < args.max_attempts else "HUMAN_GATE"
-        marker = (key, status)
-        if marker not in seen:
-            queues.setdefault("repair", []).append({
+      seen = {(x.get("key"), x.get("status")) for x in queues.get("repair", [])}
+      for name, entry in (supervisor.get("worktrees") or {}).items():
+          phase = entry.get("phase")
+          if phase not in {"ISOLATED_DIRTY", "CONFLICT", "BUILD_FAILED", "SMOKE_FAILED", "ERROR"}:
+              continue
+          snap = entry.get("snapshot") or {}
+          key = "%s:%s:%s" % (name, snap.get("head", ""), phase)
+          previous = [x for x in queues.get("repair", []) if x.get("key") == key]
+          for item in previous:
+              if not item.get("worktree"):
+                  item["worktree"] = entry.get("path")
+          attempts = max([x.get("attempts", 0) for x in previous] or [0])
+          status = "READY_FOR_REPAIR" if attempts < args.max_attempts else "HUMAN_GATE"
+          marker = (key, status)
+          if marker not in seen:
+              queues.setdefault("repair", []).append({
                 "key": key, "created_at": now(), "line": name,
                 "head": snap.get("head"), "phase": phase,
                 "worktree": entry.get("path"),
                 "reasons": entry.get("reasons", []),
                 "attempts": attempts, "status": status,
-                "policy": "repair agent must preserve worktree and prove build/smoke"
-            })
-    queues["updated_at"] = now()
-    save(root / "autonomy_queues.json", queues)
+                  "policy": "repair agent must preserve worktree and prove build/smoke"
+              })
+      queues["updated_at"] = now()
+      save(queue_path, queues)
     print(json.dumps({"repair": len(queues.get("repair", [])), "updated_at": queues["updated_at"]}))
 
 
